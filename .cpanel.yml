@@ -1,0 +1,26 @@
+---
+deployment:
+  tasks:
+    - export REPOPATH="$(pwd)"
+    - export APPNAME="$(basename "$REPOPATH")"
+    - export DEPLOYPATH="$HOME/public_html/$APPNAME"
+    - /bin/mkdir -p "$DEPLOYPATH"
+    - >
+      if command -v rsync >/dev/null 2>&1; then
+        rsync -av --delete
+        --exclude='.git/'
+        --exclude='.cpanel.yml'
+        --exclude='.gitignore'
+        --exclude='docs/'
+        --exclude='README.md'
+        "$REPOPATH"/ "$DEPLOYPATH"/;
+      else
+        /usr/bin/find "$DEPLOYPATH" -mindepth 1 -maxdepth 1 ! -name '.well-known' -exec rm -rf {} +;
+        /bin/tar
+        --exclude='.git'
+        --exclude='.cpanel.yml'
+        --exclude='.gitignore'
+        --exclude='docs'
+        --exclude='README.md'
+        -cf - . | (cd "$DEPLOYPATH" && /bin/tar -xf -);
+      fi
