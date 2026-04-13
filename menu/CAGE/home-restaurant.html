@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="icon" href="../img/favicon-32x32.png" sizes="32x32" />
+  <link rel="icon" href="../img/favicon-192x192.png" sizes="192x192" />
+  <link rel="apple-touch-icon-precomposed" href="../img/favicon-180x180.png" />
+  <meta name="msapplication-TileImage" content="../img/favicon-270x270.png" />
+  <title>Home-Restaurant</title>
+  <!-- FONTS -->
+  <link href="https://fonts.googleapis.com/css?family=Karla:400,400i,700|Poppins:300,400,400i,600|Source+Sans+Pro:400,400i,600,700,900|Mukta:400,700,800|Oswald:400,600|Lato:400,400i,700|Roboto:300,400,500,700|Roboto+Slab:400,700|Playfair+Display:400,400i,700i,700|Catamaran:300,400,500,600,700,900|Merriweather:400,700|Montserrat:400,500,600|Nunito|Open+Sans:300,400,500,600|Caveat:400,700|Dancing+Script|Libre+Baskerville:400,700"
+    rel="stylesheet">
+  <!-- STYLES -->
+  <!-- Main Style -->
+  <link rel="stylesheet" id="style-main" href="../css/styles-main.css?v=3">
+  <link rel="stylesheet" id="swiper-main" href="../vendors/swiper/swiper.min.css">
+  <link rel="stylesheet" id="lity-main" href="../vendors/lity/lity.min.css">
+  <link rel="stylesheet" id="mediaelementplayer" href="../vendors/mediaelement/mediaelementplayer.min.css">
+  <link rel="stylesheet" id="range" href="../vendors/range/jquery.range.css">
+  <link rel="stylesheet" id="lightgallery" href="../vendors/lightgallery/lightgallery.min.css">
+  <link rel="stylesheet" id="style-link" href="../css/styles-7.css?v=35">
+  <!-- SCRIPTS -->
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+  <script src="https://code.jquery.com/jquery-migrate-1.3.0.js" integrity="sha256-/Gj+NlY1u/J2UGzM/B2QrWR01trK8ZZqrD5BdqQUsac=" crossorigin="anonymous"></script>
+  <!-- Swiper -->
+  <script src="../vendors/swiper/swiper.min.js"></script>
+  <!-- Isotope -->
+  <script src="../vendors/isotope/isotope.pkgd.min.js"></script>
+  <!-- Images loaded library -->
+  <script src="../vendors/lazyload/imagesloaded.pkgd.min.js"></script>
+  <!-- MediaElement js library (only for Aheto HTML) -->
+  <script src="../vendors/mediaelement/mediaelement.min.js"></script>
+  <script src="../vendors/mediaelement/mediaelement-and-player.min.js"></script>
+  <!-- Typed animation text -->
+  <script src="../vendors/typed/typed.min.js"></script>
+  <!-- Lity Lightbox -->
+  <script src="../vendors/lity/lity.min.js"></script>
+</head>
+
+<body data-anm=".anm" class="">
+  <header class="aheto-header aheto-header-7">
+    <div class="aheto-header-7__nav-wrap">
+      <div class="aheto-header-7__inner">
+        <div class="aheto-header-7__line">
+          <div class="aheto-header-7__logo">
+            <div class="logo">
+              <a class="logo__link" href="">
+                <div class="logo__img-holder">
+                  <img class="logo__img" src="../img/restaurant/rest-main-logo.png" alt="Logo image">
+                </div>
+                <div class="logo__text-holder">
+                  <h3 class="logo__text">KARMA</h3>
+                </div>
+              </a>
+            </div>
+          </div>
+          <div class="aheto-header-7__menu js-menu js-menu-height">
+            <ul class="main-menu">
+              <li class="menu-item menu-item-type-custom menu-item-object-custom">
+                <a href="home-restaurant.html">Home</a>
+              </li>
+              <li class="menu-item menu-item-type-custom menu-item-object-custom">
+                <a href="about.html">About</a>
+              </li>
+              <li class="menu-item menu-item-type-custom menu-item-object-custom">
+                <a href="menu.html">Menu</a>
+              </li>
+              <li class="menu-item menu-item-type-custom menu-item-object-custom">
+                <a href="gallery.html">Gallery</a>
+              </li>
+              <li class="menu-item menu-item-type-custom menu-item-object-custom">
+                <a href="service.html">Services</a>
+              </li>
+              <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children">
+                <a href="#">News</a>
+                <ul class="sub-menu menu-depth-1">
+                  <li class="menu-item menu-item-type-custom menu-item-object-custom"><a href="blog.html">Blog</a></li>
+                  <li class="menu-item menu-item-type-custom menu-item-object-custom"><a href="blog-details.html">Blog Details</a></li>
+                </ul>
+              </li>
+              <li class="menu-item menu-item-type-custom menu-item-object-custom">
+                <a href="reservations.html">Reservation</a>
+              </li>
+              <li class="menu-item menu-item-type-custom menu-item-object-custom">
+                <a href="contact.html">Contact Us</a>
+              </li>
+            </ul>
+          </div>
+          <div class="aheto-header-7__hamburger-aside">
+            <button class="hamburger--squeeze js-hamburger-menu hamburger js-hamburger js-hamburger--body-over" type="button">
+              <span class="hamburger-box">
+                <span class="hamburger-inner"></span>
+              </span>
+            </button>
+            <button class="hamburger--squeeze-desktop hamburger-ds js-hamburger-aside js-hamburger js-hamburger--body-over" type="button">
+              <span class="hamburger-box">
+                <span class="hamburger-inner"></span>
+              </span>
+            </button>
+          </div>
+        </div>
+        <div class="aheto-header-7__aside js-aside">
+          <div class="aheto-header-7__aside-close js-aside-close">
+          </div>
+          <div class="aheto-header-7__contact">
+            <ul class="aheto-header-7__aside-menu">
+              <li>
+                <a href="menu.html">Menu</a>
+              </li>
+              <li>
+                <a href="reservations.html">Reservation</a>
+              </li>
+              <li>
+                <a href="contact.html">Contact Us</a>
+              </li>
+            </ul>
+            <div class="aheto-header-7__aside-socials">
+              <div class="aht-socials ">
+                <a class="aht-socials__link aht-btn--dark aht-btn--trans " href="https://www.facebook.com/">
+                  <i class="aht-socials__icon icon ion-social-facebook"></i>
+                </a>
+                <a class="aht-socials__link aht-btn--dark aht-btn--trans " href="https://www.tumblr.com/">
+                  <i class="aht-socials__icon icon ion-social-tumblr"></i>
+                </a>
+                <a class="aht-socials__link aht-btn--dark aht-btn--trans " href="https://twitter.com/">
+                  <i class="aht-socials__icon icon ion-social-twitter"></i>
+                </a>
+                <a class="aht-socials__link aht-btn--dark aht-btn--trans " href="https://www.youtube.com/">
+                  <i class="aht-socials__icon icon ion-social-youtube"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+  <div class="swiper swiper--rest-home ">
+    <div class="swiper-container " data-autoplay="true" data-speed="2000" data-mode="vertical" data-modehorizontal="horizontal" data-spaceBetween="0" data-slidesPerView="responsive" data-add-slides="1" data-lg-slides="1" data-md-slides="1"
+      data-sm-slides="1" data-xs-slides="1">
+      <div class="swiper-wrapper ">
+        <div class="swiper-slide ">
+          <div class="aht-ban aht-ban--rest aht-ban--rest-first t-left aht-ban--full">
+            <img class="js-bg" src="../img/restaurant/home/slide-1-bg.jpg" alt="Background">
+            <div class="aht-ban__content">
+              <div class="aht-ban__absoluteItem">$18</div>
+              <h1 class="aht-ban__title">Delicious Steak</h1>
+              <h5 class="aht-ban__undertitle">nice offfer</h5>
+              <h5 class="aht-ban__desc">Rare steak with side dish of French beans and glass of red wine on a wooden</h5>
+            </div>
+          </div>
+        </div>
+        <div class="swiper-slide ">
+          <div class="aht-ban aht-ban--rest aht-ban--rest-second t-center aht-ban--full">
+            <img class="js-bg" src="../img/restaurant/home/slide-2-bg.jpg" alt="Background">
+            <div class="aht-ban__content">
+              <h1 class="aht-ban__title">Delicious Steak</h1>
+              <h5 class="aht-ban__desc">Rare steak with side dish of French beans and glass of red wine on a wooden</h5>
+              <div class="aht-ban__links-wrap">
+                <div class="aht-ban__links">
+                  <a href="#" class="aht-ban__link">book a table</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="swiper-slide ">
+          <div class="aht-ban aht-ban--rest aht-ban--rest-third t-center aht-ban--full">
+            <img class="js-bg" src="../img/restaurant/home/slide-3-bg.jpg" alt="Background">
+            <div class="aht-ban__content">
+              <h1 class="aht-ban__title">Season Flavours</h1>
+              <h5 class="aht-ban__desc">Rare steak with side dish of French beans and glass of red wine on a wooden</h5>
+              <div class="aht-ban__links-wrap">
+                <div class="aht-ban__links">
+                  <a href="#" class="aht-ban__link">book a table</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="swiper-pagination swiper-pagination--numeric2"></div>
+    </div>
+    <div class="swiper-button-prev">
+    </div>
+    <div class="swiper-button-next">
+    </div>
+  </div>
+  <div class="aheto-signature--restaurant-home padding-lg-150t padding-xs-50t padding-lg-20b padding-xs-50b padding-md-80t padding-md-80b padding-sm-50t">
+    <img src="../img/restaurant/rest-bg-rectangle-dots.png" class="w-100 js-bg" alt="single img">
+    <div class="bg-text">About</div>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-6 col-md-6 offset-md-0 col-sm-10 offset-sm-1 col-12">
+          <div class="signature-image-bock">
+            <div class="aheto-single-img    ">
+              <img src="../img/restaurant/home/flying-meat.png" class="   w-100" alt="single img">
+            </div>
+            <div class="signature-circle-bg"></div>
+          </div>
+        </div>
+        <div class="col-lg-6 col-md-6 offset-md-0 col-sm-10 offset-sm-1 col-12 t-left padding-xs-20t">
+          <div class="signature-block">
+            <div class="row">
+              <div class="col-md-12">
+                <div class="aheto-heading t-left aheto-heading--restaurant aheto-heading--restaurant-signature">
+                  <h6 class="aheto-heading__subtitle t-uppercase t-bold">about us</h6>
+                  <h2 class="aheto-heading__title        f-40  t-medium ">American dining from the esteemed Chef Billy Lang.</h2>
+                  <h5 class="aheto-heading__undertitle">Golden Spork winner Chef Lang has been serving</h5>
+                  <p class="aheto-heading__desc   ">Pacific Tavern opened in May 2010 and is located inside the Smith Hotel Brooklyn.
+                    Since then, Golden Spork winner Chef Lang has been serving both quality interpretations of
+                    classic dishes and daring new ventures into the uncharted territories of food.</p>
+                </div>
+              </div>
+            </div>
+            <div class="row margin-lg-50t">
+              <div class="col-md-12">
+                <div class="aht-author aht-author--rest-home">
+                  <div class="aht-author__img-holder">
+                    <img class="aht-author__img" src="../img/restaurant/home/signature.png" alt="Signature">
+                  </div>
+                  <div class="aht-author__caption">
+                    <h6 class="aht-author__name">Antonin Scalia<span class="aht-author__pos">CEO Founder</span></h6>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="restaurant-speciality padding-xs-0t padding-lg-185t padding-md-0t padding-sm-50t padding-sm-0b">
+    <img src="../img/restaurant/rest-bg-rectangle-dots.png" class="w-100 js-bg" alt="single img">
+    <div class="row">
+      <div class="rest-speciality-container col-lg-12">
+        <div class="speciality-img">
+          <div class="aheto-single-img    ">
+            <img src="../img/restaurant/home/home-pricing.jpg" class="   w-100" alt="single img">
+          </div>
+        </div>
+        <div class="speciality-info-wrap">
+          <blockquote class="speciality-info">
+            <img src="../img/restaurant/slider-descr-bg.png" class="w-100 js-bg" alt="single img">
+            <div class="speciality_inner">
+              <div class="aheto-heading t-left aheto-heading--restaurant-speciality">
+                <h4 class="aheto-heading__title    f-style-italic    f-40  t-bold ">Today Speciality</h4>
+              </div>
+              <div class="row margin-lg-20t">
+                <div class="col-md-12">
+                  <div class="aht-pricing aht-pricing--rest-speciality ">
+                    <div class="aht-pricing__item">
+                      <h4 class="aht-pricing__title"></h4>
+                      <span class="aht-pricing__desc"></span>
+                      <ul class="aht-pricing__list">
+                        <li class="aht-pricing__line">
+                          <div class="aht-pricing__img-holder">
+                            <img src="../" class="w-100 js-bg" alt="single img">
+                          </div>
+                          <div class="aht-pricing__price-ultraWrap">
+                            <div class="aht-pricing__price-wrap">
+                              <span class="aht-pricing__per">Mac and Cheese</span>
+                              <span class="aht-pricing__price">$20.00</span>
+                            </div>
+                            <div class="aht-pricing__composition"></div>
+                          </div>
+                        </li>
+                        <li class="aht-pricing__line">
+                          <div class="aht-pricing__img-holder">
+                            <img src="../" class="w-100 js-bg" alt="single img">
+                          </div>
+                          <div class="aht-pricing__price-ultraWrap">
+                            <div class="aht-pricing__price-wrap">
+                              <span class="aht-pricing__per">Milanese</span>
+                              <span class="aht-pricing__price">$40.00</span>
+                            </div>
+                            <div class="aht-pricing__composition"></div>
+                          </div>
+                        </li>
+                        <li class="aht-pricing__line">
+                          <div class="aht-pricing__img-holder">
+                            <img src="../" class="w-100 js-bg" alt="single img">
+                          </div>
+                          <div class="aht-pricing__price-ultraWrap">
+                            <div class="aht-pricing__price-wrap">
+                              <span class="aht-pricing__per">Raleigh</span>
+                              <span class="aht-pricing__price">$20.00</span>
+                            </div>
+                            <div class="aht-pricing__composition"></div>
+                          </div>
+                        </li>
+                      </ul>
+                    </div>
+                    <div class="aht-pricing__item">
+                      <h4 class="aht-pricing__title"></h4>
+                      <span class="aht-pricing__desc"></span>
+                      <ul class="aht-pricing__list">
+                        <li class="aht-pricing__line">
+                          <div class="aht-pricing__img-holder">
+                            <img src="../" class="w-100 js-bg" alt="single img">
+                          </div>
+                          <div class="aht-pricing__price-ultraWrap">
+                            <div class="aht-pricing__price-wrap">
+                              <span class="aht-pricing__per">Burger</span>
+                              <span class="aht-pricing__price">$20.00</span>
+                            </div>
+                            <div class="aht-pricing__composition"></div>
+                          </div>
+                        </li>
+                        <li class="aht-pricing__line">
+                          <div class="aht-pricing__img-holder">
+                            <img src="../" class="w-100 js-bg" alt="single img">
+                          </div>
+                          <div class="aht-pricing__price-ultraWrap">
+                            <div class="aht-pricing__price-wrap">
+                              <span class="aht-pricing__per">Braised Lamb</span>
+                              <span class="aht-pricing__price">$40.00</span>
+                            </div>
+                            <div class="aht-pricing__composition"></div>
+                          </div>
+                        </li>
+                        <li class="aht-pricing__line">
+                          <div class="aht-pricing__img-holder">
+                            <img src="../" class="w-100 js-bg" alt="single img">
+                          </div>
+                          <div class="aht-pricing__price-ultraWrap">
+                            <div class="aht-pricing__price-wrap">
+                              <span class="aht-pricing__per">Salmon Steak</span>
+                              <span class="aht-pricing__price">$40.00</span>
+                            </div>
+                            <div class="aht-pricing__composition"></div>
+                          </div>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="row margin-lg-40t">
+                <div class="col-md-12">
+                  <div class="aheto-btn-container  t-left">
+                    <a href="#" style="" class="aheto-btn      ">
+                      BOOK A TABLE
+                    </a>
+                    <a href="#" style="" class="aheto-btn  aheto-btn--underline  aheto-btn--light  ">
+                      VIEW FULL MENU
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </blockquote>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="restaurant-menu-wrap rest-menu-salads rest-menu-salads-home padding-lg-150t padding-lg-60b padding-md-60t padding-md-20b padding-xs-50t padding-xs-30b">
+    <img src="../img/restaurant/menu/menu_bg-01.png" class="w-100 js-bg" alt="single img">
+    <div class="bg-text">Menu</div>
+    <div class="container ">
+      <div class="row">
+        <div class="col-md-10 offset-md-1">
+          <div class="aheto-heading t-center aheto-heading--restaurant">
+            <h6 class="aheto-heading__subtitle t-uppercase t-bold">karma menu</h6>
+            <h2 class="aheto-heading__title        f-40  t-medium ">Sortly and crunchy main courses</h2>
+          </div>
+        </div>
+      </div>
+      <div class="row margin-lg-80t margin-md-60t margin-xs-30t">
+        <div class="col-md-12">
+          <div class="aht-pricing aht-pricing--rest ">
+            <div class="aht-pricing__item">
+              <h4 class="aht-pricing__title">Snack Salads</h4>
+              <span class="aht-pricing__desc"></span>
+              <ul class="aht-pricing__list">
+                <li class="aht-pricing__line">
+                  <div class="aht-pricing__img-holder">
+                    <img src="../img/restaurant/menu/items/menu-salad-01.jpg" class="w-100 js-bg" alt="single img">
+                  </div>
+                  <div class="aht-pricing__price-ultraWrap">
+                    <div class="aht-pricing__price-wrap">
+                      <span class="aht-pricing__per">Primavera Salad</span>
+                      <span class="aht-pricing__price">$10.00</span>
+                    </div>
+                    <div class="aht-pricing__composition">arugula, cherry tomato, shaved almonds, shallot vinaigrette</div>
+                  </div>
+                </li>
+                <li class="aht-pricing__line">
+                  <div class="aht-pricing__img-holder">
+                    <img src="../img/restaurant/menu/items/menu-salad-02.jpg" class="w-100 js-bg" alt="single img">
+                  </div>
+                  <div class="aht-pricing__price-ultraWrap">
+                    <div class="aht-pricing__price-wrap">
+                      <span class="aht-pricing__per">Alpine</span>
+                      <span class="aht-pricing__price">$10.00</span>
+                    </div>
+                    <div class="aht-pricing__composition">coleslaw, barbecue sauce, pickles on sesame roll</div>
+                  </div>
+                </li>
+                <li class="aht-pricing__line">
+                  <div class="aht-pricing__img-holder">
+                    <img src="../img/restaurant/menu/items/menu-salad-03.jpg" class="w-100 js-bg" alt="single img">
+                  </div>
+                  <div class="aht-pricing__price-ultraWrap">
+                    <div class="aht-pricing__price-wrap">
+                      <span class="aht-pricing__per">Lobster Bolognese</span>
+                      <span class="aht-pricing__price">$10.00</span>
+                    </div>
+                    <div class="aht-pricing__composition">ham, unmelted cheddar, mayo on kaiser roll</div>
+                  </div>
+                </li>
+                <li class="aht-pricing__line">
+                  <div class="aht-pricing__img-holder">
+                    <img src="../img/restaurant/menu/items/menu-salad-04.jpg" class="w-100 js-bg" alt="single img">
+                  </div>
+                  <div class="aht-pricing__price-ultraWrap">
+                    <div class="aht-pricing__price-wrap">
+                      <span class="aht-pricing__per">Burger</span>
+                      <span class="aht-pricing__price">$10.00</span>
+                    </div>
+                    <div class="aht-pricing__composition">fried chicken, lettuce, tomato, mayo on focaccia</div>
+                  </div>
+                </li>
+              </ul>
+            </div>
+            <div class="aht-pricing__item">
+              <h4 class="aht-pricing__title">Sandwiches</h4>
+              <span class="aht-pricing__desc"></span>
+              <ul class="aht-pricing__list">
+                <li class="aht-pricing__line">
+                  <div class="aht-pricing__img-holder">
+                    <img src="../img/restaurant/menu/items/menu-salad-01.jpg" class="w-100 js-bg" alt="single img">
+                  </div>
+                  <div class="aht-pricing__price-ultraWrap">
+                    <div class="aht-pricing__price-wrap">
+                      <span class="aht-pricing__per">Mac and Cheese</span>
+                      <span class="aht-pricing__price">$11.34</span>
+                    </div>
+                    <div class="aht-pricing__composition">fontina, gruyere, truffle oil on multigrain toast</div>
+                  </div>
+                </li>
+                <li class="aht-pricing__line">
+                  <div class="aht-pricing__img-holder">
+                    <img src="../img/restaurant/menu/items/menu-salad-02.jpg" class="w-100 js-bg" alt="single img">
+                  </div>
+                  <div class="aht-pricing__price-ultraWrap">
+                    <div class="aht-pricing__price-wrap">
+                      <span class="aht-pricing__per">Milanese</span>
+                      <span class="aht-pricing__price">$9.99</span>
+                    </div>
+                    <div class="aht-pricing__composition">arugula, cherry tomato, shaved almonds, shallot vinaigrette</div>
+                  </div>
+                </li>
+                <li class="aht-pricing__line">
+                  <div class="aht-pricing__img-holder">
+                    <img src="../img/restaurant/menu/items/menu-salad-03.jpg" class="w-100 js-bg" alt="single img">
+                  </div>
+                  <div class="aht-pricing__price-ultraWrap">
+                    <div class="aht-pricing__price-wrap">
+                      <span class="aht-pricing__per">Reuben</span>
+                      <span class="aht-pricing__price">$13.09</span>
+                    </div>
+                    <div class="aht-pricing__composition">quinoa, roasted carrots, mustard lemon glaze</div>
+                  </div>
+                </li>
+                <li class="aht-pricing__line">
+                  <div class="aht-pricing__img-holder">
+                    <img src="../img/restaurant/menu/items/menu-salad-04.jpg" class="w-100 js-bg" alt="single img">
+                  </div>
+                  <div class="aht-pricing__price-ultraWrap">
+                    <div class="aht-pricing__price-wrap">
+                      <span class="aht-pricing__per">Braised Lamb</span>
+                      <span class="aht-pricing__price">$12.00</span>
+                    </div>
+                    <div class="aht-pricing__composition">grass-fed, with arugula salad, smashed potatoes</div>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row margin-lg-20t margin-md-5t">
+        <div class="col-md-12">
+          <div class="aheto-btn-container  t-center">
+            <a href="menu.html" style="" class="aheto-btn      ">
+              VIEW FULL MENU
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="rest-single-gallery-section rest-home">
+    <img src="../img/restaurant/rest-bg-rectangle-dots.png" class="w-100 js-bg" alt="single img">
+    <div class="single-gallery-ultraWrap padding-lg-90t padding-lg-45b margin-sm-0t padding-xs-20t padding-xs-25b padding-sm-55b padding-md-60t padding-md-50b">
+      <div class="single-gallery-container">
+        <div class="single-gallery-descrWrap padding-sm-50t padding-sm-50b padding-md-70t padding-md-70b padding-lg-100t padding-lg-100b">
+          <img src="../img/restaurant/slider-descr-bg.png" class="w-100 js-bg" alt="single img">
+          <div class="single-gallery-descr">
+            <div class="aheto-heading  aheto-heading--single-gallery">
+              <h3 class="aheto-heading__title    f-style-italic      t-bold ">Our Gallery</h3>
+              <p class="aheto-heading__desc   ">Pacific Tavern opened in May 2010 and is located inside the Smith Hotel Brooklyn. Since then, Golden Spork winner Chef Lang</p>
+            </div>
+            <div class="single-gallery-descr-icons">
+              <div class="aheto-single-img   ">
+                <img src="../img/restaurant/about/serv-ico-4.png" class="  " alt="single img">
+              </div>
+              <div class="aheto-single-img   ">
+                <img src="../img/restaurant/about/serv-ico-5.png" class="  " alt="single img">
+              </div>
+              <div class="aheto-single-img   ">
+                <img src="../img/restaurant/about/serv-ico-3.png" class="  " alt="single img">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="single-gallery-wrap">
+        <div class="swiper swiper--restaurant swiper--single-gallery ">
+          <div class="swiper-container " data-autoplay="true" data-speed="500" data-loop="true" data-spaceBetween="0" data-slidesPerView="responsive" data-add-slides="1" data-lg-slides="1" data-md-slides="1" data-sm-slides="1" data-xs-slides="1">
+            <div class="swiper-wrapper ">
+              <div class="swiper-slide ">
+                <img src="../img/restaurant/gallery/gallery-item-000.jpg" class="w-100 js-bg" alt="single img">
+              </div>
+              <div class="swiper-slide ">
+                <img src="../img/restaurant/gallery/gallery-item-009.jpg" class="w-100 js-bg" alt="single img">
+              </div>
+              <div class="swiper-slide ">
+                <img src="../img/restaurant/gallery/gallery-item-008.jpg" class="w-100 js-bg" alt="single img">
+              </div>
+            </div>
+          </div>
+          <div class="swiper-button-prev">
+          </div>
+          <div class="swiper-button-next">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="restaurant-services-section-wrap rest-home-page padding-lg-90t padding-lg-160b padding-md-10t padding-sm-0t padding-xs-30t padding-md-80b padding-sm-80b padding-xs-50b">
+    <img src="../img/restaurant/full-width-dots-bg.png" class="w-100 js-bg" alt="single img">
+    <div class="bg-text">Services</div>
+    <div class="container ">
+      <div class="col-md-8 offset-md-2">
+        <div class="aheto-heading t-center aheto-heading--restaurant">
+          <h6 class="aheto-heading__subtitle t-uppercase t-bold">best services ever</h6>
+          <h2 class="aheto-heading__title        f-40  t-medium ">We bring the best services ever</h2>
+        </div>
+      </div>
+      <div class="row margin-lg-80t margin-md-70t margin-sm-40t justify-content-center">
+        <div class="col-md-6 col-lg-4 margin-lg-55b margin-sm-40b">
+          <div class="aheto-content-block aheto-content-block--restaurant t-left  ">
+            <div class="aheto-content-block__img">
+              <img class="js-bg" src="../img/restaurant/about/Rest_About_Serv_1.jpg" alt="Image">
+            </div>
+            <div class="aheto-content-block__descr transition-none">
+              <div class="aheto-content-block__title-holder">
+                <i class="aheto-content-block__ico icon true">
+                  <img class="js-bg" src="../img/restaurant/about/serv-ico-1.png" alt="">
+                </i>
+                <h5 class="aheto-content-block__title margin-lg-40t margin-sm-25t margin-lg-20b ">Enjoy Difference</h5>
+              </div>
+              <div class="aheto-content-block__info">
+                <p class="aheto-content-block__info-text ">Pacific Tavern opened in May 2010 and is located inside the Smith Hotel Brooklyn.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4 margin-lg-55b margin-sm-40b">
+          <div class="aheto-content-block aheto-content-block--restaurant t-left  ">
+            <div class="aheto-content-block__img">
+              <img class="js-bg" src="../img/restaurant/about/Rest_About_Serv_2.jpg" alt="Image">
+            </div>
+            <div class="aheto-content-block__descr transition-none">
+              <div class="aheto-content-block__title-holder">
+                <i class="aheto-content-block__ico icon true">
+                  <img class="js-bg" src="../img/restaurant/about/serv-ico-2.png" alt="">
+                </i>
+                <h5 class="aheto-content-block__title margin-lg-40t margin-sm-25t margin-lg-20b ">Wifi Available</h5>
+              </div>
+              <div class="aheto-content-block__info">
+                <p class="aheto-content-block__info-text ">Pacific Tavern opened in May 2010 and is located inside the Smith Hotel Brooklyn.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4 margin-lg-55b margin-sm-40b">
+          <div class="aheto-content-block aheto-content-block--restaurant t-left  ">
+            <div class="aheto-content-block__img">
+              <img class="js-bg" src="../img/restaurant/about/Rest_About_Serv_3.jpg" alt="Image">
+            </div>
+            <div class="aheto-content-block__descr transition-none">
+              <div class="aheto-content-block__title-holder">
+                <i class="aheto-content-block__ico icon true">
+                  <img class="js-bg" src="../img/restaurant/about/serv-ico-3.png" alt="">
+                </i>
+                <h5 class="aheto-content-block__title margin-lg-40t margin-sm-25t margin-lg-20b ">Extra Delicious</h5>
+              </div>
+              <div class="aheto-content-block__info">
+                <p class="aheto-content-block__info-text ">Pacific Tavern opened in May 2010 and is located inside the Smith Hotel Brooklyn.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="margin-xs-10t margin-sm-40t margin-md-0t margin-lg-25t">
+        <div class="aheto-btn-container aheto-btn-container--resaurant_about ">
+          <a href="service.html" style="" class="aheto-btn  aheto-btn--dark    ">
+            MORE SERVICES
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="aht-cta-restaurant padding-lg-130t padding-lg-100b padding-md-100t padding-sm-80t padding-sm-80b padding-xs-50t padding-xs-50b">
+    <img src="../img/restaurant/home/home-delivery-bg.jpg" class="w-100 js-bg" alt="single img">
+    <div class="container">
+      <div class="col-md-12">
+        <div class="aht-cta aht-cta--t-white aht-cta--rest">
+          <div class="aht-cta__text">
+            <div class="aht-cta__img-wrap">
+              <img class="aht-cta__img" src="../img/restaurant/home/home-delivery-main.png" alt="Image">
+            </div>
+            <h3 class="aht-cta__title">(347) 555 1234</h3>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <section class="rest-reservation-home">
+    <img src="../img/restaurant/rest-bg-width-dots.png" class="w-100 js-bg" alt="single img">
+    <div class="rest-reservation-container rest-reservation-container_bottom">
+      <div class="rest-reservation-order">
+        <div class="aheto-heading t-center aheto-heading--restaurant-contact">
+          <h2 class="aheto-heading__title    f-style-italic    f-40  t-bold ">Thanks For the Reservation</h2>
+          <p class="aheto-heading__desc   ">Your application has been accepted, the confirmation will come to the email you specified</p>
+        </div>
+        <div class="aheto-single-img   ">
+          <img src="../img/restaurant/pepper.jpg" class="  " alt="single img">
+        </div>
+      </div>
+      <div class="aheto-heading t-center aheto-heading--restaurant-contact">
+        <h2 class="aheto-heading__title    f-style-italic    f-40  t-bold ">Book a Table</h2>
+        <p class="aheto-heading__desc   ">Call hotline or book online with OpenTable.</p>
+      </div>
+      <div class="form-rest-reservation-wrap margin-lg-60t margin-xs-40t">
+        <div class="aheto-form aheto-form--default aheto-form--restaurant aheto-form--rest-reservation">
+          <form class="row">
+            <span class="col-12 col-md-6 col-lg-4 wpcf7-form-control-wrap input-icon input-icon-persons">
+              <select name="TotalPersons" class="wpcf7-form-control wpcf7-select" aria-invalid="false">
+                <option value="1">1 Person</option>
+                <option value="2">2 Person</option>
+                <option value="3">3 Person</option>
+                <option value="4">4 Person</option>
+              </select>
+            </span>
+            <span class="col-12 col-md-6 col-lg-4 wpcf7-form-control-wrap input-icon input-icon-date">
+              <input type="date" name="Date" value="" size="40" class="wpcf7-form-control wpcf7-text wpcf7-validates-as-required" aria-required="true" aria-invalid="false" placeholder="Date" required>
+            </span>
+            <span class="col-12 col-md-6 col-lg-4 wpcf7-form-control-wrap input-icon input-icon-time">
+              <input type="time" name="Time" value="" size="40" class="wpcf7-form-control wpcf7-text wpcf7-validates-as-required" aria-required="true" aria-invalid="false" placeholder="Time" required>
+            </span>
+            <span class="col-12 col-md-6 col-lg-4 wpcf7-form-control-wrap">
+              <input type="text" name="Name" value="" size="40" class="wpcf7-form-control wpcf7-text wpcf7-validates-as-required" aria-required="true" aria-invalid="false" placeholder="Name" required>
+            </span>
+            <span class="col-12 col-md-6 col-lg-4 wpcf7-form-control-wrap input-icon input-icon-phone">
+              <input type="tel" name="Phone" value="" size="40" class="wpcf7-form-control wpcf7-text wpcf7-tel wpcf7-validates-as-tel" aria-invalid="false" placeholder="Phone" required>
+            </span>
+            <span class="col-12 col-md-6 col-lg-4 wpcf7-form-control-wrap form-bth-holder">
+              <button type="button" class="wpcf7-form-control wpcf7-submit rest-reserv-btn">book now</button>
+            </span>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+  <div id="aheto-map" class="aheto-map aheto-map--restaurant " data-zoom="13" data-style="default" data-center-lat="40.676884" data-center-lng="-74.012943" data-marker-img="" data-active-marker-img="" data-lat-0="40.676884" data-lng-0="-74.012943"
+    data-img-0="../img/inner-pages/contact/marker-4.png" data-active-0="" data-title-0="Location" data-desc-0="74 5th Avenue at St. Marks Place Brooklyn" data-tell-0="(347) 555 1234" data-photo-0="../img/restaurant/marker-photo.jpg">
+  </div>
+  <footer class="aheto-footer aheto-footer-7" style="background-image: url('../img/restaurant/footer_bg.jpg')">
+    <div class="aheto-footer-7__main">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-12">
+            <div class="widget widget_aheto t-center">
+              <div class="widget_aheto__logo">
+                <img src="../img/home/footer-logo-6.png" alt="footer">
+              </div>
+            </div>
+          </div>
+          <div class="col-md-12">
+            <div class="widget widget_nav_menu widget_nav_menu_">
+              <div class="menu-main-container">
+                <ul class="menu">
+                  <li class="menu-item  menu-item-type-post_type menu-item-object-page"><a href="#">About</a></li>
+                  <li class="menu-item  menu-item-type-post_type menu-item-object-page"><a href="#">Menu</a></li>
+                  <li class="menu-item  menu-item-type-post_type menu-item-object-page"><a href="#">Gallery</a></li>
+                  <li class="menu-item  menu-item-type-post_type menu-item-object-page"><a href="#">Special offers</a></li>
+                  <li class="menu-item  menu-item-type-post_type menu-item-object-page"><a href="#">Location</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-12">
+            <div class="aht-socials aht-socials--retreat t-center">
+              <a class="aht-socials__link aht-btn--dark aht-btn--trans " href="https://www.facebook.com/">
+                <i class="aht-socials__icon icon ion-social-facebook"></i>
+              </a>
+              <a class="aht-socials__link aht-btn--dark aht-btn--trans " href="https://www.tumblr.com/">
+                <i class="aht-socials__icon icon ion-social-tumblr"></i>
+              </a>
+              <a class="aht-socials__link aht-btn--dark aht-btn--trans " href="https://twitter.com/">
+                <i class="aht-socials__icon icon ion-social-twitter"></i>
+              </a>
+              <a class="aht-socials__link aht-btn--dark aht-btn--trans " href="https://www.youtube.com/">
+                <i class="aht-socials__icon icon ion-social-youtube"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="aheto-footer-7__bottom">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-12 col-sm-12 col-xs-12">
+            <div class="aheto-footer-7__cr">
+              <p class="aheto-footer-7__cr-text ">© Karma Restaurant. All Right Reserved 2019.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+  <div class="site-search" id="search-box">
+    <button class="close-btn js-close-search"><i class="fa fa-times" aria-hidden="true"></i></button>
+    <div class="form-container">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-12">
+            <form role="search" method="get" class="search-form" action="http://ahetopro/" autocomplete="off">
+              <div class="input-group">
+                <input type="search" value="" name="s" class="search-field" placeholder="Enter Keyword" required="">
+              </div>
+            </form>
+            <p class="search-description">Input your search keywords and press Enter.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Magnific popup -->
+  <script src="../vendors/magnific/jquery.magnific-popup.min.js"></script>
+  <!-- anm -->
+  <script src="../vendors/animation/anm.min.js"></script>
+  <!-- Google maps -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyARwCmK-LlGIH8Mv1ac4VyceMYUgg9vStM&amp;#038;&language=en"></script>
+  <script src="../vendors/googlemap/google-maps.js?v=1"></script>
+  <!-- FullCalendar -->
+  <!-- Parallax -->
+  <script src="../vendors/parallax/parallax.min.js"></script>
+  <!-- asRange -->
+  <script src="../vendors/range/jquery.range-min.js"></script>
+  <!-- lightgallery -->
+  <script src="../vendors/lightgallery/lightgallery.min.js"></script>
+  <!-- Main script -->
+  <script src="../vendors/script.js?v=1"></script>
+  <script src="../vendors/spectragram/spectragram.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      jQuery.fn.spectragram.accessData = {
+        accessToken: '4058508404.1677ed0.f87c0182df0d4512a9e01def0c53adb7'
+      }
+
+      $('.instafeed').spectragram('getUserFeed', {
+        size: 'big',
+        max: 6
+      });
+    });
+  </script>
+</body>
+
+</html>

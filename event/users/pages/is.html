@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Invitation Spéciale — Invitations haut de gamme & e‑invites</title>
+<meta name="description" content="Invitations haut de gamme, e‑invitations avec QR code, sites de mariage et gestion des invités à Kinshasa et partout dans le monde." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<link rel="icon" href="/favicon.ico">
+<style>
+:root{
+--bg:#0b0e16; /* fond principal (très sombre, élégant) */
+--surface:#0f1424; /* panneaux */
+--text:#e6e8ee; /* texte */
+--muted:#a8b0c2; /* texte secondaire */
+--primary:#eab308; /* or / accent */
+--primary-2:#ffd54a; /* or clair */
+--line:#232a3e; /* séparateurs */
+--ok:#22c55e; /* vert */
+--err:#ef4444; /* rouge */
+--radius:18px;
+--shadow: 0 10px 30px rgba(0,0,0,.35);
+--container:1200px;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+margin:0; background: radial-gradient(1200px 600px at 80% -10%, rgba(234,179,8,.15), transparent 60%),
+radial-gradient(900px 500px at -20% 20%, rgba(234,179,8,.07), transparent 60%),
+var(--bg);
+color:var(--text); font:400 16px/1.6 Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+-webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility
+}
+a{color:inherit; text-decoration:none}
+img{max-width:100%; display:block}
+.container{width:min(100%, var(--container)); margin-inline:auto; padding:0 20px}
+/* Header */
+header{position:sticky; top:0; z-index:40; backdrop-filter:saturate(180%) blur(10px); background:rgba(11,14,22,.6); border-bottom:1px solid rgba(255,255,255,.05)}
+.nav{display:flex; align-items:center; justify-content:space-between; padding:14px 0}
+.brand{display:flex; align-items:center; gap:12px}
+.brand .logo{width:40px; height:40px; border-radius:50%; background:linear-gradient(180deg, var(--primary-2), var(--primary)); display:grid; place-items:center; color:#111; font-weight:800}
+.brand h1{font:700 18px/1 Inter; letter-spacing:.3px}
+.menu{display:flex; gap:20px}
+.menu a{opacity:.9}
+.btn{display:inline-flex; align-items:center; gap:10px; border:1px solid var(--line); padding:10px 14px; border-radius:12px; background:#121832; transition:.2s ease; font-weight:600}
+.btn:hover{transform:translateY(-1px); box-shadow:var(--shadow)}
+.btn.primary{background:linear-gradient(180deg, var(--primary-2), var(--primary)); color:#111; border:none}
+.hamb{display:none}
+@media (max-width:900px){
+.menu{display:none}
+.hamb{display:inline-flex}
+}
+/* Hero */
+.hero{padding:80px 0 40px; position:relative}
+.hero .grid{display:grid; grid-template-columns: 1.1fr .9fr; gap:40px}
+.eyebrow{font:600 12px/1.2 Inter; letter-spacing:.3em; text-transform:uppercase; color:var(--primary)}
+.hero h2{font:700 46px/1.1 Playfair Display, serif; margin:.4em 0 .5em}
+.hero p{color:var(--muted)}
+.hero .cta{margin-top:26px; display:flex; gap:14px; flex-wrap:wrap}
+.hero-card{background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02)); border:1px solid rgba(255,255,255,.06); padding:22px; border-radius:var(--radius); box-shadow:var(--shadow)}
+.stats{display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-top:26px}
+.stat{padding:16px; border:1px solid rgba(255,255,255,.06); border-radius:14px; text-align:center; background:#0e142c}
+.stat .n{font-weight:800; font-size:28px; color:var(--primary)}
+.mock{border-radius:20px; overflow:hidden; border:1px solid rgba(255,255,255,.06); box-shadow:var(--shadow)}
+@media (max-width:900px){
+.hero{padding:54px 0 10px}
+.hero .grid{grid-template-columns:1fr}
+.hero h2{font-size:34px}
+.stats{grid-template-columns:repeat(3, minmax(0, 1fr))}
+}
+/* Services */
+</html>

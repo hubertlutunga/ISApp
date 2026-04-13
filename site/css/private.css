@@ -1,0 +1,17 @@
+.pcompteeur{
+    letter-spacing: 5px;
+}
+
+@media only screen and (max-width: 769px) {
+
+    .pcompteeur{
+        letter-spacing: 5px !important;
+        font-size: 16px !important;
+        margin-bottom: 15px !important;
+    }
+
+    /* .display-2{
+        font-size: 30px !important;
+    } */
+
+    }

@@ -1,0 +1,27 @@
+.DS_Store
+Thumbs.db
+
+# Archives
+*.zip
+*.ZIP
+*.7z
+*.tar
+*.gz
+*.rar
+
+# Videos and generated media
+*.mp4
+*.MP4
+*.mov
+*.MOV
+*.avi
+*.AVI
+*.mkv
+*.MKV
+*.webm
+*.WEBM
+
+# Temporary files
+*.log
+*.tmp
+*.bak

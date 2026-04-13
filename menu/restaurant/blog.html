@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="icon" href="../img/favicon-32x32.png" sizes="32x32" />
+  <link rel="icon" href="../img/favicon-192x192.png" sizes="192x192" />
+  <link rel="apple-touch-icon-precomposed" href="../img/favicon-180x180.png" />
+  <meta name="msapplication-TileImage" content="../img/favicon-270x270.png" />
+  <title>Blog</title>
+  <!-- FONTS -->
+  <link href="https://fonts.googleapis.com/css?family=Karla:400,400i,700|Poppins:300,400,400i,600|Source+Sans+Pro:400,400i,600,700,900|Mukta:400,700,800|Oswald:400,600|Lato:400,400i,700|Roboto:300,400,500,700|Roboto+Slab:400,700|Playfair+Display:400,400i,700i,700|Catamaran:300,400,500,600,700,900|Merriweather:400,700|Montserrat:400,500,600|Nunito|Open+Sans:300,400,500,600|Caveat:400,700|Dancing+Script|Libre+Baskerville:400,700"
+    rel="stylesheet">
+  <!-- STYLES -->
+  <!-- Main Style -->
+  <link rel="stylesheet" id="style-main" href="../css/styles-main.css?v=3">
+  <link rel="stylesheet" id="swiper-main" href="../vendors/swiper/swiper.min.css">
+  <link rel="stylesheet" id="lity-main" href="../vendors/lity/lity.min.css">
+  <link rel="stylesheet" id="mediaelementplayer" href="../vendors/mediaelement/mediaelementplayer.min.css">
+  <link rel="stylesheet" id="range" href="../vendors/range/jquery.range.css">
+  <link rel="stylesheet" id="lightgallery" href="../vendors/lightgallery/lightgallery.min.css">
+  <link rel="stylesheet" id="style-link" href="../css/styles-7.css?v=35">
+  <!-- SCRIPTS -->
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+  <script src="https://code.jquery.com/jquery-migrate-1.3.0.js" integrity="sha256-/Gj+NlY1u/J2UGzM/B2QrWR01trK8ZZqrD5BdqQUsac=" crossorigin="anonymous"></script>
+  <!-- Swiper -->
+  <script src="../vendors/swiper/swiper.min.js"></script>
+  <!-- Isotope -->
+  <script src="../vendors/isotope/isotope.pkgd.min.js"></script>
+  <!-- Images loaded library -->
+  <script src="../vendors/lazyload/imagesloaded.pkgd.min.js"></script>
+  <!-- MediaElement js library (only for Aheto HTML) -->
+  <script src="../vendors/mediaelement/mediaelement.min.js"></script>
+  <script src="../vendors/mediaelement/mediaelement-and-player.min.js"></script>
+  <!-- Typed animation text -->
+  <script src="../vendors/typed/typed.min.js"></script>
+  <!-- Lity Lightbox -->
+  <script src="../vendors/lity/lity.min.js"></script>
+</head>
+
+<body data-anm=".anm" class="">
+  <header class="aheto-header aheto-header-7">
+    <div class="aheto-header-7__nav-wrap">
+      <div class="aheto-header-7__inner">
+        <div class="aheto-header-7__line">
+          <div class="aheto-header-7__logo">
+            <div class="logo">
+              <a class="logo__link" href="">
+                <div class="logo__img-holder">
+                  <img class="logo__img" src="../img/restaurant/rest-main-logo.png" alt="Logo image">
+                </div>
+                <div class="logo__text-holder">
+                  <h3 class="logo__text">KARMA</h3>
+                </div>
+              </a>
+            </div>
+          </div>
+          <div class="aheto-header-7__menu js-menu js-menu-height">
+            <ul class="main-menu">
+              <li class="menu-item menu-item-type-custom menu-item-object-custom">
+                <a href="home-restaurant.html">Home</a>
+              </li>
+              <li class="menu-item menu-item-type-custom menu-item-object-custom">
+                <a href="about.html">About</a>
+              </li>
+              <li class="menu-item menu-item-type-custom menu-item-object-custom">
+                <a href="menu.html">Menu</a>
+              </li>
+              <li class="menu-item menu-item-type-custom menu-item-object-custom">
+                <a href="gallery.html">Gallery</a>
+              </li>
+              <li class="menu-item menu-item-type-custom menu-item-object-custom">
+                <a href="service.html">Services</a>
+              </li>
+              <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children">
+                <a href="#">News</a>
+                <ul class="sub-menu menu-depth-1">
+                  <li class="menu-item menu-item-type-custom menu-item-object-custom"><a href="blog.html">Blog</a></li>
+                  <li class="menu-item menu-item-type-custom menu-item-object-custom"><a href="blog-details.html">Blog Details</a></li>
+                </ul>
+              </li>
+              <li class="menu-item menu-item-type-custom menu-item-object-custom">
+                <a href="reservations.html">Reservation</a>
+              </li>
+              <li class="menu-item menu-item-type-custom menu-item-object-custom">
+                <a href="contact.html">Contact Us</a>
+              </li>
+            </ul>
+          </div>
+          <div class="aheto-header-7__hamburger-aside">
+            <button class="hamburger--squeeze js-hamburger-menu hamburger js-hamburger js-hamburger--body-over" type="button">
+              <span class="hamburger-box">
+                <span class="hamburger-inner"></span>
+              </span>
+            </button>
+            <button class="hamburger--squeeze-desktop hamburger-ds js-hamburger-aside js-hamburger js-hamburger--body-over" type="button">
+              <span class="hamburger-box">
+                <span class="hamburger-inner"></span>
+              </span>
+            </button>
+          </div>
+        </div>
+        <div class="aheto-header-7__aside js-aside">
+          <div class="aheto-header-7__aside-close js-aside-close">
+          </div>
+          <div class="aheto-header-7__contact">
+            <ul class="aheto-header-7__aside-menu">
+              <li>
+                <a href="menu.html">Menu</a>
+              </li>
+              <li>
+                <a href="reservations.html">Reservation</a>
+              </li>
+              <li>
+                <a href="contact.html">Contact Us</a>
+              </li>
+            </ul>
+            <div class="aheto-header-7__aside-socials">
+              <div class="aht-socials ">
+                <a class="aht-socials__link aht-btn--dark aht-btn--trans " href="https://www.facebook.com/">
+                  <i class="aht-socials__icon icon ion-social-facebook"></i>
+                </a>
+                <a class="aht-socials__link aht-btn--dark aht-btn--trans " href="https://www.tumblr.com/">
+                  <i class="aht-socials__icon icon ion-social-tumblr"></i>
+                </a>
+                <a class="aht-socials__link aht-btn--dark aht-btn--trans " href="https://twitter.com/">
+                  <i class="aht-socials__icon icon ion-social-twitter"></i>
+                </a>
+                <a class="aht-socials__link aht-btn--dark aht-btn--trans " href="https://www.youtube.com/">
+                  <i class="aht-socials__icon icon ion-social-youtube"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+  <div class="aheto-titlebar aheto-titlebar--restaurant aheto-titlebar--height-500">
+    <div class="aheto-titlebar__main   ">
+      <img class="js-bg" alt="" src="../img/restaurant/blog/blog-titlebar-bg.jpg">
+      <div class="aheto-titlebar__content w-1000">
+        <div class="aheto-titlebar__text ">
+          <p class="aheto-titlebar__subtitle t-white   t-medium t-center t-uppercase">may be interested</p>
+          <h1 class="aheto-titlebar__title  t-white t-semibold t-center  large-size">Our Latest news</h1>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="container">
+    <div class="row margin-sm-50t margin-sm-50b margin-md-80t margin-md-80b margin-lg-100t margin-lg-90b">
+      <div class="col-md-12">
+        <div class="aht-blog-rest ">
+          <div class="aht-blog-rest__item aht-blog-rest__item--standart">
+            <div class="aht-blog-rest__img">
+              <img class="aht-blog-rest__img-inner js-bg" src="../img/restaurant/blog/blog-photo-1.jpg" alt="Blog image">
+            </div>
+            <div class="aht-blog-rest__content">
+              <div class="aht-blog-rest__cats ">
+                <a href="#" class="aht-blog-rest__cat salads">Salads</a>
+                <a href="#" class="aht-blog-rest__cat tips">Tips</a>
+              </div>
+              <p class="aht-blog-rest__date">25 Jul, 2019</p>
+              <h4 class="aht-blog-rest__title">WASABI WEDNESDAY</h4>
+              <p class="aht-blog-rest__desc">Interdum et malesuada fames ac ante ipsum primis in faucibus. Quisque at tellus felis. Sed fringilla, tellus non congue porttitor, dui eros faucibus augue, id lobortis tellus felis ut ligula. Cras
+                scelerisque ligula sed finibus fringilla.</p>
+              <a class="aht-blog-rest__link" href="#">Read full post</a>
+            </div>
+          </div>
+          <div class="aht-blog-rest__item aht-blog-rest__item--image">
+            <div class="aht-blog-rest__img">
+              <img class="aht-blog-rest__img-inner js-bg" src="../img/restaurant/blog/blog-photo-2.jpg" alt="Blog image">
+            </div>
+            <div class="aht-blog-rest__content">
+              <div class="aht-blog-rest__cats ">
+                <a href="#" class="aht-blog-rest__cat tips">Tips</a>
+              </div>
+              <p class="aht-blog-rest__date">25 Jul, 2019</p>
+              <h4 class="aht-blog-rest__title">SPICY GRILLED CHORIZO</h4>
+              <p class="aht-blog-rest__desc">Vivamus sed fermentum tellus. Donec quis elit sapien. Aliquam commodo tortor nisi, nec varius mi finibus at. In nulla libero, dictum vel orci at, congue pretium tortor. Ut ullamcorper volutpat lectus. Sed
+                in gravida mauris.</p>
+              <a class="aht-blog-rest__link" href="#">Read full post</a>
+            </div>
+          </div>
+          <div class="aht-blog-rest__item aht-blog-rest__item--quote">
+            <div class="aht-blog-rest__cats">
+              <a href="#" class="aht-blog-rest__cat recipe">Recipe</a>
+            </div>
+            <div class="aht-blog-rest__bq-content">
+              <div class="aht-blog-rest__bq-holder">
+                <span class="aht-blog-rest__bq">Follow your passion, be prepared to work hard and sacrifice, don’t let anyone limit your dreams.</span>
+              </div>
+              <p class="aht-blog-rest__author">- Michale Vouge</p>
+            </div>
+          </div>
+          <div class="aht-blog-rest__item aht-blog-rest__item--standart">
+            <div class="aht-blog-rest__img">
+              <img class="aht-blog-rest__img-inner js-bg" src="../img/restaurant/blog/blog-photo-3.jpg" alt="Blog image">
+            </div>
+            <div class="aht-blog-rest__content">
+              <div class="aht-blog-rest__cats ">
+                <a href="#" class="aht-blog-rest__cat meat">Meat</a>
+                <a href="#" class="aht-blog-rest__cat tips">Tips</a>
+              </div>
+              <p class="aht-blog-rest__date">25 Jul, 2019</p>
+              <h4 class="aht-blog-rest__title">HIBACHI STEAK</h4>
+              <p class="aht-blog-rest__desc">Interdum et malesuada fames ac ante ipsum primis in faucibus. Quisque at tellus felis. Sed fringilla, tellus non congue porttitor, dui eros faucibus augue, id lobortis tellus felis ut ligula. Cras
+                scelerisque ligula sed finibus fringilla.</p>
+              <a class="aht-blog-rest__link" href="#">Read full post</a>
+            </div>
+          </div>
+          <div class="aht-blog-rest__item aht-blog-rest__item--standart">
+            <div class="aht-blog-rest__content">
+              <div class="aht-blog-rest__cats aht-blog-rest__cats--static">
+                <a href="#" class="aht-blog-rest__cat tips">Tips</a>
+              </div>
+              <p class="aht-blog-rest__date">25 Jul, 2019</p>
+              <h4 class="aht-blog-rest__title">CARNE ASADA TACOS</h4>
+              <p class="aht-blog-rest__desc">Vivamus sed fermentum tellus. Donec quis elit sapien. Aliquam commodo tortor nisi, nec varius mi finibus at. In nulla libero, dictum vel orci at, congue pretium tortor. Ut ullamcorper volutpat lectus. Sed
+                in gravida mauris. Nam consectetur varius libero, nec scelerisque mauris fermentum eu. Nulla rutrum vitae nulla iaculis lacinia. Integer eu efficitur purus. Nullam vehicula sapien eget tellus rhoncus</p>
+              <a class="aht-blog-rest__link" href="#">Read full post</a>
+            </div>
+          </div>
+          <div class="aht-blog-rest__item aht-blog-rest__item--gallery">
+            <div class="aht-blog-rest__imgs">
+              <div class="swiper swiper--rest-blog ">
+                <div class="swiper-container " data-delay="6000" data-speed="600" data-loop="true" data-spaceBetween="0" data-slidesPerView="responsive" data-add-slides="1" data-lg-slides="1" data-md-slides="1" data-sm-slides="1" data-xs-slides="1">
+                  <div class="swiper-wrapper ">
+                    <div class="swiper-slide ">
+                      <div class="aht-blog-rest__img">
+                        <img class="aht-blog-rest__img-inner js-bg" src="../img/restaurant/blog/blog-photo-4.jpg" alt="Blog image">
+                      </div>
+                    </div>
+                    <div class="swiper-slide ">
+                      <div class="aht-blog-rest__img">
+                        <img class="aht-blog-rest__img-inner js-bg" src="../img/restaurant/blog/blog-photo-3.jpg" alt="Blog image">
+                      </div>
+                    </div>
+                    <div class="swiper-slide ">
+                      <div class="aht-blog-rest__img">
+                        <img class="aht-blog-rest__img-inner js-bg" src="../img/restaurant/blog/blog-photo-2.jpg" alt="Blog image">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="swiper-button-prev">
+                </div>
+                <div class="swiper-button-next">
+                </div>
+              </div>
+            </div>
+            <div class="aht-blog-rest__content">
+              <div class="aht-blog-rest__cats ">
+                <a href="#" class="aht-blog-rest__cat salads">Salads</a>
+              </div>
+              <p class="aht-blog-rest__date">25 Jul, 2019</p>
+              <h4 class="aht-blog-rest__title">WASABI WEDNESDAY</h4>
+              <p class="aht-blog-rest__desc">Interdum et malesuada fames ac ante ipsum primis in faucibus. Quisque at tellus felis. Sed fringilla, tellus non congue porttitor, dui eros faucibus augue, id lobortis tellus felis ut ligula. Cras
+                scelerisque ligula sed finibus fringilla.</p>
+              <a class="aht-blog-rest__link" href="#">Read full post</a>
+            </div>
+          </div>
+          <div class="aht-blog-rest__item aht-blog-rest__item--video">
+            <div class="aht-blog-rest__video">
+              <img class="aht-blog-rest__video-img js-bg" src="../img/restaurant/blog/blog-photo-5.jpg" alt="Video thumbnail">
+              <a href="https://www.youtube.com/watch?v=cxuufRSEaRU" class="aht-blog-rest__video-link js-mp-video">
+                <i class="aht-blog-rest__video-play icon ion-play"></i>
+              </a>
+            </div>
+            <div class="aht-blog-rest__content">
+              <div class="aht-blog-rest__cats">
+                <a href="#" class="aht-blog-rest__cat video">Video</a>
+                <a href="#" class="aht-blog-rest__cat tips">Tips</a>
+              </div>
+              <p class="aht-blog-rest__date">25 Jul, 2019</p>
+              <h4 class="aht-blog-rest__title">BRAZILIAN BURGER WITH EGG</h4>
+              <p class="aht-blog-rest__desc">Cerasis developed, as an added functionality to our proprietary transportation management system, the Cerasis Rater, a transportation reverse logistics product in...</p>
+              <a class="aht-blog-rest__link" href="#">Read full post</a>
+            </div>
+          </div>
+          <div class="aht-blog-rest__item aht-blog-rest__item--standart">
+            <div class="aht-blog-rest__img">
+              <img class="aht-blog-rest__img-inner js-bg" src="../img/restaurant/blog/blog-photo-6.jpg" alt="Blog image">
+            </div>
+            <div class="aht-blog-rest__content">
+              <div class="aht-blog-rest__cats ">
+                <a href="#" class="aht-blog-rest__cat sweets">Sweets</a>
+              </div>
+              <p class="aht-blog-rest__date">25 Jul, 2019</p>
+              <h4 class="aht-blog-rest__title">SAFFRON AND NOUGAT ICE CREAM</h4>
+              <p class="aht-blog-rest__desc">Here at Cerasis, we think it’s important that our clients and customers understand that transportation reverse logistics (or reverse logistics in general for that matter) is...</p>
+              <a class="aht-blog-rest__link" href="#">Read full post</a>
+            </div>
+          </div>
+          <div class="aht-blog-rest__item aht-blog-rest__item--standart">
+            <div class="aht-blog-rest__img">
+              <img class="aht-blog-rest__img-inner js-bg" src="../img/restaurant/blog/blog-photo-7.jpg" alt="Blog image">
+            </div>
+            <div class="aht-blog-rest__content">
+              <div class="aht-blog-rest__cats ">
+                <a href="#" class="aht-blog-rest__cat meat">Meat</a>
+              </div>
+              <p class="aht-blog-rest__date">25 Jul, 2019</p>
+              <h4 class="aht-blog-rest__title">TENDERLOIN STEAK</h4>
+              <p class="aht-blog-rest__desc">Cerasis developed, as an added functionality to our proprietary transportation management system, the Cerasis Rater, a transportation reverse logistics product in order to serve our shipper customers and
+                future... </p>
+              <a class="aht-blog-rest__link" href="#">Read full post</a>
+            </div>
+          </div>
+          <div class="aht-blog-rest__item aht-blog-rest__item--audio">
+            <div class="aht-blog-rest__content">
+              <div class="aht-blog-rest__cats aht-blog-rest__cats--static">
+                <a href="#" class="aht-blog-rest__cat music">Music</a>
+              </div>
+              <div class="aht-blog-rest__audio audio-wrapper">
+                <audio src="../audio/audio-sample.mp3">
+                  Your browser does not support the <code>audio</code> element.
+                </audio>
+              </div>
+              <p class="aht-blog-rest__date">25 Jul, 2019</p>
+              <h4 class="aht-blog-rest__title">BRAZILIAN BURGER WITH EGG</h4>
+              <p class="aht-blog-rest__desc">Interdum et malesuada fames ac ante ipsum primis in faucibus. Quisque at tellus felis. Sed fringilla, tellus non congue porttitor, dui eros faucibus augue, id lobortis tellus felis ut ligula. Cras
+                scelerisque ligula sed finibus fringilla.</p>
+              <a class="aht-blog-rest__link" href="#">Read full post</a>
+            </div>
+          </div>
+          <div class="aht-blog-rest__item aht-blog-rest__item--quote">
+            <div class="aht-blog-rest__cats">
+              <a href="#" class="aht-blog-rest__cat recipe">Recipe</a>
+            </div>
+            <div class="aht-blog-rest__bq-content">
+              <div class="aht-blog-rest__bq-holder">
+                <span class="aht-blog-rest__bq">Follow your passion, be prepared to work hard and sacrifice, don’t let anyone limit your dreams.</span>
+              </div>
+              <p class="aht-blog-rest__author">- Michale Vouge</p>
+            </div>
+          </div>
+          <div class="aht-blog-rest__item aht-blog-rest__item--standart">
+            <div class="aht-blog-rest__img">
+              <img class="aht-blog-rest__img-inner js-bg" src="../img/restaurant/blog/blog-photo-8.jpg" alt="Blog image">
+            </div>
+            <div class="aht-blog-rest__content">
+              <div class="aht-blog-rest__cats ">
+                <a href="#" class="aht-blog-rest__cat salads">Salads</a>
+              </div>
+              <p class="aht-blog-rest__date">25 Jul, 2019</p>
+              <h4 class="aht-blog-rest__title">CARNE ASADA TACOS</h4>
+              <p class="aht-blog-rest__desc">With that said, we have assembled and written the Ultimate Guide to Transportation Reverse logistics as we have finalized our new technology product for Transportation Reverse Logistics.</p>
+              <a class="aht-blog-rest__link" href="#">Read full post</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row margin-sm-50b margin-md-80b margin-lg-90b">
+      <div class="col-md-12">
+        <div class="aht-pag-rest">
+          <div class="pagination">
+            <a href="#" class="prev page-numbers"><span><i class="icon ion-arrow-left-c"></i>PREV</span></a>
+            <div class="wrap">
+              <a class="page-numbers current" href="#">1</a>
+              <a class="page-numbers" href="#">2</a>
+              <a class="page-numbers" href="#">3</a>
+              <span class="page-numbers no-hover">...</span>
+              <a class="page-numbers" href="#">6</a>
+            </div>
+            <a href="#" class="next page-numbers"><span>NEXT<i class="icon ion-arrow-right-c"></i></span></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer class="aheto-footer aheto-footer-7" style="background-image: url('../img/restaurant/footer_bg.jpg')">
+    <div class="aheto-footer-7__main">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-12">
+            <div class="widget widget_aheto t-center">
+              <div class="widget_aheto__logo">
+                <img src="../img/home/footer-logo-6.png" alt="footer">
+              </div>
+            </div>
+          </div>
+          <div class="col-md-12">
+            <div class="widget widget_nav_menu widget_nav_menu_">
+              <div class="menu-main-container">
+                <ul class="menu">
+                  <li class="menu-item  menu-item-type-post_type menu-item-object-page"><a href="#">About</a></li>
+                  <li class="menu-item  menu-item-type-post_type menu-item-object-page"><a href="#">Menu</a></li>
+                  <li class="menu-item  menu-item-type-post_type menu-item-object-page"><a href="#">Gallery</a></li>
+                  <li class="menu-item  menu-item-type-post_type menu-item-object-page"><a href="#">Special offers</a></li>
+                  <li class="menu-item  menu-item-type-post_type menu-item-object-page"><a href="#">Location</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-12">
+            <div class="aht-socials aht-socials--retreat t-center">
+              <a class="aht-socials__link aht-btn--dark aht-btn--trans " href="https://www.facebook.com/">
+                <i class="aht-socials__icon icon ion-social-facebook"></i>
+              </a>
+              <a class="aht-socials__link aht-btn--dark aht-btn--trans " href="https://www.tumblr.com/">
+                <i class="aht-socials__icon icon ion-social-tumblr"></i>
+              </a>
+              <a class="aht-socials__link aht-btn--dark aht-btn--trans " href="https://twitter.com/">
+                <i class="aht-socials__icon icon ion-social-twitter"></i>
+              </a>
+              <a class="aht-socials__link aht-btn--dark aht-btn--trans " href="https://www.youtube.com/">
+                <i class="aht-socials__icon icon ion-social-youtube"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="aheto-footer-7__bottom">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-12 col-sm-12 col-xs-12">
+            <div class="aheto-footer-7__cr">
+              <p class="aheto-footer-7__cr-text ">© Karma Restaurant. All Right Reserved 2019.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+  <div class="site-search" id="search-box">
+    <button class="close-btn js-close-search"><i class="fa fa-times" aria-hidden="true"></i></button>
+    <div class="form-container">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-12">
+            <form role="search" method="get" class="search-form" action="http://ahetopro/" autocomplete="off">
+              <div class="input-group">
+                <input type="search" value="" name="s" class="search-field" placeholder="Enter Keyword" required="">
+              </div>
+            </form>
+            <p class="search-description">Input your search keywords and press Enter.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Magnific popup -->
+  <script src="../vendors/magnific/jquery.magnific-popup.min.js"></script>
+  <!-- anm -->
+  <script src="../vendors/animation/anm.min.js"></script>
+  <!-- Google maps -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyARwCmK-LlGIH8Mv1ac4VyceMYUgg9vStM&amp;#038;&language=en"></script>
+  <script src="../vendors/googlemap/google-maps.js?v=1"></script>
+  <!-- FullCalendar -->
+  <!-- Parallax -->
+  <script src="../vendors/parallax/parallax.min.js"></script>
+  <!-- asRange -->
+  <script src="../vendors/range/jquery.range-min.js"></script>
+  <!-- lightgallery -->
+  <script src="../vendors/lightgallery/lightgallery.min.js"></script>
+  <!-- Main script -->
+  <script src="../vendors/script.js?v=1"></script>
+  <script src="../vendors/spectragram/spectragram.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      jQuery.fn.spectragram.accessData = {
+        accessToken: '4058508404.1677ed0.f87c0182df0d4512a9e01def0c53adb7'
+      }
+
+      $('.instafeed').spectragram('getUserFeed', {
+        size: 'big',
+        max: 6
+      });
+    });
+  </script>
+</body>
+
+</html>

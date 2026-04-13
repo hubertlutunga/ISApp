@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="icon" href="../img/favicon-32x32.png" sizes="32x32" />
+  <link rel="icon" href="../img/favicon-192x192.png" sizes="192x192" />
+  <link rel="apple-touch-icon-precomposed" href="../img/favicon-180x180.png" />
+  <meta name="msapplication-TileImage" content="../img/favicon-270x270.png" />
+  <title>Services</title>
+  <!-- FONTS -->
+  <link href="https://fonts.googleapis.com/css?family=Karla:400,400i,700|Poppins:300,400,400i,600|Source+Sans+Pro:400,400i,600,700,900|Mukta:400,700,800|Oswald:400,600|Lato:400,400i,700|Roboto:300,400,500,700|Roboto+Slab:400,700|Playfair+Display:400,400i,700i,700|Catamaran:300,400,500,600,700,900|Merriweather:400,700|Montserrat:400,500,600|Nunito|Open+Sans:300,400,500,600|Caveat:400,700|Dancing+Script|Libre+Baskerville:400,700"
+    rel="stylesheet">
+  <!-- STYLES -->
+  <!-- Main Style -->
+  <link rel="stylesheet" id="style-main" href="../css/styles-main.css?v=3">
+  <link rel="stylesheet" id="swiper-main" href="../vendors/swiper/swiper.min.css">
+  <link rel="stylesheet" id="lity-main" href="../vendors/lity/lity.min.css">
+  <link rel="stylesheet" id="mediaelementplayer" href="../vendors/mediaelement/mediaelementplayer.min.css">
+  <link rel="stylesheet" id="range" href="../vendors/range/jquery.range.css">
+  <link rel="stylesheet" id="lightgallery" href="../vendors/lightgallery/lightgallery.min.css">
+  <link rel="stylesheet" id="style-link" href="../css/styles-7.css?v=35">
+  <!-- SCRIPTS -->
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+  <script src="https://code.jquery.com/jquery-migrate-1.3.0.js" integrity="sha256-/Gj+NlY1u/J2UGzM/B2QrWR01trK8ZZqrD5BdqQUsac=" crossorigin="anonymous"></script>
+  <!-- Swiper -->
+  <script src="../vendors/swiper/swiper.min.js"></script>
+  <!-- Isotope -->
+  <script src="../vendors/isotope/isotope.pkgd.min.js"></script>
+  <!-- Images loaded library -->
+  <script src="../vendors/lazyload/imagesloaded.pkgd.min.js"></script>
+  <!-- MediaElement js library (only for Aheto HTML) -->
+  <script src="../vendors/mediaelement/mediaelement.min.js"></script>
+  <script src="../vendors/mediaelement/mediaelement-and-player.min.js"></script>
+  <!-- Typed animation text -->
+  <script src="../vendors/typed/typed.min.js"></script>
+  <!-- Lity Lightbox -->
+  <script src="../vendors/lity/lity.min.js"></script>
+</head>
+
+<body data-anm=".anm" class="">
+  <header class="aheto-header aheto-header-7">
+    <div class="aheto-header-7__nav-wrap">
+      <div class="aheto-header-7__inner">
+        <div class="aheto-header-7__line">
+          <div class="aheto-header-7__logo">
+            <div class="logo">
+              <a class="logo__link" href="">
+                <div class="logo__img-holder">
+                  <img class="logo__img" src="../img/restaurant/rest-main-logo.png" alt="Logo image">
+                </div>
+                <div class="logo__text-holder">
+                  <h3 class="logo__text">KARMA</h3>
+                </div>
+              </a>
+            </div>
+          </div>
+          <div class="aheto-header-7__menu js-menu js-menu-height">
+            <ul class="main-menu">
+              <li class="menu-item menu-item-type-custom menu-item-object-custom">
+                <a href="home-restaurant.html">Home</a>
+              </li>
+              <li class="menu-item menu-item-type-custom menu-item-object-custom">
+                <a href="about.html">About</a>
+              </li>
+              <li class="menu-item menu-item-type-custom menu-item-object-custom">
+                <a href="menu.html">Menu</a>
+              </li>
+              <li class="menu-item menu-item-type-custom menu-item-object-custom">
+                <a href="gallery.html">Gallery</a>
+              </li>
+              <li class="menu-item menu-item-type-custom menu-item-object-custom">
+                <a href="service.html">Services</a>
+              </li>
+              <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children">
+                <a href="#">News</a>
+                <ul class="sub-menu menu-depth-1">
+                  <li class="menu-item menu-item-type-custom menu-item-object-custom"><a href="blog.html">Blog</a></li>
+                  <li class="menu-item menu-item-type-custom menu-item-object-custom"><a href="blog-details.html">Blog Details</a></li>
+                </ul>
+              </li>
+              <li class="menu-item menu-item-type-custom menu-item-object-custom">
+                <a href="reservations.html">Reservation</a>
+              </li>
+              <li class="menu-item menu-item-type-custom menu-item-object-custom">
+                <a href="contact.html">Contact Us</a>
+              </li>
+            </ul>
+          </div>
+          <div class="aheto-header-7__hamburger-aside">
+            <button class="hamburger--squeeze js-hamburger-menu hamburger js-hamburger js-hamburger--body-over" type="button">
+              <span class="hamburger-box">
+                <span class="hamburger-inner"></span>
+              </span>
+            </button>
+            <button class="hamburger--squeeze-desktop hamburger-ds js-hamburger-aside js-hamburger js-hamburger--body-over" type="button">
+              <span class="hamburger-box">
+                <span class="hamburger-inner"></span>
+              </span>
+            </button>
+          </div>
+        </div>
+        <div class="aheto-header-7__aside js-aside">
+          <div class="aheto-header-7__aside-close js-aside-close">
+          </div>
+          <div class="aheto-header-7__contact">
+            <ul class="aheto-header-7__aside-menu">
+              <li>
+                <a href="menu.html">Menu</a>
+              </li>
+              <li>
+                <a href="reservations.html">Reservation</a>
+              </li>
+              <li>
+                <a href="contact.html">Contact Us</a>
+              </li>
+            </ul>
+            <div class="aheto-header-7__aside-socials">
+              <div class="aht-socials ">
+                <a class="aht-socials__link aht-btn--dark aht-btn--trans " href="https://www.facebook.com/">
+                  <i class="aht-socials__icon icon ion-social-facebook"></i>
+                </a>
+                <a class="aht-socials__link aht-btn--dark aht-btn--trans " href="https://www.tumblr.com/">
+                  <i class="aht-socials__icon icon ion-social-tumblr"></i>
+                </a>
+                <a class="aht-socials__link aht-btn--dark aht-btn--trans " href="https://twitter.com/">
+                  <i class="aht-socials__icon icon ion-social-twitter"></i>
+                </a>
+                <a class="aht-socials__link aht-btn--dark aht-btn--trans " href="https://www.youtube.com/">
+                  <i class="aht-socials__icon icon ion-social-youtube"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+  <div class="aheto-titlebar aheto-titlebar--restaurant aheto-titlebar--height-500">
+    <div class="aheto-titlebar__main   ">
+      <img class="js-bg" alt="" src="../img/restaurant/service/service-titlebar-bg.jpg">
+      <div class="aheto-titlebar__content w-1000">
+        <div class="aheto-titlebar__text ">
+          <p class="aheto-titlebar__subtitle t-white   t-medium t-center t-uppercase">Our services</p>
+          <h1 class="aheto-titlebar__title  t-white t-semibold t-center  large-size">Why People Choose us</h1>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="restaurant-services-section-wrap rest-serv-page margin-xs-50t margin-lg-75t padding-lg-90t padding-sm-0t margin-sm-70t padding-lg-30b padding-md-0b padding-sm-0b padding-xs-10b">
+    <img src="../img/restaurant/rest-bg-squre-dots2.png" class="w-100 js-bg" alt="single img">
+    <div class="bg-text">Services</div>
+    <div class="container ">
+      <div class="col-md-8 offset-md-2">
+        <div class="aheto-heading t-center aheto-heading--restaurant">
+          <h6 class="aheto-heading__subtitle t-uppercase t-bold">best services ever</h6>
+          <h2 class="aheto-heading__title        f-40  t-medium ">We bring the best services ever</h2>
+        </div>
+      </div>
+      <div class="row margin-lg-80t margin-md-0t justify-content-center">
+        <div class="content-block-wrap col-md-6 col-lg-4 margin-lg-55b margin-sm-40b">
+          <div class="aheto-content-block aheto-content-block--restaurant t-left  ">
+            <div class="aheto-content-block__img">
+              <img class="js-bg" src="../img/restaurant/service/Rest_Serv_1.jpg" alt="Image">
+            </div>
+            <div class="aheto-content-block__descr transition-none">
+              <div class="aheto-content-block__title-holder">
+                <i class="aheto-content-block__ico icon true">
+                  <img class="js-bg" src="../img/restaurant/service/serv-ico-1.png" alt="">
+                </i>
+                <h5 class="aheto-content-block__title margin-lg-40t margin-sm-25t margin-lg-20b ">Enjoy Difference</h5>
+              </div>
+              <div class="aheto-content-block__info">
+                <p class="aheto-content-block__info-text ">Pacific Tavern opened in May 2010 and is located inside the Smith Hotel Brooklyn.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="content-block-wrap col-md-6 col-lg-4 margin-lg-55b margin-sm-40b">
+          <div class="aheto-content-block aheto-content-block--restaurant t-left  ">
+            <div class="aheto-content-block__img">
+              <img class="js-bg" src="../img/restaurant/service/Rest_Serv_2.jpg" alt="Image">
+            </div>
+            <div class="aheto-content-block__descr transition-none">
+              <div class="aheto-content-block__title-holder">
+                <i class="aheto-content-block__ico icon true">
+                  <img class="js-bg" src="../img/restaurant/service/serv-ico-2.png" alt="">
+                </i>
+                <h5 class="aheto-content-block__title margin-lg-40t margin-sm-25t margin-lg-20b ">Wifi Available</h5>
+              </div>
+              <div class="aheto-content-block__info">
+                <p class="aheto-content-block__info-text ">Pacific Tavern opened in May 2010 and is located inside the Smith Hotel Brooklyn.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="content-block-wrap col-md-6 col-lg-4 margin-lg-55b margin-sm-40b">
+          <div class="aheto-content-block aheto-content-block--restaurant t-left  ">
+            <div class="aheto-content-block__img">
+              <img class="js-bg" src="../img/restaurant/service/Rest_Serv_3.jpg" alt="Image">
+            </div>
+            <div class="aheto-content-block__descr transition-none">
+              <div class="aheto-content-block__title-holder">
+                <i class="aheto-content-block__ico icon true">
+                  <img class="js-bg" src="../img/restaurant/service/serv-ico-3.png" alt="">
+                </i>
+                <h5 class="aheto-content-block__title margin-lg-40t margin-sm-25t margin-lg-20b ">Extra Delicious</h5>
+              </div>
+              <div class="aheto-content-block__info">
+                <p class="aheto-content-block__info-text ">Pacific Tavern opened in May 2010 and is located inside the Smith Hotel Brooklyn.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="content-block-wrap col-md-6 col-lg-4 margin-lg-55b margin-sm-40b">
+          <div class="aheto-content-block aheto-content-block--restaurant t-left  ">
+            <div class="aheto-content-block__img">
+              <img class="js-bg" src="../img/restaurant/service/Rest_Serv_4.jpg" alt="Image">
+            </div>
+            <div class="aheto-content-block__descr transition-none">
+              <div class="aheto-content-block__title-holder">
+                <i class="aheto-content-block__ico icon true">
+                  <img class="js-bg" src="../img/restaurant/service/serv-ico-6.png" alt="">
+                </i>
+                <h5 class="aheto-content-block__title margin-lg-40t margin-sm-25t margin-lg-20b ">Delicious Wine</h5>
+              </div>
+              <div class="aheto-content-block__info">
+                <p class="aheto-content-block__info-text ">Pacific Tavern opened in May 2010 and is located inside the Smith Hotel Brooklyn.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="content-block-wrap col-md-6 col-lg-4 margin-lg-55b margin-sm-40b">
+          <div class="aheto-content-block aheto-content-block--restaurant t-left  ">
+            <div class="aheto-content-block__img">
+              <img class="js-bg" src="../img/restaurant/service/Rest_Serv_5.jpg" alt="Image">
+            </div>
+            <div class="aheto-content-block__descr transition-none">
+              <div class="aheto-content-block__title-holder">
+                <i class="aheto-content-block__ico icon true">
+                  <img class="js-bg" src="../img/restaurant/service/serv-ico-7.png" alt="">
+                </i>
+                <h5 class="aheto-content-block__title margin-lg-40t margin-sm-25t margin-lg-20b ">Tasty Desserts</h5>
+              </div>
+              <div class="aheto-content-block__info">
+                <p class="aheto-content-block__info-text ">Pacific Tavern opened in May 2010 and is located inside the Smith Hotel Brooklyn.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="content-block-wrap col-md-6 col-lg-4 margin-lg-55b margin-sm-40b">
+          <div class="aheto-content-block aheto-content-block--restaurant t-left  ">
+            <div class="aheto-content-block__img">
+              <img class="js-bg" src="../img/restaurant/service/Rest_Serv_6.jpg" alt="Image">
+            </div>
+            <div class="aheto-content-block__descr transition-none">
+              <div class="aheto-content-block__title-holder">
+                <i class="aheto-content-block__ico icon true">
+                  <img class="js-bg" src="../img/restaurant/service/serv-ico-8.png" alt="">
+                </i>
+                <h5 class="aheto-content-block__title margin-lg-40t margin-sm-25t margin-lg-20b ">Open 24 Hours</h5>
+              </div>
+              <div class="aheto-content-block__info">
+                <p class="aheto-content-block__info-text ">Pacific Tavern opened in May 2010 and is located inside the Smith Hotel Brooklyn.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="aheto-blockquote--restaurant-awards padding-xs-0t padding-lg-115t padding-lg-110b padding-xs-10b padding-md-20t padding-md-0b padding-sm-50t padding-sm-0b">
+    <div class="bg-text">Awards</div>
+    <div class="bg-text bg-text-left">Number</div>
+    <div class="row">
+      <div class="awards-wrap col-lg-12">
+        <div class="blockquote-img-awards">
+          <div class="aheto-single-img    ">
+            <img src="../img/restaurant/service/awards-img.jpg" class="   w-100" alt="single img">
+          </div>
+        </div>
+        <div class="awards-info-wrap">
+          <blockquote class="t-left">
+            <img src="../img/restaurant/slider-descr-bg.png" class="w-100 js-bg" alt="single img">
+            <div class="about_blockquote">
+              <div class="aheto-heading t-center aheto-heading--restaurant-awards">
+                <h4 class="aheto-heading__title    f-style-italic    f-40  t-bold ">Award Winning Restaurant</h4>
+                <p class="aheto-heading__desc   ">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Voluptatem distinctio, reprehenderit, odit incidunt, hic ducimus.</p>
+              </div>
+              <div class="row">
+                <div class="rest-awards-icons-wrap col-lg-12 margin-lg-55t">
+                  <div class="aheto-single-img   ">
+                    <img src="../img/restaurant/award-01.png" class="  " alt="single img">
+                  </div>
+                  <div class="aheto-single-img   ">
+                    <img src="../img/restaurant/award-02.png" class="  " alt="single img">
+                  </div>
+                  <div class="aheto-single-img   ">
+                    <img src="../img/restaurant/award-03.png" class="  " alt="single img">
+                  </div>
+                  <div class="aheto-single-img   ">
+                    <img src="../img/restaurant/award-04.png" class="  " alt="single img">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </blockquote>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="rest-counter-wrap padding-xs-0t padding-sm-0t padding-md-40t padding-lg-60t">
+    <div class="aheto-single-img   left-img">
+      <img src="../img/restaurant/service/count-bg-l.png" class="  " alt="single img">
+    </div>
+    <div class="aheto-single-img   right-img">
+      <img src="../img/restaurant/service/count-bg-r.png" class="  " alt="single img">
+    </div>
+    <div class="aheto-counter aheto-counter--restaurant">
+      <div class="aheto-counter__item">
+        <div class="aheto-counter__item-top">
+          <h4 class="aheto-counter__number js-counter js-whole">201</h4>
+          <p class="aheto-counter__title">/dishes</p>
+        </div>
+        <div class="aheto-counter__icon-holder">
+          <img class="js-bg" src="../img/restaurant/counter-ico-1.png" alt="Counter image">
+        </div>
+      </div>
+      <div class="aheto-counter__item">
+        <div class="aheto-counter__item-top">
+          <h4 class="aheto-counter__number js-counter js-whole">2160</h4>
+          <p class="aheto-counter__title">/customer</p>
+        </div>
+        <div class="aheto-counter__icon-holder">
+          <img class="js-bg" src="../img/restaurant/counter-ico-2.png" alt="Counter image">
+        </div>
+      </div>
+      <div class="aheto-counter__item">
+        <div class="aheto-counter__item-top">
+          <h4 class="aheto-counter__number js-counter js-whole">6</h4>
+          <p class="aheto-counter__title">/year</p>
+        </div>
+        <div class="aheto-counter__icon-holder">
+          <img class="js-bg" src="../img/restaurant/counter-ico-3.png" alt="Counter image">
+        </div>
+      </div>
+      <div class="aheto-counter__item">
+        <div class="aheto-counter__item-top">
+          <h4 class="aheto-counter__number js-counter js-whole">57</h4>
+          <p class="aheto-counter__title">/personnel</p>
+        </div>
+        <div class="aheto-counter__icon-holder">
+          <img class="js-bg" src="../img/restaurant/counter-ico-4.png" alt="Counter image">
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="rest-single-gallery-section">
+    <img src="../img/restaurant/full-width-dots-bg.png" class="w-100 js-bg" alt="single img">
+    <div class="single-gallery-ultraWrap padding-270bottom margin-lg-15t margin-sm-0t padding-xs-50t padding-xs-25b padding-sm-55b padding-md-60t padding-md-50b padding-lg-150t">
+      <div class="bg-text">Gallery</div>
+      <div class="single-gallery-container">
+        <div class="single-gallery-descrWrap padding-sm-50t padding-sm-50b padding-md-70t padding-md-70b padding-lg-100t padding-lg-100b">
+          <img src="../img/restaurant/slider-descr-bg.png" class="w-100 js-bg" alt="single img">
+          <div class="single-gallery-descr">
+            <div class="aheto-heading  aheto-heading--single-gallery">
+              <h3 class="aheto-heading__title    f-style-italic      t-bold ">Our Gallery</h3>
+              <p class="aheto-heading__desc   ">Pacific Tavern opened in May 2010 and is located inside the Smith Hotel Brooklyn. Since then, Golden Spork winner Chef Lang</p>
+            </div>
+            <div class="single-gallery-descr-icons">
+              <div class="aheto-single-img   ">
+                <img src="../img/restaurant/about/serv-ico-4.png" class="  " alt="single img">
+              </div>
+              <div class="aheto-single-img   ">
+                <img src="../img/restaurant/about/serv-ico-5.png" class="  " alt="single img">
+              </div>
+              <div class="aheto-single-img   ">
+                <img src="../img/restaurant/about/serv-ico-3.png" class="  " alt="single img">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="single-gallery-wrap">
+        <div class="swiper swiper--restaurant swiper--single-gallery ">
+          <div class="swiper-container " data-autoplay="true" data-speed="500" data-loop="true" data-spaceBetween="0" data-slidesPerView="responsive" data-add-slides="1" data-lg-slides="1" data-md-slides="1" data-sm-slides="1" data-xs-slides="1">
+            <div class="swiper-wrapper ">
+              <div class="swiper-slide ">
+                <img src="../img/restaurant/gallery/gallery-item-000.jpg" class="w-100 js-bg" alt="single img">
+              </div>
+              <div class="swiper-slide ">
+                <img src="../img/restaurant/gallery/gallery-item-009.jpg" class="w-100 js-bg" alt="single img">
+              </div>
+              <div class="swiper-slide ">
+                <img src="../img/restaurant/gallery/gallery-item-008.jpg" class="w-100 js-bg" alt="single img">
+              </div>
+            </div>
+          </div>
+          <div class="swiper-button-prev">
+          </div>
+          <div class="swiper-button-next">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer class="aheto-footer aheto-footer-7" style="background-image: url('../img/restaurant/footer_bg.jpg')">
+    <div class="aheto-footer-7__main">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-12">
+            <div class="widget widget_aheto t-center">
+              <div class="widget_aheto__logo">
+                <img src="../img/home/footer-logo-6.png" alt="footer">
+              </div>
+            </div>
+          </div>
+          <div class="col-md-12">
+            <div class="widget widget_nav_menu widget_nav_menu_">
+              <div class="menu-main-container">
+                <ul class="menu">
+                  <li class="menu-item  menu-item-type-post_type menu-item-object-page"><a href="#">About</a></li>
+                  <li class="menu-item  menu-item-type-post_type menu-item-object-page"><a href="#">Menu</a></li>
+                  <li class="menu-item  menu-item-type-post_type menu-item-object-page"><a href="#">Gallery</a></li>
+                  <li class="menu-item  menu-item-type-post_type menu-item-object-page"><a href="#">Special offers</a></li>
+                  <li class="menu-item  menu-item-type-post_type menu-item-object-page"><a href="#">Location</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-12">
+            <div class="aht-socials aht-socials--retreat t-center">
+              <a class="aht-socials__link aht-btn--dark aht-btn--trans " href="https://www.facebook.com/">
+                <i class="aht-socials__icon icon ion-social-facebook"></i>
+              </a>
+              <a class="aht-socials__link aht-btn--dark aht-btn--trans " href="https://www.tumblr.com/">
+                <i class="aht-socials__icon icon ion-social-tumblr"></i>
+              </a>
+              <a class="aht-socials__link aht-btn--dark aht-btn--trans " href="https://twitter.com/">
+                <i class="aht-socials__icon icon ion-social-twitter"></i>
+              </a>
+              <a class="aht-socials__link aht-btn--dark aht-btn--trans " href="https://www.youtube.com/">
+                <i class="aht-socials__icon icon ion-social-youtube"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="aheto-footer-7__bottom">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-12 col-sm-12 col-xs-12">
+            <div class="aheto-footer-7__cr">
+              <p class="aheto-footer-7__cr-text ">© Karma Restaurant. All Right Reserved 2019.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+  <div class="site-search" id="search-box">
+    <button class="close-btn js-close-search"><i class="fa fa-times" aria-hidden="true"></i></button>
+    <div class="form-container">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-12">
+            <form role="search" method="get" class="search-form" action="http://ahetopro/" autocomplete="off">
+              <div class="input-group">
+                <input type="search" value="" name="s" class="search-field" placeholder="Enter Keyword" required="">
+              </div>
+            </form>
+            <p class="search-description">Input your search keywords and press Enter.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Magnific popup -->
+  <script src="../vendors/magnific/jquery.magnific-popup.min.js"></script>
+  <!-- anm -->
+  <script src="../vendors/animation/anm.min.js"></script>
+  <!-- Google maps -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyARwCmK-LlGIH8Mv1ac4VyceMYUgg9vStM&amp;#038;&language=en"></script>
+  <script src="../vendors/googlemap/google-maps.js?v=1"></script>
+  <!-- FullCalendar -->
+  <!-- Parallax -->
+  <script src="../vendors/parallax/parallax.min.js"></script>
+  <!-- asRange -->
+  <script src="../vendors/range/jquery.range-min.js"></script>
+  <!-- lightgallery -->
+  <script src="../vendors/lightgallery/lightgallery.min.js"></script>
+  <!-- Main script -->
+  <script src="../vendors/script.js?v=1"></script>
+  <script src="../vendors/spectragram/spectragram.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      jQuery.fn.spectragram.accessData = {
+        accessToken: '4058508404.1677ed0.f87c0182df0d4512a9e01def0c53adb7'
+      }
+
+      $('.instafeed').spectragram('getUserFeed', {
+        size: 'big',
+        max: 6
+      });
+    });
+  </script>
+</body>
+
+</html>

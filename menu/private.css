@@ -1,0 +1,578 @@
+ 
+.contentbg { 
+    background-image: url('images/isbg.png') !important;
+    background-repeat: no-repeat !important;
+    background-size: cover !important;
+    background-position: center bottom !important;    
+    background-attachment: fixed !important;    
+}
+
+ 
+#previewContainer .image-container {
+    position: relative;
+    width: 100px; /* Largeur du carré */
+    height: 100px; /* Hauteur du carré */
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+#previewContainer .image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Pour garder les proportions */
+} 
+
+.delete-icon {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    cursor: pointer;
+    background: rgba(255, 0, 0, 0.7);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.btnpic{
+    width: 100%;
+    height:90px;
+    background:#eee;
+    text-align:center;
+    border:1px solid #aaa;
+    border-radius: 5px 5px 5px 5px;
+    padding-top:35px;
+    color:#222;
+}  
+
+
+
+/* pages commandes */
+
+
+.hidden {
+    display: none;
+}
+.modal {
+    display: none; /* Masqué par défaut */
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgb(0,0,0);
+    background-color: rgba(0,0,0,0.4); /* Couleur de fond */
+    padding-top: 60px;
+}
+.modal-content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 400px;
+    border-radius: 5px;
+}
+.dropdown-content {
+    display: flex;
+    flex-direction: column;
+}
+.dropdown-content div {
+    padding: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+.dropdown-content div:hover {
+    background-color:rgb(120, 52, 52);
+}
+.option-image {
+    width: 100%;   
+    padding-top:10px;
+}
+.modal-content label{ 
+    padding:10px;  
+    background-color:#eee;
+    text-align:center;
+}
+.modal-content h2{  
+    text-align:center;
+}
+.selected-option{
+    margin-left:15px; 
+}
+.champmod{
+    border:1px solid #f6f6f6 !important;
+    width: 100%;
+    height:34px;
+    border-radius:5px;
+}
+.spanmod{
+    border-top:none;
+    border-bottom:none;
+    border-left:none;
+} 
+
+.boxcontent{
+   
+}
+
+
+
+
+
+
+
+input[type="datetime-local"]::-webkit-inner-spin-button {
+    display: none !important; /* Cache les flèches de sélection de date */
+}
+
+input[type="datetime-local"] {
+    color: transparent !important; /* Rend le texte transparent */
+}
+
+input[type="datetime-local"]:focus {
+    color: black !important; /* Rend le texte visible lors du focus */
+}
+
+
+
+input[type="datetime-local"] {
+   text-align: left !important;
+   font-weight: none !important;
+}
+
+
+.chmpdate {
+    position: relative;
+}
+
+.placeholder-label {
+    position: absolute;
+    left: 50px; /* Ajustez selon vos besoins */
+    top: 18px;
+    transform: translateY(-50%);
+    color: #aaa;
+    pointer-events: none; /* Ignore les événements de la souris */
+    transition: 0.2s;
+}
+
+ .labaccessoire{
+    font-family: 20px !important;
+    margin-bottom: 20px !important;
+ }
+
+
+
+ .radiomonsieur{
+    width:33%;
+    float:left;
+    border:1px solid #eee;
+    height:35px;
+    padding-top:4px;
+    border-radius:5px;
+    margin-right:2px;
+}
+
+.radiomadame{
+    width:33%;
+    float:left;
+    border:1px solid #eee;
+    height:35px;
+    padding-top:4px;
+    border-radius:5px;
+}
+
+.radiocouple{
+    width:33%;
+    float:right;
+    border:1px solid #eee;
+    height:35px;
+    padding-top:4px;
+    border-radius:5px;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+:root {
+    /*Background color when it's turned off*/
+    --vc-off-color: #d1d3d4;
+  
+    /*Background color when it's turned on*/
+    --vc-on-color: #38cf5b;
+    
+    /*Animation speed and type*/
+    --vc-animation-speed: 0.15s ease-out;
+  
+    /*Font used by the text*/
+    --vc-font-family: Arial;
+  
+    /*The size used*/
+    --vc-font-size: 11px;
+  
+    /*The font weight*/
+    --vc-font-weight: 300;
+    
+    /*Font color when the switch is on*/
+    --vc-on-font-color: white;
+  
+    /*Font color when the switch is off*/
+    --vc-off-font-color: white;
+  
+    /*How far the OFF text is from the right side*/
+    --vc-label-position-off: 12px;
+  
+    /*How far the ON text is from the left side*/
+    --vc-label-position-on: 11px;
+  
+    /*Small switch width*/
+    --vc-width: 50px;
+  
+    /*Small switch height*/
+    --vc-height: 25px;
+  
+    /*Border radius for the handle*/
+    --vc-handle-border-radius: 20px;
+  
+    /*Border radius for the box*/
+    --vc-box-border-radius: 18px;
+  
+    /*Shadow for the handle*/
+    --vc-handle-shadow: 1px 1px 5px rgba(0, 0, 0, 0.2);
+    
+    /*Handle color*/
+    --vc-handle-color: white;
+  
+    /*Handle width*/
+    --vc-handle-width: 15px;
+  
+    /*Handle height*/
+    --vc-handle-height: 15px;
+  
+    /*The handle's width while the toggle is clicked*/
+    --vc-onclick-width: 30px;
+  
+    /*Handle's distance from the top*/
+    --vc-handle-top: 5px;
+  }
+  
+  .vc-toggle-container * {
+    font-family: var(--vc-font-family);
+    -webkit-transition: var(--vc-animation-speed);
+    -moz-transition: var(--vc-animation-speed);
+    -o-transition: var(--vc-animation-speed);
+    transition: var(--vc-animation-speed);
+  }
+  
+  .vc-switch {
+    width: var(--vc-width);
+    height: var(--vc-height);
+  }
+  
+  .vc-toggle-container label {
+    position: relative;
+    display: inline-block;
+    vertical-align: top;
+    border-radius: var(--vc-box-border-radius);
+    cursor: pointer;
+  }
+  
+  .vc-switch-input {
+    position: absolute;
+    transform: translate3d(5px, 5px, 0);
+  }
+  
+  .vc-switch-label {
+    position: relative;
+    display: block;
+    height: inherit;
+    font-size: var(--vc-font-size);
+    font-weight: var(--vc-font-weight);
+    background: var(--vc-off-color);
+    border-radius: inherit;
+  }
+  
+  .vc-switch-label:before,
+  .vc-switch-label:after {
+    position: absolute;
+    top: 50%;
+    margin-top: -0.5em;
+    line-height: 1.1;
+  }
+  
+  .vc-switch-label:before {
+    content: attr(data-off);
+    color: var(--vc-on-font-color);
+  }
+  
+  .vc-switch-label:after {
+    content: attr(data-on);
+    color: var(--vc-off-font-color);
+    opacity: 0;
+  }
+  
+  .vc-switch-label:before {
+    right: var(--vc-label-position-off);;
+  }
+  
+  .vc-switch-label:after {
+    left: var(--vc-label-position-on);;
+  }
+  
+  .vc-switch-input:checked ~ .vc-switch-label {
+    background: var(--vc-on-color);
+  }
+  
+  .vc-switch-input:checked ~ .vc-switch-label:before {
+    opacity: 0;
+  }
+  
+  .vc-switch-input:checked ~ .vc-switch-label:after {
+    opacity: 1;
+  }
+  
+  .vc-handle {
+    position: absolute !important;
+    top: var(--vc-handle-top);
+    left: 5px;
+    background: var(--vc-handle-color);
+    border-radius: var(--vc-handle-border-radius);
+    box-shadow: var(--vc-handle-shadow);
+  }
+  
+  .vc-handle {
+    width: var(--vc-handle-width);
+    height: var(--vc-handle-height);
+  }
+  
+  .vc-handle:before {
+    content: "";
+    top: 50%;
+    left: 50%;
+    position: absolute !important;
+    margin: -6px 0 0 -6px;
+    width: 12px;
+    height: 12px;
+    border-radius: 6px;
+  }
+  
+  .vc-switch-label:active ~ .vc-handle, .vc-handle:active {
+    width: var(--vc-onclick-width);
+  }
+  
+  .vc-switch-input:checked ~ .vc-handle {
+    left: unset;
+    right: 5px;
+  }
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+@media only screen and (max-width: 769px) {
+    /* Styles pour les téléphones */
+    .boxcontent{
+        
+    }
+     
+    input[type="datetime-local"] {
+        text-align: left !important;
+    }
+    
+    .main-nav{
+        display: none !important;
+    }
+
+    .main-header{
+        position:relative !important; 
+    }
+
+    .navbar-custom-menu {
+        display: flex !important;
+        justify-content: center !important; /* Centre les éléments horizontalement */
+        align-items: center !important; /* Centre les éléments verticalement */
+        width: 100% !important; /* Assurez-vous que la barre prend toute la largeur */
+    }
+    
+    .navbar-nav {
+        display: flex !important;
+        justify-content: center !important; /* Centre les éléments de la liste */
+        padding: 0 !important; /* Supprime le padding par défaut */
+        margin: 0 !important; /* Supprime la marge par défaut */
+        list-style: none !important; /* Supprime les puces */
+    }
+    
+    .navbar-nav li {
+        margin: 0 15px !important; /* Espace entre les éléments */
+    }
+
+    .navbar-nav a {
+        color: white !important; /* Change la couleur des textes et icônes */
+    }
+    
+    .navbar-nav a:hover {
+        color: #ccc !important; /* Change la couleur au survol (facultatif) */
+    }
+
+    .navbar-custom-menu{
+        border-top:1px solid #444;
+        padding-top:7px !important;
+    }
+    
+    .content-wrapper{
+        margin-top: 90px !important; 
+    }
+
+    #myModal{
+        margin-top: 20px !important; 
+        z-index: 5800;
+    }
+
+    .fc-view-harness{ 
+        height: 370px !important;
+    }
+ 
+    .listenot{
+        background-color: #aaa !important;
+    }
+
+    .salut{
+        margin-top:-5px;
+        z-index: 3800;
+    }
+
+
+
+    .radiomonsieur{
+        width:100%; 
+        border:1px solid #ddd !important;
+        height:35px;
+        padding-top:4px;
+        padding-left:-14px !important;
+        border-radius:5px;
+        margin-right:2px;
+    }
+
+    .radiomadame{
+        width:100%; 
+        border:1px solid #ddd !important;
+        height:35px;
+        padding-top:4px;
+        border-radius:5px;
+    }
+
+    .radiocouple{
+        width:100%; 
+        border:1px solid #ddd !important;
+        height:35px;
+        padding-top:4px;
+        border-radius:5px;
+    }
+}
+ 
+
+
+
+
+
+@media only screen and (min-width: 770px) and (max-width: 1024px) {
+    /* Styles pour les tablettes */
+    .boxcontent{
+        width:80%; 
+    }
+    
+    input[type="datetime-local"] {
+    text-align: left !important;
+    }
+
+ 
+
+
+
+}

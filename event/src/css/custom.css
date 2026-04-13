@@ -1,0 +1,17 @@
+.box {
+  margin-bottom: 20px;
+}
+
+
+@media only screen and (max-width: 1440px) {
+  .summery-box .box-body  {
+    padding: 13px !important; 
+  }
+}
+
+@media only screen and (max-width: 991px) {
+  .summery-box .box  {
+    margin-bottom: 20px !important;
+  }
+}
+ 
