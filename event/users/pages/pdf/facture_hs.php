@@ -7,6 +7,80 @@
 	include("../../../../pages/bdd.php");
     //include('../phpqrcode/qrlib.php'); 
 	
+	function renderInvoiceErrorPage($title, $message)
+	{
+		http_response_code(404);
+		?>
+		<!DOCTYPE html>
+		<html lang="fr">
+		<head>
+			<meta charset="utf-8">
+			<meta name="viewport" content="width=device-width, initial-scale=1">
+			<title><?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?></title>
+			<style>
+				body {
+					margin: 0;
+					min-height: 100vh;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					padding: 24px;
+					font-family: Arial, sans-serif;
+					background: linear-gradient(135deg, #f8fafc 0%, #dbeafe 100%);
+					color: #0f172a;
+				}
+
+				.invoice-error-card {
+					width: min(100%, 580px);
+					padding: 32px;
+					border-radius: 24px;
+					background: #ffffff;
+					box-shadow: 0 24px 60px rgba(15, 23, 42, 0.16);
+					text-align: center;
+				}
+
+				.invoice-error-card h1 {
+					margin: 0 0 12px;
+					font-size: 28px;
+					line-height: 1.2;
+				}
+
+				.invoice-error-card p {
+					margin: 0;
+					font-size: 16px;
+					line-height: 1.7;
+					color: #475569;
+				}
+			</style>
+		</head>
+		<body>
+			<div class="invoice-error-card">
+				<h1><?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?></h1>
+				<p><?php echo htmlspecialchars($message, ENT_QUOTES, 'UTF-8'); ?></p>
+			</div>
+		</body>
+		</html>
+		<?php
+		exit();
+	}
+
+	$reference = isset($_GET['cod']) ? trim((string) $_GET['cod']) : '';
+	$documentType = (isset($_GET['type']) && $_GET['type'] === 'devis') ? 'Devis' : 'Facture';
+
+	if ($reference === '') {
+		renderInvoiceErrorPage('Reference introuvable', 'Aucune reference de facture n a ete fournie dans la requete.');
+	}
+
+	$initialFactureStmt = $pdo->prepare("SELECT * FROM facture WHERE reference = :reference AND type_fact = :type_fact ORDER BY date_enreg DESC, cod_fact DESC LIMIT 1");
+	$initialFactureStmt->execute([
+		':reference' => $reference,
+		':type_fact' => $documentType,
+	]);
+	$initialFacture = $initialFactureStmt->fetch(PDO::FETCH_ASSOC) ?: null;
+
+	if (!$initialFacture) {
+		renderInvoiceErrorPage('Document indisponible', 'Aucun ' . strtolower($documentType) . ' n a ete trouve pour la reference ' . $reference . '.');
+	}
 
 
 
@@ -528,15 +602,9 @@ $this->Cell(5,7,mb_convert_encoding('', 'ISO-8859-1', 'UTF-8'),0,0,'L',true);
 	$pdf->Infofact($pdo);
 	$pdf->Infosign($pdo);
 
-	$documentType = (isset($_GET['type']) && $_GET['type'] === 'devis') ? 'Devis' : 'Facture';
 	$documentPrefix = $documentType === 'Devis' ? 'DEVIS-HS-' : 'FACT-HS-';
 	$nomFichier = $documentPrefix . ($_GET['cod'] ?? 'document') . '.pdf';
-	$stmtFacture = $pdo->prepare("SELECT cod_cli FROM facture WHERE reference = :reference AND type_fact = :type_fact ORDER BY date_enreg DESC, cod_fact DESC LIMIT 1");
-	$stmtFacture->execute([
-		':reference' => $_GET['cod'] ?? '',
-		':type_fact' => $documentType,
-	]);
-	$datacomp = $stmtFacture->fetch(PDO::FETCH_ASSOC) ?: null;
+	$datacomp = $initialFacture;
 	if (is_array($datacomp) && !empty($datacomp['cod_cli'])) {
 		$stmtus = $pdo->prepare("SELECT noms FROM is_users WHERE cod_user = :cod_user");
 		$stmtus->execute(['cod_user' => $datacomp['cod_cli']]);
