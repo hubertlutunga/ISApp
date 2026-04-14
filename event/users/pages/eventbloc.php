@@ -440,28 +440,40 @@ if (!empty($events)) {
   </ul>
 </nav>
 
-<!-- STATISTIQUES PAR UTILISATEUR (créaevent) -->
+<!-- STATISTIQUES PAR UTILISATEUR (créaevent) : total et par mois -->
 <?php
-// Récupérer le nombre d'événements réalisés par chaque utilisateur
-$stmtStats = $pdo->query("SELECT cod_user, COUNT(*) as total FROM creaevent GROUP BY cod_user ORDER BY total DESC");
+// Statistiques globales (total distinct cod_event par utilisateur)
+$stmtStats = $pdo->query("SELECT cod_user, COUNT(DISTINCT cod_event) as total FROM creaevent GROUP BY cod_user ORDER BY total DESC");
 $userStats = $stmtStats->fetchAll(PDO::FETCH_ASSOC);
 
+// Statistiques du mois en cours (distinct cod_event par utilisateur)
+$mois = date('m');
+$annee = date('Y');
+$stmtStatsMois = $pdo->prepare("SELECT cod_user, COUNT(DISTINCT cod_event) as total_mois FROM creaevent WHERE MONTH(date_enreg) = ? AND YEAR(date_enreg) = ? GROUP BY cod_user ORDER BY total_mois DESC");
+$stmtStatsMois->execute([$mois, $annee]);
+$userStatsMois = [];
+foreach ($stmtStatsMois->fetchAll(PDO::FETCH_ASSOC) as $row) {
+  $userStatsMois[$row['cod_user']] = $row['total_mois'];
+}
+
 if ($userStats) {
-    echo '<div style="margin:32px 0 0 0; padding:18px; background:#f8fafc; border-radius:18px; box-shadow:0 2px 8px rgba(0,0,0,0.04);">';
-    echo '<h5 style="margin-bottom:16px; color:#1e293b;">Statistiques des réalisations par utilisateur</h5>';
-    echo '<table style="width:auto; min-width:320px; border-collapse:collapse; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,0.03);">';
-    echo '<tr style="background:#e2e8f0; color:#334155; font-weight:700;"><th style="padding:10px 18px;">Utilisateur</th><th style="padding:10px 18px;">Nombre d\'événements réalisés</th></tr>';
-    foreach ($userStats as $row) {
-        // Récupérer le nom de l'utilisateur
-        $stmtNom = $pdo->prepare("SELECT noms FROM is_users WHERE cod_user = ?");
-        $stmtNom->execute([$row['cod_user']]);
-        $nom = $stmtNom->fetchColumn() ?: $row['cod_user'];
-        echo '<tr>';
-        echo '<td style="padding:8px 18px; border-bottom:1px solid #e2e8f0;">' . htmlspecialchars($nom) . '</td>';
-        echo '<td style="padding:8px 18px; border-bottom:1px solid #e2e8f0; text-align:center; font-weight:600; color:#0f172a;">' . (int)$row['total'] . '</td>';
-        echo '</tr>';
-    }
-    echo '</table>';
-    echo '</div>';
+  echo '<div style="margin:32px 0 0 0; padding:18px; background:#f8fafc; border-radius:18px; box-shadow:0 2px 8px rgba(0,0,0,0.04);">';
+  echo '<h5 style="margin-bottom:16px; color:#1e293b;">Statistiques des réalisations par utilisateur</h5>';
+  echo '<table style="width:auto; min-width:420px; border-collapse:collapse; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,0.03);">';
+  echo '<tr style="background:#e2e8f0; color:#334155; font-weight:700;"><th style="padding:10px 18px;">Utilisateur</th><th style="padding:10px 18px;">Total réalisés</th><th style="padding:10px 18px;">Ce mois</th></tr>';
+  foreach ($userStats as $row) {
+    // Récupérer le nom de l'utilisateur
+    $stmtNom = $pdo->prepare("SELECT noms FROM is_users WHERE cod_user = ?");
+    $stmtNom->execute([$row['cod_user']]);
+    $nom = $stmtNom->fetchColumn() ?: $row['cod_user'];
+    $totalMois = $userStatsMois[$row['cod_user']] ?? 0;
+    echo '<tr>';
+    echo '<td style="padding:8px 18px; border-bottom:1px solid #e2e8f0;">' . htmlspecialchars($nom) . '</td>';
+    echo '<td style="padding:8px 18px; border-bottom:1px solid #e2e8f0; text-align:center; font-weight:600; color:#0f172a;">' . (int)$row['total'] . '</td>';
+    echo '<td style="padding:8px 18px; border-bottom:1px solid #e2e8f0; text-align:center; color:#2563eb;">' . (int)$totalMois . '</td>';
+    echo '</tr>';
+  }
+  echo '</table>';
+  echo '</div>';
 }
 ?>
