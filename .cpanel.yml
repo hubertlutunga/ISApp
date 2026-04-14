@@ -3,19 +3,19 @@ deployment:
   tasks:
     - export DEPLOYPATH=/home/invizfxg/public_html/
     - /bin/mkdir -p $DEPLOYPATH
-    - /usr/bin/rsync -a --delete bootstrap/ $DEPLOYPATH/bootstrap/
-    - /usr/bin/rsync -a --delete config/ $DEPLOYPATH/config/
-    - /usr/bin/rsync -a --delete couple/ $DEPLOYPATH/couple/
-    - /usr/bin/rsync -a --delete event/ $DEPLOYPATH/event/
-    - /usr/bin/rsync -a --delete fonts/ $DEPLOYPATH/fonts/
-    - /usr/bin/rsync -a --delete images/ $DEPLOYPATH/images/
-    - /usr/bin/rsync -a --delete js/ $DEPLOYPATH/js/
-    - /usr/bin/rsync -a --delete menu/ $DEPLOYPATH/menu/
-    - /usr/bin/rsync -a --delete pages/ $DEPLOYPATH/pages/
-    - /usr/bin/rsync -a --delete PHPMailer/ $DEPLOYPATH/PHPMailer/
-    - /usr/bin/rsync -a --delete qrscan/ $DEPLOYPATH/qrscan/
-    - /usr/bin/rsync -a --delete site/ $DEPLOYPATH/site/
-    - /usr/bin/rsync -a --delete src/ $DEPLOYPATH/src/
-    - /usr/bin/rsync -a --delete sweet/ $DEPLOYPATH/sweet/
-    - /usr/bin/rsync -a --delete twilio-php-main/ $DEPLOYPATH/twilio-php-main/
+    - /usr/bin/rsync -a bootstrap/ $DEPLOYPATH/bootstrap/
+    - /usr/bin/rsync -a config/ $DEPLOYPATH/config/
+    - /usr/bin/rsync -a couple/ $DEPLOYPATH/couple/
+    - /usr/bin/rsync -a event/ $DEPLOYPATH/event/
+    - /usr/bin/rsync -a fonts/ $DEPLOYPATH/fonts/
+    - /usr/bin/rsync -a images/ $DEPLOYPATH/images/
+    - /usr/bin/rsync -a js/ $DEPLOYPATH/js/
+    - /usr/bin/rsync -a menu/ $DEPLOYPATH/menu/
+    - /usr/bin/rsync -a pages/ $DEPLOYPATH/pages/
+    - /usr/bin/rsync -a PHPMailer/ $DEPLOYPATH/PHPMailer/
+    - /usr/bin/rsync -a qrscan/ $DEPLOYPATH/qrscan/
+    - /usr/bin/rsync -a site/ $DEPLOYPATH/site/
+    - /usr/bin/rsync -a src/ $DEPLOYPATH/src/
+    - /usr/bin/rsync -a sweet/ $DEPLOYPATH/sweet/
+    - /usr/bin/rsync -a twilio-php-main/ $DEPLOYPATH/twilio-php-main/
     - /bin/cp -u index.php $DEPLOYPATH
