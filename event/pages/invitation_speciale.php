@@ -7,7 +7,7 @@ include('../../pages/bdd.php');
 
 require_once('pdf/fpdf.php');
 require_once('fpdi/src/autoload.php');
-require_once('../users/pages/pdf/phpqrcode/qrlib.php');
+require_once __DIR__ . '/../../qrscan/phpqrcode/qrlib.php';
 
 use setasign\Fpdi\Fpdi;
 
