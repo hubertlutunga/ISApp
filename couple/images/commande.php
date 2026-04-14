@@ -7,7 +7,7 @@
 					<div class="col-lg-5 col-md-5 col-12 boxcontent">
 						<div class="bg-white rounded10 shadow-lg ">
 							<div class="content-top-agile p-20 pb-0"> 
-                                <img src="../images/Logo_invitationSpeciale_1.png">
+                                <img src="../images/Logo_invitationSpeciale_SF.png">
 								<p class="mb-0 text-fade">Créer votre événements</p>							
 							</div>
 							<div class="p-40">

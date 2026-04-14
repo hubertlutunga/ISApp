@@ -121,7 +121,7 @@
 			$this->SetTextColor(0, 0, 0);
             $this->Ln(8); 
 
-			$this->Image('../../../images/Logo_invitationSpeciale_1.png',0,5,50); 
+			$this->Image('../../../images/Logo_invitationSpeciale_SF.png',0,5,50); 
 			$this->Ln(1);	
 			$this->SetFont('Arial','',6);
             $this->MultiCell(50, 3, mb_convert_encoding("Filiale de Hubert Solutions, dédiée à la création d'invitations haut de gamme, alliant élégance et sophistication.", 'ISO-8859-1', 'UTF-8'), 0, 0,true);

@@ -40,7 +40,7 @@
 		<div class="card rounded-4">
 
         
-                                <img src="../images/Logo_invitationSpeciale_1.png">
+                                <img src="../images/Logo_invitationSpeciale_SF.png">
 
 			   <div class="box-header d-flex b-0 justify-content-between align-items-center">
  

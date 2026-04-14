@@ -101,7 +101,7 @@
                 <div class="row justify-content-center">
 <div class="corp">
 <article>
-<img src="images/Logo_invitationSpeciale_1.png">
+<img src="images/Logo_invitationSpeciale_SF.png">
 
     <div align="center" style="margin-top:-30px;">
     <p style="width:90%;text-align:center;">Nous sommes une entreprise dédiée à la création d'invitations haut de gamme, alliant élégance et sophistication. Nous proposons des designs sur mesure pour des événements mémorables, qu'il s'agisse de mariages, d'anniversaires, de soirées d'entreprise ou de célébrations privées.
