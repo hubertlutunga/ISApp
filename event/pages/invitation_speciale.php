@@ -15,11 +15,13 @@ class MyPDF extends Fpdi {
     function RoundedRect($x, $y, $w, $h, $r, $style = '') {
         $k = $this->k;
         $hp = $this->h;
-        $op = match ($style) {
-            'F' => 'f',
-            'FD', 'DF' => 'B',
-            default => 'S',
-        };
+        if ($style === 'F') {
+            $op = 'f';
+        } elseif ($style === 'FD' || $style === 'DF') {
+            $op = 'B';
+        } else {
+            $op = 'S';
+        }
         $MyArc = 4/3 * (sqrt(2) - 1);
         $this->_out(sprintf('%.2F %.2F m', ($x + $r) * $k, ($hp - $y) * $k));
         $xc = $x + $w - $r;
@@ -76,12 +78,15 @@ for ($i = 1; $i <= $pagecount; $i++) {
     $stmt->execute([':id_inv' => $_GET['cod']]);
     $datainvite = $stmt->fetch();
 
-    $sing = match ($datainvite['sing']) {
-        'C' => 'Couple',
-        'Mr' => 'Monsieur',
-        'Mme' => 'Madame',
-        default => '',
-    };
+    if ($datainvite['sing'] === 'C') {
+        $sing = 'Couple';
+    } elseif ($datainvite['sing'] === 'Mr') {
+        $sing = 'Monsieur';
+    } elseif ($datainvite['sing'] === 'Mme') {
+        $sing = 'Madame';
+    } else {
+        $sing = '';
+    }
 
     $nominvite = $sing . ' ' . ucfirst($datainvite['nom']);
 
@@ -523,11 +528,13 @@ for ($i = 1; $i <= $pagecount; $i++) {
     // Ajouter le nom de l'invité à la page 2
     if ($i == $dataevent['pagenom']) {
         $y = $dataevent['ajustenom'];
-        $x = match ($dataevent['alignnominv']) {
-            'center' => ($pdf->GetPageWidth() - $pdf->GetStringWidth($nominvite)) / 2,
-            'left' => is_numeric($dataevent['bordgauchenominv']) ? (float)$dataevent['bordgauchenominv'] : 10,
-            default => 10,
-        };
+        if (($dataevent['alignnominv'] ?? '') === 'center') {
+            $x = ($pdf->GetPageWidth() - $pdf->GetStringWidth($nominvite)) / 2;
+        } elseif (($dataevent['alignnominv'] ?? '') === 'left') {
+            $x = is_numeric($dataevent['bordgauchenominv']) ? (float) $dataevent['bordgauchenominv'] : 10;
+        } else {
+            $x = 10;
+        }
         $pdf->Text($x, $y, mb_convert_encoding($nominvite, 'ISO-8859-1', 'UTF-8')); 
     }
 
@@ -559,11 +566,13 @@ for ($i = 1; $i <= $pagecount; $i++) {
         }
 
         $y = $dataevent['ajustenom'];
-        $x = match ($dataevent['alignnominv']) {
-            'center' => ($pdf->GetPageWidth() - $pdf->GetStringWidth($nominvite)) / 2,
-            'left' => is_numeric($dataevent['bordgauchenominv']) ? (float)$dataevent['bordgauchenominv'] : 10,
-            default => 10,
-        };
+        if (($dataevent['alignnominv'] ?? '') === 'center') {
+            $x = ($pdf->GetPageWidth() - $pdf->GetStringWidth($nominvite)) / 2;
+        } elseif (($dataevent['alignnominv'] ?? '') === 'left') {
+            $x = is_numeric($dataevent['bordgauchenominv']) ? (float) $dataevent['bordgauchenominv'] : 10;
+        } else {
+            $x = 10;
+        }
 
         if (isset($dataevent['ajustenom'])) {
             $pdf->Text($x, $y, mb_convert_encoding($nominvite, 'ISO-8859-1', 'UTF-8'));
