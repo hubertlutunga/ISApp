@@ -3,9 +3,14 @@
 				
 		
 		
-	require('fpdf.php');
-	include("../../../../pages/bdd.php");
+	require __DIR__ . '/fpdf.php';
+	include __DIR__ . '/../../../../pages/bdd.php';
     //include('../phpqrcode/qrlib.php'); 
+
+	$invoicePdfDir = __DIR__;
+	$invoiceLogoPath = dirname(__DIR__, 4) . '/images/Logo_invitationSpeciale_SF.png';
+	$invoiceFactureStampPath = $invoicePdfDir . '/cach_IS_pmarci.png';
+	$invoiceDevisStampPath = $invoicePdfDir . '/cach_IS_proforma.png';
 	
 	function renderInvoiceErrorPage($title, $message)
 	{
@@ -195,7 +200,10 @@
 			$this->SetTextColor(0, 0, 0);
             $this->Ln(8); 
 
-			$this->Image('../../../../images/Logo_invitationSpeciale_SF.png',0,5,50); 
+			global $invoiceLogoPath;
+			if (is_file($invoiceLogoPath)) {
+				$this->Image($invoiceLogoPath,0,5,50);
+			}
 			$this->Ln(1);	
 			$this->SetFont('Arial','',6);
             $this->MultiCell(50, 3, mb_convert_encoding("Filiale de Hubert Solutions, dédiée à la création d'invitations haut de gamme, alliant élégance et sophistication.", 'ISO-8859-1', 'UTF-8'), 0, 0,true);
@@ -255,14 +263,19 @@
 		
  	
 
+			global $invoiceFactureStampPath, $invoiceDevisStampPath;
 			if($datacomp['type_fact'] === "Facture"){
 
-				$this->Image('cach_IS_pmarci.png',80,160,45); 
+				if (is_file($invoiceFactureStampPath)) {
+					$this->Image($invoiceFactureStampPath,80,160,45);
+				}
 				$this->Ln(1);
 
 			}else{
 				
-				$this->Image('cach_IS_proforma.png',140,220,50); 
+				if (is_file($invoiceDevisStampPath)) {
+					$this->Image($invoiceDevisStampPath,140,220,50);
+				}
 				$this->Ln(1);
 			}
 		/*
@@ -529,11 +542,16 @@ $this->Cell(5,7,mb_convert_encoding('', 'ISO-8859-1', 'UTF-8'),0,0,'L',true);
 		function Infosign($pdo){
 
 			$datacomp = $this->latestFacture($pdo);
+			global $invoiceFactureStampPath, $invoiceDevisStampPath;
 			if ($datacomp) {
 				if($datacomp['type_fact'] === "Facture"){
-					$this->Image('cach_IS_pmarci.png',80,160,45);
+					if (is_file($invoiceFactureStampPath)) {
+						$this->Image($invoiceFactureStampPath,80,160,45);
+					}
 				}else{
-					$this->Image('cach_IS_proforma.png',140,220,50);
+					if (is_file($invoiceDevisStampPath)) {
+						$this->Image($invoiceDevisStampPath,140,220,50);
+					}
 				}
 			}
 
