@@ -25,6 +25,8 @@ Thumbs.db
 *.log
 *.tmp
 *.bak
+qrscan/phpqrcode/*.png-errors.txt
+qrscan/phpqrcode/cache/generated/
 
 # Local environment overrides
 config/database.local.php

@@ -8,7 +8,7 @@
     //include('../phpqrcode/qrlib.php'); 
 
 	$invoicePdfDir = __DIR__;
-	$invoiceLogoPath = dirname(__DIR__, 4) . '/images/Logo_invitationSpeciale_SF.png';
+	$invoiceLogoPath = dirname(__DIR__, 4) . '/images/Logo_invitationSpeciale_1.png';
 	$invoiceFactureStampPath = $invoicePdfDir . '/cach_IS_pmarci.png';
 	$invoiceDevisStampPath = $invoicePdfDir . '/cach_IS_proforma.png';
 	

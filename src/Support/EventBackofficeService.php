@@ -332,16 +332,38 @@ LIMIT :limit OFFSET :offset
     private static function ensureQrCode(array $event, string $publicUrl): string
     {
         $rootPath = dirname(__DIR__, 2);
-        $relativeDir = 'mesqrcode';
-        $absoluteDir = $rootPath . '/event/users/' . $relativeDir;
+        $directories = [
+            [
+                'relative_dir' => 'mesqrcode',
+                'absolute_dir' => $rootPath . '/event/users/mesqrcode',
+            ],
+            [
+                'relative_dir' => 'qrscan/phpqrcode/cache/generated',
+                'absolute_dir' => $rootPath . '/qrscan/phpqrcode/cache/generated',
+            ],
+        ];
 
-        if (!is_dir($absoluteDir)) {
-            @mkdir($absoluteDir, 0775, true);
+        $selectedDirectory = null;
+
+        foreach ($directories as $directory) {
+            if (!is_dir($directory['absolute_dir'])) {
+                @mkdir($directory['absolute_dir'], 0777, true);
+            }
+
+            if (is_dir($directory['absolute_dir']) && (is_writable($directory['absolute_dir']) || @chmod($directory['absolute_dir'], 0777))) {
+                $selectedDirectory = $directory;
+                break;
+            }
+        }
+
+        if ($selectedDirectory === null) {
+            $selectedDirectory = $directories[0];
         }
 
         $fileName = 'qr_' . ($event['cod_event'] ?? 'event') . '_' . md5($publicUrl) . '.png';
+        $absoluteDir = $selectedDirectory['absolute_dir'];
         $absolutePath = $absoluteDir . '/' . $fileName;
-        $relativePath = $relativeDir . '/' . $fileName;
+        $relativePath = $selectedDirectory['relative_dir'] . '/' . $fileName;
 
         $oldFiles = glob($absoluteDir . '/qr_' . ($event['cod_event'] ?? 'event') . '_*.png');
         if ($oldFiles !== false) {

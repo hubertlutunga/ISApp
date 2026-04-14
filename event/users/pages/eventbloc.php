@@ -155,7 +155,7 @@ if (!empty($events)) {
 
             <?php
             // ---------- Accessoires (avec image de modèle en hover CSS) ----------
-            $stmtae = $pdo->prepare("SELECT cod_event, cod_acc, quantite FROM accessoires_event WHERE cod_event = ? ORDER BY cod_accev DESC");
+            $stmtae = $pdo->prepare("SELECT * FROM accessoires_event WHERE cod_event = ? ORDER BY cod_accev DESC");
             $stmtae->execute([$dataevent['cod_event']]);
             while ($dataae = $stmtae->fetch(PDO::FETCH_ASSOC)) {
                 $stmtMod = $pdo->prepare("SELECT nom, image FROM modele_is WHERE cod_mod = ?");
