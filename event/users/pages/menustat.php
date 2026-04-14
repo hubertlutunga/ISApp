@@ -187,7 +187,7 @@ if ($maxMonthly < 1) {
 		align-items: center;
 		padding: 3px 8px;
 		border-radius: 999px;
-		font-size: 9px;
+		font-size: 13px;
 		font-weight: 800;
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
@@ -227,7 +227,7 @@ if ($maxMonthly < 1) {
 	.stats-premium-title {
 		margin-top: 8px;
 		color: #475569;
-		font-size: 10px;
+		font-size: 16px;
 		font-weight: 700;
 		letter-spacing: 0.02em;
 	}
@@ -235,7 +235,7 @@ if ($maxMonthly < 1) {
 	.stats-premium-total {
 		margin-top: 4px;
 		color: #0f172a;
-		font-size: 22px;
+		font-size: 34px;
 		font-weight: 800;
 		line-height: 0.95;
 	}
@@ -252,25 +252,32 @@ if ($maxMonthly < 1) {
 
 	.stats-premium-month {
 		display: flex;
-		flex-direction: column;
-		gap: 3px;
+		align-items: baseline;
+		gap: 6px;
+		flex-wrap: nowrap;
 	}
 
 	.stats-premium-month strong {
 		color: #0f172a;
-		font-size: 12px;
+		font-size: 18px;
 		font-weight: 800;
+		white-space: nowrap;
 	}
 
 	.stats-premium-month span,
 	.stats-premium-hint {
 		color: #64748b;
-		font-size: 9px;
+		font-size: 13px;
+	}
+
+	.stats-premium-month span {
+		white-space: nowrap;
 	}
 
 	.stats-premium-hint {
 		text-align: right;
 		max-width: 54px;
+		display: none;
 	}
 
 	.stats-agent-panel {
@@ -323,7 +330,7 @@ if ($maxMonthly < 1) {
 		border-radius: 999px;
 		background: rgba(255, 255, 255, 0.88);
 		color: #b45309;
-		font-size: 9px;
+		font-size: 13px;
 		font-weight: 700;
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
@@ -333,7 +340,7 @@ if ($maxMonthly < 1) {
 	.stats-agent-title {
 		margin: 10px 0 6px;
 		color: #172554;
-		font-size: 18px;
+		font-size: 26px;
 		font-weight: 800;
 		line-height: 1.15;
 	}
@@ -341,7 +348,7 @@ if ($maxMonthly < 1) {
 	.stats-agent-subtitle {
 		margin: 0;
 		color: #64748b;
-		font-size: 11px;
+		font-size: 15px;
 		max-width: 680px;
 	}
 
@@ -357,13 +364,13 @@ if ($maxMonthly < 1) {
 
 	.stats-agent-summary strong {
 		display: block;
-		font-size: 18px;
+		font-size: 26px;
 		line-height: 1;
 		margin-bottom: 6px;
 	}
 
 	.stats-agent-summary span {
-		font-size: 10px;
+		font-size: 14px;
 		color: rgba(255, 255, 255, 0.72);
 	}
 
@@ -420,14 +427,14 @@ if ($maxMonthly < 1) {
 	.stats-agent-name {
 		margin: 0 34px 8px 0;
 		color: #0f172a;
-		font-size: 12px;
+		font-size: 18px;
 		font-weight: 700;
 	}
 
 	.stats-agent-total-label,
 	.stats-agent-month-label {
 		display: block;
-		font-size: 9px;
+		font-size: 13px;
 		font-weight: 700;
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
@@ -440,7 +447,7 @@ if ($maxMonthly < 1) {
 	.stats-agent-total-value {
 		margin-top: 4px;
 		color: #0f172a;
-		font-size: 20px;
+		font-size: 31px;
 		font-weight: 800;
 		line-height: 1;
 	}
@@ -460,7 +467,7 @@ if ($maxMonthly < 1) {
 	.stats-agent-month-value {
 		margin-top: 4px;
 		color: #0c4a6e;
-		font-size: 12px;
+		font-size: 18px;
 		font-weight: 800;
 	}
 
@@ -477,7 +484,7 @@ if ($maxMonthly < 1) {
 		display: flex;
 		justify-content: space-between;
 		gap: 12px;
-		font-size: 9px;
+		font-size: 13px;
 		color: #64748b;
 	}
 
@@ -489,7 +496,7 @@ if ($maxMonthly < 1) {
 		background: rgba(255, 255, 255, 0.92);
 		color: #64748b;
 		border: 1px dashed rgba(148, 163, 184, 0.5);
-		font-size: 11px;
+		font-size: 16px;
 	}
 
 	@media (max-width: 1199px) {
@@ -544,7 +551,7 @@ if ($maxMonthly < 1) {
 				<div class="stats-premium-bottom">
 					<div class="stats-premium-month">
 						<strong><?php echo $card['month']; ?></strong>
-						<span>sur le mois en cours</span>
+						<span>sur ce mois en cours</span>
 					</div>
 					<div class="stats-premium-hint">Touchez pour ouvrir le détail</div>
 				</div>
