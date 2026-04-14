@@ -1,4 +1,4 @@
-<?php 
+<?php
   
                                 if ($datasession['type_user'] == '3') {
                                     $linkall = "index.php?page=crea_accueil";
@@ -12,6 +12,34 @@
                                     $linkatt = "index.php?page=admin_filcom&type=enattente"; 
                                 }
 
+// --- Statistiques du mois en cours ---
+$mois = date('m');
+$annee = date('Y');
+
+// Réalisées ce mois
+$stmtMois = $pdo->prepare("SELECT COUNT(*) FROM events WHERE crea = '2' AND MONTH(date_enreg) = ? AND YEAR(date_enreg) = ?");
+$stmtMois->execute([$mois, $annee]);
+$nbRealiseMois = (int)$stmtMois->fetchColumn();
+
+// Evénements créés ce mois
+$stmtEvtMois = $pdo->prepare("SELECT COUNT(*) FROM events WHERE MONTH(date_enreg) = ? AND YEAR(date_enreg) = ?");
+$stmtEvtMois->execute([$mois, $annee]);
+$nbEvtMois = (int)$stmtEvtMois->fetchColumn();
+
+// Non payés ce mois
+$stmtNpMois = $pdo->prepare("SELECT COUNT(*) FROM events WHERE fact IS NULL AND MONTH(date_enreg) = ? AND YEAR(date_enreg) = ?");
+$stmtNpMois->execute([$mois, $annee]);
+$nbNpMois = (int)$stmtNpMois->fetchColumn();
+
+// En attente ce mois
+$stmtAttMois = $pdo->prepare("SELECT COUNT(*) FROM events WHERE fact = 'oui' AND (crea IS NULL OR crea = '4') AND MONTH(date_enreg) = ? AND YEAR(date_enreg) = ?");
+$stmtAttMois->execute([$mois, $annee]);
+$nbAttMois = (int)$stmtAttMois->fetchColumn();
+
+// Réalisations par agent pour le mois en cours
+$stmtAgents = $pdo->prepare("SELECT u.noms AS agent, COUNT(*) AS total FROM events e JOIN is_users u ON u.cod_user = e.cod_user WHERE e.crea = '2' AND MONTH(e.date_enreg) = ? AND YEAR(e.date_enreg) = ? GROUP BY u.noms ORDER BY total DESC");
+$stmtAgents->execute([$mois, $annee]);
+$agentsStats = $stmtAgents->fetchAll(PDO::FETCH_ASSOC);
 ?>
   
 				<div class="box box-body">
@@ -103,6 +131,30 @@
 						</div>	
 					</div>
 				</div>
+
+<!-- Réalisations par agent pour le mois en cours -->
+<div class="row mt-3">
+  <div class="col-12">
+    <div class="box box-body" style="border-radius:18px; background:#f8fafc;">
+      <h5 class="mb-2" style="color:#1f2a44;">Réalisations par agent (mois en cours)</h5>
+      <div class="d-flex flex-wrap" style="gap:18px;">
+        <?php foreach ($agentsStats as $agent): ?>
+          <div style="min-width:120px; background:#fff; border-radius:12px; box-shadow:0 2px 8px #e0e7ef; padding:14px 18px; margin-bottom:8px; text-align:center;">
+            <div style="font-size:22px; font-weight:700; color:#0f2242; line-height:1;">
+              <?php echo htmlspecialchars($agent['total']); ?>
+            </div>
+            <div style="font-size:13px; color:#475569; margin-top:2px;">
+              <?php echo htmlspecialchars($agent['agent']); ?>
+            </div>
+          </div>
+        <?php endforeach; ?>
+        <?php if (empty($agentsStats)): ?>
+          <span style="color:#64748b;">Aucune réalisation ce mois-ci.</span>
+        <?php endif; ?>
+      </div>
+    </div>
+  </div>
+</div>
 
 
 
