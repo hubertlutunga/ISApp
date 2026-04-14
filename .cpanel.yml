@@ -1,7 +1,7 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=$HOME/public_html/ISApp
+    - export DEPLOYPATH=$HOME/public_html
     - /bin/mkdir -p $DEPLOYPATH
     - /usr/bin/find $DEPLOYPATH -mindepth 1 -maxdepth 1 ! -name .well-known -exec rm -rf {} \;
     - /bin/tar --exclude=.git --exclude=.cpanel.yml --exclude=.gitignore --exclude=README.md --exclude=docs -cf - . | /bin/tar -C $DEPLOYPATH -xf -
