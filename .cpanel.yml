@@ -3,5 +3,19 @@ deployment:
   tasks:
     - export DEPLOYPATH=/home/invizfxg/public_html/
     - /bin/mkdir -p $DEPLOYPATH
-    - /bin/find $DEPLOYPATH -mindepth 1 -maxdepth 1 ! -name .well-known -exec rm -rf {} \;
-    - /bin/cp -R ./* $DEPLOYPATH
+    - /bin/cp -ru bootstrap $DEPLOYPATH
+    - /bin/cp -ru config $DEPLOYPATH
+    - /bin/cp -ru couple $DEPLOYPATH
+    - /bin/cp -ru event $DEPLOYPATH
+    - /bin/cp -ru fonts $DEPLOYPATH
+    - /bin/cp -ru images $DEPLOYPATH
+    - /bin/cp -ru js $DEPLOYPATH
+    - /bin/cp -ru menu $DEPLOYPATH
+    - /bin/cp -ru pages $DEPLOYPATH
+    - /bin/cp -ru PHPMailer $DEPLOYPATH
+    - /bin/cp -ru qrscan $DEPLOYPATH
+    - /bin/cp -ru site $DEPLOYPATH
+    - /bin/cp -ru src $DEPLOYPATH
+    - /bin/cp -ru sweet $DEPLOYPATH
+    - /bin/cp -ru twilio-php-main $DEPLOYPATH
+    - /bin/cp -u index.php $DEPLOYPATH
