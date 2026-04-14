@@ -25,3 +25,6 @@ Thumbs.db
 *.log
 *.tmp
 *.bak
+
+# Local environment overrides
+config/database.local.php

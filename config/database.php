@@ -4,13 +4,18 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+$serverHost = (string) ($_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? '');
+$homeDirectory = (string) (getenv('HOME') ?: '');
+$isCpanelProduction = str_contains($serverHost, 'invitationspeciale.com')
+    || str_contains($homeDirectory, '/home/invizfxg');
+
 $databaseConfig = [
-    'host' => getenv('ISAPP_DB_HOST') ?: '127.0.0.1',
-    'name' => getenv('ISAPP_DB_NAME') ?: 'isapp_db',
+    'host' => getenv('ISAPP_DB_HOST') ?: ($isCpanelProduction ? 'localhost' : '127.0.0.1'),
+    'name' => getenv('ISAPP_DB_NAME') ?: 'invizfxg_is',
     'charset' => getenv('ISAPP_DB_CHARSET') ?: 'utf8mb4',
-    'user' => getenv('ISAPP_DB_USER') ?: 'root',
-    'password' => getenv('ISAPP_DB_PASSWORD') ?: 'Root_2023',
-    'display_errors' => getenv('ISAPP_DISPLAY_ERRORS') === '1',
+    'user' => getenv('ISAPP_DB_USER') ?: ($isCpanelProduction ? 'invizfxg_hubert' : 'root'),
+    'password' => getenv('ISAPP_DB_PASSWORD') ?: ($isCpanelProduction ? 'Huberusbb01' : 'Root_2023'),
+    'display_errors' => getenv('ISAPP_DISPLAY_ERRORS') === '1' || !$isCpanelProduction,
 ];
 
 $localConfigPath = __DIR__ . '/database.local.php';
