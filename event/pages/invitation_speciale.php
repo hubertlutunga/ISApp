@@ -11,6 +11,62 @@ require_once __DIR__ . '/../../qrscan/phpqrcode/qrlib.php';
 
 use setasign\Fpdi\Fpdi;
 
+function renderPdfErrorPage($title, $message) {
+    http_response_code(404);
+    ?>
+    <!DOCTYPE html>
+    <html lang="fr">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title><?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?></title>
+        <style>
+            body {
+                margin: 0;
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 24px;
+                font-family: Arial, sans-serif;
+                background: linear-gradient(135deg, #f8fafc 0%, #dbeafe 100%);
+                color: #0f172a;
+            }
+
+            .pdf-error-card {
+                width: min(100%, 560px);
+                padding: 32px;
+                border-radius: 24px;
+                background: #ffffff;
+                box-shadow: 0 24px 60px rgba(15, 23, 42, 0.16);
+                text-align: center;
+            }
+
+            .pdf-error-card h1 {
+                margin: 0 0 12px;
+                font-size: 28px;
+                line-height: 1.2;
+            }
+
+            .pdf-error-card p {
+                margin: 0;
+                font-size: 16px;
+                line-height: 1.7;
+                color: #475569;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="pdf-error-card">
+            <h1><?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?></h1>
+            <p><?php echo htmlspecialchars($message, ENT_QUOTES, 'UTF-8'); ?></p>
+        </div>
+    </body>
+    </html>
+    <?php
+    exit();
+}
+
 class MyPDF extends Fpdi {
     function RoundedRect($x, $y, $w, $h, $r, $style = '') {
         $k = $this->k;
@@ -56,8 +112,20 @@ $stmtev = $pdo->prepare("SELECT * FROM events WHERE cod_event = ?");
 $stmtev->execute([$_GET['event']]);
 $dataevent = $stmtev->fetch();
 
+if (!$dataevent) {
+    renderPdfErrorPage("Evenement introuvable", "L'evenement demande est introuvable ou n'est plus disponible.");
+}
+
 $cheminfichier = $dataevent['invit_religieux'];
-$pdf_source = 'fichiers/' . $cheminfichier;
+$pdf_source = __DIR__ . '/fichiers/' . ltrim((string) $cheminfichier, '/');
+
+if ($cheminfichier === null || trim((string) $cheminfichier) === '') {
+    renderPdfErrorPage("Invitation indisponible", "Le modele PDF de cette invitation n'a pas encore ete ajoute pour cet evenement.");
+}
+
+if (!is_file($pdf_source)) {
+    renderPdfErrorPage("Fichier d'invitation manquant", "Le fichier PDF source de cette invitation est introuvable sur le serveur. Merci de l'ajouter dans le dossier des invitations avant de relancer le partage.");
+}
 
 // Créer un nouveau document PDF en utilisant votre classe personnalisée
 $pdf = new MyPDF();
@@ -77,6 +145,10 @@ for ($i = 1; $i <= $pagecount; $i++) {
     $stmt = $pdo->prepare("SELECT * FROM invite WHERE id_inv = :id_inv");
     $stmt->execute([':id_inv' => $_GET['cod']]);
     $datainvite = $stmt->fetch();
+
+    if (!$datainvite) {
+        renderPdfErrorPage("Invite introuvable", "L'invite demande est introuvable ou n'est plus disponible.");
+    }
 
     if ($datainvite['sing'] === 'C') {
         $sing = 'Couple';

@@ -1,13 +1,18 @@
 
-<div class="container h-p100" style="margin-top:20px;">
+<?php
+$feedbackMessage = null;
+$feedbackType = 'error';
+?>
+
+<div class="container h-p100 commande-page-shell" style="margin-top:20px;">
 		<div class="row align-items-center justify-content-md-center h-p100">
 			
 			<div class="col-12">
 				<div class="row justify-content-center g-0">
 					<div class="col-lg-5 col-md-5 col-12 boxcontent">
-						<div class="bg-white rounded10 shadow-lg">
-							<div class="content-top-agile p-20 pb-0"> 
-                                <img src="../images/Logo_invitationSpeciale_1.png">
+                        <div class="bg-white rounded10 shadow-lg commande-card">
+                            <div class="content-top-agile p-20 pb-0 commande-card-header"> 
+                                <img src="../images/Logo_invitationSpeciale_1.png" class="commande-logo" alt="Invitation Speciale">
 
 
 
@@ -56,7 +61,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
 
-    echo "<span style='color:red;'>" . htmlspecialchars((string) ($registrationResult['message'] ?? ''), ENT_QUOTES, 'UTF-8') . "</span>";
+    $feedbackMessage = (string) ($registrationResult['message'] ?? '');
+    $feedbackType = 'error';
 
         
 
@@ -90,38 +96,120 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 </style>
 
-
-
 <style>
+    .commande-page-shell {
+        padding-bottom: 32px;
+    }
+
+    .commande-card {
+        border: 0;
+        border-radius: 28px;
+        overflow: hidden;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+        box-shadow: 0 28px 70px rgba(15, 23, 42, 0.12);
+    }
+
+    .commande-card-header {
+        padding: 28px 32px 12px;
+        text-align: center;
+        background:
+            radial-gradient(circle at top left, rgba(14, 165, 233, 0.18), transparent 45%),
+            radial-gradient(circle at top right, rgba(6, 149, 120, 0.16), transparent 42%),
+            linear-gradient(135deg, #eff6ff 0%, #ffffff 55%, #f0fdf4 100%);
+    }
+
+    .commande-logo {
+        width: clamp(150px, 42vw, 220px);
+        max-width: 100%;
+    }
+
+    .commande-kicker {
+        margin: 18px 0 8px;
+        font-size: 12px;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+        color: #0891b2;
+        font-weight: 800;
+    }
+
+    .commande-title {
+        margin: 0;
+        font-size: clamp(28px, 4vw, 40px);
+        line-height: 1.08;
+        color: #0f172a;
+        font-weight: 900;
+    }
+
+    .commande-subtitle {
+        max-width: 460px;
+        margin: 14px auto 0;
+        color: #475569;
+        font-size: 15px;
+        line-height: 1.7;
+    }
+
+    .commande-card-body {
+        padding: 28px 32px 36px;
+    }
+
+    .commande-section-caption {
+        margin-bottom: 18px;
+        font-size: 14px;
+        font-weight: 700;
+        color: #64748b;
+        text-align: center;
+    }
+
+    .commande-feedback {
+        margin-bottom: 18px;
+        padding: 14px 16px;
+        border-radius: 16px;
+        font-size: 14px;
+        line-height: 1.6;
+        border: 1px solid transparent;
+    }
+
+    .commande-feedback.error {
+        background: #fef2f2;
+        border-color: #fecaca;
+        color: #b91c1c;
+    }
+
     .option-container {
-        border: 1px solid #000; 
-        border-radius :  8px;
-        padding: 10px 15px;
-        margin-bottom: 10px;
+        border: 1px solid #dbe4f0; 
+        border-radius : 20px;
+        padding: 16px 18px;
+        margin-bottom: 14px;
         display: flex;
-        align-items: center;
+        align-items: flex-start;
+        gap: 14px;
         cursor: pointer;
-        transition: background-color 0.3s;
+        transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
         font-family: Arial, sans-serif;
         width: 100%;
+        background: #fff;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
     }
 
     .option-container.selected {
-        background-color: #06a578ff;
+        background: linear-gradient(135deg, #0891b2 0%, #06a578 100%);
         color: white;
-        border:none !important;
+        border-color: transparent !important;
+        box-shadow: 0 18px 38px rgba(6, 149, 120, 0.26);
+        transform: translateY(-1px);
     }
 
     .radio-custom {
-        width: 20px;
-        height: 20px;
-        border: 2px solid #000;
+        width: 24px;
+        min-width: 24px;
+        height: 24px;
+        border: 2px solid #0f172a;
         border-radius: 50%;
-        margin-right: 10px;
         position: relative;
         display: flex;
         align-items: center;
         justify-content: center;
+        margin-top: 2px;
     }
 
     .radio-custom::after {
@@ -129,8 +217,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         width: 12px;
         height: 12px;
         border-radius: 50%;
-        background-color: #aaa;
+        background-color: #0f172a;
         display: none;
+    }
+
+    .option-container.selected .radio-custom {
+        border-color: rgba(255,255,255,.9);
     }
 
     .option-container.selected .radio-custom::after {
@@ -139,8 +231,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     .description {
-        font-size: 1em;
-        opacity: 0.8;
+        display: block;
+        margin-top: 5px;
+        font-size: 13px;
+        line-height: 1.6;
+        color: #64748b;
+    }
+
+    .option-container.selected .description {
+        color: rgba(255,255,255,.84);
     }
 
     input[type="radio"] {
@@ -148,7 +247,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     label {
-        font-size: 1.5em;
+        font-size: 18px;
+        line-height: 1.3;
+        font-weight: 800;
+        margin: 0;
     }
 
     .btn.disabled {
@@ -158,13 +260,79 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     h4{
         text-align:center;
-        margin-top:-10px;
-        margin-bottom:15px;
+        margin-top:4px;
+        margin-bottom:18px;
+        color: #0f172a;
+        font-size: 22px;
+        font-weight: 800;
     }
 
     #submit-button{
-        height:45px !important;
+        height:54px !important;
         border:none !important;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #0f172a 0%, #0891b2 100%);
+        font-size: 15px;
+        font-weight: 800;
+        box-shadow: 0 18px 32px rgba(8, 145, 178, 0.22);
+    }
+
+    .commande-panel {
+        padding: 20px 20px 4px;
+        margin: 8px 0 14px;
+        border-radius: 22px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+    }
+
+    .commande-panel .input-group-text {
+        border-radius: 14px 0 0 14px;
+        border-color: #dbe4f0;
+        color: #0891b2;
+        min-width: 48px;
+        justify-content: center;
+    }
+
+    .commande-panel .form-control {
+        border-color: #dbe4f0;
+        border-radius: 0 14px 14px 0;
+        min-height: 48px;
+        color: #0f172a;
+    }
+
+    .commande-panel .form-control:focus {
+        border-color: #7dd3fc;
+        box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.14);
+    }
+
+    .commande-links {
+        text-align: center;
+        padding-top: 8px;
+    }
+
+    .commande-links p {
+        color: #64748b;
+    }
+
+    .commande-links a {
+        color: #0891b2;
+        font-weight: 700;
+    }
+
+    @media only screen and (max-width: 767px) {
+        .commande-card-header,
+        .commande-card-body {
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+
+        .option-container {
+            padding: 14px;
+        }
+
+        label {
+            font-size: 16px;
+        }
     }
 
 </style>
@@ -172,9 +340,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
 
-                    <p class="mb-0 text-fade">Identification du client</p>							
+                    <p class="commande-kicker">Commande et accès client</p>
+                    <h1 class="commande-title">Commencez votre commande en quelques instants</h1>
+                    <p class="commande-subtitle">Connectez-vous si vous avez deja un compte, ou creez-en un pour acceder a votre espace evenement et poursuivre votre commande sans interruption.</p>
 							</div>
-							<div class="p-40">
+							<div class="p-40 commande-card-body">
+
+<?php if (!empty($feedbackMessage)) { ?>
+<div class="commande-feedback <?php echo htmlspecialchars($feedbackType, ENT_QUOTES, 'UTF-8'); ?>">
+    <?php echo htmlspecialchars($feedbackMessage, ENT_QUOTES, 'UTF-8'); ?>
+</div>
+<?php } ?>
+
+<p class="commande-section-caption">Choisissez votre parcours pour continuer.</p>
 
 <form action="" method="post"> 
     <div class="input-group mb-3">
@@ -182,13 +360,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="radio-custom"></div>
             <input type="radio" name="choix" value="ancien_client" id="client">
             <div>
-                <label for="client">Jesuis déjà un client</label><br>
+                <label for="client">Je suis deja client</label><br>
                 <span class="description">Je possède déjà un compte</span>
             </div>
         </div> 
     </div> 
 
-    <div id="ancien_client" style="display: none;">
+    <div id="ancien_client" class="commande-panel" style="display: none;">
 
     
     <h4>Connectez - vous</h4>
@@ -220,7 +398,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div> 
 
-    <div class="new_client" style="display: none;">
+    <div class="new_client commande-panel" style="display: none;">
 
     <h4>Inscrivez - vous</h4>
 
@@ -341,11 +519,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
 
-								<div class="text-center">
+                                <div class="commande-links">
 									<p class="mt-15 mb-0 text-fade">Vous avez déjà un compte ?<a href="index.php?page=login" class="text-primary ms-5">Se Connecter</a></p>
 								</div>
 								
-								<div class="text-center">
+                                <div class="commande-links">
 								  <p class="mt-20 text-fade">- Nos réseaux -</p>
 								  <p class="gap-items-2 mb-0">
 								  <a class="waves-effect waves-circle btn btn-social-icon btn-circle btn-twitter-light" href="#"><i class="fab fa-tiktok"></i></a>
