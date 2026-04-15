@@ -261,6 +261,8 @@
 		justify-content:center;
 		width:42px;
 		height:42px;
+		min-width:42px;
+		flex-shrink:0;
 		border-radius:14px;
 		border:1px solid #fde68a;
 		background:linear-gradient(180deg,#fff7e8 0%,#ffe7b8 100%);
@@ -285,7 +287,12 @@
 	.modal{z-index: 8999 !important;}
 
 	@media only screen and (max-width: 769px) {
+		.mb-invite-card{
+			overflow:visible;
+		}
+
 		.mb-invite-row{
+			display:block;
 			position:relative;
 		}
 
@@ -323,23 +330,56 @@
 			padding-right:18px;
 		}
 
-		.mb-invite-row td{
-			display:block;
+		.mb-invite-body{
+			padding-bottom:96px;
+		}
+
+		.mb-invite-table{
+			table-layout:fixed;
 			width:100%;
-			padding:12px 0 !important;
 		}
 
-		.mb-invite-row td:first-child{
-			padding-right:62px !important;
+		.mb-invite-row{
+			display:table-row;
 		}
 
-		.mb-invite-row td.text-end{
-			position:absolute;
-			top:12px;
-			right:0;
+		.mb-invite-row td{
+			display:table-cell;
 			width:auto !important;
-			padding:0 !important;
+			padding:12px 0 !important;
+			vertical-align:top;
+		}
+
+		.mb-invite-row td.pt-0.px-0.b-0{
+			width:60% !important;
+			min-width:0;
+			padding-right:12px !important;
+		}
+
+		.mb-invite-row td.text-end.b-0.pt-0.px-0{
+			position:static;
+			width:40% !important;
+			min-width:40%;
+			padding:12px 0 12px 12px !important;
 			text-align:right !important;
+			vertical-align:top;
+		}
+
+		.mb-invite-row td.text-end .list-icons,
+		.mb-invite-row td.text-end .list-icons-item{
+			display:inline-flex !important;
+			flex-wrap:nowrap;
+			flex-shrink:0;
+			justify-content:flex-end;
+			width:100%;
+		}
+
+		.mb-invite-row td.text-end .dropdown,
+		.mb-invite-row td.text-end .dropdown-toggle,
+		.mb-invite-actions{
+			width:42px;
+			min-width:42px;
+			height:42px;
 		}
 	}
 </style>
@@ -540,7 +580,7 @@
 												 <span class="mb-invite-inline-meta"><strong><?php echo htmlspecialchars($sing, ENT_QUOTES, 'UTF-8'); ?></strong>, <?php echo htmlspecialchars($inviteAccord, ENT_QUOTES, 'UTF-8'); ?> par <strong><?php echo htmlspecialchars($hoteNom, ENT_QUOTES, 'UTF-8'); ?></strong><br><?php echo $reponseconf; ?>, table : <?php echo htmlspecialchars($siege, ENT_QUOTES, 'UTF-8'); ?></span>
 										   </td> 
    
-										   <td class="text-end b-0 pt-0 px-0" width="15%"> 
+											<td class="text-end b-0 pt-0 px-0"> 
 											  
 
 
