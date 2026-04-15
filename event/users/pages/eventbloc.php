@@ -31,6 +31,7 @@ $fmt = new IntlDateFormatter(
 .event-row { position:relative; }
 .event-card-cell { padding:0 !important; }
 .event-card-shell {
+  position:relative;
   background:linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
   border:1px solid #e2e8f0;
   border-radius:28px;
@@ -251,6 +252,7 @@ $fmt = new IntlDateFormatter(
   display:flex;
   justify-content:flex-end;
   flex:0 0 auto;
+  margin-left:auto;
 }
 
 .pagination { gap:8px; flex-wrap:wrap; }
@@ -269,8 +271,24 @@ $fmt = new IntlDateFormatter(
 
 @media (max-width: 991px) {
   .event-card-shell { padding:18px; border-radius:22px; }
-  .event-card-topbar { flex-direction:column; align-items:stretch; }
-  .event-actions-wrap { justify-content:flex-start; }
+  .event-card-topbar {
+    display:block;
+    padding-right:64px;
+  }
+  .event-card-flags {
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    min-width:0;
+  }
+  .event-actions-wrap {
+    position:absolute;
+    top:18px;
+    right:18px;
+    margin-left:0;
+    justify-content:flex-end;
+    z-index:4;
+  }
   .hoverx-container { min-width:100%; }
 }
 
@@ -362,7 +380,7 @@ if (!empty($events)) {
 
 
 
-    // ----------- Affichage ligne -----------
+    //----------- Affichage ligne -----------
     ?>
     <tr class="event-row">
       <td class="event-card-cell">

@@ -285,6 +285,10 @@
 	.modal{z-index: 8999 !important;}
 
 	@media only screen and (max-width: 769px) {
+		.mb-invite-row{
+			position:relative;
+		}
+
 		.mb-invite-toolbar{
 			align-items:stretch;
 		}
@@ -325,9 +329,17 @@
 			padding:12px 0 !important;
 		}
 
+		.mb-invite-row td:first-child{
+			padding-right:62px !important;
+		}
+
 		.mb-invite-row td.text-end{
-			text-align:left !important;
-			padding-top:0 !important;
+			position:absolute;
+			top:12px;
+			right:0;
+			width:auto !important;
+			padding:0 !important;
+			text-align:right !important;
 		}
 	}
 </style>
