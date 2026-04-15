@@ -204,11 +204,39 @@
 		color:#2563eb;
 	}
 
+	.mb-invite-inline-meta{
+		display:block;
+		margin-top:7px;
+		font-size:13px;
+		line-height:1.55;
+		color:#64748b;
+	}
+
+	.mb-invite-inline-meta strong{
+		font-weight:700;
+		color:#334155;
+	}
+
 	.mb-invite-badges{
 		display:flex;
 		gap:8px;
 		flex-wrap:wrap;
-		margin-top:10px;
+		margin-top:8px;
+	}
+
+	.mb-invite-hostline{
+		display:inline-flex;
+		align-items:center;
+		gap:6px;
+		margin-top:8px;
+		font-size:12px;
+		font-weight:500;
+		color:#64748b;
+	}
+
+	.mb-invite-hostline strong{
+		font-weight:600;
+		color:#334155;
 	}
 
 	.mb-invite-badge{
@@ -372,9 +400,21 @@
 									$tri = 'ORDER BY nom ASC';
 								}
 
-							$hostStmt = $pdo->prepare("SELECT u.cod_user, u.noms, COUNT(*) AS invite_total FROM invite i LEFT JOIN is_users u ON u.cod_user = i.hote WHERE i.cod_mar = :codevent AND i.hote IS NOT NULL GROUP BY u.cod_user, u.noms ORDER BY u.noms ASC");
+							$hostStmt = $pdo->prepare("SELECT u.cod_user, u.noms, SUM(CASE WHEN i.sing = 'C' THEN 2 ELSE 1 END) AS invite_total FROM invite i LEFT JOIN is_users u ON u.cod_user = i.hote WHERE i.cod_mar = :codevent AND i.hote IS NOT NULL GROUP BY u.cod_user, u.noms ORDER BY u.noms ASC");
 								$hostStmt->execute([':codevent' => $codevent]);
 								$hostOptions = $hostStmt->fetchAll(PDO::FETCH_ASSOC);
+
+							$extractFirstName = static function (?string $fullName): string {
+								$normalized = trim((string) $fullName);
+
+								if ($normalized === '') {
+									return 'Hôte inconnu';
+								}
+
+								$parts = preg_split('/\s+/u', $normalized);
+
+								return $parts && $parts[0] !== '' ? $parts[0] : $normalized;
+							};
 
 							$totalInviteCount = 0;
 							$myInviteCount = 0;
@@ -436,7 +476,7 @@
 							   <option value="mine" <?php echo $selectedHostFilter === 'mine' ? 'selected' : ''; ?>>Mes invités (<?php echo $myInviteCount; ?>)</option>
 							   <?php } ?>
 							   <?php foreach ($hostOptions as $hostOption) { ?>
-							   <option value="<?php echo htmlspecialchars((string) $hostOption['cod_user'], ENT_QUOTES, 'UTF-8'); ?>" <?php echo $selectedHostFilter === (string) $hostOption['cod_user'] ? 'selected' : ''; ?>><?php echo htmlspecialchars(trim((string) ($hostOption['noms'] ?? 'Administrateur inconnu')), ENT_QUOTES, 'UTF-8'); ?> (<?php echo (int) ($hostOption['invite_total'] ?? 0); ?>)</option>
+							   <option value="<?php echo htmlspecialchars((string) $hostOption['cod_user'], ENT_QUOTES, 'UTF-8'); ?>" <?php echo $selectedHostFilter === (string) $hostOption['cod_user'] ? 'selected' : ''; ?>><?php echo htmlspecialchars($extractFirstName(isset($hostOption['noms']) ? (string) $hostOption['noms'] : 'Administrateur inconnu'), ENT_QUOTES, 'UTF-8'); ?> (<?php echo (int) ($hostOption['invite_total'] ?? 0); ?>)</option>
 							   <?php } ?>
 						   </select>
 					   </div>
@@ -462,18 +502,21 @@
 									   $siege = $seatName ? ucfirst($seatName) : 'Non définie';
 									   if (($row_inv['sing'] ?? '') === 'C') {
 										   $sing = 'Couple';
+										   $inviteAccord = 'invités';
 									   } elseif (($row_inv['sing'] ?? '') === 'Mr') {
 										   $sing = 'Monsieur';
+										   $inviteAccord = 'invité';
 									   } elseif (($row_inv['sing'] ?? '') === 'Mme') {
 										   $sing = 'Madame';
+										   $inviteAccord = 'invitée';
 									   } else {
 										   $sing = 'Non défini';
+										   $inviteAccord = 'invité';
 									   }
 									   $confirmed = isset($confirmedNames[InviteStatusService::normalizeName((string) $row_inv['nom'])]);
 									   $reponseconf = InviteStatusService::confirmationLabel($confirmed, $row_inv['sing'] ?? null);
 									   $responseClass = $confirmed ? 'success' : 'muted';
-									   $hoteNom = trim((string) ($row_inv['hote_nom'] ?? ''));
-									   $hoteNom = $hoteNom !== '' ? $hoteNom : 'Hôte inconnu';
+									   $hoteNom = $extractFirstName(isset($row_inv['hote_nom']) ? (string) $row_inv['hote_nom'] : '');
 
 							 
 							 ?>
@@ -482,12 +525,7 @@
 
 											<td class="pt-0 px-0 b-0">
 												<a class="invite-name mb-invite-name-link" href="index.php?page=modinv&idinv=<?php echo $row_inv['id_inv'];?>"><?php echo htmlspecialchars(ucfirst($row_inv['nom'])); ?></a>
-												 <span class="mb-invite-tableline"><i class="mdi mdi-table-chair"></i> Table : <?php echo htmlspecialchars($siege, ENT_QUOTES, 'UTF-8'); ?></span>
-												 <div class="mb-invite-badges">
-													<span class="mb-invite-badge host"><?php echo htmlspecialchars($hoteNom, ENT_QUOTES, 'UTF-8'); ?></span>
-													<span class="mb-invite-badge type"><?php echo $sing; ?></span>
-													<span class="mb-invite-badge <?php echo $responseClass; ?>"><?php echo $reponseconf; ?></span>
-												</div>
+												 <span class="mb-invite-inline-meta"><strong><?php echo htmlspecialchars($sing, ENT_QUOTES, 'UTF-8'); ?></strong>, <?php echo htmlspecialchars($inviteAccord, ENT_QUOTES, 'UTF-8'); ?> par <strong><?php echo htmlspecialchars($hoteNom, ENT_QUOTES, 'UTF-8'); ?></strong><br><?php echo $reponseconf; ?>, table : <?php echo htmlspecialchars($siege, ENT_QUOTES, 'UTF-8'); ?></span>
 										   </td> 
    
 										   <td class="text-end b-0 pt-0 px-0" width="15%"> 
