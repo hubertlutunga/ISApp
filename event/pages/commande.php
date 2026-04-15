@@ -12,7 +12,7 @@ $feedbackType = 'error';
 					<div class="col-lg-5 col-md-5 col-12 boxcontent">
                         <div class="bg-white rounded10 shadow-lg commande-card">
                             <div class="content-top-agile p-20 pb-0 commande-card-header"> 
-                                <img src="../images/Logo_invitationSpeciale_SF.png" class="commande-logo" alt="Invitation Speciale">
+                                <img src="../images/Logo_invitationSpeciale_1.png" class="commande-logo" alt="Invitation Speciale">
 
 
 

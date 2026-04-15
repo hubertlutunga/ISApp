@@ -56,7 +56,7 @@ try {
     $color = ($acces === 'oui') ? '#3bbc72' : '';
 
     $singRaw = (string)($r['sing'] ?? '');
-    $tiHtml  = ($singRaw === 'C') ? 'Couple' : (!empty($singRaw) ? 'Singleton' : '<em>Non défini</em>');
+    $tiHtml  = ($singRaw === 'C') ? 'Couple' : (!empty($singRaw) ? 'Singleton' : 'Non defini');
 
     $nomtable = $r['nom_tab'] ?? 'Non définie';
 
@@ -67,15 +67,15 @@ try {
     $colorCss = htmlspecialchars($color, ENT_QUOTES, 'UTF-8');
 
     $html .= '
-      <tr style="margin-bottom:15px;">
+      <tr>
         <td align="left" style="border-bottom:1px solid #aaa;padding:7px 0;">
           <a href="'. $url .'" style="color: '. $colorCss .'">'. $nom .'</a>
         </td>
         <td align="left" style="border-bottom:1px solid #aaa;padding:7px 0;">
-          <a href="'. $url .'" style="color: '. $colorCss .'">'. $tiHtml .'</a>
+          <a href="'. $url .'" style="color: '. $colorCss .'"><span class="access-type-pill">'. htmlspecialchars($tiHtml, ENT_QUOTES, 'UTF-8') .'</span></a>
         </td>
         <td align="right" style="border-bottom:1px solid #aaa;padding:7px 0;">
-          <a href="'. $url .'" style="color: '. $colorCss .'">'. $tabHtml .'</a>
+          <a href="'. $url .'" style="color: '. $colorCss .'" class="access-table-name">'. $tabHtml .'</a>
         </td>
       </tr>
     ';

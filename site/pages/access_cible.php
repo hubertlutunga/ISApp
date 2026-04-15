@@ -21,7 +21,7 @@
  
 
                  <div style="display: flex; justify-content: center;">
-                     <a href="index.php?page=access&cod=<?php echo $codevent?>"><img src="../images/Logo_invitationSpeciale_3.png" width="300px;"></a>
+                     <a href="index.php?page=access&cod=<?php echo $codevent?>"><img src="../images/Logo_invitationSpeciale_1.png" width="300px;"></a>
 
 
 

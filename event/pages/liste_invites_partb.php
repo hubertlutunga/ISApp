@@ -94,7 +94,7 @@
 			$this->SetTextColor(0, 0, 0);
 			$this->SetFont('Arial','',20);
 			
-			$this->Image('../images/Logo_invitationSpeciale_SF.png',68,5,70);
+			$this->Image('../images/Logo_invitationSpeciale_1.png',68,5,70);
 			$this->Ln(20);
 
 

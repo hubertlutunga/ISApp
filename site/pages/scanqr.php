@@ -50,6 +50,30 @@
   let qr = null;
   let isRunning = false;
 
+  async function startWithCamera(cameraConfig, config){
+    await qr.start(
+      cameraConfig,
+      config,
+      (decodedText) => {
+        if (!isRunning) return;
+        isRunning = false;
+
+        const url = normalizeUrl(decodedText);
+        if (!url) {
+          setStatus("QR détecté mais lien invalide ❌");
+          return;
+        }
+
+        setStatus("QR détecté ✅ Redirection…");
+
+        stopQr();
+
+        window.location.href = url;
+      },
+      () => {}
+    );
+  }
+
   function setStatus(txt){
     if ($status) $status.textContent = txt;
   }
@@ -75,37 +99,28 @@
       $btnStop.style.display  = "inline-block";
       setStatus("Ouverture caméra...");
 
-      const cameras = await Html5Qrcode.getCameras();
-      const backCam = cameras.length
-        ? (cameras.find(c => /back|rear|environment/i.test(c.label)) || cameras[0])
-        : null;
-
       const config = { fps: 10, qrbox: { width: 260, height: 260 } };
 
       isRunning = true;
 
-      await qr.start(
-        backCam ? { deviceId: { exact: backCam.id } } : { facingMode: "environment" },
-        config,
-        (decodedText) => {
-          if (!isRunning) return;
-          isRunning = false;
+      try {
+        await startWithCamera({ facingMode: { exact: "environment" } }, config);
+      } catch (environmentError) {
+        const cameras = await Html5Qrcode.getCameras();
+        const backCam = cameras.length
+          ? (cameras.find(c => /back|rear|environment|traseira|arriere/i.test(c.label)) || cameras[0])
+          : null;
 
-          const url = normalizeUrl(decodedText);
-          if (!url) {
-            setStatus("QR détecté mais lien invalide ❌");
-            return;
+        if (backCam) {
+          try {
+            await startWithCamera({ deviceId: { exact: backCam.id } }, config);
+          } catch (deviceError) {
+            await startWithCamera({ facingMode: "environment" }, config);
           }
-
-          setStatus("QR détecté ✅ Redirection…");
-
-          stopQr();
-
-          // 👉 REDIRECTION MÊME ONGLET
-          window.location.href = url;
-        },
-        () => {}
-      );
+        } else {
+          await startWithCamera({ facingMode: "environment" }, config);
+        }
+      }
 
       setStatus("Caméra active. Scanne un QR…");
 
