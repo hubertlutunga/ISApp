@@ -37,6 +37,11 @@ $fmt = new IntlDateFormatter(
   padding:24px;
   box-shadow:0 20px 40px rgba(15, 23, 42, 0.08);
 }
+.event-card-shell.event-card-overdue {
+  background:linear-gradient(180deg, #fff7f7 0%, #fff1f2 100%);
+  border-color:#fecaca;
+  box-shadow:0 20px 40px rgba(239, 68, 68, 0.10);
+}
 .event-card-topbar {
   display:flex;
   align-items:flex-start;
@@ -66,6 +71,7 @@ $fmt = new IntlDateFormatter(
 .badge-done{ background:rgb(0,129,97); color:#fff; }
 .badge-progress{ background:rgb(15,99,233); color:#fff; }
 .badge-partial{ background:#d98a00; color:#fff; }
+.badge-overdue{ background:#dc2626; color:#fff; }
 .badge-unpaid{ background:#6b7280; color:#fff; }
 .badge-livr{ background:#fff3e8; color:rgb(149,27,0); }
 
@@ -340,6 +346,13 @@ if (!empty($events)) {
   $publicUrl = $eventDisplay['publicUrl'];
   $qrFile = $eventDisplay['qrFile'];
   $paymentMeta = $eventDisplay['payment'];
+  $deliveryTimestamp = !empty($dataevent['date_livraison']) ? strtotime((string) $dataevent['date_livraison']) : false;
+  $isOverdue = $deliveryTimestamp !== false
+    && ($dataevent['crea'] ?? null) !== '2'
+    && $deliveryTimestamp < strtotime(date('Y-m-d'));
+  $overdueBadge = $isOverdue
+    ? '<span class="badge-flag badge-overdue">En retard</span>'
+    : '';
 
 
 
@@ -353,9 +366,9 @@ if (!empty($events)) {
     ?>
     <tr class="event-row">
       <td class="event-card-cell">
-        <div class="event-card-shell">
+        <div class="event-card-shell<?php echo $isOverdue ? ' event-card-overdue' : ''; ?>">
         <div class="event-card-topbar">
-          <div class="event-card-flags"><?= $badge . ' ' . $badgepaie ?></div>
+          <div class="event-card-flags"><?= $badge . ' ' . $badgepaie . ' ' . $overdueBadge ?></div>
           <div class="event-actions-wrap">
             <div class="list-icons d-inline-flex">
               <div class="list-icons-item dropdown">

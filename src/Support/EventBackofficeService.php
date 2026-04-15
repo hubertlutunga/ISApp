@@ -227,7 +227,13 @@ LIMIT :limit OFFSET :offset
         }
 
         if ($paymentMeta['is_partially_paid']) {
-            return "<span class='badge-partial'>partiellement payé</span>";
+            $partialBadge = "<span class='badge-partial'>partiellement payé</span>";
+
+            if (!empty($event['date_livraison'])) {
+                return $partialBadge . " <em class='badge-livr'>à livré le " . date('d/m/Y', strtotime($event['date_livraison'])) . '</em>';
+            }
+
+            return $partialBadge;
         }
 
         if (!empty($event['date_livraison'])) {
