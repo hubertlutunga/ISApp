@@ -703,6 +703,10 @@
     margin-bottom: 20px;
   }
 
+  .finance-counter {
+    font-weight: 400;
+  }
+
   .finance-grid {
     row-gap: 18px;
   }
@@ -806,7 +810,7 @@
     background: rgba(15, 23, 42, 0.06);
     color: #0f172a;
     font-size: 12px;
-    font-weight: 800;
+    font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
   }

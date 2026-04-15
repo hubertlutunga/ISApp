@@ -227,7 +227,7 @@ LIMIT :limit OFFSET :offset
         }
 
         if ($paymentMeta['is_partially_paid']) {
-            return "<span style='position:relative; z-index:10; top:4px; left:-15px; background:#d98a00; color:#fff; padding:5px 10px 5px 25px; border-radius:0 0 20px 0; font-size:14px; font-weight:bold;'>partiellement payé</span>";
+            return "<span class='badge-partial'>partiellement payé</span>";
         }
 
         if (!empty($event['date_livraison'])) {

@@ -94,14 +94,14 @@ $dashboardCards = [
 	]
 ];
 
-$maxMonthly = 0;
+$totalMonthly = 0;
 
 foreach ($agentsStats as $agentStat) {
-	$maxMonthly = max($maxMonthly, (int) ($agentStat['total_mois'] ?? 0));
+	$totalMonthly += (int) ($agentStat['total_mois'] ?? 0);
 }
 
-if ($maxMonthly < 1) {
-	$maxMonthly = 1;
+if ($totalMonthly < 1) {
+	$totalMonthly = 1;
 }
 ?>
 
@@ -188,7 +188,7 @@ if ($maxMonthly < 1) {
 		padding: 3px 8px;
 		border-radius: 999px;
 		font-size: 13px;
-		font-weight: 800;
+		font-weight: 400;
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
 		background: rgba(255, 255, 255, 0.76);
@@ -260,7 +260,7 @@ if ($maxMonthly < 1) {
 	.stats-premium-month strong {
 		color: #0f172a;
 		font-size: 18px;
-		font-weight: 800;
+		font-weight: 300;
 		white-space: nowrap;
 	}
 
@@ -341,7 +341,7 @@ if ($maxMonthly < 1) {
 		margin: 10px 0 6px;
 		color: #172554;
 		font-size: 26px;
-		font-weight: 800;
+		font-weight: 300;
 		line-height: 1.15;
 	}
 
@@ -435,7 +435,7 @@ if ($maxMonthly < 1) {
 	.stats-agent-month-label {
 		display: block;
 		font-size: 13px;
-		font-weight: 700;
+		font-weight: 400;
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
 	}
@@ -567,12 +567,12 @@ if ($maxMonthly < 1) {
 			<div class="stats-agent-header">
 				<div>
 					<span class="stats-agent-kicker">Classement mensuel</span>
-					<h5 class="stats-agent-title">Réalisations par agent</h5>
-					<p class="stats-agent-subtitle">Chaque carte affiche le total global et la progression mensuelle calculée depuis date_enreg dans creaevent.</p>
+					<h5 class="stats-agent-title">Réalisations par graphiste</h5>
+					<p class="stats-agent-subtitle">Chaque carte affiche le total global et la progression mensuelle calculée depuis la date de réalisation.</p>
 				</div>
 				<div class="stats-agent-summary">
 					<strong><?php echo count($agentsStats); ?></strong>
-					<span>agent<?php echo count($agentsStats) > 1 ? 's' : ''; ?> classé<?php echo count($agentsStats) > 1 ? 's' : ''; ?></span>
+					<span>graphiste<?php echo count($agentsStats) > 1 ? 's' : ''; ?> classé<?php echo count($agentsStats) > 1 ? 's' : ''; ?></span>
 				</div>
 			</div>
 
@@ -581,7 +581,7 @@ if ($maxMonthly < 1) {
 				<?php foreach ($agentsStats as $index => $agent): ?>
 					<?php
 						$monthValue = (int) $agent['total_mois'];
-						$progress = (int) round(($monthValue / $maxMonthly) * 100);
+						$progress = (int) round(($monthValue / $totalMonthly) * 100);
 					?>
 					<div class="stats-agent-card">
 						<div class="stats-agent-rank"><?php echo $index + 1; ?></div>
@@ -595,8 +595,8 @@ if ($maxMonthly < 1) {
 							<div class="stats-agent-month-value"><?php echo $monthValue; ?> réalisation<?php echo $monthValue > 1 ? 's' : ''; ?></div>
 							<div class="stats-agent-progress"><span style="width: <?php echo $progress; ?>%;"></span></div>
 							<div class="stats-agent-progress-meta">
-								<span>Progression du mois</span>
-								<span><?php echo $progress; ?>% du leader</span>
+								<span>Part du total du mois</span>
+								<span><?php echo $progress; ?>% des realisations</span>
 							</div>
 						</div>
 					</div>

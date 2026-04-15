@@ -25,20 +25,204 @@ $fmt = new IntlDateFormatter(
 // =====================
 ?>
 <style>
-.table-events td { vertical-align: top; }
-.badge-flag{ position:relative; z-index:20; top:4px; left:0; padding:6px 10px; border-radius:0 0 20px 0; font-size:14px; font-weight:700; color:#fff; display:inline-block }
-.badge-new{ background:#FF5733;z-index: 100; }
-.badge-done{ background:rgb(0,129,97) }
-.badge-progress{ background:rgb(15,99,233) }
+.table-events { width:100%; border-collapse:separate; border-spacing:0 18px; }
+.table-events td { vertical-align: top; border:0; background:transparent; }
 
-.badge-unpaid{ position:relative; z-index:10; top:4px; left:-15px; background:#979898; color:#fff; padding:5px 10px 5px 25px; border-radius:0 0 20px 0; font-size:14px; font-weight:bold }
-.badge-livr{ position:relative; z-index:10; top:4px; left:-20px; color:rgb(149,27,0); font-size:14px; padding:5px 10px 5px 25px }
+.event-row { position:relative; }
+.event-card-cell { padding:0 !important; }
+.event-card-shell {
+  background:linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  border:1px solid #e2e8f0;
+  border-radius:28px;
+  padding:24px;
+  box-shadow:0 20px 40px rgba(15, 23, 42, 0.08);
+}
+.event-card-topbar {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+  margin-bottom:16px;
+}
+.event-card-flags { display:flex; flex-wrap:wrap; gap:10px; }
 
-.square-img, .square-img-qr { width:100px; height:100px; object-fit:cover; float:left; margin:0 15px 15px 0 }
-.square-img-qr{ border:1px solid #000 !important }
+.badge-flag,
+.badge-partial,
+.badge-unpaid,
+.badge-livr {
+  position:static;
+  top:auto;
+  left:auto;
+  display:inline-flex;
+  align-items:center;
+  padding:7px 14px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:700;
+  line-height:1;
+  box-shadow:0 10px 20px rgba(15, 23, 42, 0.10);
+}
+.badge-new{ background:#FF5733; color:#fff; }
+.badge-done{ background:rgb(0,129,97); color:#fff; }
+.badge-progress{ background:rgb(15,99,233); color:#fff; }
+.badge-partial{ background:#d98a00; color:#fff; }
+.badge-unpaid{ background:#6b7280; color:#fff; }
+.badge-livr{ background:#fff3e8; color:rgb(149,27,0); }
 
-.hoverx-container{ position:relative; display:inline-block }
-.hoverx-image{ display:none; position:absolute; z-index:9000; max-width:220px; border:1px solid #ccc; background:#fff; padding:5px; box-shadow:0 4px 10px rgba(0,0,0,.3) }
+.event-body-grid { margin:0; row-gap:18px; }
+.event-main-column,
+.event-side-column { padding-left:0; padding-right:0; }
+
+.event-card-title {
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:8px;
+  color:#0f172a !important;
+  font-size:20px;
+  font-weight:800;
+  text-decoration:none;
+}
+.event-card-title .text-fade { color:#475569 !important; }
+.event-card-date {
+  display:block;
+  color:#64748b;
+  font-size:13px;
+  margin-bottom:16px;
+}
+
+.event-accessories {
+}
+.event-accessories br { display:none; }
+.event-accessories > em {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-top:6px;
+  color:#334155;
+  font-style:normal;
+}
+.event-accessories > em::before {
+  content:'';
+  flex:0 0 auto;
+  width:8px;
+  height:8px;
+  border-radius:999px;
+  background:linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+  box-shadow:0 0 0 4px rgba(245, 158, 11, 0.14);
+}
+.event-accessories > em:first-child { margin-top:0; }
+
+.event-detail-stack {
+  margin-top:10px;
+  display:grid;
+  gap:3px;
+}
+.event-detail-stack br { display:none; }
+.event-detail-stack span,
+.event-detail-stack em {
+  display:block;
+  margin:0;
+  line-height:1.25;
+  color:#475569;
+  font-style:normal;
+}
+.event-detail-stack b {
+  color:#0f172a;
+  font-weight:700;
+}
+.event-detail-stack a {
+  color:#1d4ed8;
+  text-decoration:none;
+}
+
+.event-payment-stack {
+  margin-top:10px;
+  width:96%;
+  padding:14px 16px;
+  border-radius:18px;
+  background:linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  box-shadow:0 16px 28px rgba(15, 23, 42, 0.18);
+}
+.event-payment-stack span {
+  display:block;
+  margin-top:3px;
+  line-height:1.25;
+  color:#e2e8f0;
+}
+.event-payment-stack span:first-child { margin-top:0; }
+.event-payment-stack b { color:#94a3b8; font-weight:600; }
+.event-payment-stack a { color:#fff; text-decoration:none; }
+
+.event-media-panel {
+  height:100%;
+  padding:18px;
+  border-radius:22px;
+  border:1px solid #e2e8f0;
+  background:linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+}
+.event-media-strip {
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+}
+
+.square-img, .square-img-qr {
+  width:100px;
+  height:100px;
+  object-fit:cover;
+  float:none;
+  margin:0;
+  border-radius:18px;
+  box-shadow:0 12px 22px rgba(15, 23, 42, 0.12);
+  background:#fff;
+}
+.square-img { cursor:pointer; }
+.square-img-qr{
+  border:1px solid #dbe4f0 !important;
+  padding:6px;
+}
+
+.event-report-card {
+  margin-top:10px;
+  padding:16px 18px;
+  border-radius:18px;
+  background:linear-gradient(180deg, #eff6ff 0%, #ffffff 100%);
+  border:1px solid #dbeafe;
+}
+.event-report-card em {
+  display:block;
+  color:#1d4ed8;
+  font-style:normal;
+  font-weight:700;
+  margin-bottom:4px;
+}
+.event-report-card p {
+  margin:0 0 3px;
+  line-height:1.22;
+  color:#334155;
+}
+.event-report-card p:last-child { margin-bottom:0; }
+.event-report-files {
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.event-report-files a {
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 12px;
+  border-radius:999px;
+  background:#fff;
+  border:1px solid #cbd5e1;
+  color:#0f172a;
+  text-decoration:none;
+}
+
+.hoverx-container{ position:relative; display:inline-flex; min-width:420px; max-width:100%; white-space:nowrap }
+.hoverx-container .modelx-link{ display:inline-flex; align-items:center; white-space:nowrap }
+.hoverx-image{ display:none; position:absolute; z-index:9000; max-width:320px; border:1px solid #ccc; background:#fff; padding:5px; box-shadow:0 4px 10px rgba(0,0,0,.3) }
 .hoverx-container:hover .hoverx-image{ display:block }
 
 .admin-actions-toggle{ width:44px; height:44px; display:inline-flex; align-items:center; justify-content:center; border-radius:14px; border:1px solid #f5d08a; background:linear-gradient(180deg,#fff7e8 0%,#ffe7b8 100%); color:#8a5200 !important; box-shadow:0 10px 24px rgba(138,82,0,.16); transition:transform .18s ease, box-shadow .18s ease, background .18s ease }
@@ -56,6 +240,33 @@ $fmt = new IntlDateFormatter(
 .event-actions-menu .action-danger{ color:#b91c1c }
 .event-actions-menu .action-state{ color:#0f766e }
 .event-actions-menu .action-progress{ color:#1d4ed8 }
+
+.event-actions-wrap {
+  display:flex;
+  justify-content:flex-end;
+  flex:0 0 auto;
+}
+
+.pagination { gap:8px; flex-wrap:wrap; }
+.pagination .page-link {
+  border-radius:12px;
+  border:1px solid #e2e8f0;
+  color:#0f172a;
+  padding:8px 12px;
+  box-shadow:0 8px 16px rgba(15, 23, 42, 0.05);
+}
+.pagination .page-item.active .page-link {
+  background:#0f172a;
+  border-color:#0f172a;
+  color:#fff;
+}
+
+@media (max-width: 991px) {
+  .event-card-shell { padding:18px; border-radius:22px; }
+  .event-card-topbar { flex-direction:column; align-items:stretch; }
+  .event-actions-wrap { justify-content:flex-start; }
+  .hoverx-container { min-width:100%; }
+}
 
 /* Lightbox (popup) */
 #imgLightboxBackdrop{
@@ -140,24 +351,93 @@ if (!empty($events)) {
 
     // ----------- Affichage ligne -----------
     ?>
-    <tr>
-      <td class="pt-0 px-0" style="position:relative;padding:30px 10px 10px 10px;">
-        <?= $badge . ' ' . $badgepaie ?><br><br>
+    <tr class="event-row">
+      <td class="event-card-cell">
+        <div class="event-card-shell">
+        <div class="event-card-topbar">
+          <div class="event-card-flags"><?= $badge . ' ' . $badgepaie ?></div>
+          <div class="event-actions-wrap">
+            <div class="list-icons d-inline-flex">
+              <div class="list-icons-item dropdown">
+                <a href="#" class="admin-actions-toggle list-icons-item dropdown-toggle" data-bs-toggle="dropdown">
+                  <i class="fas fa-ellipsis-h" style="font-size:20px;"></i>
+                </a>
+                <div class="dropdown-menu dropdown-menu-end event-actions-menu">
+                  <?php if (!empty($datasession['type_user']) && $datasession['type_user'] === '1') { ?>
+                    <?php if (!$paymentMeta['has_payment']) { ?>
+                      <a class="dropdown-item action-item action-doc" href="index.php?page=paiement&cod=<?= htmlspecialchars($dataevent['cod_event']) ?>&mode=devis"><i class="fa fa-file-text"></i> Devis</a>
+                    <?php } ?>
+                    <?php if (!$paymentMeta['is_fully_paid']) { ?>
+                      <a class="dropdown-item action-item action-money" href="<?= htmlspecialchars($paymentMeta['payment_action_url']) ?>"><i class="fa fa-dollar-sign"></i> <?= htmlspecialchars($paymentMeta['payment_action_label']) ?></a>
+                    <?php } ?>
+                    <?php if ($paymentMeta['invoice_pdf_url'] !== null) { ?>
+                      <a href="<?= htmlspecialchars($paymentMeta['invoice_pdf_url']) ?>" target="_blank" class="dropdown-item action-item action-doc"><i class="fa fa-print"></i> Facture</a>
+                    <?php } ?>
+                    <div class="dropdown-divider"></div>
+                    <a href="index.php?page=modevent&cod=<?= htmlspecialchars($dataevent['cod_event']) ?>" class="dropdown-item action-item action-edit"><i class="fa fa-pencil"></i> Modifier</a>
+                    <a
+                      onclick="openModal2(this); return false;"
+                      class="dropdown-item action-item action-doc"
+                      href="#"
+                      data-cod-event="<?= htmlspecialchars((string) $dataevent['cod_event'], ENT_QUOTES, 'UTF-8') ?>"
+                      data-invit-religieux="<?= htmlspecialchars((string) ($dataevent['invit_religieux'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+                      data-ajustenom="<?= htmlspecialchars((string) ($dataevent['ajustenom'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+                      data-taillenominv="<?= htmlspecialchars((string) ($dataevent['taillenominv'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+                      data-alignnominv="<?= htmlspecialchars((string) ($dataevent['alignnominv'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+                      data-pagenom="<?= htmlspecialchars((string) ($dataevent['pagenom'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+                      data-pagebouton="<?= htmlspecialchars((string) ($dataevent['pagebouton'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+                      data-colornom="<?= htmlspecialchars((string) ($dataevent['colornom'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+                      data-bordgauchenominv="<?= htmlspecialchars((string) ($dataevent['bordgauchenominv'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+                      data-qrcode="<?= htmlspecialchars((string) ($dataevent['qrcode'] ?? 'non'), ENT_QUOTES, 'UTF-8') ?>"
+                      data-pageqr="<?= htmlspecialchars((string) ($dataevent['pageqr'] ?? '3'), ENT_QUOTES, 'UTF-8') ?>"
+                      data-hautqr="<?= htmlspecialchars((string) ($dataevent['hautqr'] ?? '18'), ENT_QUOTES, 'UTF-8') ?>"
+                      data-gaucheqr="<?= htmlspecialchars((string) ($dataevent['gaucheqr'] ?? '52'), ENT_QUOTES, 'UTF-8') ?>"
+                      data-tailleqr="<?= htmlspecialchars((string) ($dataevent['tailleqr'] ?? '90'), ENT_QUOTES, 'UTF-8') ?>"
+                      data-lang="<?= htmlspecialchars((string) ($dataevent['lang'] ?? 'fr'), ENT_QUOTES, 'UTF-8') ?>"
+                    ><i class="fa fa-file"></i> Inv électronique</a>
+                    <a
+                      onclick="openClientModal(this); return false;"
+                      class="dropdown-item action-item action-client"
+                      href="#"
+                      data-client-code="<?= htmlspecialchars((string) ($dataevent['client_code'] ?? $dataevent['cod_user'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+                      data-client-type="<?= htmlspecialchars((string) ($dataevent['client_type_user'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+                      data-client-name="<?= htmlspecialchars((string) ($dataevent['client_nom'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+                      data-client-phone="<?= htmlspecialchars((string) ($dataevent['client_phone'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+                      data-client-email="<?= htmlspecialchars((string) ($dataevent['client_email'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+                      data-client-password="<?= htmlspecialchars((string) ($dataevent['client_recpass'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+                    ><i class="fa fa-user"></i> Clients</a>
+                    <a href="#" title="Suppression" onclick="confirmSuppEvent(event,'<?= htmlspecialchars($typeevent) ?>','<?= htmlspecialchars($fetard) ?>','<?= htmlspecialchars($dataevent['cod_event']) ?>')" class="dropdown-item action-item action-danger">
+                      <i class="fa fa-remove"></i> Supprimer
+                    </a>
+                  <?php } ?>
+                  <a onclick="openModal('<?= htmlspecialchars($dataevent['cod_event']) ?>','<?= htmlspecialchars($dataevent['cod_event']) ?>')" class="dropdown-item action-item action-state" href="#"><i class="fa fa-check"></i> Terminer</a>
+                  <a href="#" title="Amorcer" onclick="amorcerEvent(event,'<?= htmlspecialchars($typeevent) ?>','<?= htmlspecialchars($fetard) ?>','<?= htmlspecialchars($dataevent['cod_event']) ?>')" class="dropdown-item action-item action-progress">
+                    <i class="fa fa-spinner fa-spin"></i> En cours
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-        <div class="row">
-          <div class="col-md-6 col-12">
-            <a class="d-block fw-500 fs-14" style="<?= $color2 ?>" href="#">
+        <div class="row event-body-grid">
+          <div class="col-md-6 col-12 event-main-column">
+            <a class="event-card-title" style="<?= $color2 ?>" href="#">
               (<?= htmlspecialchars($dataevent['cod_event']) ?>) 
               <?= htmlspecialchars(ucfirst($typeevent)) ?>,
               <span class="text-fade" style="<?= $color2 ?>"><?= htmlspecialchars($fetard) ?></span> <?= $icon ?>
             </a>
-            <span><?= htmlspecialchars($formatted_date) ?></span>
+            <span class="event-card-date"><?= htmlspecialchars($formatted_date) ?></span>
 
             <?php
             // ---------- Accessoires (avec image de modèle en hover CSS) ----------
             $stmtae = $pdo->prepare("SELECT * FROM accessoires_event WHERE cod_event = ? ORDER BY cod_accev DESC");
             $stmtae->execute([$dataevent['cod_event']]);
-            while ($dataae = $stmtae->fetch(PDO::FETCH_ASSOC)) {
+            $accessoiresEvent = $stmtae->fetchAll(PDO::FETCH_ASSOC);
+            if (!empty($accessoiresEvent)) {
+              echo '<div class="event-accessories">';
+            }
+            foreach ($accessoiresEvent as $dataae) {
                 $stmtMod = $pdo->prepare("SELECT nom, image FROM modele_is WHERE cod_mod = ?");
                 $stmtMod->execute([$dataae['cod_acc']]);
                 $data_accessoire = $stmtMod->fetch(PDO::FETCH_ASSOC);
@@ -195,7 +475,6 @@ if (!empty($events)) {
                     }
                 }
                 ?>
-                <br>
                 <em>
                   <?= htmlspecialchars($accessoire) ?>
                   <span class="hoverx-container">
@@ -209,35 +488,38 @@ if (!empty($events)) {
                 </em>
                 <?php
             }
+            if (!empty($accessoiresEvent)) {
+              echo '</div>';
+            }
             ?>
 
+            <div class="event-detail-stack">
             <?php if ($dataevent['type_event'] == "1") { ?>
-              <br><span><b>Epoux : </b><?= htmlspecialchars(($dataevent['prenom_epoux']??'').' '.($dataevent['nom_epoux']??'')) ?></span>
-              <br><span><b>Epouse : </b><?= htmlspecialchars(($dataevent['prenom_epouse']??'').' '.($dataevent['nom_epouse']??'')) ?></span>
+              <span><b>Epoux :</b> <?= htmlspecialchars(($dataevent['prenom_epoux']??'').' '.($dataevent['nom_epoux']??'')) ?></span>
+              <span><b>Epouse :</b> <?= htmlspecialchars(($dataevent['prenom_epouse']??'').' '.($dataevent['nom_epouse']??'')) ?></span>
             <?php } elseif ($dataevent['type_event'] == "3") { ?>
-              <br><span><b>Thème : </b><?= htmlspecialchars($dataevent['themeconf'] ?? '') ?></span>
+              <span><b>Thème :</b> <?= htmlspecialchars($dataevent['themeconf'] ?? '') ?></span>
             <?php } ?>
 
-            <br><span><b>Autres précisions : </b><?= nl2br(htmlspecialchars($dataevent['autres_precisions'] ?? '')) ?></span>
-            <br><span><b>Lieu : </b><?= htmlspecialchars($dataevent['lieu'] ?? '') ?></span>
-            <br><span><b>Adresse : </b><?= isset($dataevent['adresse']) ? '(' . htmlspecialchars($dataevent['adresse']) . ')' : 'Non défini' ?></span>
-            <br><em>Siteweb : 
-              <a target="_blank" href="<?= htmlspecialchars($publicUrl) ?>"><?= htmlspecialchars($publicUrl) ?></a>
-            </em>
-            <br><span><b>Enregistré,</b> le <?= date('d/m/Y', strtotime($dataevent['date_enreg'])) ?></span>
+            <span><b>Autres précisions :</b> <?= nl2br(htmlspecialchars($dataevent['autres_precisions'] ?? '')) ?></span>
+            <span><b>Lieu :</b> <?= htmlspecialchars($dataevent['lieu'] ?? '') ?></span>
+            <span><b>Adresse :</b> <?= isset($dataevent['adresse']) ? '(' . htmlspecialchars($dataevent['adresse']) . ')' : 'Non défini' ?></span>
+            <span><b>Site web :</b> <a target="_blank" href="<?= htmlspecialchars($publicUrl) ?>"><?= htmlspecialchars($publicUrl) ?></a></span>
+            <span><b>Enregistré le</b> <?= date('d/m/Y', strtotime($dataevent['date_enreg'])) ?></span>
+            </div>
 
             <?php if (!empty($datasession['type_user']) && $datasession['type_user'] === "1") { ?>
-              <br><span><b>Whatsapp Client : </b>
-                <a href="http://wa.me/<?= htmlspecialchars($phone) ?>" target="_blank" rel="noopener noreferrer"><?= htmlspecialchars($client) ?></a>
-              </span>
-              <br><span><b>Payé : </b><?= $paye ?></span>
-              <br><span><b>Reste : </b><?= $reste ?></span>
+              <div class="event-payment-stack">
+                <span><b>Whatsapp client :</b> <a href="http://wa.me/<?= htmlspecialchars($phone) ?>" target="_blank" rel="noopener noreferrer"><?= htmlspecialchars($client) ?></a></span>
+                <span><b>Payé :</b> <?= $paye ?></span>
+                <span><b>Reste :</b> <?= $reste ?></span>
+              </div>
             <?php } ?>
           </div>
 
-          <div class="col-md-6 col-12">
-            <div class="row">
-              <div class="col-md-12">
+          <div class="col-md-6 col-12 event-side-column">
+            <div class="event-media-panel">
+              <div class="event-media-strip">
                 <!-- QR -->
                 <img src="<?= htmlspecialchars($qrFile) ?>" alt="QR Code" class="square-img-qr" width="100" height="100" loading="lazy">
 
@@ -258,7 +540,6 @@ if (!empty($events)) {
                 ?>
               </div>
 
-              <div class="col-md-12">
                 <?php
                 // Rapport si terminé
                 if ($dataevent['crea'] == '2') {
@@ -269,85 +550,26 @@ if (!empty($events)) {
                         $stmtrecus = $pdo->prepare("SELECT noms FROM is_users WHERE cod_user = ?");
                         $stmtrecus->execute([$datarapport['cod_user']]);
                         $realNom = $stmtrecus->fetchColumn();
-                        echo '<br><br><em>Réalisé par ' . htmlspecialchars($realNom) . '</em><br>';
+                        echo '<div class="event-report-card">';
+                        echo '<em>Réalisé par ' . htmlspecialchars($realNom) . '</em>';
                         echo '<p>' . nl2br(htmlspecialchars($obser)) . '</p>';
 
                         // Fichiers impression
+                        echo '<div class="event-report-files">';
                         foreach (EventPrintService::listFilesByEvent($pdo, (int) $dataevent['cod_event']) as $datafile) {
                             $f = $datafile['nom_fichier'];
-                            echo '<a href="../pages/fichiersprint/' . htmlspecialchars($f) . '" download>' . htmlspecialchars($f) . "</a><br>";
+                            echo '<a href="../pages/fichiersprint/' . htmlspecialchars($f) . '" download>' . htmlspecialchars($f) . "</a>";
                         }
+                        echo '</div>';
+                        echo '</div>';
                     }
                 }
                 ?>
-              </div>
             </div>
           </div>
+        </div>
         </div>
       </td>
-
-      <!-- COLONNE ACTIONS -->
-      <td class="text-end pt-0 px-0" width="15%" style="padding-right:10px;">
-        <div class="list-icons d-inline-flex">
-          <div class="list-icons-item dropdown">
-            <a href="#" class="admin-actions-toggle list-icons-item dropdown-toggle" data-bs-toggle="dropdown">
-              <i class="fas fa-ellipsis-h" style="font-size:20px;"></i>
-            </a>
-            <div class="dropdown-menu dropdown-menu-end event-actions-menu">
-              <?php if (!empty($datasession['type_user']) && $datasession['type_user'] === '1') { ?>
-                <?php if (!$paymentMeta['has_payment']) { ?>
-                  <a class="dropdown-item action-item action-doc" href="index.php?page=paiement&cod=<?= htmlspecialchars($dataevent['cod_event']) ?>&mode=devis"><i class="fa fa-file-text"></i> Devis</a>
-                <?php } ?>
-                <?php if (!$paymentMeta['is_fully_paid']) { ?>
-                  <a class="dropdown-item action-item action-money" href="<?= htmlspecialchars($paymentMeta['payment_action_url']) ?>"><i class="fa fa-dollar-sign"></i> <?= htmlspecialchars($paymentMeta['payment_action_label']) ?></a>
-                <?php } ?>
-                <?php if ($paymentMeta['invoice_pdf_url'] !== null) { ?>
-                  <a href="<?= htmlspecialchars($paymentMeta['invoice_pdf_url']) ?>" target="_blank" class="dropdown-item action-item action-doc"><i class="fa fa-print"></i> Facture</a>
-                <?php } ?>
-                <div class="dropdown-divider"></div>
-                <a href="index.php?page=modevent&cod=<?= htmlspecialchars($dataevent['cod_event']) ?>" class="dropdown-item action-item action-edit"><i class="fa fa-pencil"></i> Modifier</a>
-                <a
-                  onclick="openModal2(this); return false;"
-                  class="dropdown-item action-item action-doc"
-                  href="#"
-                  data-cod-event="<?= htmlspecialchars((string) $dataevent['cod_event'], ENT_QUOTES, 'UTF-8') ?>"
-                  data-invit-religieux="<?= htmlspecialchars((string) ($dataevent['invit_religieux'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
-                  data-ajustenom="<?= htmlspecialchars((string) ($dataevent['ajustenom'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
-                  data-taillenominv="<?= htmlspecialchars((string) ($dataevent['taillenominv'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
-                  data-alignnominv="<?= htmlspecialchars((string) ($dataevent['alignnominv'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
-                  data-pagenom="<?= htmlspecialchars((string) ($dataevent['pagenom'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
-                  data-pagebouton="<?= htmlspecialchars((string) ($dataevent['pagebouton'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
-                  data-colornom="<?= htmlspecialchars((string) ($dataevent['colornom'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
-                  data-bordgauchenominv="<?= htmlspecialchars((string) ($dataevent['bordgauchenominv'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
-                  data-qrcode="<?= htmlspecialchars((string) ($dataevent['qrcode'] ?? 'non'), ENT_QUOTES, 'UTF-8') ?>"
-                  data-pageqr="<?= htmlspecialchars((string) ($dataevent['pageqr'] ?? '3'), ENT_QUOTES, 'UTF-8') ?>"
-                  data-hautqr="<?= htmlspecialchars((string) ($dataevent['hautqr'] ?? '18'), ENT_QUOTES, 'UTF-8') ?>"
-                  data-gaucheqr="<?= htmlspecialchars((string) ($dataevent['gaucheqr'] ?? '52'), ENT_QUOTES, 'UTF-8') ?>"
-                  data-tailleqr="<?= htmlspecialchars((string) ($dataevent['tailleqr'] ?? '90'), ENT_QUOTES, 'UTF-8') ?>"
-                  data-lang="<?= htmlspecialchars((string) ($dataevent['lang'] ?? 'fr'), ENT_QUOTES, 'UTF-8') ?>"
-                ><i class="fa fa-file"></i> Inv électronique</a>
-                <a
-                  onclick="openClientModal(this); return false;"
-                  class="dropdown-item action-item action-client"
-                  href="#"
-                  data-client-code="<?= htmlspecialchars((string) ($dataevent['client_code'] ?? $dataevent['cod_user'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
-                  data-client-type="<?= htmlspecialchars((string) ($dataevent['client_type_user'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
-                  data-client-name="<?= htmlspecialchars((string) ($dataevent['client_nom'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
-                  data-client-phone="<?= htmlspecialchars((string) ($dataevent['client_phone'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
-                  data-client-email="<?= htmlspecialchars((string) ($dataevent['client_email'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
-                  data-client-password="<?= htmlspecialchars((string) ($dataevent['client_recpass'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
-                ><i class="fa fa-user"></i> Clients</a>
-                <a href="#" title="Suppression" onclick="confirmSuppEvent(event,'<?= htmlspecialchars($typeevent) ?>','<?= htmlspecialchars($fetard) ?>','<?= htmlspecialchars($dataevent['cod_event']) ?>')" class="dropdown-item action-item action-danger">
-                  <i class="fa fa-remove"></i> Supprimer
-                </a>
-              <?php } ?>
-              <a onclick="openModal('<?= htmlspecialchars($dataevent['cod_event']) ?>','<?= htmlspecialchars($dataevent['cod_event']) ?>')" class="dropdown-item action-item action-state" href="#"><i class="fa fa-check"></i> Terminer</a>
-              <a href="#" title="Amorcer" onclick="amorcerEvent(event,'<?= htmlspecialchars($typeevent) ?>','<?= htmlspecialchars($fetard) ?>','<?= htmlspecialchars($dataevent['cod_event']) ?>')" class="dropdown-item action-item action-progress">
-                <i class="fa fa-spinner fa-spin"></i> En cours
-              </a>
-            </div>
-          </div>
-        </div>
 
         <script>
         function confirmSuppEvent(event, typeEvent, fetard, codeEvent) {
@@ -417,7 +639,7 @@ if (!empty($events)) {
     <?php
   } // fin while
 } else {
-  echo '<tr><td colspan="3" class="text-left" style="font-style:italic;">Aucune commande</td></tr>';
+  echo '<tr><td colspan="1" class="text-left" style="font-style:italic;">Aucune commande</td></tr>';
 }
 ?>
   </tbody>
