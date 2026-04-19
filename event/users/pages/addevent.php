@@ -410,6 +410,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     border-radius:16px;
     border:1px solid rgba(148,163,184,.18);
     background:#fff;
+    cursor:zoom-in;
   }
   .selected-model-copy{
     display:flex;
@@ -434,6 +435,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     font-size:18px;
     font-weight:800;
     line-height:1.3;
+  }
+  .selected-model-price{
+    color:#0f766e;
+    font-size:16px;
+    font-weight:800;
   }
   .selected-model-meta{
     color:#64748b;
@@ -482,6 +488,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     border-radius:16px;
     border:1px solid rgba(148,163,184,.18);
     background:#fff;
+    cursor:zoom-in;
   }
   .selected-model-item-copy{
     display:flex;
@@ -492,6 +499,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   .selected-model-item-title{
     color:#0f172a;
     font-size:15px;
+    font-weight:800;
+  }
+  .selected-model-item-price{
+    color:#0f766e;
+    font-size:13px;
     font-weight:800;
   }
   .selected-model-item-meta{
@@ -622,10 +634,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     gap:10px;
     text-align:left;
   }
+  .model-option-image-trigger{
+    position:relative;
+    display:block;
+    width:100%;
+    border:none;
+    padding:0;
+    border-radius:14px;
+    overflow:hidden;
+    background:#f8fafc;
+    cursor:zoom-in;
+  }
+  .model-option-image-trigger::after{
+    content:'Agrandir';
+    position:absolute;
+    right:10px;
+    bottom:10px;
+    padding:6px 10px;
+    border-radius:999px;
+    background:rgba(15,23,42,.72);
+    color:#fff;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.04em;
+  }
   .model-option-copy{
     display:flex;
     flex-direction:column;
     gap:5px;
+  }
+  .model-option-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:10px;
   }
   .model-option-title{
     color:#0f172a;
@@ -633,12 +675,103 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     font-weight:800;
     line-height:1.35;
   }
+  .model-option-reference{
+    display:inline-flex;
+    align-self:flex-start;
+    padding:5px 9px;
+    border-radius:999px;
+    background:#eff6ff;
+    color:#1d4ed8;
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+  }
+  .model-option-price{
+    color:#0f766e;
+    font-size:14px;
+    font-weight:800;
+    white-space:nowrap;
+  }
   .model-option-meta{
     color:#64748b;
     font-size:13px;
     line-height:1.5;
   }
-  .option-image{width:100%;height:190px;object-fit:cover;border-radius:14px;border:1px solid rgba(148,163,184,.16);margin-top:0}
+  .model-option-hint{
+    color:#94a3b8;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+  }
+  .option-image{display:block;width:100%;height:190px;object-fit:cover;border-radius:14px;border:1px solid rgba(148,163,184,.16);margin-top:0}
+  .image-lightbox{
+    position:fixed;
+    inset:0;
+    z-index:10001;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:22px;
+    background:rgba(15,23,42,.86);
+  }
+  .image-lightbox.is-open{
+    display:flex;
+  }
+  .image-lightbox-dialog{
+    position:relative;
+    width:min(920px, 100%);
+    max-height:100%;
+    padding:18px;
+    border-radius:24px;
+    background:#fff;
+    box-shadow:0 30px 80px rgba(15,23,42,.32);
+  }
+  .image-lightbox-close{
+    position:absolute;
+    top:14px;
+    right:14px;
+    width:42px;
+    height:42px;
+    border:none;
+    border-radius:999px;
+    background:rgba(15,23,42,.08);
+    color:#0f172a;
+    font-size:24px;
+    line-height:1;
+    cursor:pointer;
+  }
+  .image-lightbox-figure{
+    margin:0;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+  .image-lightbox-figure img{
+    width:100%;
+    max-height:min(78vh, 820px);
+    object-fit:contain;
+    border-radius:18px;
+    background:#f8fafc;
+  }
+  .image-lightbox-caption{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .image-lightbox-title{
+    color:#0f172a;
+    font-size:18px;
+    font-weight:800;
+  }
+  .image-lightbox-meta{
+    color:#0f766e;
+    font-size:14px;
+    font-weight:800;
+  }
   @media (max-width: 767px){
     .event-builder-header{padding:24px 22px 6px !important}
     .event-builder-form{padding:22px 20px 28px !important}
@@ -658,6 +791,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   .modal{display:none;position:fixed;z-index:9999;left:0;top:0;width:100%;height:100%;overflow:auto;background:rgba(0,0,0,.4)}
   .dropdown-content{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-top:10px}
   .option-image{width:100%;height:110px;object-fit:cover;border-radius:6px;margin-top:6px}
+  .image-lightbox-dialog{padding:14px}
+  .image-lightbox-caption{align-items:flex-start}
   #closeModal{font-size:24px}
   .btnpic{cursor:pointer}
   .image-container{position:relative;margin:6px}
@@ -793,6 +928,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="selected-model-copy">
       <span class="selected-model-kicker">Aperçu principal</span>
       <div id="selectedModelTitle" class="selected-model-title"></div>
+      <div id="selectedModelPrice" class="selected-model-price"></div>
       <div id="selectedModelMeta" class="selected-model-meta">La génération automatique d’une invitation personnalisée pour chaque invité avec son nom inscrit.</div>
       <div class="selected-model-actions">
         <span class="selected-model-chip"><i class="fas fa-check-circle"></i> Prêt à l'emploi</span>
@@ -1182,18 +1318,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="dropdown-content" id="weddingTypeDropdown">
       <?php foreach ($invitationModelRows as $data_mod) {
           $modelImage = '../images/modeleis/' . $data_mod['image'];
+          $modelReference = 'INV-' . str_pad((string) max(1, (int) ($data_mod['cod_mod'] ?? 0)), 3, '0', STR_PAD_LEFT);
+          $modelPriceValue = round((float) ($data_mod['unit_price'] ?? 0), 2);
+          $modelPriceLabel = $modelPriceValue > 0 ? number_format($modelPriceValue, 2, '.', ' ') . ' $' : 'Sur demande';
       ?>
-      <div data-value="<?php echo $data_mod['cod_mod']?>" data-label="<?php echo htmlspecialchars($data_mod['nom'], ENT_QUOTES, 'UTF-8')?>" data-image="<?php echo htmlspecialchars($modelImage, ENT_QUOTES, 'UTF-8')?>">
+      <div data-value="<?php echo $data_mod['cod_mod']?>" data-label="<?php echo htmlspecialchars($data_mod['nom'], ENT_QUOTES, 'UTF-8')?>" data-image="<?php echo htmlspecialchars($modelImage, ENT_QUOTES, 'UTF-8')?>" data-price="<?php echo htmlspecialchars($modelPriceLabel, ENT_QUOTES, 'UTF-8')?>">
         <div class="model-option-card">
-          <img class="option-image" src="<?php echo $modelImage; ?>" alt="<?php echo htmlspecialchars($data_mod['nom'])?>">
+          <button type="button" class="model-option-image-trigger" data-preview-image="<?php echo htmlspecialchars($modelImage, ENT_QUOTES, 'UTF-8')?>" data-preview-title="<?php echo htmlspecialchars($data_mod['nom'], ENT_QUOTES, 'UTF-8')?>" data-preview-price="<?php echo htmlspecialchars($modelPriceLabel, ENT_QUOTES, 'UTF-8')?>">
+            <img class="option-image" src="<?php echo $modelImage; ?>" alt="<?php echo htmlspecialchars($data_mod['nom'])?>">
+          </button>
           <div class="model-option-copy">
-            <span class="model-option-title"><?php echo htmlspecialchars($data_mod['nom'], ENT_QUOTES, 'UTF-8')?></span>
+            <div class="model-option-head">
+              <span class="model-option-title"><?php echo htmlspecialchars($data_mod['nom'], ENT_QUOTES, 'UTF-8')?></span>
+              <span class="model-option-price"><?php echo htmlspecialchars($modelPriceLabel, ENT_QUOTES, 'UTF-8')?></span>
+            </div>
+            <span class="model-option-reference"><?php echo htmlspecialchars($modelReference, ENT_QUOTES, 'UTF-8')?></span>
             <span class="model-option-meta">Cliquez pour ajouter ou retirer ce modèle dans votre commande.</span>
+            <span class="model-option-hint">Touchez la photo pour un aperçu agrandi.</span>
           </div>
         </div>
       </div>
       <?php } ?>
     </div>
+  </div>
+</div>
+<div id="modelImageLightbox" class="image-lightbox" aria-hidden="true">
+  <div class="image-lightbox-dialog" role="dialog" aria-modal="true" aria-labelledby="modelImageLightboxTitle">
+    <button type="button" class="image-lightbox-close" id="closeModelImageLightbox" aria-label="Fermer l'aperçu">&times;</button>
+    <figure class="image-lightbox-figure">
+      <img id="modelImageLightboxImg" src="" alt="">
+      <figcaption class="image-lightbox-caption">
+        <span id="modelImageLightboxTitle" class="image-lightbox-title"></span>
+        <span id="modelImageLightboxMeta" class="image-lightbox-meta"></span>
+      </figcaption>
+    </figure>
   </div>
 </div>
 <script>
@@ -1259,7 +1417,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   const selectedModelPreview = document.getElementById('selectedModelPreview');
   const selectedModelImage = document.getElementById('selectedModelImage');
   const selectedModelTitle = document.getElementById('selectedModelTitle');
+  const selectedModelPrice = document.getElementById('selectedModelPrice');
   const selectedModelMeta = document.getElementById('selectedModelMeta');
+  const modelImageLightbox = document.getElementById('modelImageLightbox');
+  const modelImageLightboxImg = document.getElementById('modelImageLightboxImg');
+  const modelImageLightboxTitle = document.getElementById('modelImageLightboxTitle');
+  const modelImageLightboxMeta = document.getElementById('modelImageLightboxMeta');
+  const closeModelImageLightbox = document.getElementById('closeModelImageLightbox');
 
   const checkoutSummaryWedding = document.getElementById('checkoutSummaryWedding');
   const checkoutSummaryOther = document.getElementById('checkoutSummaryOther');
@@ -1336,16 +1500,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     selectedModelPreview.style.display = 'none';
     selectedModelImage.src = '';
     selectedModelTitle.textContent = '';
+    selectedModelPrice.textContent = '';
     selectedModelMeta.textContent = 'La génération automatique d’une invitation personnalisée pour chaque invité avec son nom inscrit.';
   }
 
-  function applySelectedModelPreview(label, image, count) {
+  function formatCatalogPrice(amount) {
+    const normalizedAmount = Number(amount || 0);
+    return normalizedAmount > 0 ? formatMoney(normalizedAmount) : 'Sur demande';
+  }
+
+  function applySelectedModelPreview(label, image, count, priceText) {
     selectedModelImage.src = image || '';
+    selectedModelImage.alt = label || 'Aperçu du modèle sélectionné';
     selectedModelTitle.textContent = label || '';
+    selectedModelPrice.textContent = priceText || '';
     selectedModelMeta.textContent = count > 1
       ? `${count} modèles sélectionnés pour cette commande.`
       : 'La génération automatique d’une invitation personnalisée pour chaque invité avec son nom inscrit.';
     selectedModelPreview.style.display = 'grid';
+  }
+
+  function openModelImageLightbox(image, title, meta) {
+    if (!image) {
+      return;
+    }
+
+    modelImageLightboxImg.src = image;
+    modelImageLightboxImg.alt = title || 'Aperçu du modèle';
+    modelImageLightboxTitle.textContent = title || 'Aperçu du modèle';
+    modelImageLightboxMeta.textContent = meta || '';
+    modelImageLightbox.classList.add('is-open');
+    modelImageLightbox.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModelPreviewLightbox() {
+    modelImageLightbox.classList.remove('is-open');
+    modelImageLightbox.setAttribute('aria-hidden', 'true');
+    modelImageLightboxImg.src = '';
+    modelImageLightboxImg.alt = '';
+    document.body.style.overflow = '';
   }
 
   function formatMoney(amount) {
@@ -1543,7 +1737,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     selectedOption.innerHTML = `<div class="model-picker-summary"><span class="model-picker-label">${selectedModels.length} modèle(s) sélectionné(s)</span><span class="model-picker-meta">Vous pouvez continuer à ajouter ou retirer des designs dans la galerie.</span></div>`;
-    applySelectedModelPreview(selectedModels[0].label, selectedModels[0].image, selectedModels.length);
+    applySelectedModelPreview(selectedModels[0].label, selectedModels[0].image, selectedModels.length, formatCatalogPrice(selectedModels[0].unitPrice));
 
     dropdownContent.querySelectorAll('div[data-value]').forEach((item) => {
       item.classList.toggle('is-selected', selectedInvitationModels.has(item.getAttribute('data-value') || ''));
@@ -1558,6 +1752,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="selected-model-item-copy">
           <input type="hidden" name="invitation_models[]" value="${model.id}">
           <span class="selected-model-item-title">${model.label}</span>
+          <span class="selected-model-item-price">${formatCatalogPrice(model.unitPrice)}</span>
           <span class="selected-model-item-meta">${invitationModelsNeedQuantity() ? 'Définissez la quantité pour ce modèle imprimé.' : 'Ce modèle sera utilisé pour votre invitation.'}</span>
           <div class="selected-model-item-controls">
             ${invitationModelsNeedQuantity()
@@ -1589,6 +1784,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         const modelId = button.getAttribute('data-remove-model') || '';
         selectedInvitationModels.delete(modelId);
         syncSelectedModelsUI();
+      });
+    });
+
+    selectedModelsList.querySelectorAll('img').forEach((image) => {
+      image.addEventListener('click', () => {
+        const card = image.closest('.selected-model-item');
+        const title = card?.querySelector('.selected-model-item-title')?.textContent || image.alt || 'Aperçu du modèle';
+        const price = card?.querySelector('.selected-model-item-price')?.textContent || '';
+        openModelImageLightbox(image.src, title, price);
       });
     });
 
@@ -1786,9 +1990,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (event.target === modal) {
       modal.style.display = 'none';
     }
+
+    if (event.target === modelImageLightbox) {
+      closeModelPreviewLightbox();
+    }
   });
 
   dropdownContent?.addEventListener('click', (event) => {
+    const previewTrigger = event.target.closest('[data-preview-image]');
+    if (previewTrigger) {
+      event.stopPropagation();
+      openModelImageLightbox(
+        previewTrigger.getAttribute('data-preview-image') || '',
+        previewTrigger.getAttribute('data-preview-title') || 'Aperçu du modèle',
+        previewTrigger.getAttribute('data-preview-price') || ''
+      );
+      return;
+    }
+
     const cell = event.target.closest('div[data-value]');
     if (!cell) {
       return;
@@ -1797,6 +2016,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     const modelId = cell.getAttribute('data-value') || '';
     const label = cell.getAttribute('data-label') || 'Modèle sélectionné';
     const image = cell.getAttribute('data-image') || '';
+    const priceLabel = cell.getAttribute('data-price') || '';
 
     if (selectedInvitationModels.has(modelId)) {
       selectedInvitationModels.delete(modelId);
@@ -1805,12 +2025,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         id: modelId,
         label,
         image,
-          unitPrice: Number(modelCatalogById.get(modelId)?.unitPrice || 0),
+        unitPrice: Number(modelCatalogById.get(modelId)?.unitPrice || 0),
         quantity: 1,
       });
     }
 
     syncSelectedModelsUI();
+  });
+
+  selectedModelImage?.addEventListener('click', () => {
+    if (!selectedModelImage.src) {
+      return;
+    }
+
+    openModelImageLightbox(selectedModelImage.src, selectedModelTitle.textContent || 'Aperçu du modèle', selectedModelPrice.textContent || '');
+  });
+
+  closeModelImageLightbox?.addEventListener('click', closeModelPreviewLightbox);
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && modelImageLightbox.classList.contains('is-open')) {
+      closeModelPreviewLightbox();
+    }
   });
 
   function attachImagePreview(input, container) {

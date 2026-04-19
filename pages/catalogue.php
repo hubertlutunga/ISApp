@@ -407,11 +407,38 @@ $buildReference = static function (array $catalogModel): string {
     overflow:hidden;
     background:linear-gradient(180deg, #f0dfcf 0%, #f7efe7 100%);
   }
+  .catalogue-card-media-trigger{
+    display:block;
+    width:100%;
+    height:100%;
+    border:none;
+    padding:0;
+    background:transparent;
+    cursor:zoom-in;
+  }
   .catalogue-card-media img{
     width:100%;
     height:100%;
     object-fit:cover;
     transition:transform .34s ease;
+  }
+  .catalogue-card-media-hint{
+    position:absolute;
+    right:16px;
+    bottom:16px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:32px;
+    padding:0 12px;
+    border-radius:999px;
+    background:rgba(48, 29, 23, 0.78);
+    color:#fffaf2;
+    font-size:10px;
+    font-weight:800;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    backdrop-filter:blur(10px);
   }
   .catalogue-card:hover .catalogue-card-media img{
     transform:scale(1.05);
@@ -649,6 +676,75 @@ $buildReference = static function (array $catalogModel): string {
   .catalogue-whatsapp-float svg{
     flex-shrink:0;
   }
+  .catalogue-lightbox{
+    position:fixed;
+    inset:0;
+    z-index:80;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    background:rgba(35, 24, 21, 0.84);
+  }
+  .catalogue-lightbox.is-open{
+    display:flex;
+  }
+  .catalogue-lightbox-dialog{
+    position:relative;
+    width:min(980px, 100%);
+    max-height:100%;
+    padding:18px;
+    border-radius:28px;
+    background:#fffdf9;
+    box-shadow:0 34px 70px rgba(48, 29, 23, 0.30);
+  }
+  .catalogue-lightbox-close{
+    position:absolute;
+    top:14px;
+    right:14px;
+    width:42px;
+    height:42px;
+    border:none;
+    border-radius:999px;
+    background:rgba(48, 29, 23, 0.08);
+    color:#301d17;
+    font-size:24px;
+    line-height:1;
+    cursor:pointer;
+  }
+  .catalogue-lightbox-figure{
+    margin:0;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+  .catalogue-lightbox-figure img{
+    width:100%;
+    max-height:min(78vh, 860px);
+    object-fit:contain;
+    border-radius:20px;
+    background:#f6efe6;
+  }
+  .catalogue-lightbox-caption{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    flex-wrap:wrap;
+  }
+  .catalogue-lightbox-title{
+    color:#301d17;
+    font-family:'Playfair Display', serif;
+    font-size:24px;
+    line-height:1.2;
+  }
+  .catalogue-lightbox-meta{
+    color:#7a3a27;
+    font-size:14px;
+    font-weight:800;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+  }
   @media (max-width: 1080px){
     .catalogue-grid{
       grid-template-columns:repeat(2, minmax(0, 1fr));
@@ -743,6 +839,13 @@ $buildReference = static function (array $catalogModel): string {
       padding:0 8px;
       font-size:9px;
     }
+    .catalogue-card-media-hint{
+      right:10px;
+      bottom:42px;
+      min-height:24px;
+      padding:0 8px;
+      font-size:8px;
+    }
     .catalogue-card-body{
       gap:10px;
       padding:12px 12px 12px 14px;
@@ -812,6 +915,12 @@ $buildReference = static function (array $catalogModel): string {
       right:12px;
       bottom:12px;
       justify-content:center;
+    }
+    .catalogue-lightbox{
+      padding:14px;
+    }
+    .catalogue-lightbox-dialog{
+      padding:14px;
     }
   }
 </style>
@@ -926,7 +1035,10 @@ $buildReference = static function (array $catalogModel): string {
                 <span class="catalogue-card-badge"><?php echo htmlspecialchars($catalogLabels[$catalogType] ?? ucfirst($catalogType), ENT_QUOTES, 'UTF-8'); ?></span>
                 <span class="catalogue-card-reference"><?php echo htmlspecialchars($modelReference, ENT_QUOTES, 'UTF-8'); ?></span>
                 <?php if ($imagePath !== null) { ?>
-                  <img src="<?php echo htmlspecialchars($imagePath, ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($modelName, ENT_QUOTES, 'UTF-8'); ?>">
+                  <button type="button" class="catalogue-card-media-trigger" data-catalogue-image="<?php echo htmlspecialchars($imagePath, ENT_QUOTES, 'UTF-8'); ?>" data-catalogue-title="<?php echo htmlspecialchars($modelName, ENT_QUOTES, 'UTF-8'); ?>" data-catalogue-meta="<?php echo htmlspecialchars($priceLabel . ' • ' . $modelReference, ENT_QUOTES, 'UTF-8'); ?>" aria-label="Agrandir l'aperçu du modèle <?php echo htmlspecialchars($modelName, ENT_QUOTES, 'UTF-8'); ?>">
+                    <img src="<?php echo htmlspecialchars($imagePath, ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($modelName, ENT_QUOTES, 'UTF-8'); ?>">
+                  </button>
+                  <span class="catalogue-card-media-hint">Agrandir</span>
                 <?php } else { ?>
                   <div class="catalogue-card-empty">Aperçu du modèle</div>
                 <?php } ?>
@@ -984,8 +1096,72 @@ $buildReference = static function (array $catalogModel): string {
   </a>
 </main>
 
+<div id="catalogueLightbox" class="catalogue-lightbox" aria-hidden="true">
+  <div class="catalogue-lightbox-dialog" role="dialog" aria-modal="true" aria-labelledby="catalogueLightboxTitle">
+    <button type="button" class="catalogue-lightbox-close" id="catalogueLightboxClose" aria-label="Fermer l'aperçu">&times;</button>
+    <figure class="catalogue-lightbox-figure">
+      <img id="catalogueLightboxImage" src="" alt="">
+      <figcaption class="catalogue-lightbox-caption">
+        <span id="catalogueLightboxTitle" class="catalogue-lightbox-title"></span>
+        <span id="catalogueLightboxMeta" class="catalogue-lightbox-meta"></span>
+      </figcaption>
+    </figure>
+  </div>
+</div>
+
 <script>
   document.getElementById('catalogueHamb')?.addEventListener('click', function () {
     document.querySelector('.menu')?.classList.toggle('open');
+  });
+
+  const catalogueLightbox = document.getElementById('catalogueLightbox');
+  const catalogueLightboxImage = document.getElementById('catalogueLightboxImage');
+  const catalogueLightboxTitle = document.getElementById('catalogueLightboxTitle');
+  const catalogueLightboxMeta = document.getElementById('catalogueLightboxMeta');
+  const catalogueLightboxClose = document.getElementById('catalogueLightboxClose');
+
+  function openCatalogueLightbox(image, title, meta) {
+    if (!image) {
+      return;
+    }
+
+    catalogueLightboxImage.src = image;
+    catalogueLightboxImage.alt = title || 'Aperçu du modèle';
+    catalogueLightboxTitle.textContent = title || 'Aperçu du modèle';
+    catalogueLightboxMeta.textContent = meta || '';
+    catalogueLightbox.classList.add('is-open');
+    catalogueLightbox.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeCatalogueLightbox() {
+    catalogueLightbox.classList.remove('is-open');
+    catalogueLightbox.setAttribute('aria-hidden', 'true');
+    catalogueLightboxImage.src = '';
+    catalogueLightboxImage.alt = '';
+    document.body.style.overflow = '';
+  }
+
+  document.querySelectorAll('[data-catalogue-image]').forEach(function (trigger) {
+    trigger.addEventListener('click', function () {
+      openCatalogueLightbox(
+        trigger.getAttribute('data-catalogue-image') || '',
+        trigger.getAttribute('data-catalogue-title') || 'Aperçu du modèle',
+        trigger.getAttribute('data-catalogue-meta') || ''
+      );
+    });
+  });
+
+  catalogueLightboxClose?.addEventListener('click', closeCatalogueLightbox);
+  catalogueLightbox?.addEventListener('click', function (event) {
+    if (event.target === catalogueLightbox) {
+      closeCatalogueLightbox();
+    }
+  });
+
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && catalogueLightbox?.classList.contains('is-open')) {
+      closeCatalogueLightbox();
+    }
   });
 </script>
