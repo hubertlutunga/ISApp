@@ -260,7 +260,7 @@ final class EventOrderService
         $stmt->execute([$promoId]);
     }
 
-    public static function upsertCatalogModel(PDO $pdo, array $payload, ?array $imageFile = null, string $imageTargetDir = '../images/modeleis'): int
+    public static function upsertCatalogModel(PDO $pdo, array $payload, ?array $imageFile = null, string $imageTargetDir = __DIR__ . '/../../event/images/modeleis'): int
     {
         self::ensureModelCatalogColumns($pdo);
 

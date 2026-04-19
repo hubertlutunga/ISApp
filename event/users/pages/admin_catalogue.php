@@ -6,6 +6,9 @@ if ((string) ($datasession['type_user'] ?? '') !== '1') {
 
 EventOrderService::ensureCatalogInfrastructure($pdo);
 
+$catalogImageUploadDir = __DIR__ . '/../../images/modeleis';
+$catalogImagePreviewBase = '../images/modeleis/';
+
 $flash = null;
 $flashType = 'success';
 
@@ -16,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $pdo,
                 $_POST,
                 $_FILES['catalog_image'] ?? null,
-                '../images/modeleis'
+                $catalogImageUploadDir
             );
             $flash = 'Catalogue mis a jour avec succes.';
         }
@@ -41,7 +44,7 @@ foreach ($catalogModels as $catalogModel) {
     $groupedCatalog[$group][] = $catalogModel;
 }
 
-function renderCatalogRows(array $rows, bool $showPrice): void
+function renderCatalogRows(array $rows, bool $showPrice, string $imagePreviewBase): void
 {
     foreach ($rows as $row) {
         $imagePath = trim((string) ($row['image'] ?? ''));
@@ -54,7 +57,7 @@ function renderCatalogRows(array $rows, bool $showPrice): void
             <div class="catalog-row-main">
                 <div class="catalog-preview">
                     <?php if ($imagePath !== '') { ?>
-                    <img src="../images/modeleis/<?php echo htmlspecialchars($imagePath, ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars((string) ($row['nom'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
+                    <img src="<?php echo htmlspecialchars($imagePreviewBase . rawurlencode($imagePath), ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars((string) ($row['nom'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
                     <?php } else { ?>
                     <div class="catalog-preview-empty">Apercu</div>
                     <?php } ?>
@@ -131,7 +134,7 @@ function renderCatalogRows(array $rows, bool $showPrice): void
                             <h2>Tarifs des accessoires</h2>
                             <p>Ces prix sont utilises dans l'etape de total de commande.</p>
                         </div>
-                        <?php renderCatalogRows($groupedCatalog['accessoires'], true); ?>
+                        <?php renderCatalogRows($groupedCatalog['accessoires'], true, $catalogImagePreviewBase); ?>
                     </section>
 
                     <section class="catalog-card">
@@ -139,7 +142,7 @@ function renderCatalogRows(array $rows, bool $showPrice): void
                             <h2>Modeles d'invitation</h2>
                             <p>Ajoutez ou modifiez les modeles visibles dans la galerie de selection ainsi que leur prix unitaire.</p>
                         </div>
-                        <?php renderCatalogRows($groupedCatalog['invitation'], true); ?>
+                        <?php renderCatalogRows($groupedCatalog['invitation'], true, $catalogImagePreviewBase); ?>
                     </section>
 
                     <section class="catalog-card">
@@ -147,7 +150,7 @@ function renderCatalogRows(array $rows, bool $showPrice): void
                             <h2>Modeles de chevalet</h2>
                             <p>Administrez les variantes de chevalet de table disponibles a la commande.</p>
                         </div>
-                        <?php renderCatalogRows($groupedCatalog['chevalet'], false); ?>
+                        <?php renderCatalogRows($groupedCatalog['chevalet'], false, $catalogImagePreviewBase); ?>
                     </section>
 
                     <section class="catalog-card">
