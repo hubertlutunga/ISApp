@@ -672,20 +672,140 @@ $buildReference = static function (array $catalogModel): string {
     .catalogue-container{
       width:min(100%, calc(100% - 22px));
     }
+    .catalogue-hero{
+      padding:28px 0 18px;
+    }
+    .catalogue-hero-card{
+      padding:22px;
+    }
+    .catalogue-copy{
+      font-size:15px;
+      line-height:1.55;
+    }
+    .catalogue-manifesto{
+      font-size:11px;
+      line-height:1.6;
+    }
     .catalogue-intro-row{
-      padding-bottom:24px;
+      padding-bottom:18px;
     }
     .catalogue-grid{
       grid-template-columns:1fr;
+      gap:12px;
+    }
+    .catalogue-section{
+      padding:6px 0 28px;
+    }
+    .catalogue-section + .catalogue-section{
+      padding-top:24px;
+    }
+    .catalogue-section-head{
+      gap:12px;
+      margin-bottom:14px;
+    }
+    .catalogue-section-title{
+      font-size:26px;
+    }
+    .catalogue-section-copy{
+      font-size:13px;
+      line-height:1.6;
+    }
+    .catalogue-count{
+      min-width:48px;
+      min-height:48px;
+      font-size:12px;
+    }
+    .catalogue-card{
+      flex-direction:row;
+      align-items:stretch;
+      min-height:0;
+      border-radius:22px;
+    }
+    .catalogue-card-media{
+      flex:0 0 96px;
+      width:96px;
+      min-width:96px;
+      aspect-ratio:auto;
+      min-height:132px;
+    }
+    .catalogue-card-badge{
+      left:10px;
+      top:10px;
+      padding:6px 8px;
+      font-size:9px;
+      letter-spacing:.05em;
+    }
+    .catalogue-card-reference{
+      right:10px;
+      top:auto;
+      bottom:10px;
+      min-height:26px;
+      padding:0 8px;
+      font-size:9px;
+    }
+    .catalogue-card-body{
+      gap:10px;
+      padding:12px 12px 12px 14px;
+      min-width:0;
     }
     .catalogue-card-head{
-      flex-direction:column;
+      flex-direction:row;
+      gap:8px;
+    }
+    .catalogue-card-name{
+      font-size:15px;
+      line-height:1.25;
     }
     .catalogue-card-price{
-      text-align:left;
+      text-align:right;
+      font-size:14px;
+      line-height:1.2;
+    }
+    .catalogue-card-price small{
+      margin-top:3px;
+      font-size:9px;
+    }
+    .catalogue-card-desc{
+      font-size:12px;
+      line-height:1.45;
+      display:-webkit-box;
+      -webkit-line-clamp:2;
+      -webkit-box-orient:vertical;
+      overflow:hidden;
+    }
+    .catalogue-card-footer{
+      gap:8px;
+      padding-top:10px;
+      align-items:flex-start;
+    }
+    .catalogue-card-meta{
+      gap:6px;
+    }
+    .catalogue-meta-pill{
+      padding:5px 7px;
+      font-size:9px;
+    }
+    .catalogue-card-meta .catalogue-meta-pill:last-child{
+      display:none;
+    }
+    .catalogue-card-action{
+      display:none;
+    }
+    .catalogue-card-cta{
+      width:auto;
+      min-height:34px;
+      padding:0 12px;
+      border-radius:12px;
+      font-size:10px;
+      letter-spacing:.05em;
+      align-self:flex-start;
     }
     .catalogue-title{
       font-size:40px;
+    }
+    .catalogue-footer-card{
+      margin:10px 0 56px;
+      padding:22px 20px;
     }
     .catalogue-whatsapp-float{
       left:12px;
