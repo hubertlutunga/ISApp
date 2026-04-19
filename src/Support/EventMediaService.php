@@ -27,7 +27,7 @@ final class EventMediaService
         }
     }
 
-    public static function storeUploadedImage(array $file, string $targetDir, string $prefix = null, ?int $maxBytes = null): ?string
+    public static function storeUploadedImage(array $file, string $targetDir, ?string $prefix = null, ?int $maxBytes = null): ?string
     {
         if (!isset($file['error']) || $file['error'] === UPLOAD_ERR_NO_FILE) {
             return null;

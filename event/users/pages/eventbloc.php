@@ -99,26 +99,56 @@ $fmt = new IntlDateFormatter(
 }
 
 .event-accessories {
+  display:grid;
+  gap:10px;
+  margin:8px 0 2px;
 }
 .event-accessories br { display:none; }
-.event-accessories > em {
-  display:flex;
-  align-items:center;
-  gap:8px;
-  margin-top:6px;
+.event-accessory-item,
+.event-accessory-subline {
+  display:grid;
+  grid-template-columns:14px minmax(0, 1fr);
+  gap:12px;
+  margin:0;
   color:#334155;
   font-style:normal;
 }
-.event-accessories > em::before {
+.event-accessory-item::before,
+.event-accessory-subline::before {
   content:'';
-  flex:0 0 auto;
-  width:8px;
-  height:8px;
+  width:10px;
+  height:10px;
+  margin-top:6px;
   border-radius:999px;
   background:linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
-  box-shadow:0 0 0 4px rgba(245, 158, 11, 0.14);
+  box-shadow:0 0 0 6px rgba(245, 158, 11, 0.12);
 }
-.event-accessories > em:first-child { margin-top:0; }
+.event-accessory-subline {
+  margin-left:0;
+}
+.event-accessory-subline .event-accessory-content {
+  padding-left:14px;
+}
+.event-accessory-content {
+  min-width:0;
+  display:flex;
+  flex-wrap:wrap;
+  align-items:baseline;
+  gap:8px 10px;
+}
+.event-accessory-name {
+  font-weight:700;
+  color:#334155;
+}
+.event-accessory-qty,
+.event-accessory-meta,
+.event-accessory-price {
+  color:#64748b;
+  font-size:12px;
+}
+.event-accessory-price {
+  white-space:nowrap;
+}
 
 .event-detail-stack {
   margin-top:10px;
@@ -227,8 +257,8 @@ $fmt = new IntlDateFormatter(
   text-decoration:none;
 }
 
-.hoverx-container{ position:relative; display:inline-flex; min-width:420px; max-width:100%; white-space:nowrap }
-.hoverx-container .modelx-link{ display:inline-flex; align-items:center; white-space:nowrap }
+.hoverx-container{ position:relative; display:inline-flex; max-width:100%; min-width:0; flex-wrap:wrap; gap:6px; align-items:baseline }
+.hoverx-container .modelx-link{ display:inline-flex; align-items:center; max-width:100%; white-space:normal; word-break:break-word; color:#312e81; font-weight:700 }
 .hoverx-image{ display:none; position:absolute; z-index:9000; max-width:320px; border:1px solid #ccc; background:#fff; padding:5px; box-shadow:0 4px 10px rgba(0,0,0,.3) }
 .hoverx-container:hover .hoverx-image{ display:block }
 
@@ -289,7 +319,12 @@ $fmt = new IntlDateFormatter(
     justify-content:flex-end;
     z-index:4;
   }
-  .hoverx-container { min-width:100%; }
+  .event-accessory-subline { margin-left:0; }
+  .event-accessory-item,
+  .event-accessory-subline { grid-template-columns:12px minmax(0, 1fr); gap:10px; }
+  .event-accessory-content { display:grid; gap:4px; }
+  .event-accessory-subline .event-accessory-content { padding-left:0; }
+  .event-accessory-price { white-space:normal; }
 }
 
 /* Lightbox (popup) */
@@ -364,6 +399,9 @@ if (!empty($events)) {
   $publicUrl = $eventDisplay['publicUrl'];
   $qrFile = $eventDisplay['qrFile'];
   $paymentMeta = $eventDisplay['payment'];
+  $eventInvitationModels = EventOrderService::loadInvitationModelsByEvent($pdo, (int) ($dataevent['cod_event'] ?? 0));
+  $eventCheckout = EventOrderService::loadCheckoutByEvent($pdo, (int) ($dataevent['cod_event'] ?? 0));
+  $paymentTypeLabel = EventOrderService::paymentLabel($eventCheckout['type_paiement'] ?? null);
   $deliveryTimestamp = !empty($dataevent['date_livraison']) ? strtotime((string) $dataevent['date_livraison']) : false;
   $isOverdue = $deliveryTimestamp !== false
     && ($dataevent['crea'] ?? null) !== '2'
@@ -491,13 +529,43 @@ if (!empty($events)) {
                 // Si l’accessoire correspond à une maquette d’invitation/chevalet, récupérer le nom du modèle choisi
                 $modele_inv = '';
                 if ($dataae['cod_acc'] == "1") {
+                  if ($eventInvitationModels !== []) {
+                    foreach ($eventInvitationModels as $invitationModel) {
+                      $modelName = (string) ($invitationModel['nom'] ?? 'Modele');
+                      $modelImage = (string) ($invitationModel['image'] ?? $image_inv);
+                      $modelQuantity = max(1, (int) ($invitationModel['quantite'] ?? 1));
+                      $modelUnitPrice = round((float) ($invitationModel['unit_price'] ?? 0), 2);
+                      $modelLineTotal = round((float) ($invitationModel['line_total'] ?? ($modelUnitPrice * $modelQuantity)), 2);
+                      ?>
+                      <div class="event-accessory-subline">
+                        <div class="event-accessory-content">
+                          <span class="event-accessory-name"><?= htmlspecialchars($accessoire) ?></span>
+                          <span class="hoverx-container">
+                            <a target="_blank" href="<?= 'https://invitationspeciale.com/event/images/modeleis/' . rawurlencode($modelImage) ?>" class="modelx-link">
+                              <?= htmlspecialchars($modelName) ?>
+                            </a>
+                            <span class="event-accessory-qty">x <?= $modelQuantity ?></span>
+                            <?php if ($modelUnitPrice > 0): ?>
+                              <span class="event-accessory-price"><?= htmlspecialchars(number_format($modelUnitPrice, 2, '.', ' '), ENT_QUOTES, 'UTF-8') ?> $ / u. | <?= htmlspecialchars(number_format($modelLineTotal, 2, '.', ' '), ENT_QUOTES, 'UTF-8') ?> $</span>
+                            <?php endif; ?>
+                            <?php if (!empty($modelImage)): ?>
+                              <img class="hoverx-image" src="<?= '../images/modeleis/' . htmlspecialchars($modelImage) ?>" alt="">
+                            <?php endif; ?>
+                          </span>
+                        </div>
+                      </div>
+                      <?php
+                    }
+
+                    continue;
+                  } else {
                     $stmtmi = $pdo->prepare("SELECT nom, image FROM modele_is WHERE cod_mod = ?");
                     $stmtmi->execute([$dataevent['modele_inv']]);
                     if ($mi = $stmtmi->fetch(PDO::FETCH_ASSOC)) {
-                        $modele_inv = '(' . $mi['nom'] . ')';
-                        // si tu veux afficher l’image correspondante, remplace $image_inv
-                        $image_inv = $mi['image'] ?? $image_inv;
+                      $modele_inv = '(' . $mi['nom'] . ')';
+                      $image_inv = $mi['image'] ?? $image_inv;
                     }
+                  }
                 } elseif ($dataae['cod_acc'] == "3") {
                     $stmtmc = $pdo->prepare("SELECT nom FROM modele_is WHERE cod_mod = ?");
                     $stmtmc->execute([$dataevent['modele_chev']]);
@@ -506,17 +574,22 @@ if (!empty($events)) {
                     }
                 }
                 ?>
-                <em>
-                  <?= htmlspecialchars($accessoire) ?>
-                  <span class="hoverx-container">
-                    <a target="_blank" href="<?= 'https://invitationspeciale.com/event/images/modeleis/' . rawurlencode($image_inv) ?>" class="modelx-link">
-                      <?= htmlspecialchars($modele_inv) ?><?= $qtecom ?>
-                    </a>
-                    <?php if (!empty($image_inv)): ?>
-                      <img class="hoverx-image" src="<?= '../images/modeleis/' . htmlspecialchars($image_inv) ?>" alt="">
+                <div class="event-accessory-item">
+                  <div class="event-accessory-content">
+                    <span class="event-accessory-name"><?= htmlspecialchars($accessoire) ?></span>
+                    <?php if ($modele_inv !== '' || !empty($image_inv)): ?>
+                    <span class="hoverx-container">
+                      <a target="_blank" href="<?= 'https://invitationspeciale.com/event/images/modeleis/' . rawurlencode($image_inv) ?>" class="modelx-link">
+                        <?= htmlspecialchars(trim($modele_inv, '()')) ?>
+                      </a>
+                      <?php if (!empty($image_inv)): ?>
+                        <img class="hoverx-image" src="<?= '../images/modeleis/' . htmlspecialchars($image_inv) ?>" alt="">
+                      <?php endif; ?>
+                    </span>
                     <?php endif; ?>
-                  </span>
-                </em>
+                    <span class="event-accessory-meta"><?= htmlspecialchars(trim(strip_tags($qtecom)), ENT_QUOTES, 'UTF-8') ?></span>
+                  </div>
+                </div>
                 <?php
             }
             if (!empty($accessoiresEvent)) {
@@ -533,6 +606,9 @@ if (!empty($events)) {
             <?php } ?>
 
             <span><b>Autres précisions :</b> <?= nl2br(htmlspecialchars($dataevent['autres_precisions'] ?? '')) ?></span>
+            <span><b>Langue :</b> <?= htmlspecialchars(((string) ($dataevent['lang'] ?? 'fr')) === 'en' ? 'Anglais' : 'Français', ENT_QUOTES, 'UTF-8') ?></span>
+            <span><b>Type de paiement :</b> <?= htmlspecialchars($paymentTypeLabel, ENT_QUOTES, 'UTF-8') ?></span>
+            <span><b>Code promo :</b> <?= htmlspecialchars((string) ($eventCheckout['promo_code'] ?? 'Aucun'), ENT_QUOTES, 'UTF-8') ?></span>
             <span><b>Lieu :</b> <?= htmlspecialchars($dataevent['lieu'] ?? '') ?></span>
             <span><b>Adresse :</b> <?= isset($dataevent['adresse']) ? '(' . htmlspecialchars($dataevent['adresse']) . ')' : 'Non défini' ?></span>
             <span><b>Site web :</b> <a target="_blank" href="<?= htmlspecialchars($publicUrl) ?>"><?= htmlspecialchars($publicUrl) ?></a></span>
@@ -542,6 +618,7 @@ if (!empty($events)) {
             <?php if (!empty($datasession['type_user']) && $datasession['type_user'] === "1") { ?>
               <div class="event-payment-stack">
                 <span><b>Whatsapp client :</b> <a href="http://wa.me/<?= htmlspecialchars($phone) ?>" target="_blank" rel="noopener noreferrer"><?= htmlspecialchars($client) ?></a></span>
+                <span><b>Total commande :</b> <?= htmlspecialchars(number_format((float) ($eventCheckout['total'] ?? 0), 2, '.', ' '), ENT_QUOTES, 'UTF-8') ?> <?= htmlspecialchars((string) ($eventCheckout['devise'] ?? 'USD'), ENT_QUOTES, 'UTF-8') ?></span>
                 <span><b>Payé :</b> <?= $paye ?></span>
                 <span><b>Reste :</b> <?= $reste ?></span>
               </div>

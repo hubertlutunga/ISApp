@@ -41,10 +41,13 @@ $dataevent = $codget > 0 ? EventUpdateService::findEventById($pdo, $codget) : []
 <?php
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') { 
+    $currentUserId = (int) (($datasession['cod_user'] ?? ($_SESSION['cod_user'] ?? 0)) ?: 0);
+
     try {
         EventCreationService::createLegacyEvent(
             $pdo,
             [
+                'cod_user' => $currentUserId > 0 ? $currentUserId : null,
                 'type_event' => $_POST['event'] ?? null,
                 'type_mar' => $_POST['weddingType'] ?? null,
                 'modele_inv' => $_POST['modele_inv'] ?? null,

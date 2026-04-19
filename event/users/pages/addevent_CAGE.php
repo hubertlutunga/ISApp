@@ -7,11 +7,13 @@
       
     
 
+        $currentUserId = (int) (($datasession['cod_user'] ?? ($_SESSION['cod_user'] ?? 0)) ?: 0);
+
         try {
             EventCreationService::createManagedEvent(
                 $pdo,
                 [
-                    'cod_user' => $datasession['cod_user'] ?? null,
+                    'cod_user' => $currentUserId > 0 ? $currentUserId : null,
                     'type_event' => $_POST['event'] ?? null,
                     'type_mar' => $_POST['weddingType'] ?? null,
                     'modele_inv' => $_POST['modele_inv'] ?? null,

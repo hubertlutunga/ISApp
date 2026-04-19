@@ -1,16 +1,14 @@
  
 <?php 
-
-	$stmtss = $pdo->prepare("SELECT * FROM is_users WHERE phone = ?");
-	$stmtss->execute([$_SESSION['user_phone']]);
-	$datasession = $stmtss->fetch();
-	$typeUser = (string) ($datasession['type_user'] ?? '');
-
-
 	if (!isset($_SESSION['user_phone'])) {
 		header("Location: index.php?page=logout"); // Rediriger vers users.php si déjà connecté
 		exit();
 	}
+
+	$stmtss = $pdo->prepare("SELECT * FROM is_users WHERE phone = ?");
+	$stmtss->execute([$_SESSION['user_phone']]);
+	$datasession = $stmtss->fetch(PDO::FETCH_ASSOC) ?: ['noms' => 'Utilisateur', 'type_user' => ''];
+	$typeUser = (string) ($datasession['type_user'] ?? '');
 
  
 	if ((($_GET['page'] ?? '') === 'admin_accueil' OR ($_GET['page'] ?? '') === 'factures') && $typeUser !== '1') {
@@ -80,7 +78,7 @@
 					</label>
 	        	</li>  -->
 <?php 
-    if ($datasession['type_user'] !== '3') {
+	if ($typeUser !== '3') {
        ?>
 			<li class="dropdown notifications-menu btn-group">
 				<a href="index.php?page=factures" class="waves-effect waves-light dropdown-toggle" title="Accueil">
@@ -212,8 +210,13 @@
 		<li><a href="#"><i data-feather="shopping-cart"></i>Commandes</a> 
 		</li>
 
+		<li><a href="index.php?page=admin_catalogue"><i data-feather="sliders"></i>Catalogue</a>
+		</li>
+		<li><a href="index.php?page=admin_promos"><i data-feather="percent"></i>Codes promo</a>
+		</li>
+
 <?php 
-    if ($datasession['type_user'] !== '3') {
+	if ($typeUser !== '3') {
        ?>
 
 		<li><a href="index.php?page=factures"><i data-feather="arrow-down"></i>Entrées</a> 

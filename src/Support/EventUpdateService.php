@@ -84,8 +84,9 @@ final class EventUpdateService
         $prenomEpouse = self::nullableString($request['prenomEpouse'] ?? null);
         $nomsFetard = self::nullableString($request['nomsfetard'] ?? null);
         $themeConf = self::nullableString($request['themeConf'] ?? null);
+        $ordrePrenoms = self::nullableString($request['nameOrder'] ?? ($request['ordrepri'] ?? null));
 
-        return self::buildInitiale($typeEvent, $prenomEpoux, $prenomEpouse, $nomsFetard, $themeConf);
+        return self::buildInitiale($typeEvent, $prenomEpoux, $prenomEpouse, $nomsFetard, $themeConf, $ordrePrenoms);
     }
 
     public static function updateInvitationTemplate(PDO $pdo, int $eventId, array $settings): void
@@ -175,7 +176,8 @@ final class EventUpdateService
         ?string $prenomEpoux,
         ?string $prenomEpouse,
         ?string $nomsFetard,
-        ?string $themeConf
+        ?string $themeConf,
+        ?string $ordrePrenoms = null
     ): ?string {
         if ($typeEvent === '1') {
             $initialeEpouse = self::firstCharacter($prenomEpouse);
@@ -183,6 +185,10 @@ final class EventUpdateService
 
             if ($initialeEpouse === null && $initialeEpoux === null) {
                 return null;
+            }
+
+            if ($ordrePrenoms === 'm') {
+                return ($initialeEpoux ?? '') . '&' . ($initialeEpouse ?? '');
             }
 
             return ($initialeEpouse ?? '') . '&' . ($initialeEpoux ?? '');

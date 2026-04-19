@@ -16,7 +16,7 @@ SELECT
   e.nomfetard, e.themeconf, e.autres_precisions, e.lieu, e.adresse, e.date_enreg,
     e.modele_inv, e.modele_chev,
     e.invit_religieux, e.ajustenom, e.taillenominv, e.alignnominv, e.pagenom, e.pagebouton,
-    e.colornom, e.bordgauchenominv, e.qrcode, e.pageqr, e.hautqr, e.gaucheqr, e.tailleqr, e.lang,
+        e.colornom, e.bordgauchenominv, e.qrcode, e.pageqr, e.hautqr, e.gaucheqr, e.tailleqr, e.lang, e.ordrepri,
     u.cod_user AS client_code, u.type_user AS client_type_user, u.noms AS client_nom, u.phone AS client_phone, u.email AS client_email, u.recpass AS client_recpass,
   f.montant_total, f.montant_paye,
   us.short_code
@@ -67,10 +67,24 @@ LIMIT :limit OFFSET :offset
 
     public static function decorateEvent(PDO $pdo, array $event, IntlDateFormatter $formatter, array $config): array
     {
-        $client = !empty($event['client_nom'])
-            ? $event['client_nom'] . ' (' . ($event['client_phone'] ?? '') . ')'
-            : 'Inconnu';
-        $phone = $event['client_phone'] ?? '';
+        $clientName = trim((string) ($event['client_nom'] ?? ''));
+        $phone = trim((string) ($event['client_phone'] ?? ''));
+        $email = trim((string) ($event['client_email'] ?? ''));
+        $clientCode = trim((string) ($event['client_code'] ?? ''));
+
+        if ($clientName !== '' && $phone !== '') {
+            $client = $clientName . ' (' . $phone . ')';
+        } elseif ($clientName !== '') {
+            $client = $clientName;
+        } elseif ($phone !== '') {
+            $client = $phone;
+        } elseif ($email !== '') {
+            $client = $email;
+        } elseif ($clientCode !== '') {
+            $client = 'Client #' . $clientCode;
+        } else {
+            $client = 'Inconnu';
+        }
 
         $paymentMeta = self::resolvePaymentMeta($pdo, $event);
         $paye = $paymentMeta['paid_label'];
@@ -261,9 +275,19 @@ LIMIT :limit OFFSET :offset
     private static function resolveEventIdentity(PDO $pdo, array $event): array
     {
         if (($event['type_event'] ?? null) == '1') {
+            $firstName = trim((string) ($event['prenom_epouse'] ?? ''));
+            $secondName = trim((string) ($event['prenom_epoux'] ?? ''));
+
+            if (($event['ordrepri'] ?? null) === 'm') {
+                $firstName = trim((string) ($event['prenom_epoux'] ?? ''));
+                $secondName = trim((string) ($event['prenom_epouse'] ?? ''));
+            }
+
+            $fetard = trim($firstName . ' & ' . $secondName, ' &');
+
             return [
                 'typeevent' => 'Mariage ' . ($event['type_mar'] ?? ''),
-                'fetard' => trim(($event['prenom_epouse'] ?? '') . ' & ' . ($event['prenom_epoux'] ?? '')) ?: 'Inconnu',
+                'fetard' => $fetard !== '' ? $fetard : 'Inconnu',
                 'displayvue' => 'display:block;',
             ];
         }

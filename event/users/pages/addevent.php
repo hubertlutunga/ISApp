@@ -1,5 +1,119 @@
 <?php
 // ====== ENTÊTE PAGE ======
+
+$accessoryCatalog = EventOrderService::accessoryCatalog($pdo);
+$promoCatalog = EventOrderService::promoCatalog($pdo);
+$paymentOptions = EventOrderService::paymentOptions();
+
+$invitationModelStmt = $pdo->prepare("SELECT * FROM modele_is WHERE type_mod = :type_mod AND is_active = 1 ORDER BY nom ASC");
+$invitationModelStmt->execute([':type_mod' => 'invitation']);
+$invitationModelRows = $invitationModelStmt->fetchAll(PDO::FETCH_ASSOC);
+
+$postedAccessories = array_map('strval', $_POST['accessoires'] ?? []);
+$requiresInvitationModelQuantity = in_array('1', $postedAccessories, true);
+$selectedInvitationModels = EventOrderService::normalizeInvitationModels(
+  array_map('strval', $_POST['invitation_models'] ?? []),
+  (array) ($_POST['invitation_model_quantities'] ?? []),
+  $requiresInvitationModelQuantity
+);
+$selectedInvitationModels = EventOrderService::hydrateInvitationModels($selectedInvitationModels, $invitationModelRows);
+
+if ($selectedInvitationModels !== []) {
+  $_POST['modele_inv'] = (string) $selectedInvitationModels[0]['model_id'];
+}
+
+if ($requiresInvitationModelQuantity && $selectedInvitationModels !== []) {
+  $_POST['accessoire_quantities']['1'] = (string) array_sum(array_map(
+    static fn(array $model): int => (int) ($model['quantity'] ?? 1),
+    $selectedInvitationModels
+  ));
+}
+
+$checkoutPreview = EventOrderService::summarizeSelection(
+  $postedAccessories,
+  (array) ($_POST['accessoire_quantities'] ?? []),
+  $selectedInvitationModels,
+  $accessoryCatalog,
+  $promoCatalog,
+  (string) ($_POST['promo_code'] ?? '')
+);
+
+$promoCodeHints = implode(', ', array_keys($promoCatalog));
+$currentSessionUser = null;
+
+if (!empty($_SESSION['user_phone'])) {
+  $sessionUserStmt = $pdo->prepare("SELECT cod_user FROM is_users WHERE phone = ? LIMIT 1");
+  $sessionUserStmt->execute([$_SESSION['user_phone']]);
+  $currentSessionUser = $sessionUserStmt->fetch(PDO::FETCH_ASSOC) ?: null;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  $isAjaxRequest = strtolower((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')) === 'xmlhttprequest';
+  $type_event = $_POST['event'] ?? null;
+  $nomsAnniv = $_POST['nomsfetard'] ?? null;
+  $prenomEpoux = $_POST['prenomEpoux'] ?? null;
+  $prenomEpouse = $_POST['prenomEpouse'] ?? null;
+  $primaryInvitationModel = $_POST['modele_inv'] ?? null;
+  $currentUserId = (int) (($currentSessionUser['cod_user'] ?? ($_SESSION['cod_user'] ?? 0)) ?: 0);
+  $initialemar = EventUpdateService::buildInitialeFromRequest($_POST);
+
+  try {
+    $cod_event = EventCreationService::createManagedEvent(
+      $pdo,
+      [
+        'cod_user' => $currentUserId > 0 ? $currentUserId : null,
+        'type_event' => $type_event,
+        'type_mar' => $_POST['weddingType'] ?? null,
+        'modele_inv' => $primaryInvitationModel,
+        'modele_chev' => $_POST['chevaletModel'] ?? null,
+        'date_event' => $_POST['dateHeure'] ?? null,
+        'lieu' => $_POST['lieu'] ?? null,
+        'adresse' => $_POST['adresse'] ?? null,
+        'prenom_epoux' => $prenomEpoux,
+        'nom_epoux' => $_POST['nomEpoux'] ?? null,
+        'prenom_epouse' => $prenomEpouse,
+        'nom_epouse' => $_POST['nomEpouse'] ?? null,
+        'nomfetard' => $nomsAnniv,
+        'themeconf' => $_POST['themeConf'] ?? null,
+        'autres_precisions' => $_POST['details'] ?? null,
+        'initiale_mar' => $initialemar,
+        'lang' => $_POST['invitation_lang'] ?? null,
+        'ordrepri' => $_POST['nameOrder'] ?? null,
+        'accessoire_quantities' => $_POST['accessoire_quantities'] ?? [],
+        'invitation_models' => $selectedInvitationModels,
+        'checkout' => array_merge($checkoutPreview, [
+          'payment_type' => $_POST['payment_type'] ?? null,
+        ]),
+      ],
+      $_POST['accessoires'] ?? [],
+      $_FILES['photos'] ?? null,
+      '../photosevent',
+      $isAppConfig
+    );
+
+    if ($isAjaxRequest) {
+      header('Content-Type: application/json; charset=utf-8');
+      echo json_encode([
+        'success' => true,
+        'cod_event' => $cod_event,
+      ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+      return;
+    }
+  } catch (PDOException $e) {
+    if ($isAjaxRequest) {
+      http_response_code(500);
+      header('Content-Type: application/json; charset=utf-8');
+      echo json_encode([
+        'success' => false,
+        'message' => $e->getMessage(),
+      ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+      return;
+    }
+
+    echo "Erreur lors de l'enregistrement : " . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8');
+    return;
+  }
+}
 ?>
 <div class="wrapper">
   <?php include('header.php');?>
@@ -19,61 +133,7 @@
                   </div>
                   <div class="p-40 event-builder-form">
 
-<?php
-// ================== TRAITEMENT PHP (inchangé) ==================
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  $type_event = $_POST['event'] ?? null;
-  $nomsAnniv = $_POST['nomsfetard'] ?? null;
-  $prenomEpoux = $_POST['prenomEpoux'] ?? null;
-  $prenomEpouse = $_POST['prenomEpouse'] ?? null;
 
-  $initialemar = substr((string) $prenomEpouse, 0, 1) . '&' . substr((string) $prenomEpoux, 0, 1);
-  if ($type_event === '2' || $type_event === '3') {
-    $initialemar = (string) $nomsAnniv;
-  }
-
-  try {
-    $cod_event = EventCreationService::createManagedEvent(
-      $pdo,
-      [
-        'cod_user' => $datasession['cod_user'] ?? null,
-        'type_event' => $type_event,
-        'type_mar' => $_POST['weddingType'] ?? null,
-        'modele_inv' => $_POST['modele_inv'] ?? null,
-        'modele_chev' => $_POST['chevaletModel'] ?? null,
-        'date_event' => $_POST['dateHeure'] ?? null,
-        'lieu' => $_POST['lieu'] ?? null,
-        'adresse' => $_POST['adresse'] ?? null,
-        'prenom_epoux' => $prenomEpoux,
-        'nom_epoux' => $_POST['nomEpoux'] ?? null,
-        'prenom_epouse' => $prenomEpouse,
-        'nom_epouse' => $_POST['nomEpouse'] ?? null,
-        'nomfetard' => $nomsAnniv,
-        'themeconf' => $_POST['themeConf'] ?? null,
-        'autres_precisions' => $_POST['details'] ?? null,
-        'initiale_mar' => $initialemar,
-        'accessoire_quantities' => $_POST['accessoire_quantities'] ?? [],
-      ],
-      $_POST['accessoires'] ?? [],
-      $_FILES['photos'] ?? null,
-      '../photosevent',
-      $isAppConfig
-    );
-
-    error_log('Données reçues : ' . print_r($_POST, true));
-  } catch (PDOException $e) {
-    echo "Erreur lors de l'enregistrement : " . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8');
-    return;
-  }
-}
-?>
-
-
-
-
-
-
- 
  
 
 <!-- ================== CSS MINIMAL (wizard + modal + preview) ================== -->
@@ -398,6 +458,140 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     font-size:12px;
     font-weight:700;
   }
+  .selected-model-stack{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    margin-top:16px;
+  }
+  .selected-model-item{
+    display:grid;
+    grid-template-columns:72px minmax(0, 1fr) auto;
+    gap:14px;
+    align-items:center;
+    padding:14px;
+    border:1px solid rgba(148,163,184,.2);
+    border-radius:18px;
+    background:#fff;
+    box-shadow:0 12px 24px rgba(15,23,42,.05);
+  }
+  .selected-model-item img{
+    width:72px;
+    height:72px;
+    object-fit:cover;
+    border-radius:16px;
+    border:1px solid rgba(148,163,184,.18);
+    background:#fff;
+  }
+  .selected-model-item-copy{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    min-width:0;
+  }
+  .selected-model-item-title{
+    color:#0f172a;
+    font-size:15px;
+    font-weight:800;
+  }
+  .selected-model-item-meta{
+    color:#64748b;
+    font-size:13px;
+    line-height:1.5;
+  }
+  .selected-model-item-controls{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .selected-model-item-controls input{
+    width:96px;
+    min-height:42px;
+    border-radius:12px !important;
+    text-align:center;
+  }
+  .selected-model-item-remove{
+    border:none;
+    background:rgba(220,38,38,.08);
+    color:#b91c1c;
+    border-radius:999px;
+    padding:10px 14px;
+    font-size:12px;
+    font-weight:800;
+  }
+  .checkout-panel{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+  .checkout-summary{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+  .checkout-summary-card{
+    padding:16px 18px;
+    border:1px solid rgba(148,163,184,.18);
+    border-radius:18px;
+    background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%);
+    box-shadow:0 16px 28px rgba(15,23,42,.05);
+  }
+  .checkout-line{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:16px;
+    color:#0f172a;
+    font-size:14px;
+  }
+  .checkout-line + .checkout-line{
+    margin-top:10px;
+    padding-top:10px;
+    border-top:1px dashed rgba(148,163,184,.25);
+  }
+  .checkout-line small{
+    display:block;
+    margin-top:4px;
+    color:#64748b;
+    font-size:12px;
+  }
+  .checkout-total{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    padding:16px 18px;
+    border-radius:18px;
+    background:linear-gradient(135deg,#0f766e 0%,#0f9f85 100%);
+    color:#fff;
+    box-shadow:0 18px 30px rgba(15,118,110,.18);
+  }
+  .checkout-total span{
+    font-size:13px;
+    font-weight:700;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+    opacity:.82;
+  }
+  .checkout-total strong{
+    font-size:26px;
+    font-weight:800;
+  }
+  .checkout-empty{
+    padding:18px;
+    border-radius:18px;
+    background:#f8fafc;
+    border:1px dashed rgba(148,163,184,.32);
+    color:#64748b;
+    font-size:14px;
+    line-height:1.6;
+  }
+  .promo-note{
+    margin-top:-4px;
+    color:#64748b;
+    font-size:13px;
+  }
   .modal-content{background:#fff;margin:60px auto;padding:24px;border:1px solid #dbe3ef;width:95%;max-width:760px;border-radius:24px;box-shadow:0 28px 80px rgba(15,23,42,.18)}
   .model-modal-head{
     display:flex;
@@ -452,7 +646,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     .section-head{flex-direction:column}
     .form-grid.two-col{grid-template-columns:minmax(0, 1fr)}
     .accessory-grid{grid-template-columns:minmax(0, 1fr)}
-    .selected-model-preview{grid-template-columns:minmax(0, 1fr)}
+    .selected-model-preview,
+    .selected-model-item{grid-template-columns:minmax(0, 1fr)}
     #eventForm > .form-group,
     #eventForm > fieldset,
     #eventForm > .step,
@@ -517,6 +712,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <span class="wizard-dot" data-stepdot="1"></span>
     <span class="wizard-dot" data-stepdot="2"></span>
     <span class="wizard-dot" data-stepdot="3"></span>
+    <span class="wizard-dot" data-stepdot="4"></span>
   </div>
 
 
@@ -534,7 +730,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <label class="labaccessoire">Que commandez-vous ?</label>
         <div class="accessory-grid">
         <?php 
-          $reqmod = $pdo->prepare("SELECT * FROM modele_is WHERE type_mod = :type_mod ORDER BY CASE WHEN REPLACE(REPLACE(REPLACE(LOWER(nom), 'é', 'e'), 'è', 'e'), 'ê', 'e') LIKE 'invitation imprim%' OR REPLACE(REPLACE(REPLACE(LOWER(nom), 'é', 'e'), 'è', 'e'), 'ê', 'e') LIKE 'invitations imprim%' THEN 0 WHEN REPLACE(REPLACE(REPLACE(LOWER(nom), 'é', 'e'), 'è', 'e'), 'ê', 'e') LIKE 'invitation electron%' OR REPLACE(REPLACE(REPLACE(LOWER(nom), 'é', 'e'), 'è', 'e'), 'ê', 'e') LIKE 'invitations electron%' THEN 1 ELSE 2 END, nom ASC");
+          $reqmod = $pdo->prepare("SELECT * FROM modele_is WHERE type_mod = :type_mod AND is_active = 1 ORDER BY CASE WHEN REPLACE(REPLACE(REPLACE(LOWER(nom), 'é', 'e'), 'è', 'e'), 'ê', 'e') LIKE 'invitation imprim%' OR REPLACE(REPLACE(REPLACE(LOWER(nom), 'é', 'e'), 'è', 'e'), 'ê', 'e') LIKE 'invitations imprim%' THEN 0 WHEN REPLACE(REPLACE(REPLACE(LOWER(nom), 'é', 'e'), 'è', 'e'), 'ê', 'e') LIKE 'invitation electron%' OR REPLACE(REPLACE(REPLACE(LOWER(nom), 'é', 'e'), 'è', 'e'), 'ê', 'e') LIKE 'invitations electron%' THEN 1 ELSE 2 END, nom ASC");
           $reqmod->execute([':type_mod' => 'accessoires']);  
           while ($data_mod = $reqmod->fetch()) {
             $accessoireNom = (string) ($data_mod['nom'] ?? '');
@@ -581,30 +777,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       
 <!-- ✅ Déplacés ici : communs à tous les types -->
 <div class="form-group" id="ModInvitation" style="display:none;margin-top:20px;">
-  <label class="form-label">Modèle d'invitation</label>
+  <label class="form-label">Modèles d'invitation</label>
   <div class="input-group mb-3 champmod" id="dropdownToggle" style="cursor:pointer;border:1px solid #ccc;">
     <span class="input-group-text bg-transparent spanmod"><i class="fas fa-ring"></i></span>
     <div class="selected-option" style="margin-left:15px;">
       <div class="model-picker-summary">
-        <span class="model-picker-label">Choisir un modèle…</span>
-        <span class="model-picker-meta">Ouvrez la galerie pour sélectionner le design d'invitation.</span>
+        <span class="model-picker-label">Choisir un ou plusieurs modèles…</span>
+        <span class="model-picker-meta">Ouvrez la galerie pour composer votre sélection d'invitations.</span>
       </div>
     </div>
   </div>
-  <p class="field-help">La génération automatique d’une invitation personnalisée pour chaque invité avec son nom inscrit.</p>
+  <p class="field-help">Vous pouvez commander un, deux ou plusieurs modèles. Pour l’invitation imprimée, la quantité se définit modèle par modèle.</p>
   <div id="selectedModelPreview" class="selected-model-preview">
     <img id="selectedModelImage" class="selected-model-thumb" src="" alt="Aperçu du modèle sélectionné">
     <div class="selected-model-copy">
-      <span class="selected-model-kicker">Aperçu sélectionné</span>
+      <span class="selected-model-kicker">Aperçu principal</span>
       <div id="selectedModelTitle" class="selected-model-title"></div>
       <div id="selectedModelMeta" class="selected-model-meta">La génération automatique d’une invitation personnalisée pour chaque invité avec son nom inscrit.</div>
       <div class="selected-model-actions">
         <span class="selected-model-chip"><i class="fas fa-check-circle"></i> Prêt à l'emploi</span>
-        <span class="selected-model-chip"><i class="fas fa-images"></i> Galerie active</span>
+        <span class="selected-model-chip"><i class="fas fa-images"></i> Sélection multiple</span>
       </div>
     </div>
   </div>
-  <input type="hidden" name="modele_inv" id="modeleInv" value="">
+  <div id="selectedModelsList" class="selected-model-stack"></div>
+  <input type="hidden" name="modele_inv" id="modeleInv" value="<?php echo htmlspecialchars((string) ($_POST['modele_inv'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
+</div>
+
+<div class="form-group" id="InvitationLanguageGroup" style="display:none;">
+  <label for="invitationLang" class="form-label">Langue du texte sur l'invitation</label>
+  <div class="input-group mb-3">
+    <span class="input-group-text bg-transparent"><i class="fas fa-language"></i></span>
+    <select class="form-control ps-15 bg-transparent" name="invitation_lang" id="invitationLang">
+      <option value="">-- Sélectionner --</option>
+      <option value="fr" <?php if (($_POST['invitation_lang'] ?? '') === 'fr') { echo 'selected'; } ?>>Français</option>
+      <option value="en" <?php if (($_POST['invitation_lang'] ?? '') === 'en') { echo 'selected'; } ?>>Anglais</option>
+    </select>
+  </div>
 </div>
 
 <div class="form-group" id="ModChevalet" style="display:none;">
@@ -614,7 +823,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <select class="form-control ps-15 bg-transparent" name="chevaletModel" id="chevaletModel">
       <option value="">-- Sélectionner --</option>
       <?php 
-        $reqmod = $pdo->prepare("SELECT * FROM modele_is WHERE type_mod = :type_mod ORDER BY nom ASC");
+        $reqmod = $pdo->prepare("SELECT * FROM modele_is WHERE type_mod = :type_mod AND is_active = 1 ORDER BY nom ASC");
         $reqmod->execute([':type_mod' => 'chevalet']);  
         while ($data_mod = $reqmod->fetch()) {
       ?>
@@ -648,10 +857,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <span class="input-group-text bg-transparent"><i class="fas fa-ring"></i></span>
           <select class="form-control ps-15 bg-transparent" name="weddingType" id="weddingType">
             <option value="">-- Sélectionner --</option>
-            <option value="religieux">Religieux</option>
-            <option value="coutumier">Coutumier</option>
-            <option value="civil">Civil</option>
-            <option value="Prédot">Prédot</option>
+            <option value="Mariage Coutumier" <?php if (($_POST['weddingType'] ?? '') === 'Mariage Coutumier') { echo 'selected'; } ?>>Mariage Coutumier</option>
+            <option value="Mariage Civil" <?php if (($_POST['weddingType'] ?? '') === 'Mariage Civil') { echo 'selected'; } ?>>Mariage Civil</option>
+            <option value="Mariage religieux" <?php if (($_POST['weddingType'] ?? '') === 'Mariage religieux') { echo 'selected'; } ?>>Mariage religieux</option>
+            <option value="Soirée dansante" <?php if (($_POST['weddingType'] ?? '') === 'Soirée dansante') { echo 'selected'; } ?>>Soirée dansante</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group form-span-full" id="NameOrderGroup">
+        <label for="nameOrder" class="form-label">Ordre des prénoms sur l'invitation</label>
+        <div class="input-group mb-3">
+          <span class="input-group-text bg-transparent"><i class="fas fa-sort-alpha-down"></i></span>
+          <select class="form-control ps-15 bg-transparent" name="nameOrder" id="nameOrder">
+            <option value="">-- Sélectionner --</option>
+            <option value="f" <?php if (($_POST['nameOrder'] ?? '') === 'f') { echo 'selected'; } ?>>Commencer par le prénom de la femme</option>
+            <option value="m" <?php if (($_POST['nameOrder'] ?? '') === 'm') { echo 'selected'; } ?>>Commencer par le prénom de l'homme</option>
           </select>
         </div>
       </div>
@@ -660,7 +881,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <label for="prenomEpoux" class="form-label">Prénom de l'époux</label>
         <div class="input-group mb-3">
           <span class="input-group-text bg-transparent"><i class="fas fa-user"></i></span>
-          <input type="text" name="prenomEpoux" id="prenomEpoux" class="form-control ps-15 bg-transparent" placeholder="Ex. Samuel">
+          <input type="text" name="prenomEpoux" id="prenomEpoux" class="form-control ps-15 bg-transparent" placeholder="Ex. Samuel" value="<?php echo htmlspecialchars((string) ($_POST['prenomEpoux'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
         </div>
       </div>
 
@@ -668,7 +889,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <label for="nomEpoux" class="form-label">Nom de l'époux</label>
         <div class="input-group mb-3">
           <span class="input-group-text bg-transparent"><i class="fas fa-user"></i></span>
-          <input type="text" name="nomEpoux" id="nomEpoux" class="form-control ps-15 bg-transparent" placeholder="Ex. Lutunga">
+          <input type="text" name="nomEpoux" id="nomEpoux" class="form-control ps-15 bg-transparent" placeholder="Ex. Lutunga" value="<?php echo htmlspecialchars((string) ($_POST['nomEpoux'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
         </div>
       </div>
 
@@ -676,7 +897,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <label for="prenomEpouse" class="form-label">Prénom de l'épouse</label>
         <div class="input-group mb-3">
           <span class="input-group-text bg-transparent"><i class="fas fa-user"></i></span>
-          <input type="text" name="prenomEpouse" id="prenomEpouse" class="form-control ps-15 bg-transparent" placeholder="Ex. Esther">
+          <input type="text" name="prenomEpouse" id="prenomEpouse" class="form-control ps-15 bg-transparent" placeholder="Ex. Ursule" value="<?php echo htmlspecialchars((string) ($_POST['prenomEpouse'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
         </div>
       </div>
 
@@ -684,7 +905,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <label for="nomEpouse" class="form-label">Nom de l'épouse</label>
         <div class="input-group mb-3">
           <span class="input-group-text bg-transparent"><i class="fas fa-user"></i></span>
-          <input type="text" name="nomEpouse" id="nomEpouse" class="form-control ps-15 bg-transparent" placeholder="Ex. Kanku">
+          <input type="text" name="nomEpouse" id="nomEpouse" class="form-control ps-15 bg-transparent" placeholder="Ex. Mpia" value="<?php echo htmlspecialchars((string) ($_POST['nomEpouse'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
         </div>
       </div>
     </div>
@@ -768,7 +989,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <label for="details" class="form-label">Autres précisions</label>
         <div class="input-group mb-3">
           <span class="input-group-text bg-transparent"><i class="fas fa-edit"></i></span>
-          <textarea name="details" id="details" class="form-control ps-15 bg-transparent" rows="5" placeholder="Précisez ici les informations utiles pour notre équipe..."></textarea>
+          <textarea name="details" id="details" class="form-control ps-15 bg-transparent" rows="5" placeholder="Précisez ici les informations utiles pour notre équipe..."><?php echo htmlspecialchars((string) ($_POST['details'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></textarea>
+        </div>
+      </div>
+
+      <button type="button" id="btnNext3" class="btn btn-primary">Voir le montant</button>
+    </div>
+  </div>
+
+  <div class="step" id="step4">
+    <div class="wizard-actions">
+      <button type="button" class="btn btn-outline-secondary" id="btnPrev4">Retour</button>
+
+      <div class="section-head">
+        <div>
+          <h3>Montant et paiement</h3>
+          <p>Vérifiez votre commande, appliquez un code promo si nécessaire et choisissez votre mode de paiement.</p>
+        </div>
+        <span class="section-step-badge">4</span>
+      </div>
+
+      <div class="checkout-panel">
+        <div id="checkoutSummaryWedding" class="checkout-summary"></div>
+
+        <div class="form-grid two-col">
+          <div class="form-group">
+            <label for="promoCode" class="form-label">Code promo</label>
+            <div class="input-group mb-3">
+              <span class="input-group-text bg-transparent"><i class="fas fa-ticket-alt"></i></span>
+              <input type="text" name="promo_code" id="promoCode" class="form-control ps-15 bg-transparent" placeholder="Ex. ISWELCOME" value="<?php echo htmlspecialchars((string) ($_POST['promo_code'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
+            </div>
+            <p class="promo-note">Codes actifs: <?php echo htmlspecialchars($promoCodeHints, ENT_QUOTES, 'UTF-8'); ?></p>
+          </div>
+
+          <div class="form-group">
+            <label for="paymentType" class="form-label">Type de paiement</label>
+            <div class="input-group mb-3">
+              <span class="input-group-text bg-transparent"><i class="fas fa-credit-card"></i></span>
+              <select class="form-control ps-15 bg-transparent" name="payment_type" id="paymentType">
+                <option value="">-- Sélectionner --</option>
+                <?php foreach ($paymentOptions as $paymentValue => $paymentLabel) { ?>
+                <option value="<?php echo htmlspecialchars($paymentValue, ENT_QUOTES, 'UTF-8'); ?>" <?php if (($_POST['payment_type'] ?? '') === $paymentValue) { echo 'selected'; } ?>><?php echo htmlspecialchars($paymentLabel, ENT_QUOTES, 'UTF-8'); ?></option>
+                <?php } ?>
+              </select>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -782,7 +1047,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </div>
 
       <button type="submit" id="BtnEvent" class="btn btn-primary">Commander</button>
-      <!-- Commander en bas -->
     </div>
   </div>
 
@@ -853,7 +1117,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <label for="details2" class="form-label">Autres précisions</label>
         <div class="input-group mb-3">
           <span class="input-group-text bg-transparent"><i class="fas fa-edit"></i></span>
-          <textarea name="details" id="details2" class="form-control ps-15 bg-transparent" rows="5" placeholder="Précisez ici les informations utiles pour notre équipe..."></textarea>
+          <textarea name="details" id="details2" class="form-control ps-15 bg-transparent" rows="5" placeholder="Précisez ici les informations utiles pour notre équipe..."><?php echo htmlspecialchars((string) ($_POST['details'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></textarea>
+        </div>
+      </div>
+
+      <div class="form-group form-span-full">
+        <div class="checkout-panel">
+          <div id="checkoutSummaryOther" class="checkout-summary"></div>
+
+          <div class="form-grid two-col">
+            <div class="form-group">
+              <label for="promoCodeOther" class="form-label">Code promo</label>
+              <div class="input-group mb-3">
+                <span class="input-group-text bg-transparent"><i class="fas fa-ticket-alt"></i></span>
+                <input type="text" name="promo_code" id="promoCodeOther" class="form-control ps-15 bg-transparent" placeholder="Ex. ISWELCOME" value="<?php echo htmlspecialchars((string) ($_POST['promo_code'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
+              </div>
+              <p class="promo-note">Codes actifs: <?php echo htmlspecialchars($promoCodeHints, ENT_QUOTES, 'UTF-8'); ?></p>
+            </div>
+
+            <div class="form-group">
+              <label for="paymentTypeOther" class="form-label">Type de paiement</label>
+              <div class="input-group mb-3">
+                <span class="input-group-text bg-transparent"><i class="fas fa-credit-card"></i></span>
+                <select class="form-control ps-15 bg-transparent" name="payment_type" id="paymentTypeOther">
+                  <option value="">-- Sélectionner --</option>
+                  <?php foreach ($paymentOptions as $paymentValue => $paymentLabel) { ?>
+                  <option value="<?php echo htmlspecialchars($paymentValue, ENT_QUOTES, 'UTF-8'); ?>" <?php if (($_POST['payment_type'] ?? '') === $paymentValue) { echo 'selected'; } ?>><?php echo htmlspecialchars($paymentLabel, ENT_QUOTES, 'UTF-8'); ?></option>
+                  <?php } ?>
+                </select>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -883,12 +1177,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <h2>Sélectionnez un modèle</h2>
         <p>Choisissez le design qui servira de base à votre invitation électronique. L’aperçu choisi restera visible dans le formulaire.</p>
       </div>
+      <button type="button" id="finishModelSelection" class="btn btn-primary" style="width:auto !important; min-height:44px; padding:0 18px;">Terminer</button>
     </div>
     <div class="dropdown-content" id="weddingTypeDropdown">
-      <?php 
-        $reqmod = $pdo->prepare("SELECT * FROM modele_is WHERE type_mod = :type_mod ORDER BY nom ASC");
-        $reqmod->execute([':type_mod' => 'invitation']);  
-        while ($data_mod = $reqmod->fetch()) {
+      <?php foreach ($invitationModelRows as $data_mod) {
           $modelImage = '../images/modeleis/' . $data_mod['image'];
       ?>
       <div data-value="<?php echo $data_mod['cod_mod']?>" data-label="<?php echo htmlspecialchars($data_mod['nom'], ENT_QUOTES, 'UTF-8')?>" data-image="<?php echo htmlspecialchars($modelImage, ENT_QUOTES, 'UTF-8')?>">
@@ -896,415 +1188,816 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <img class="option-image" src="<?php echo $modelImage; ?>" alt="<?php echo htmlspecialchars($data_mod['nom'])?>">
           <div class="model-option-copy">
             <span class="model-option-title"><?php echo htmlspecialchars($data_mod['nom'], ENT_QUOTES, 'UTF-8')?></span>
-            <span class="model-option-meta">Cliquez pour utiliser ce modèle dans votre commande.</span>
+            <span class="model-option-meta">Cliquez pour ajouter ou retirer ce modèle dans votre commande.</span>
           </div>
         </div>
       </div>
-      <?php } ?>  
+      <?php } ?>
     </div>
   </div>
 </div>
 <script>
-// ========= RÉFÉRENCES =========
-const eventTypeSelect   = document.getElementById('eventType');
+  const accessoryCatalog = <?php echo json_encode($accessoryCatalog, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+  const promoCatalog = <?php echo json_encode($promoCatalog, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+  const invitationModelCatalog = <?php echo json_encode(array_map(static fn(array $row): array => [
+    'id' => (string) ($row['cod_mod'] ?? ''),
+    'label' => (string) ($row['nom'] ?? ''),
+    'image' => '../images/modeleis/' . (string) ($row['image'] ?? ''),
+    'unitPrice' => round((float) ($row['unit_price'] ?? 0), 2),
+  ], $invitationModelRows), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+  const initialSelectedInvitationModels = <?php echo json_encode($selectedInvitationModels, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
 
-// Wizard (mariage)
-const wizardStepper     = document.getElementById('wizardStepper');
-const dots              = [...document.querySelectorAll('[data-stepdot]')];
-const step1             = document.getElementById('step1');
-const step2             = document.getElementById('step2');
-const step3             = document.getElementById('step3');
-const steps             = [step1, step2, step3];
+  const eventTypeSelect = document.getElementById('eventType');
+  const wizardStepper = document.getElementById('wizardStepper');
+  const dots = [...document.querySelectorAll('[data-stepdot]')];
+  const step1 = document.getElementById('step1');
+  const step2 = document.getElementById('step2');
+  const step3 = document.getElementById('step3');
+  const step4 = document.getElementById('step4');
+  const steps = [step1, step2, step3, step4];
 
-// Groupes mariage
-const weddingTypeGroup  = document.getElementById('weddingTypeGroup');
-const AccessoireGroup   = document.getElementById('AccessoireGroup');
-const NomepouxGroup     = document.getElementById('NomepouxGroup');
-const PrenomepouxGroup  = document.getElementById('PrenomepouxGroup');
-const NomepouseGroup    = document.getElementById('NomepouseGroup');
-const PrenomepouseGroup = document.getElementById('PrenomepouseGroup');
+  const weddingTypeGroup = document.getElementById('weddingTypeGroup');
+  const invitationLanguageGroup = document.getElementById('InvitationLanguageGroup');
+  const accessoireGroup = document.getElementById('AccessoireGroup');
+  const nameOrderGroup = document.getElementById('NameOrderGroup');
+  const nomEpouxGroup = document.getElementById('NomepouxGroup');
+  const prenomEpouxGroup = document.getElementById('PrenomepouxGroup');
+  const nomEpouseGroup = document.getElementById('NomepouseGroup');
+  const prenomEpouseGroup = document.getElementById('PrenomepouseGroup');
 
-// Champs mariage
-const weddingType  = document.getElementById('weddingType');
-const prenomEpoux  = document.getElementById('prenomEpoux');
-const prenomEpouse = document.getElementById('prenomEpouse');
+  const weddingType = document.getElementById('weddingType');
+  const invitationLang = document.getElementById('invitationLang');
+  const nameOrder = document.getElementById('nameOrder');
+  const prenomEpoux = document.getElementById('prenomEpoux');
+  const prenomEpouse = document.getElementById('prenomEpouse');
 
-// Étape 2 (wizard)
-const datepicker   = document.getElementById('datepicker');
-const lieu         = document.getElementById('lieu');
-const adresse      = document.getElementById('adresse');
+  const datepicker = document.getElementById('datepicker');
+  const lieu = document.getElementById('lieu');
+  const adresse = document.getElementById('adresse');
 
-// Single-step pour autres types
-const singleStepOthers = document.getElementById('singleStepOthers');
-const NomsAnnivGroup  = document.getElementById('NomsAnnivGroup');
-const ThemeConfGroup  = document.getElementById('ThemeConfGroup');
-const nomsfetard      = document.getElementById('nomsfetard');
-const themeConf       = document.getElementById('themeConf');
+  const singleStepOthers = document.getElementById('singleStepOthers');
+  const nomsAnnivGroup = document.getElementById('NomsAnnivGroup');
+  const themeConfGroup = document.getElementById('ThemeConfGroup');
+  const nomsfetard = document.getElementById('nomsfetard');
+  const themeConf = document.getElementById('themeConf');
 
-// Boutons wizard
-const btnNext1 = document.getElementById('btnNext1');
-const btnNext2 = document.getElementById('btnNext2');
-const btnPrev2 = document.getElementById('btnPrev2');
-const btnPrev3 = document.getElementById('btnPrev3');
+  const btnNext1 = document.getElementById('btnNext1');
+  const btnNext2 = document.getElementById('btnNext2');
+  const btnNext3 = document.getElementById('btnNext3');
+  const btnPrev2 = document.getElementById('btnPrev2');
+  const btnPrev3 = document.getElementById('btnPrev3');
+  const btnPrev4 = document.getElementById('btnPrev4');
 
-// Modèle d’invitation (modal)
-const dropdownToggle = document.getElementById('dropdownToggle');
-const modal          = document.getElementById('myModal');
-const closeModal     = document.getElementById('closeModal');
-const dropdownContent= document.getElementById('weddingTypeDropdown');
-const selectedOption = document.querySelector('.selected-option');
-const modeleInvInput = document.getElementById('modeleInv');
-const selectedModelPreview = document.getElementById('selectedModelPreview');
-const selectedModelImage = document.getElementById('selectedModelImage');
-const selectedModelTitle = document.getElementById('selectedModelTitle');
-const selectedModelMeta = document.getElementById('selectedModelMeta');
+  const dropdownToggle = document.getElementById('dropdownToggle');
+  const modal = document.getElementById('myModal');
+  const closeModal = document.getElementById('closeModal');
+  const finishModelSelection = document.getElementById('finishModelSelection');
+  const dropdownContent = document.getElementById('weddingTypeDropdown');
+  const selectedOption = document.querySelector('.selected-option');
+  const selectedModelsList = document.getElementById('selectedModelsList');
+  const modeleInvInput = document.getElementById('modeleInv');
+  const selectedModelPreview = document.getElementById('selectedModelPreview');
+  const selectedModelImage = document.getElementById('selectedModelImage');
+  const selectedModelTitle = document.getElementById('selectedModelTitle');
+  const selectedModelMeta = document.getElementById('selectedModelMeta');
 
-// Upload preview (wizard)
-const fileInput = document.getElementById('fileInput');
-const previewContainer = document.getElementById('previewContainer');
-// Upload preview (autres types)
-const fileInput2 = document.getElementById('fileInput2');
-const previewContainer2 = document.getElementById('previewContainer2');
+  const checkoutSummaryWedding = document.getElementById('checkoutSummaryWedding');
+  const checkoutSummaryOther = document.getElementById('checkoutSummaryOther');
+  const promoCodeInput = document.getElementById('promoCode');
+  const promoCodeOtherInput = document.getElementById('promoCodeOther');
+  const paymentTypeInput = document.getElementById('paymentType');
+  const paymentTypeOtherInput = document.getElementById('paymentTypeOther');
 
-// ========= OUTILS =========
-function showStep(n){
-  steps.forEach((s,idx)=> s.classList.toggle('active', idx === n-1));
-  dots.forEach((d,idx)=> d.classList.toggle('active', idx <= n-1));
-}
-function showWizard(show){
-  wizardStepper.classList.toggle('hidden', !show);
-  wizardStepper.setAttribute('aria-hidden', show ? 'false' : 'true');
-  if(show){
-    singleStepOthers.style.display = 'none';
-    showStep(1);
-  }else{
-    steps.forEach(s=> s.classList.remove('active'));
+  const fileInput = document.getElementById('fileInput');
+  const previewContainer = document.getElementById('previewContainer');
+  const fileInput2 = document.getElementById('fileInput2');
+  const previewContainer2 = document.getElementById('previewContainer2');
+
+  const modelCatalogById = new Map(invitationModelCatalog.map((model) => [String(model.id), model]));
+  const selectedInvitationModels = new Map();
+
+  initialSelectedInvitationModels.forEach((model) => {
+    const modelId = String(model.model_id || '');
+    const catalogItem = modelCatalogById.get(modelId);
+    if (!catalogItem) {
+      return;
+    }
+
+    selectedInvitationModels.set(modelId, {
+      id: modelId,
+      label: catalogItem.label,
+      image: catalogItem.image,
+      unitPrice: Number(catalogItem.unitPrice || 0),
+      quantity: Math.max(1, Number(model.quantity || 1)),
+    });
+  });
+
+  function showStep(stepNumber) {
+    steps.forEach((step, index) => step.classList.toggle('active', index === stepNumber - 1));
+    dots.forEach((dot, index) => dot.classList.toggle('active', index <= stepNumber - 1));
   }
-}
-function toggle(el, show){
-  if(!el) return;
-  el.style.display = show ? '' : 'none';
-}
 
-function resetSelectedModelPreview() {
-  if (selectedModelPreview) {
+  function toggle(element, shouldShow) {
+    if (!element) {
+      return;
+    }
+
+    element.style.display = shouldShow ? '' : 'none';
+  }
+
+  function showWizard(shouldShow) {
+    wizardStepper.classList.toggle('hidden', !shouldShow);
+    wizardStepper.setAttribute('aria-hidden', shouldShow ? 'false' : 'true');
+
+    if (shouldShow) {
+      singleStepOthers.style.display = 'none';
+      showStep(1);
+      return;
+    }
+
+    steps.forEach((step) => step.classList.remove('active'));
+  }
+
+  function setSectionEnabled(sectionEl, enabled) {
+    if (!sectionEl) {
+      return;
+    }
+
+    sectionEl.querySelectorAll('input, select, textarea, button').forEach((control) => {
+      if (control.type === 'button' && control.closest('.wizard-actions')) {
+        return;
+      }
+
+      control.disabled = !enabled;
+    });
+  }
+
+  function resetSelectedModelPreview() {
     selectedModelPreview.style.display = 'none';
-  }
-  if (selectedModelImage) {
     selectedModelImage.src = '';
-  }
-  if (selectedModelTitle) {
     selectedModelTitle.textContent = '';
-  }
-  if (selectedModelMeta) {
     selectedModelMeta.textContent = 'La génération automatique d’une invitation personnalisée pour chaque invité avec son nom inscrit.';
   }
-}
 
-function applySelectedModelPreview(label, image) {
-  if (!selectedModelPreview || !selectedModelImage || !selectedModelTitle) {
-    return;
+  function applySelectedModelPreview(label, image, count) {
+    selectedModelImage.src = image || '';
+    selectedModelTitle.textContent = label || '';
+    selectedModelMeta.textContent = count > 1
+      ? `${count} modèles sélectionnés pour cette commande.`
+      : 'La génération automatique d’une invitation personnalisée pour chaque invité avec son nom inscrit.';
+    selectedModelPreview.style.display = 'grid';
   }
 
-  selectedModelImage.src = image || '';
-  selectedModelTitle.textContent = label || '';
-  selectedModelMeta.textContent = 'La génération automatique d’une invitation personnalisée pour chaque invité avec son nom inscrit.';
-  selectedModelPreview.style.display = 'grid';
-}
-
-// Désactiver/activer tous les champs d’une section
-function setSectionEnabled(sectionEl, enabled){
-  if(!sectionEl) return;
-  const controls = sectionEl.querySelectorAll('input, select, textarea, button');
-  controls.forEach(ctrl => {
-    if (ctrl.type === 'button' && ctrl.closest('.wizard-actions')) return;
-    ctrl.disabled = !enabled;
-  });
-}
-
-// Active Mariage et désactive l’autre, ou l’inverse
-function applyMode(mode) {
-  const enableWedding = (mode === 'wedding');
-
-  if (enableWedding) {
-    showWizard(true);
-    singleStepOthers.style.display = 'none';
-    toggle(weddingTypeGroup, true);
-    toggle(NomepouxGroup, true);
-    toggle(PrenomepouxGroup, true);
-    toggle(NomepouseGroup, true);
-    toggle(PrenomepouseGroup, true);
-  } else {
-    showWizard(false);
-    singleStepOthers.style.display = '';
+  function formatMoney(amount) {
+    return `${Number(amount || 0).toFixed(2)} $`;
   }
 
-  setSectionEnabled(step1, enableWedding);
-  setSectionEnabled(step2, enableWedding);
-  setSectionEnabled(step3, enableWedding);
-  setSectionEnabled(singleStepOthers, !enableWedding);
-}
+  function getSelectedAccessoireCheckboxes() {
+    return [...document.querySelectorAll('input[name="accessoires[]"]:checked')];
+  }
 
-// ========= LOGIQUE TYPE =========
-eventTypeSelect.addEventListener('change', function(){
-  const v = this.value;
+  function getSelectedAccessoryIds() {
+    return getSelectedAccessoireCheckboxes().map((checkbox) => String(checkbox.value));
+  }
 
-  if (v) {
-    // Afficher Accessoires pour tout type
-    toggle(AccessoireGroup, true);
+  function hasInvitationAccessory() {
+    const selectedIds = getSelectedAccessoryIds();
+    return selectedIds.includes('1') || selectedIds.includes('2');
+  }
 
-    if (v === '1'){             // Mariage
-      applyMode('wedding');
-    } else {                    // Autres
-      applyMode('single');
-      toggle(NomsAnnivGroup, v === '2'); // Anniversaire
-      toggle(ThemeConfGroup, v === '3'); // Conférence
+  function invitationModelsNeedQuantity() {
+    return getSelectedAccessoryIds().includes('1');
+  }
+
+  function getPrintedInvitationQuantity() {
+    let totalQuantity = 0;
+    selectedInvitationModels.forEach((model) => {
+      totalQuantity += Math.max(1, Number(model.quantity || 1));
+    });
+
+    return totalQuantity;
+  }
+
+  function getAccessoryQuantity(accessoryId) {
+    if (accessoryId === '1') {
+      return getPrintedInvitationQuantity();
     }
-  } else {
-    // Aucun type sélectionné : on masque tout
-    toggle(AccessoireGroup, false);
-    showWizard(false);
-    singleStepOthers.style.display = 'none';
-    setSectionEnabled(step1, false);
-    setSectionEnabled(step2, false);
-    setSectionEnabled(step3, false);
-    setSectionEnabled(singleStepOthers, false);
-  }
-});
 
-// ========= WIZARD NAV =========
-btnNext1?.addEventListener('click', function(){
-  if(!weddingType.value){ alert("Sélectionnez le type de mariage."); return; }
-  if(!prenomEpoux.value?.trim()){ alert("Prénom de l'époux requis."); return; }
-  if(!prenomEpouse.value?.trim()){ alert("Prénom de l'épouse requis."); return; }
-  showStep(2);
-});
-btnNext2?.addEventListener('click', function(){
-  if(!datepicker.value){ alert("Date et heure requises."); return; }
-  if(!lieu.value?.trim()){ alert("Lieu requis."); return; }
-  if(!adresse.value?.trim()){ alert("Adresse requise."); return; }
-  showStep(3);
-});
-btnPrev2?.addEventListener('click', ()=> showStep(1));
-btnPrev3?.addEventListener('click', ()=> showStep(2));
-
-// ========= Accessoires -> afficher sélecteurs modèles =========
-function toggleFields() {
-  const checkboxes = document.querySelectorAll('input[name="accessoires[]"]');
-  let showInvitation = false, showChevalet = false;
-  checkboxes.forEach(cb=>{
-    if(cb.checked){
-      if (cb.value == 1) showInvitation = true;
-      if (cb.value == 3) showChevalet  = true;
+    const checkbox = document.querySelector(`input[name="accessoires[]"][value="${accessoryId}"]`);
+    if (!checkbox || !checkbox.checked) {
+      return 0;
     }
-  });
-  document.getElementById('ModInvitation').style.display = showInvitation ? 'block' : 'none';
-  document.getElementById('ModChevalet').style.display  = showChevalet ? 'block' : 'none';
 
-  checkboxes.forEach(cb => {
-    const quantityTarget = cb.dataset.quantityTarget;
-    const requiresQuantity = cb.dataset.requiresQuantity === '1';
-    const wrapper = quantityTarget ? document.getElementById(quantityTarget) : null;
+    const wrapper = document.getElementById(checkbox.dataset.quantityTarget || '');
     const quantityInput = wrapper ? wrapper.querySelector('input') : null;
+    const quantityMode = accessoryCatalog[accessoryId]?.quantity_mode || 'variable';
 
-    if (!wrapper || !quantityInput) {
-      return;
+    if (quantityMode === 'fixed') {
+      return 1;
     }
 
-    const shouldShow = requiresQuantity && cb.checked;
-    wrapper.style.display = shouldShow ? 'flex' : 'none';
-    quantityInput.disabled = !shouldShow;
-
-    if (shouldShow && (!quantityInput.value || Number(quantityInput.value) < 1)) {
-      quantityInput.value = '1';
-    }
-  });
-
-  if (!showInvitation) {
-    modeleInvInput.value = '';
-    selectedOption.innerHTML = '<div class="model-picker-summary"><span class="model-picker-label">Choisir un modèle…</span><span class="model-picker-meta">Ouvrez la galerie pour sélectionner le design d\'invitation.</span></div>';
-    dropdownContent?.querySelectorAll('div[data-value]').forEach(item => item.classList.remove('is-selected'));
-    resetSelectedModelPreview();
-  }
-}
-
-
-window.toggleFields = toggleFields;
-
-// ========= Modal modèle invitation =========
-dropdownToggle?.addEventListener('click', ()=> modal.style.display = 'block');
-closeModal?.addEventListener('click', ()=> modal.style.display = 'none');
-window.addEventListener('click', (e)=>{ if(e.target === modal){ modal.style.display = 'none'; } });
-dropdownContent?.addEventListener('click', function(event){
-  const cell = event.target.closest('div[data-value]');
-  if(!cell) return;
-  dropdownContent.querySelectorAll('div[data-value]').forEach(item => item.classList.remove('is-selected'));
-  cell.classList.add('is-selected');
-  const value = cell.getAttribute('data-value');
-  const label = cell.getAttribute('data-label') || 'Modèle sélectionné';
-  const image = cell.getAttribute('data-image') || '';
-  modeleInvInput.value = value;
-  selectedOption.innerHTML = '<div class="model-picker-summary"><span class="model-picker-label">' + label + '</span><span class="model-picker-meta">Modèle prêt à être appliqué à votre commande.</span></div>';
-  applySelectedModelPreview(label, image);
-  modal.style.display = 'none';
-});
-
-// ========= Preview images =========
-fileInput?.addEventListener('change', function(event){
-  const files = Array.from(event.target.files);
-  previewContainer.innerHTML = '';
-  files.forEach(file=>{
-    const reader = new FileReader();
-    reader.onload = function(e){
-      const wrap = document.createElement('div');
-      wrap.className = 'image-container';
-      const img = document.createElement('img');
-      img.src = e.target.result;
-      const del = document.createElement('button');
-      del.innerHTML = '✖';
-      del.className = 'delete-icon';
-      del.addEventListener('click', ()=> wrap.remove());
-      wrap.appendChild(img); wrap.appendChild(del);
-      previewContainer.appendChild(wrap);
-    };
-    reader.readAsDataURL(file);
-  });
-});
-fileInput2?.addEventListener('change', function(event){
-  const files = Array.from(event.target.files);
-  previewContainer2.innerHTML = '';
-  files.forEach(file=>{
-    const reader = new FileReader();
-    reader.onload = function(e){
-      const wrap = document.createElement('div');
-      wrap.className = 'image-container';
-      const img = document.createElement('img');
-      img.src = e.target.result;
-      const del = document.createElement('button');
-      del.innerHTML = '✖';
-      del.className = 'delete-icon';
-      del.addEventListener('click', ()=> wrap.remove());
-      wrap.appendChild(img); wrap.appendChild(del);
-      previewContainer2.appendChild(wrap);
-    };
-    reader.readAsDataURL(file);
-  });
-});
-
-// ========= CGU (wizard & autres) =========
-document.addEventListener("DOMContentLoaded", function() {
-  const submitButton = document.getElementById("BtnEvent");
-  const checkbox     = document.getElementById("basic_checkbox_1");
-  if(submitButton && checkbox){
-    submitButton.disabled = true;
-    checkbox.addEventListener("change", function() {
-      submitButton.disabled = !checkbox.checked;
-    });
+    return Math.max(1, Number(quantityInput?.value || 1));
   }
 
-  const submitButtonO = document.getElementById("BtnEvent_o");
-  const checkboxO     = document.getElementById("basic_checkbox_1_o");
-  if(submitButtonO && checkboxO){
-    submitButtonO.disabled = true;
-    checkboxO.addEventListener("change", function() {
-      submitButtonO.disabled = !checkboxO.checked;
-    });
-  }
-});
-
-// ========= SUBMIT AJAX + Progress =========
-document.getElementById('eventForm').addEventListener('submit', function(ev) {
-  ev.preventDefault();
-
-  const selectedAccessoires = Array.from(document.querySelectorAll('input[name="accessoires[]"]:checked'));
-  for (const accessoire of selectedAccessoires) {
-    if (accessoire.dataset.requiresQuantity !== '1') {
-      continue;
-    }
-
-    const quantityWrapper = document.getElementById(accessoire.dataset.quantityTarget || '');
-    const quantityInput = quantityWrapper ? quantityWrapper.querySelector('input') : null;
-    const quantityValue = quantityInput ? Number(quantityInput.value) : 0;
-
-    if (!quantityInput || !Number.isFinite(quantityValue) || quantityValue < 1) {
-      alert("Veuillez renseigner une quantité valide pour chaque accessoire sélectionné.");
-      quantityInput?.focus();
-      return;
-    }
+  function getPromoCodeValue() {
+    const activeInput = [promoCodeInput, promoCodeOtherInput].find((input) => input && !input.disabled);
+    return (activeInput?.value || '').trim().toUpperCase();
   }
 
-  const typeEvent = eventTypeSelect.value;
-  if (!typeEvent) { alert("Veuillez sélectionner le type de l'événement."); return; }
-
-  if (typeEvent === '1'){ // Mariage
-    if (!weddingType.value) { alert("Type de mariage requis."); return; }
-    if (!prenomEpoux.value) { alert("Prénom de l'époux requis."); return; }
-    if (!prenomEpouse.value){ alert("Prénom de l'épouse requis."); return; }
-    if (!datepicker.value)  { alert("Date/heure requises."); return; }
-    if (!lieu.value)        { alert("Lieu requis."); return; }
-    if (!adresse.value)     { alert("Adresse requise."); return; }
-    if (!document.getElementById('basic_checkbox_1').checked){ alert("Veuillez accepter les termes."); return; }
-  } else {
-    const date2 = document.getElementById('datepicker2').value;
-    const lieu2 = document.getElementById('lieu2').value;
-    const adr2  = document.getElementById('adresse2').value;
-
-    if (typeEvent === '2'){ if (!nomsfetard.value?.trim()){ alert("Nom du/de la fêté(e) requis."); return; } }
-    if (typeEvent === '3'){ if (!themeConf.value?.trim()){ alert("Thème de la conférence requis."); return; } }
-
-    if (!date2){ alert("Date/heure requises."); return; }
-    if (!lieu2){ alert("Lieu requis."); return; }
-    if (!adr2){  alert("Adresse requise."); return; }
-    if (!document.getElementById('basic_checkbox_1_o').checked){ alert("Veuillez accepter les termes."); return; }
+  function getPaymentTypeValue() {
+    const activeInput = [paymentTypeInput, paymentTypeOtherInput].find((input) => input && !input.disabled);
+    return activeInput?.value || '';
   }
 
-  // Affichage barre
-  this.style.display = 'none';
-  const progressWrapper = document.getElementById('progressWrapper');
-  progressWrapper.style.display = 'flex';
-  progressWrapper.classList.add('centered');
-  document.getElementById('progressContainer').style.display = 'block';
-  document.getElementById('progressBar').style.width = '0%';
+  function buildCheckoutSummary() {
+    const selectedIds = getSelectedAccessoryIds();
+    const lines = [];
+    let subtotal = 0;
 
-  const formData = new FormData(this);
-  const xhr = new XMLHttpRequest();
-  xhr.open('POST', '', true);
+    selectedIds.forEach((accessoryId) => {
+      const catalogItem = accessoryCatalog[accessoryId] || {label: 'Accessoire', unit_price: 0, quantity_mode: 'variable'};
 
-  xhr.upload.onprogress = function(e){
-    if(e.lengthComputable){
-      const pct = (e.loaded / e.total) * 100;
-      document.getElementById('progressBar').style.width = pct + '%';
-      document.getElementById('progressPercentage').textContent = 'Téléchargement des photos : ' + Math.round(pct) + '%';
-    }
-  };
+      if (accessoryId === '1' && selectedInvitationModels.size > 0) {
+        selectedInvitationModels.forEach((model) => {
+          const quantity = Math.max(1, Number(model.quantity || 1));
+          const unitPrice = Number(model.unitPrice || 0);
+          const lineTotal = unitPrice * quantity;
 
-  xhr.onload = function(){
-    if (xhr.status === 200) {
-      Swal.fire({
-        title: "Evénement créé !",
-        text: "Votre événement est ajouté avec succès.",
-        icon: "success",
-        confirmButtonText: "Terminer"
-      }).then((result) => {
-        if (result.isConfirmed) {
-          window.location.href = "index.php?page=mb_accueil";
-        }
+          subtotal += lineTotal;
+          lines.push({
+            id: `${accessoryId}-${model.id}`,
+            label: catalogItem.label,
+            modelLabel: model.label,
+            quantity,
+            unitPrice,
+            lineTotal,
+            modelsCount: selectedInvitationModels.size,
+          });
+        });
+
+        return;
+      }
+
+      const quantity = accessoryId === '1' ? getPrintedInvitationQuantity() : getAccessoryQuantity(accessoryId);
+      const normalizedQuantity = catalogItem.quantity_mode === 'fixed' ? 1 : quantity;
+      const lineQuantity = accessoryId === '1' && normalizedQuantity === 0 ? 0 : Math.max(1, normalizedQuantity || 0);
+      const lineTotal = Number(catalogItem.unit_price || 0) * lineQuantity;
+
+      subtotal += lineTotal;
+      lines.push({
+        id: accessoryId,
+        label: catalogItem.label,
+        quantity: lineQuantity,
+        unitPrice: Number(catalogItem.unit_price || 0),
+        lineTotal,
+        modelsCount: accessoryId === '1' ? selectedInvitationModels.size : 0,
       });
-    } else {
-      document.getElementById('status').innerHTML = 'Erreur lors du traitement.';
+    });
+
+    const promoCode = getPromoCodeValue();
+    const promoDefinition = promoCatalog[promoCode] || null;
+    let discountAmount = 0;
+    let promoLabel = '';
+
+    if (promoDefinition && subtotal > 0) {
+      promoLabel = promoDefinition.label || promoCode;
+      discountAmount = promoDefinition.type === 'fixed'
+        ? Math.min(subtotal, Number(promoDefinition.value || 0))
+        : Math.min(subtotal, subtotal * (Number(promoDefinition.value || 0) / 100));
     }
-  };
 
-  xhr.send(formData);
-});
+    return {
+      lines,
+      subtotal,
+      discountAmount,
+      promoCode,
+      promoLabel,
+      total: Math.max(0, subtotal - discountAmount),
+    };
+  }
 
-// ========= INIT =========
-(function init(){
-  toggle(AccessoireGroup, false);
-  showWizard(false);
-  singleStepOthers.style.display = 'none';
-  toggleFields();
-})();
+  function renderCheckoutSummary() {
+    const summary = buildCheckoutSummary();
+    const targets = [checkoutSummaryWedding, checkoutSummaryOther];
+
+    targets.forEach((target) => {
+      if (!target) {
+        return;
+      }
+
+      if (summary.lines.length === 0) {
+        target.innerHTML = '<div class="checkout-empty">Sélectionnez au moins un accessoire pour voir le montant total de la commande.</div>';
+        return;
+      }
+
+      const linesHtml = summary.lines.map((line) => {
+        const modelInfo = line.modelLabel
+          ? `<small>${line.modelLabel}</small>`
+          : line.modelsCount > 0
+          ? `<small>${line.modelsCount} modèle(s) d\'invitation sélectionné(s)</small>`
+          : '';
+
+        return `
+          <div class="checkout-line">
+            <div>
+              <strong>${line.label}</strong>
+              <small>Quantité: ${line.quantity} x ${formatMoney(line.unitPrice)}</small>
+              ${modelInfo}
+            </div>
+            <div>${formatMoney(line.lineTotal)}</div>
+          </div>
+        `;
+      }).join('');
+
+      const promoHtml = summary.discountAmount > 0
+        ? `<div class="checkout-line"><div><strong>Réduction promo</strong><small>${summary.promoLabel} (${summary.promoCode})</small></div><div>- ${formatMoney(summary.discountAmount)}</div></div>`
+        : summary.promoCode
+          ? `<div class="checkout-line"><div><strong>Code promo</strong><small>${summary.promoCode} non reconnu, aucune réduction appliquée.</small></div><div>0.00 $</div></div>`
+          : '';
+
+      target.innerHTML = `
+        <div class="checkout-summary-card">
+          ${linesHtml}
+          <div class="checkout-line"><div><strong>Sous-total</strong></div><div>${formatMoney(summary.subtotal)}</div></div>
+          ${promoHtml}
+        </div>
+        <div class="checkout-total">
+          <div><span>Total à payer</span></div>
+          <strong>${formatMoney(summary.total)}</strong>
+        </div>
+      `;
+    });
+  }
+
+  function syncSelectedModelsUI() {
+    const selectedModels = [...selectedInvitationModels.values()];
+    modeleInvInput.value = selectedModels[0]?.id || '';
+
+    if (selectedModels.length === 0) {
+      selectedOption.innerHTML = '<div class="model-picker-summary"><span class="model-picker-label">Choisir un ou plusieurs modèles…</span><span class="model-picker-meta">Ouvrez la galerie pour composer votre sélection d\'invitations.</span></div>';
+      selectedModelsList.innerHTML = '';
+      dropdownContent.querySelectorAll('div[data-value]').forEach((item) => item.classList.remove('is-selected'));
+      resetSelectedModelPreview();
+      renderCheckoutSummary();
+      return;
+    }
+
+    selectedOption.innerHTML = `<div class="model-picker-summary"><span class="model-picker-label">${selectedModels.length} modèle(s) sélectionné(s)</span><span class="model-picker-meta">Vous pouvez continuer à ajouter ou retirer des designs dans la galerie.</span></div>`;
+    applySelectedModelPreview(selectedModels[0].label, selectedModels[0].image, selectedModels.length);
+
+    dropdownContent.querySelectorAll('div[data-value]').forEach((item) => {
+      item.classList.toggle('is-selected', selectedInvitationModels.has(item.getAttribute('data-value') || ''));
+    });
+
+    selectedModelsList.innerHTML = '';
+    selectedModels.forEach((model) => {
+      const item = document.createElement('div');
+      item.className = 'selected-model-item';
+      item.innerHTML = `
+        <img src="${model.image}" alt="${model.label}">
+        <div class="selected-model-item-copy">
+          <input type="hidden" name="invitation_models[]" value="${model.id}">
+          <span class="selected-model-item-title">${model.label}</span>
+          <span class="selected-model-item-meta">${invitationModelsNeedQuantity() ? 'Définissez la quantité pour ce modèle imprimé.' : 'Ce modèle sera utilisé pour votre invitation.'}</span>
+          <div class="selected-model-item-controls">
+            ${invitationModelsNeedQuantity()
+              ? `<label>Quantité <input type="number" min="1" step="1" name="invitation_model_quantities[${model.id}]" value="${Math.max(1, Number(model.quantity || 1))}" data-model-quantity="${model.id}"></label>`
+              : `<input type="hidden" name="invitation_model_quantities[${model.id}]" value="1">`}
+          </div>
+        </div>
+        <button type="button" class="selected-model-item-remove" data-remove-model="${model.id}">Retirer</button>
+      `;
+      selectedModelsList.appendChild(item);
+    });
+
+    selectedModelsList.querySelectorAll('[data-model-quantity]').forEach((input) => {
+      input.addEventListener('input', () => {
+        const modelId = input.getAttribute('data-model-quantity') || '';
+        const model = selectedInvitationModels.get(modelId);
+        if (!model) {
+          return;
+        }
+
+        model.quantity = Math.max(1, Number(input.value || 1));
+        input.value = String(model.quantity);
+        renderCheckoutSummary();
+      });
+    });
+
+    selectedModelsList.querySelectorAll('[data-remove-model]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const modelId = button.getAttribute('data-remove-model') || '';
+        selectedInvitationModels.delete(modelId);
+        syncSelectedModelsUI();
+      });
+    });
+
+    renderCheckoutSummary();
+  }
+
+  function clearInvitationModels() {
+    selectedInvitationModels.clear();
+    syncSelectedModelsUI();
+  }
+
+  function toggleFields() {
+    const selectedIds = getSelectedAccessoryIds();
+    const showInvitation = selectedIds.includes('1') || selectedIds.includes('2');
+    const showChevalet = selectedIds.includes('3');
+
+    toggle(document.getElementById('ModInvitation'), showInvitation);
+    toggle(document.getElementById('ModChevalet'), showChevalet);
+
+    document.querySelectorAll('input[name="accessoires[]"]').forEach((checkbox) => {
+      const quantityTarget = checkbox.dataset.quantityTarget;
+      const wrapper = quantityTarget ? document.getElementById(quantityTarget) : null;
+      const quantityInput = wrapper ? wrapper.querySelector('input') : null;
+      const requiresQuantity = checkbox.dataset.requiresQuantity === '1';
+      const managedByModelSelection = checkbox.value === '1';
+
+      if (!wrapper || !quantityInput) {
+        return;
+      }
+
+      const shouldShow = checkbox.checked && requiresQuantity && !managedByModelSelection;
+      wrapper.style.display = shouldShow ? 'flex' : 'none';
+      quantityInput.disabled = !shouldShow;
+
+      if (shouldShow && (!quantityInput.value || Number(quantityInput.value) < 1)) {
+        quantityInput.value = '1';
+      }
+    });
+
+    if (!showInvitation) {
+      clearInvitationModels();
+    } else {
+      syncSelectedModelsUI();
+    }
+
+    renderCheckoutSummary();
+  }
+
+  window.toggleFields = toggleFields;
+
+  function applyMode(mode) {
+    const enableWedding = mode === 'wedding';
+
+    toggle(invitationLanguageGroup, !!eventTypeSelect.value);
+
+    if (enableWedding) {
+      showWizard(true);
+      singleStepOthers.style.display = 'none';
+      toggle(weddingTypeGroup, true);
+      toggle(nameOrderGroup, true);
+      toggle(nomEpouxGroup, true);
+      toggle(prenomEpouxGroup, true);
+      toggle(nomEpouseGroup, true);
+      toggle(prenomEpouseGroup, true);
+    } else {
+      showWizard(false);
+      singleStepOthers.style.display = '';
+    }
+
+    setSectionEnabled(step1, enableWedding);
+    setSectionEnabled(step2, enableWedding);
+    setSectionEnabled(step3, enableWedding);
+    setSectionEnabled(step4, enableWedding);
+    setSectionEnabled(singleStepOthers, !enableWedding);
+  }
+
+  function validateInvitationModels() {
+    if (!hasInvitationAccessory()) {
+      return true;
+    }
+
+    if (selectedInvitationModels.size === 0) {
+      alert('Sélectionnez au moins un modèle d\'invitation.');
+      dropdownToggle?.focus();
+      return false;
+    }
+
+    if (!invitationModelsNeedQuantity()) {
+      return true;
+    }
+
+    let invalidQuantity = false;
+    selectedInvitationModels.forEach((model) => {
+      if (!Number.isFinite(Number(model.quantity)) || Number(model.quantity) < 1) {
+        invalidQuantity = true;
+      }
+    });
+
+    if (invalidQuantity) {
+      alert('Renseignez une quantité valide pour chaque modèle imprimé sélectionné.');
+      return false;
+    }
+
+    return true;
+  }
+
+  function bindMirroredFields(first, second) {
+    if (!first || !second) {
+      return;
+    }
+
+    const syncFrom = (source, target) => {
+      target.value = source.value;
+      renderCheckoutSummary();
+    };
+
+    ['input', 'change'].forEach((eventName) => {
+      first.addEventListener(eventName, () => syncFrom(first, second));
+      second.addEventListener(eventName, () => syncFrom(second, first));
+    });
+  }
+
+  eventTypeSelect.addEventListener('change', function onTypeChange() {
+    const value = this.value;
+
+    if (!value) {
+      toggle(accessoireGroup, false);
+      toggle(invitationLanguageGroup, false);
+      showWizard(false);
+      singleStepOthers.style.display = 'none';
+      setSectionEnabled(step1, false);
+      setSectionEnabled(step2, false);
+      setSectionEnabled(step3, false);
+      setSectionEnabled(step4, false);
+      setSectionEnabled(singleStepOthers, false);
+      renderCheckoutSummary();
+      return;
+    }
+
+    toggle(accessoireGroup, true);
+    toggle(invitationLanguageGroup, true);
+
+    if (value === '1') {
+      applyMode('wedding');
+      toggle(nomsAnnivGroup, false);
+      toggle(themeConfGroup, false);
+    } else {
+      applyMode('single');
+      toggle(nomsAnnivGroup, value === '2');
+      toggle(themeConfGroup, value === '3');
+    }
+
+    toggleFields();
+  });
+
+  btnNext1?.addEventListener('click', () => {
+    if (!weddingType.value) { alert('Sélectionnez le type de mariage.'); return; }
+    if (!invitationLang.value) { alert('Sélectionnez la langue de l\'invitation.'); return; }
+    if (!nameOrder.value) { alert('Choisissez l\'ordre des prénoms sur l\'invitation.'); return; }
+    if (!prenomEpoux.value.trim()) { alert('Prénom de l\'époux requis.'); return; }
+    if (!prenomEpouse.value.trim()) { alert('Prénom de l\'épouse requis.'); return; }
+    if (!validateInvitationModels()) { return; }
+    showStep(2);
+  });
+
+  btnNext2?.addEventListener('click', () => {
+    if (!datepicker.value) { alert('Date et heure requises.'); return; }
+    if (!lieu.value.trim()) { alert('Lieu requis.'); return; }
+    if (!adresse.value.trim()) { alert('Adresse requise.'); return; }
+    showStep(3);
+  });
+
+  btnNext3?.addEventListener('click', () => {
+    if (!validateInvitationModels()) { return; }
+    showStep(4);
+    renderCheckoutSummary();
+  });
+
+  btnPrev2?.addEventListener('click', () => showStep(1));
+  btnPrev3?.addEventListener('click', () => showStep(2));
+  btnPrev4?.addEventListener('click', () => showStep(3));
+
+  dropdownToggle?.addEventListener('click', () => {
+    if (!hasInvitationAccessory()) {
+      alert('Sélectionnez d\'abord une invitation imprimée ou électronique.');
+      return;
+    }
+
+    modal.style.display = 'block';
+  });
+
+  closeModal?.addEventListener('click', () => { modal.style.display = 'none'; });
+  finishModelSelection?.addEventListener('click', () => { modal.style.display = 'none'; });
+  window.addEventListener('click', (event) => {
+    if (event.target === modal) {
+      modal.style.display = 'none';
+    }
+  });
+
+  dropdownContent?.addEventListener('click', (event) => {
+    const cell = event.target.closest('div[data-value]');
+    if (!cell) {
+      return;
+    }
+
+    const modelId = cell.getAttribute('data-value') || '';
+    const label = cell.getAttribute('data-label') || 'Modèle sélectionné';
+    const image = cell.getAttribute('data-image') || '';
+
+    if (selectedInvitationModels.has(modelId)) {
+      selectedInvitationModels.delete(modelId);
+    } else {
+      selectedInvitationModels.set(modelId, {
+        id: modelId,
+        label,
+        image,
+          unitPrice: Number(modelCatalogById.get(modelId)?.unitPrice || 0),
+        quantity: 1,
+      });
+    }
+
+    syncSelectedModelsUI();
+  });
+
+  function attachImagePreview(input, container) {
+    input?.addEventListener('change', (event) => {
+      const files = Array.from(event.target.files || []);
+      container.innerHTML = '';
+      files.forEach((file) => {
+        const reader = new FileReader();
+        reader.onload = (loadEvent) => {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'image-container';
+          const image = document.createElement('img');
+          image.src = String(loadEvent.target?.result || '');
+          const removeButton = document.createElement('button');
+          removeButton.innerHTML = '✖';
+          removeButton.className = 'delete-icon';
+          removeButton.addEventListener('click', () => wrapper.remove());
+          wrapper.appendChild(image);
+          wrapper.appendChild(removeButton);
+          container.appendChild(wrapper);
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+  }
+
+  attachImagePreview(fileInput, previewContainer);
+  attachImagePreview(fileInput2, previewContainer2);
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const submitButton = document.getElementById('BtnEvent');
+    const checkbox = document.getElementById('basic_checkbox_1');
+    if (submitButton && checkbox) {
+      submitButton.disabled = true;
+      checkbox.addEventListener('change', () => {
+        submitButton.disabled = !checkbox.checked;
+      });
+    }
+
+    const submitButtonOther = document.getElementById('BtnEvent_o');
+    const checkboxOther = document.getElementById('basic_checkbox_1_o');
+    if (submitButtonOther && checkboxOther) {
+      submitButtonOther.disabled = true;
+      checkboxOther.addEventListener('change', () => {
+        submitButtonOther.disabled = !checkboxOther.checked;
+      });
+    }
+  });
+
+  bindMirroredFields(promoCodeInput, promoCodeOtherInput);
+  bindMirroredFields(paymentTypeInput, paymentTypeOtherInput);
+
+  [promoCodeInput, promoCodeOtherInput].forEach((input) => input?.addEventListener('input', renderCheckoutSummary));
+  [paymentTypeInput, paymentTypeOtherInput].forEach((input) => input?.addEventListener('change', renderCheckoutSummary));
+  document.querySelectorAll('input[name^="accessoire_quantities["]').forEach((input) => {
+    input.addEventListener('input', renderCheckoutSummary);
+  });
+
+  document.getElementById('eventForm').addEventListener('submit', function onSubmit(event) {
+    event.preventDefault();
+
+    const selectedAccessoires = getSelectedAccessoireCheckboxes();
+    if (selectedAccessoires.length === 0) {
+      alert('Sélectionnez au moins un accessoire pour votre commande.');
+      return;
+    }
+
+    if (!invitationLang.value) {
+      alert('Sélectionnez la langue du texte sur l\'invitation.');
+      return;
+    }
+
+    if (!validateInvitationModels()) {
+      return;
+    }
+
+    for (const accessoire of selectedAccessoires) {
+      if (accessoire.dataset.requiresQuantity !== '1' || accessoire.value === '1') {
+        continue;
+      }
+
+      const quantityWrapper = document.getElementById(accessoire.dataset.quantityTarget || '');
+      const quantityInput = quantityWrapper ? quantityWrapper.querySelector('input') : null;
+      const quantityValue = quantityInput ? Number(quantityInput.value) : 0;
+
+      if (!quantityInput || !Number.isFinite(quantityValue) || quantityValue < 1) {
+        alert('Veuillez renseigner une quantité valide pour chaque accessoire sélectionné.');
+        quantityInput?.focus();
+        return;
+      }
+    }
+
+    const typeEvent = eventTypeSelect.value;
+    if (!typeEvent) { alert('Veuillez sélectionner le type de l\'événement.'); return; }
+    if (!getPaymentTypeValue()) { alert('Choisissez un type de paiement.'); return; }
+
+    if (typeEvent === '1') {
+      if (!weddingType.value) { alert('Type de mariage requis.'); return; }
+      if (!nameOrder.value) { alert('Choisissez l\'ordre des prénoms sur l\'invitation.'); return; }
+      if (!prenomEpoux.value.trim()) { alert('Prénom de l\'époux requis.'); return; }
+      if (!prenomEpouse.value.trim()) { alert('Prénom de l\'épouse requis.'); return; }
+      if (!datepicker.value) { alert('Date/heure requises.'); return; }
+      if (!lieu.value.trim()) { alert('Lieu requis.'); return; }
+      if (!adresse.value.trim()) { alert('Adresse requise.'); return; }
+      if (!document.getElementById('basic_checkbox_1').checked) { alert('Veuillez accepter les termes.'); return; }
+    } else {
+      const date2 = document.getElementById('datepicker2').value;
+      const lieu2 = document.getElementById('lieu2').value;
+      const adresse2 = document.getElementById('adresse2').value;
+
+      if (typeEvent === '2' && !nomsfetard.value.trim()) { alert('Nom du/de la fêté(e) requis.'); return; }
+      if (typeEvent === '3' && !themeConf.value.trim()) { alert('Thème de la conférence requis.'); return; }
+      if (!date2) { alert('Date/heure requises.'); return; }
+      if (!lieu2.trim()) { alert('Lieu requis.'); return; }
+      if (!adresse2.trim()) { alert('Adresse requise.'); return; }
+      if (!document.getElementById('basic_checkbox_1_o').checked) { alert('Veuillez accepter les termes.'); return; }
+    }
+
+    this.style.display = 'none';
+    const progressWrapper = document.getElementById('progressWrapper');
+    progressWrapper.style.display = 'flex';
+    progressWrapper.classList.add('centered');
+    document.getElementById('progressContainer').style.display = 'block';
+    document.getElementById('progressBar').style.width = '0%';
+
+    const formData = new FormData(this);
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '', true);
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+    xhr.upload.onprogress = function onProgress(progressEvent) {
+      if (progressEvent.lengthComputable) {
+        const percent = (progressEvent.loaded / progressEvent.total) * 100;
+        document.getElementById('progressBar').style.width = `${percent}%`;
+        document.getElementById('progressPercentage').textContent = `Téléchargement des photos : ${Math.round(percent)}%`;
+      }
+    };
+
+    xhr.onload = function onLoad() {
+      let payload = null;
+      try {
+        payload = JSON.parse(xhr.responseText);
+      } catch (error) {
+        payload = null;
+      }
+
+      if (xhr.status === 200 && payload?.success) {
+        Swal.fire({
+          title: 'Evénement créé !',
+          text: 'Votre événement est ajouté avec succès.',
+          icon: 'success',
+          confirmButtonText: 'Terminer'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            window.location.href = 'index.php?page=mb_accueil';
+          }
+        });
+        return;
+      }
+
+      const message = payload?.message || 'Erreur lors du traitement.';
+      document.getElementById('status').innerHTML = message;
+      Swal.fire({
+        title: 'Enregistrement impossible',
+        text: message,
+        icon: 'error',
+        confirmButtonText: 'Fermer'
+      });
+      document.getElementById('eventForm').style.display = '';
+      document.getElementById('progressWrapper').style.display = 'none';
+    };
+
+    xhr.send(formData);
+  });
+
+  (function init() {
+    toggle(accessoireGroup, false);
+    toggle(invitationLanguageGroup, false);
+    showWizard(false);
+    singleStepOthers.style.display = 'none';
+    toggleFields();
+    renderCheckoutSummary();
+
+    if (eventTypeSelect.value) {
+      eventTypeSelect.dispatchEvent(new Event('change'));
+    }
+  })();
 </script>
 
 

@@ -12,16 +12,19 @@ final class EventCreationService
         string $photoTargetDir,
         array $config
     ): int {
+        $eventUserId = self::normalizeUserId($eventData['cod_user'] ?? null);
+
         $sql = "INSERT INTO events (
             cod_user, type_event, type_mar, modele_inv, modele_chev, date_event, lieu, adresse,
             prenom_epoux, nom_epoux, prenom_epouse, nom_epouse,
-            nom_familleepoux, nom_familleepouse, nomfetard, themeconf,
+            nom_familleepoux, nom_familleepouse, ordrepri, nomfetard, themeconf,
             autres_precisions, initiale_mar, ajustenom, taillenominv, alignnominv, pagenom, pagebouton, date_enreg, pageqr, hautqr, gaucheqr, tailleqr, version
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?)";
+            , lang
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?, ?)";
 
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
-            $eventData['cod_user'] ?? null,
+            $eventUserId,
             $eventData['type_event'] ?? null,
             $eventData['type_mar'] ?? null,
             $eventData['modele_inv'] ?? null,
@@ -35,6 +38,7 @@ final class EventCreationService
             $eventData['nom_epouse'] ?? null,
             $eventData['nom_familleepoux'] ?? null,
             $eventData['nom_familleepouse'] ?? null,
+            $eventData['ordrepri'] ?? null,
             $eventData['nomfetard'] ?? null,
             $eventData['themeconf'] ?? null,
             $eventData['autres_precisions'] ?? null,
@@ -49,12 +53,19 @@ final class EventCreationService
             $eventData['gaucheqr'] ?? '52',
             $eventData['tailleqr'] ?? '90',
             $eventData['version'] ?? 'N',
+            $eventData['lang'] ?? null,
         ]);
 
         $eventId = (int) $pdo->lastInsertId();
 
         self::persistShortLink($pdo, $eventId, $eventData, $config);
         self::persistAccessoires($pdo, $eventId, $accessoires, true, (string) ($eventData['modele_inv'] ?? ''), (array) ($eventData['accessoire_quantities'] ?? []));
+        EventOrderService::persistOrderMetadata(
+            $pdo,
+            $eventId,
+            (array) ($eventData['invitation_models'] ?? []),
+            (array) ($eventData['checkout'] ?? [])
+        );
         self::persistPhotos($pdo, $eventId, $photos, $photoTargetDir, (string) ($eventData['initiale_mar'] ?? 'IS'));
 
         return $eventId;
@@ -68,15 +79,18 @@ final class EventCreationService
         string $photoTargetDir,
         array $config
     ): int {
+        $eventUserId = self::normalizeUserId($eventData['cod_user'] ?? null);
+
         $sql = "INSERT INTO events (
-            type_event, type_mar, modele_inv, modele_chev, date_event, lieu, adresse,
+            cod_user, type_event, type_mar, modele_inv, modele_chev, date_event, lieu, adresse,
             prenom_epoux, nom_epoux, prenom_epouse, nom_epouse,
-            nom_familleepoux, nom_familleepouse, nomfetard, themeconf,
-            autres_precisions, initiale_mar, date_enreg
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+            nom_familleepoux, nom_familleepouse, ordrepri, nomfetard, themeconf,
+            autres_precisions, initiale_mar, date_enreg, lang
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?)";
 
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
+            $eventUserId,
             $eventData['type_event'] ?? null,
             $eventData['type_mar'] ?? null,
             $eventData['modele_inv'] ?? null,
@@ -90,19 +104,38 @@ final class EventCreationService
             $eventData['nom_epouse'] ?? null,
             $eventData['nom_familleepoux'] ?? null,
             $eventData['nom_familleepouse'] ?? null,
+            $eventData['ordrepri'] ?? null,
             $eventData['nomfetard'] ?? null,
             $eventData['themeconf'] ?? null,
             $eventData['autres_precisions'] ?? null,
             $eventData['initiale_mar'] ?? null,
+            $eventData['lang'] ?? null,
         ]);
 
         $eventId = (int) $pdo->lastInsertId();
 
         self::persistShortLink($pdo, $eventId, $eventData, $config);
         self::persistAccessoires($pdo, $eventId, $accessoires, false, null, (array) ($eventData['accessoire_quantities'] ?? []));
+        EventOrderService::persistOrderMetadata(
+            $pdo,
+            $eventId,
+            (array) ($eventData['invitation_models'] ?? []),
+            (array) ($eventData['checkout'] ?? [])
+        );
         self::persistPhotos($pdo, $eventId, $photos, $photoTargetDir, (string) ($eventData['initiale_mar'] ?? 'IS'));
 
         return $eventId;
+    }
+
+    private static function normalizeUserId($value): ?int
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        $userId = (int) $value;
+
+        return $userId > 0 ? $userId : null;
     }
 
     private static function persistShortLink(PDO $pdo, int $eventId, array $eventData, array $config): void

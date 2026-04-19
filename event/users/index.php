@@ -9,6 +9,13 @@ if ($content === null) {
   PageRouter::redirect('index.php?page=logout');
 }
 
+$isAjaxRequest = strtolower((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')) === 'xmlhttprequest';
+
+if ($isAjaxRequest) {
+  include($content);
+  return;
+}
+
 
 //------------PHPMailer---------
 require '../../PHPMailer/src/PHPMailer.php';

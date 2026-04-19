@@ -4,7 +4,7 @@
 		
 		
 	require __DIR__ . '/fpdf.php';
-	include __DIR__ . '/../../../../pages/bdd.php';
+	require_once dirname(__DIR__, 4) . '/bootstrap/app.php';
     //include('../phpqrcode/qrlib.php'); 
 
 	$invoicePdfDir = __DIR__;
@@ -179,7 +179,10 @@
 			                    
 			$stmtus = $pdo->prepare("SELECT * FROM is_users WHERE cod_user = :cod_user");
 			$stmtus->execute(['cod_user' => $datacomp['cod_cli']]); 
-			$dataclient = $stmtus->fetch(PDO::FETCH_ASSOC); 
+			$dataclient = $stmtus->fetch(PDO::FETCH_ASSOC) ?: [];
+			$clientName = trim((string) ($dataclient['noms'] ?? 'Client introuvable'));
+			$clientPhone = trim((string) ($dataclient['phone'] ?? ''));
+			$clientEmail = trim((string) ($dataclient['email'] ?? ''));
   
             
 
@@ -234,13 +237,13 @@
 			$this->SetMargins(7,5,0,0,true);
 			$this->SetFont('Arial','',8);	
 			$this->Cell(60,7,mb_convert_encoding('HUBERT SOLUTIONS', 'ISO-8859-1', 'UTF-8'),0,0,'L');
-			$this->Cell(75,7,mb_convert_encoding($dataclient['noms'], 'ISO-8859-1', 'UTF-8'),0,0,'R');
+			$this->Cell(75,7,mb_convert_encoding($clientName, 'ISO-8859-1', 'UTF-8'),0,0,'R');
 			$this->Ln(4);
 			$this->Cell(60,7,mb_convert_encoding('2e Niv, Immeuble Interfina, Kinshasa - Gombe', 'ISO-8859-1', 'UTF-8'),0,0,'L');
-			$this->Cell(75,7,mb_convert_encoding($dataclient['phone'], 'ISO-8859-1', 'UTF-8'),0,0,'R');
+			$this->Cell(75,7,mb_convert_encoding($clientPhone, 'ISO-8859-1', 'UTF-8'),0,0,'R');
 			$this->Ln(4);
 			$this->Cell(60,7,mb_convert_encoding('+243 810 678 785', 'ISO-8859-1', 'UTF-8'),0,0,'L');
-			$this->Cell(75,7,mb_convert_encoding($dataclient['email'], 'ISO-8859-1', 'UTF-8'),0,0,'R');
+			$this->Cell(75,7,mb_convert_encoding($clientEmail, 'ISO-8859-1', 'UTF-8'),0,0,'R');
 			$this->Ln(10);	 
 			  
 
@@ -259,7 +262,7 @@
             
 			$stmtus = $pdo->prepare("SELECT * FROM is_users WHERE cod_user = :cod_user");
 			$stmtus->execute(['cod_user' => $datacomp['cod_cli']]); 
-			$dataclient = $stmtus->fetch(PDO::FETCH_ASSOC); 
+			$dataclient = $stmtus->fetch(PDO::FETCH_ASSOC) ?: [];
 		
  	
 
@@ -322,29 +325,22 @@
 			if (!$datacomp) {
 				return;
 			}
+			$invoiceSummary = EventOrderService::buildInvoiceSummaryForEvent($pdo, (int) $datacomp['reference']);
 			$paymentHistory = $this->paymentHistory($pdo);
 			$paymentTotals = $this->paymentTotals($pdo);
             
 			$stmtus = $pdo->prepare("SELECT * FROM is_users WHERE cod_user = :cod_user");
 			$stmtus->execute(['cod_user' => $datacomp['cod_cli']]); 
-			$dataclient = $stmtus->fetch(PDO::FETCH_ASSOC);
+			$dataclient = $stmtus->fetch(PDO::FETCH_ASSOC) ?: [];
 
             $sqldf = $pdo->prepare("SELECT * from details_fact where cod_event = :cod_event order by cod_df DESC");
             $sqldf->execute([
                 ':cod_event' => $datacomp['reference']
             ]);
     
-            while($datadfact = $sqldf->fetch()){ 
+			while($datadfact = $sqldf->fetch()){ 
                                    
                 
-    
-            $sqladdtot = $pdo->prepare("SELECT sum(pt) as total_n from details_fact where cod_event = :cod_event");
-            $sqladdtot->execute([
-                        ':cod_event' => $datacomp['reference']
-            ]);
-    
-            $datasomme = $sqladdtot->fetch();
-
             $prix_t = $datadfact['qtecom'] * $datadfact['pu'];
 
             $id++;
@@ -388,7 +384,7 @@
 						 
 			 
 
-			$summaryTableWidth = 55;
+			$summaryTableWidth = 73;
 			$summaryTableX = ($this->GetPageWidth() - $summaryTableWidth) / 2;
 
 			 //premiere ligne de total 
@@ -396,9 +392,9 @@
 			$this->SetFillColor(186, 217, 244); 
 			$this->Cell(5,7,mb_convert_encoding('', 'ISO-8859-1', 'UTF-8'),0,0,'L',true);
 			$this->SetFont('Arial','B',9);
-			$this->Cell(20,7,mb_convert_encoding('PT :', 'ISO-8859-1', 'UTF-8'),0,0,'L',true);
+			$this->Cell(38,7,mb_convert_encoding('Sous-total :', 'ISO-8859-1', 'UTF-8'),0,0,'L',true);
 			$this->SetFont('Arial','',9);
-			$this->Cell(25,7,mb_convert_encoding(number_format($datasomme['total_n'], 2,'.','').' '.$datacomp['devise'], 'ISO-8859-1', 'UTF-8'),0,0,'R',true);
+			$this->Cell(25,7,mb_convert_encoding(number_format((float) ($invoiceSummary['subtotal'] ?? 0), 2,'.','').' '.$datacomp['devise'], 'ISO-8859-1', 'UTF-8'),0,0,'R',true);
 			$this->Cell(5,7,mb_convert_encoding('', 'ISO-8859-1', 'UTF-8'),0,0,'L',true);
 
 
@@ -421,9 +417,9 @@
 			$this->SetFillColor(255, 255, 255); 
 			$this->Cell(5,7,mb_convert_encoding('', 'ISO-8859-1', 'UTF-8'),0,0,'L',true);
 			$this->SetFont('Arial','B',9);
-			$this->Cell(20,7,mb_convert_encoding('Tax :', 'ISO-8859-1', 'UTF-8'),0,0,'L',true);
+			$this->Cell(38,7,mb_convert_encoding('Remise :', 'ISO-8859-1', 'UTF-8'),0,0,'L',true);
 			$this->SetFont('Arial','',9);
-			$this->Cell(25,7,mb_convert_encoding('0 '.$datacomp['devise'], 'ISO-8859-1', 'UTF-8'),0,0,'R',true);
+			$this->Cell(25,7,mb_convert_encoding(number_format((float) ($invoiceSummary['discount_amount'] ?? 0), 2,'.','').' '.$datacomp['devise'], 'ISO-8859-1', 'UTF-8'),0,0,'R',true);
 			$this->Cell(5,7,mb_convert_encoding('', 'ISO-8859-1', 'UTF-8'),0,0,'L',true);
 
 
@@ -450,9 +446,9 @@ $this->SetTextColor(255, 255, 255);
 			$this->SetFillColor(72, 78, 154, 0);
 			$this->Cell(5,7,mb_convert_encoding('', 'ISO-8859-1', 'UTF-8'),0,0,'L',true);
 			$this->SetFont('Arial','B',9);
-			$this->Cell(20,7,mb_convert_encoding('Total :', 'ISO-8859-1', 'UTF-8'),0,0,'L',true);
-			$this->SetFont('Arial','',9);
-			$this->Cell(25,7,mb_convert_encoding(number_format($datasomme['total_n'], 2,'.','').' '.$datacomp['devise'], 'ISO-8859-1', 'UTF-8'),0,0,'R',true);
+			$this->Cell(38,7,mb_convert_encoding('A payer :', 'ISO-8859-1', 'UTF-8'),0,0,'L',true);
+			$this->SetFont('Arial','B',9);
+			$this->Cell(25,7,mb_convert_encoding(number_format((float) ($invoiceSummary['total'] ?? 0), 2,'.','').' '.$datacomp['devise'], 'ISO-8859-1', 'UTF-8'),0,0,'R',true);
 			$this->Cell(5,7,mb_convert_encoding('', 'ISO-8859-1', 'UTF-8'),0,0,'L',true);
 
 
@@ -464,8 +460,8 @@ $this->SetTextColor(255, 255, 255);
 
 $this->Ln(7);
 
-$paidTotal = min($paymentTotals['paid'], (float) $datasomme['total_n']);
-$rest = max((float) $datasomme['total_n'] - $paidTotal, 0);
+$paidTotal = min($paymentTotals['paid'], (float) ($invoiceSummary['total'] ?? 0));
+$rest = max((float) ($invoiceSummary['total'] ?? 0) - $paidTotal, 0);
 
 if ($this->shouldShowPaymentHistory($paymentHistory)) {
 	$historyTableWidth = 68;
@@ -475,15 +471,6 @@ if ($this->shouldShowPaymentHistory($paymentHistory)) {
 	$this->SetFont('Arial','B',9);
 	$this->SetX($historyTableX);
 	$this->Cell($historyTableWidth,6,mb_convert_encoding('Historique des paiements', 'ISO-8859-1', 'UTF-8'),0,1,'C');
-
-	$this->SetX($historyTableX);
-	$this->SetFillColor(72, 78, 154, 0);
-	$this->SetTextColor(255, 255, 255);
-	$this->SetFont('Arial','B',8);
-	$this->Cell(10,7,mb_convert_encoding('N°', 'ISO-8859-1', 'UTF-8'),0,0,'C',true);
-	$this->Cell(20,7,mb_convert_encoding('Type', 'ISO-8859-1', 'UTF-8'),0,0,'L',true);
-	$this->Cell(18,7,mb_convert_encoding('Date', 'ISO-8859-1', 'UTF-8'),0,0,'C',true);
-	$this->Cell(20,7,mb_convert_encoding('Montant', 'ISO-8859-1', 'UTF-8'),0,1,'R',true);
 
 	foreach ($paymentHistory as $index => $payment) {
 		$this->SetFillColor(255, 255, 255);
@@ -500,15 +487,15 @@ if ($this->shouldShowPaymentHistory($paymentHistory)) {
 	$this->Ln(2);
 }
 
-$this->SetFillColor(255, 255, 255);
-$this->SetTextColor(0, 0, 0);
+$this->SetFillColor(72, 78, 154, 0);
+$this->SetTextColor(255, 255, 255);
 $summaryWideWidth = 73;
 $summaryWideX = ($this->GetPageWidth() - $summaryWideWidth) / 2;
 $this->SetX($summaryWideX);
 $this->Cell(5,7,mb_convert_encoding('', 'ISO-8859-1', 'UTF-8'),0,0,'L',true);
 $this->SetFont('Arial','B',9);
 $this->Cell(38,7,mb_convert_encoding('Total encaissé :', 'ISO-8859-1', 'UTF-8'),0,0,'L',true);
-$this->SetFont('Arial','',9);
+$this->SetFont('Arial','B',9);
 $this->Cell(25,7,mb_convert_encoding(number_format($paidTotal, 2,'.','').' '.$datacomp['devise'], 'ISO-8859-1', 'UTF-8'),0,0,'R',true);
 $this->Cell(5,7,mb_convert_encoding('', 'ISO-8859-1', 'UTF-8'),0,0,'L',true);
 
@@ -516,11 +503,11 @@ $this->Ln(7);
 
 $this->SetTextColor(255, 255, 255);
 $this->SetX($summaryWideX);
-$this->SetFillColor(180, 0, 0);
+$this->SetFillColor(198, 64, 64);
 $this->Cell(5,7,mb_convert_encoding('', 'ISO-8859-1', 'UTF-8'),0,0,'L',true);
 $this->SetFont('Arial','B',9);
 $this->Cell(38,7,mb_convert_encoding('Reste :', 'ISO-8859-1', 'UTF-8'),0,0,'L',true);
-$this->SetFont('Arial','',9);
+$this->SetFont('Arial','B',9);
 $this->Cell(25,7,mb_convert_encoding(number_format($rest, 2,'.','').' '.$datacomp['devise'], 'ISO-8859-1', 'UTF-8'),0,0,'R',true);
 $this->Cell(5,7,mb_convert_encoding('', 'ISO-8859-1', 'UTF-8'),0,0,'L',true);
 
