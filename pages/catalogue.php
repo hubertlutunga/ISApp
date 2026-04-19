@@ -733,7 +733,7 @@ $buildReference = static function (array $catalogModel): string {
             <p class="catalogue-manifesto">Direction artistique soignée, personnalisation sur mesure, rendu premium pour mariage, réception et grandes célébrations.</p>
 
             <div class="catalogue-hero-actions">
-              <a class="catalogue-btn catalogue-btn-primary" href="event/users/index.php?page=addevent">Commander un événement</a>
+              <a class="catalogue-btn catalogue-btn-primary" href="index.php?page=commande">Commander un événement</a>
               <a class="catalogue-btn catalogue-btn-whatsapp" href="<?php echo htmlspecialchars($catalogWhatsappUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener noreferrer">WhatsApp direct</a>
             </div>
           </div>
@@ -850,7 +850,7 @@ $buildReference = static function (array $catalogModel): string {
         <div class="catalogue-footer-actions">
           <a class="catalogue-btn catalogue-btn-secondary" href="index.php?page=accueil">Retour au site</a>
           <a class="catalogue-btn catalogue-btn-whatsapp" href="<?php echo htmlspecialchars($catalogWhatsappUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener noreferrer">Parler sur WhatsApp</a>
-          <a class="catalogue-btn catalogue-btn-primary" href="event/users/index.php?page=addevent">Commander un événement</a>
+          <a class="catalogue-btn catalogue-btn-primary" href="index.php?page=commande">Commander un événement</a>
         </div>
       </div>
     </section>
