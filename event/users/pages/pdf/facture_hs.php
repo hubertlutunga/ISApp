@@ -34,9 +34,9 @@
 	function resolveInvoiceLogoPath(string $assetsDir): ?string
 	{
 		$candidatePaths = [
+			$assetsDir . '/Logo_invitationSpeciale_2.png',
 			$assetsDir . '/Logo_invitationSpeciale_1.png',
 			$assetsDir . '/Logo_invitationSpeciale_4.png',
-			$assetsDir . '/Logo_invitationSpeciale_2.png',
 		];
 
 		foreach ($candidatePaths as $candidatePath) {
@@ -252,7 +252,7 @@
 
 			global $invoiceLogoPath;
 			if (is_file($invoiceLogoPath)) {
-				$this->Image($invoiceLogoPath,0,5,50);
+				$this->Image($invoiceLogoPath,0,-8,50);
 			}
 			$this->Ln(1);	
 			$this->SetFont('Arial','',6);
