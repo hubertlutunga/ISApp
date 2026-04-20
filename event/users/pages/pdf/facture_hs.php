@@ -8,7 +8,54 @@
     //include('../phpqrcode/qrlib.php'); 
 
 	$invoicePdfDir = __DIR__;
-	$invoiceLogoPath = dirname(__DIR__, 4) . '/images/Logo_invitationSpeciale_1.png';
+	$invoiceAssetsDir = dirname(__DIR__, 4) . '/images';
+	
+	function isFpdfCompatiblePng(string $filePath): bool
+	{
+		$handle = @fopen($filePath, 'rb');
+		if ($handle === false) {
+			return false;
+		}
+
+		$header = fread($handle, 29);
+		fclose($handle);
+
+		if ($header === false || strlen($header) < 29) {
+			return false;
+		}
+
+		if (substr($header, 0, 8) !== chr(137) . 'PNG' . chr(13) . chr(10) . chr(26) . chr(10)) {
+			return false;
+		}
+
+		return ord($header[28]) === 0;
+	}
+
+	function resolveInvoiceLogoPath(string $assetsDir): ?string
+	{
+		$candidatePaths = [
+			$assetsDir . '/Logo_invitationSpeciale_1.png',
+			$assetsDir . '/Logo_invitationSpeciale_4.png',
+			$assetsDir . '/Logo_invitationSpeciale_2.png',
+		];
+
+		foreach ($candidatePaths as $candidatePath) {
+			if (!is_file($candidatePath)) {
+				continue;
+			}
+
+			$extension = strtolower((string) pathinfo($candidatePath, PATHINFO_EXTENSION));
+			if ($extension === 'png' && !isFpdfCompatiblePng($candidatePath)) {
+				continue;
+			}
+
+			return $candidatePath;
+		}
+
+		return null;
+	}
+
+	$invoiceLogoPath = resolveInvoiceLogoPath($invoiceAssetsDir);
 	$invoiceFactureStampPath = $invoicePdfDir . '/cach_IS_pmarci.png';
 	$invoiceDevisStampPath = $invoicePdfDir . '/cach_IS_proforma.png';
 	
