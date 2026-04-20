@@ -5,12 +5,112 @@ $accessoryCatalog = EventOrderService::accessoryCatalog($pdo);
 $promoCatalog = EventOrderService::promoCatalog($pdo);
 $paymentOptions = EventOrderService::paymentOptions();
 
+$normalizeInvitationModelLabel = static function (string $label): string {
+  $normalizedLabel = trim($label);
+  $normalizedLabel = function_exists('mb_strtolower')
+    ? mb_strtolower($normalizedLabel, 'UTF-8')
+    : strtolower($normalizedLabel);
+
+  if (function_exists('iconv')) {
+    $transliteratedLabel = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $normalizedLabel);
+    if ($transliteratedLabel !== false) {
+      $normalizedLabel = $transliteratedLabel;
+    }
+  }
+
+  $normalizedLabel = preg_replace('/[^a-z0-9]+/', ' ', $normalizedLabel) ?? $normalizedLabel;
+  return trim($normalizedLabel);
+};
+
+$classifyInvitationLabel = static function (string $label) use ($normalizeInvitationModelLabel): string {
+  $normalizedLabel = $normalizeInvitationModelLabel($label);
+  $isInvitationLabel = str_contains($normalizedLabel, 'invitation');
+  $isPrintedLabel = str_contains($normalizedLabel, 'imprim');
+  $isDigitalLabel = str_contains($normalizedLabel, 'digital') || str_contains($normalizedLabel, 'electron');
+  $hasQrCode = str_contains($normalizedLabel, 'qr') || str_contains($normalizedLabel, 'qrcode') || str_contains($normalizedLabel, 'qrcod');
+  $withoutQrCode = str_contains($normalizedLabel, 'sans') && $hasQrCode;
+  $withQrCode = $hasQrCode && !$withoutQrCode;
+
+  if ($isInvitationLabel && $isPrintedLabel) {
+    return 'printed';
+  }
+
+  if ($isInvitationLabel && $isDigitalLabel && $withoutQrCode) {
+    return 'digital_without_qr';
+  }
+
+  if ($isInvitationLabel && $isDigitalLabel && $withQrCode) {
+    return 'digital_with_qr';
+  }
+
+  if ($isInvitationLabel) {
+    return 'invitation_other';
+  }
+
+  return 'other';
+};
+
+$isUnlimitedInvitationModel = static function (string $label) use ($classifyInvitationLabel): bool {
+  return in_array($classifyInvitationLabel($label), ['digital_without_qr', 'digital_with_qr'], true);
+};
+
+$invitationModelSortPriority = static function (array $model) use ($classifyInvitationLabel): int {
+  return match ($classifyInvitationLabel((string) ($model['nom'] ?? ''))) {
+    'printed' => 0,
+    'digital_without_qr' => 1,
+    'digital_with_qr' => 2,
+    default => 3,
+  };
+};
+
+$printedInvitationAccessoryIds = [];
+$digitalWithoutQrAccessoryIds = [];
+$digitalWithQrAccessoryIds = [];
+$invitationAccessoryIds = [];
+
+foreach ($accessoryCatalog as $accessoryId => $catalogItem) {
+  $accessoryLabelType = $classifyInvitationLabel((string) ($catalogItem['label'] ?? ''));
+  $normalizedAccessoryId = (string) $accessoryId;
+
+  if ($accessoryLabelType !== 'other') {
+    $invitationAccessoryIds[] = $normalizedAccessoryId;
+  }
+
+  if ($accessoryLabelType === 'printed') {
+    $printedInvitationAccessoryIds[] = $normalizedAccessoryId;
+  }
+
+  if ($accessoryLabelType === 'digital_without_qr') {
+    $digitalWithoutQrAccessoryIds[] = $normalizedAccessoryId;
+  }
+
+  if ($accessoryLabelType === 'digital_with_qr') {
+    $digitalWithQrAccessoryIds[] = $normalizedAccessoryId;
+  }
+}
+
+$primaryPrintedInvitationAccessoryId = $printedInvitationAccessoryIds[0] ?? null;
+
 $invitationModelStmt = $pdo->prepare("SELECT * FROM modele_is WHERE type_mod = :type_mod AND is_active = 1 ORDER BY nom ASC");
 $invitationModelStmt->execute([':type_mod' => 'invitation']);
 $invitationModelRows = $invitationModelStmt->fetchAll(PDO::FETCH_ASSOC);
 
+usort($invitationModelRows, static function (array $leftModel, array $rightModel) use ($invitationModelSortPriority, $normalizeInvitationModelLabel): int {
+  $leftPriority = $invitationModelSortPriority($leftModel);
+  $rightPriority = $invitationModelSortPriority($rightModel);
+
+  if ($leftPriority !== $rightPriority) {
+    return $leftPriority <=> $rightPriority;
+  }
+
+  return strcmp(
+    $normalizeInvitationModelLabel((string) ($leftModel['nom'] ?? '')),
+    $normalizeInvitationModelLabel((string) ($rightModel['nom'] ?? ''))
+  );
+});
+
 $postedAccessories = array_map('strval', $_POST['accessoires'] ?? []);
-$requiresInvitationModelQuantity = in_array('1', $postedAccessories, true);
+$requiresInvitationModelQuantity = count(array_intersect($postedAccessories, $printedInvitationAccessoryIds)) > 0;
 $selectedInvitationModels = EventOrderService::normalizeInvitationModels(
   array_map('strval', $_POST['invitation_models'] ?? []),
   (array) ($_POST['invitation_model_quantities'] ?? []),
@@ -22,8 +122,8 @@ if ($selectedInvitationModels !== []) {
   $_POST['modele_inv'] = (string) $selectedInvitationModels[0]['model_id'];
 }
 
-if ($requiresInvitationModelQuantity && $selectedInvitationModels !== []) {
-  $_POST['accessoire_quantities']['1'] = (string) array_sum(array_map(
+if ($requiresInvitationModelQuantity && $selectedInvitationModels !== [] && $primaryPrintedInvitationAccessoryId !== null) {
+  $_POST['accessoire_quantities'][$primaryPrintedInvitationAccessoryId] = (string) array_sum(array_map(
     static fn(array $model): int => (int) ($model['quantity'] ?? 1),
     $selectedInvitationModels
   ));
@@ -604,7 +704,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     color:#64748b;
     font-size:13px;
   }
-  .modal-content{background:#fff;margin:60px auto;padding:24px;border:1px solid #dbe3ef;width:95%;max-width:760px;border-radius:24px;box-shadow:0 28px 80px rgba(15,23,42,.18)}
+  .modal-content{background:#fffdf9;margin:40px auto;padding:24px;border:1px solid rgba(145,91,45,.14);width:95%;max-width:980px;border-radius:28px;box-shadow:0 34px 70px rgba(48,29,23,.22)}
   .model-modal-head{
     display:flex;
     align-items:flex-start;
@@ -624,25 +724,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     font-size:14px;
     line-height:1.6;
   }
-  .dropdown-content div{cursor:pointer;border:1px solid #e2e8f0;border-radius:16px;padding:10px;text-align:center;transition:transform .2s ease, box-shadow .2s ease,border-color .2s ease}
-  .dropdown-content div:hover{transform:translateY(-2px);border-color:#0f766e;box-shadow:0 16px 28px rgba(15,118,110,.12)}
-  .dropdown-content div.is-selected{border-color:#0f766e;background:linear-gradient(180deg,#ecfeff 0%,#f8fffe 100%);box-shadow:0 16px 28px rgba(15,118,110,.12)}
-  .dropdown-content label{display:block;color:#0f172a;font-weight:700;font-size:14px}
+  .dropdown-content{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;margin-top:12px}
+  .dropdown-content > div{cursor:pointer;border:1px solid rgba(145,91,45,.10);border-radius:28px;padding:0;text-align:left;overflow:hidden;background:rgba(255,255,255,.92);box-shadow:0 22px 44px rgba(109,68,39,.10);transition:transform .22s ease, box-shadow .22s ease,border-color .22s ease}
+  .dropdown-content > div:hover{transform:none;border-color:rgba(145,91,45,.10);box-shadow:0 22px 44px rgba(109,68,39,.10)}
+  .dropdown-content > div.is-selected{border-color:#7a3a27;background:linear-gradient(180deg,#fffaf4 0%,#f8efe4 100%);box-shadow:0 24px 48px rgba(122,58,39,.14)}
   .model-option-card{
     display:flex;
-    flex-direction:column;
-    gap:10px;
+    flex-direction:row;
+    align-items:stretch;
     text-align:left;
   }
   .model-option-image-trigger{
     position:relative;
     display:block;
-    width:100%;
+    flex:0 0 148px;
+    width:148px;
     border:none;
     padding:0;
-    border-radius:14px;
+    border-radius:0;
     overflow:hidden;
-    background:#f8fafc;
+    background:linear-gradient(180deg,#f0dfcf 0%,#f7efe7 100%);
     cursor:zoom-in;
   }
   .model-option-image-trigger::after{
@@ -652,60 +753,74 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     bottom:10px;
     padding:6px 10px;
     border-radius:999px;
-    background:rgba(15,23,42,.72);
-    color:#fff;
-    font-size:11px;
+    background:rgba(48,29,23,.78);
+    color:#fffaf2;
+    font-size:10px;
     font-weight:700;
-    letter-spacing:.04em;
+    letter-spacing:.08em;
+    text-transform:uppercase;
   }
   .model-option-copy{
     display:flex;
     flex-direction:column;
-    gap:5px;
+    gap:10px;
+    flex:1;
+    min-width:0;
+    padding:20px 22px 18px;
+    text-align:left;
   }
   .model-option-head{
     display:flex;
     align-items:flex-start;
     justify-content:space-between;
-    gap:10px;
+    gap:18px;
   }
   .model-option-title{
-    color:#0f172a;
-    font-size:15px;
+    flex:1 1 auto;
+    min-width:0;
+    color:#231815;
+    font-size:20px;
     font-weight:800;
-    line-height:1.35;
+    line-height:1.3;
   }
   .model-option-reference{
     display:inline-flex;
     align-self:flex-start;
-    padding:5px 9px;
+    padding:8px 12px;
     border-radius:999px;
-    background:#eff6ff;
-    color:#1d4ed8;
+    background:#fff6ea;
+    color:#8b633e;
     font-size:11px;
     font-weight:800;
-    letter-spacing:.05em;
+    letter-spacing:.06em;
     text-transform:uppercase;
   }
   .model-option-price{
-    color:#0f766e;
-    font-size:14px;
+    flex:0 0 auto;
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    color:#7a3a27;
+    font-size:18px;
     font-weight:800;
     white-space:nowrap;
+    text-align:left;
   }
   .model-option-meta{
-    color:#64748b;
-    font-size:13px;
-    line-height:1.5;
+    color:#6d5a50;
+    font-size:14px;
+    line-height:1.75;
   }
   .model-option-hint{
-    color:#94a3b8;
-    font-size:11px;
+    color:#7a3a27;
+    font-size:12px;
     font-weight:700;
-    letter-spacing:.04em;
+    letter-spacing:.05em;
     text-transform:uppercase;
   }
-  .option-image{display:block;width:100%;height:190px;object-fit:cover;border-radius:14px;border:1px solid rgba(148,163,184,.16);margin-top:0}
+  .option-image{display:block;width:100%;height:100%;min-height:188px;object-fit:cover;border:none;border-radius:0;margin-top:0;transition:transform .34s ease}
+  .dropdown-content > div:hover .option-image{transform:scale(1.05)}
   .image-lightbox{
     position:fixed;
     inset:0;
@@ -781,6 +896,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     .accessory-grid{grid-template-columns:minmax(0, 1fr)}
     .selected-model-preview,
     .selected-model-item{grid-template-columns:minmax(0, 1fr)}
+    .dropdown-content{gap:12px}
+    .dropdown-content > div{border-radius:22px}
+    .model-option-card{flex-direction:row}
+    .model-option-image-trigger{flex:0 0 96px;width:96px}
+    .option-image{min-height:132px}
+    .model-option-copy{gap:8px;padding:12px 12px 12px 14px}
+    .model-option-head{gap:8px}
+    .model-option-title{font-size:15px;line-height:1.25}
+    .model-option-price{flex:0 0 auto;min-width:0;font-size:14px;line-height:1.2}
+    .model-option-meta{font-size:12px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .model-option-reference{padding:5px 7px;font-size:9px}
+    .model-option-hint{font-size:10px}
     #eventForm > .form-group,
     #eventForm > fieldset,
     #eventForm > .step,
@@ -789,8 +916,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   /* Modal modèles */
   .modal{display:none;position:fixed;z-index:9999;left:0;top:0;width:100%;height:100%;overflow:auto;background:rgba(0,0,0,.4)}
-  .dropdown-content{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-top:10px}
-  .option-image{width:100%;height:110px;object-fit:cover;border-radius:6px;margin-top:6px}
+  .dropdown-content{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;margin-top:12px}
+  .option-image{width:100%;height:100%;min-height:188px;object-fit:cover;border-radius:0;margin-top:0}
   .image-lightbox-dialog{padding:14px}
   .image-lightbox-caption{align-items:flex-start}
   #closeModal{font-size:24px}
@@ -865,19 +992,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <label class="labaccessoire">Que commandez-vous ?</label>
         <div class="accessory-grid">
         <?php 
-          $reqmod = $pdo->prepare("SELECT * FROM modele_is WHERE type_mod = :type_mod AND is_active = 1 ORDER BY CASE WHEN REPLACE(REPLACE(REPLACE(LOWER(nom), 'é', 'e'), 'è', 'e'), 'ê', 'e') LIKE 'invitation imprim%' OR REPLACE(REPLACE(REPLACE(LOWER(nom), 'é', 'e'), 'è', 'e'), 'ê', 'e') LIKE 'invitations imprim%' THEN 0 WHEN REPLACE(REPLACE(REPLACE(LOWER(nom), 'é', 'e'), 'è', 'e'), 'ê', 'e') LIKE 'invitation electron%' OR REPLACE(REPLACE(REPLACE(LOWER(nom), 'é', 'e'), 'è', 'e'), 'ê', 'e') LIKE 'invitations electron%' THEN 1 ELSE 2 END, nom ASC");
-          $reqmod->execute([':type_mod' => 'accessoires']);  
-          while ($data_mod = $reqmod->fetch()) {
+          $reqmod = $pdo->prepare("SELECT * FROM modele_is WHERE type_mod = :type_mod AND is_active = 1 ORDER BY nom ASC");
+          $reqmod->execute([':type_mod' => 'accessoires']);
+          $accessoryRows = $reqmod->fetchAll(PDO::FETCH_ASSOC);
+
+          usort($accessoryRows, static function (array $leftAccessory, array $rightAccessory) use ($classifyInvitationLabel, $normalizeInvitationModelLabel): int {
+            $priorityMap = [
+              'printed' => 0,
+              'digital_without_qr' => 1,
+              'digital_with_qr' => 2,
+              'invitation_other' => 3,
+              'other' => 4,
+            ];
+
+            $leftType = $classifyInvitationLabel((string) ($leftAccessory['nom'] ?? ''));
+            $rightType = $classifyInvitationLabel((string) ($rightAccessory['nom'] ?? ''));
+            $leftPriority = $priorityMap[$leftType] ?? 4;
+            $rightPriority = $priorityMap[$rightType] ?? 4;
+
+            if ($leftPriority !== $rightPriority) {
+              return $leftPriority <=> $rightPriority;
+            }
+
+            return strcmp(
+              $normalizeInvitationModelLabel((string) ($leftAccessory['nom'] ?? '')),
+              $normalizeInvitationModelLabel((string) ($rightAccessory['nom'] ?? ''))
+            );
+          });
+
+          foreach ($accessoryRows as $data_mod) {
             $accessoireNom = (string) ($data_mod['nom'] ?? '');
             $accessoireNomLower = function_exists('mb_strtolower') ? mb_strtolower($accessoireNom, 'UTF-8') : strtolower($accessoireNom);
             $accessoireNomNormalized = str_replace(['é', 'è', 'ê', 'ë'], 'e', $accessoireNomLower);
             $accessoireIcon = 'fa-gift';
             $requiresQuantity = true;
+            $accessoireType = $classifyInvitationLabel($accessoireNom);
 
-            if (strpos($accessoireNomNormalized, 'invitation') !== false && strpos($accessoireNomNormalized, 'elect') !== false) {
+            if (in_array($accessoireType, ['digital_without_qr', 'digital_with_qr'], true)) {
               $accessoireIcon = 'fa-mobile-screen-button';
               $requiresQuantity = false;
-            } elseif (strpos($accessoireNomNormalized, 'invitation') !== false) {
+            } elseif ($accessoireType === 'printed' || strpos($accessoireNomNormalized, 'invitation') !== false) {
               $accessoireIcon = 'fa-print';
             } elseif (strpos($accessoireNomNormalized, 'chevalet') !== false) {
               $accessoireIcon = 'fa-table-cells-large';
@@ -896,7 +1050,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               <?php if ($requiresQuantity) { ?>
               <span class="accessory-quantity" id="acc_qty_<?php echo $data_mod['cod_mod']?>">
                 <span>Quantité</span>
-                <input type="number" min="1" step="1" inputmode="numeric" name="accessoire_quantities[<?php echo $data_mod['cod_mod']?>]" value="<?php echo htmlspecialchars((string) $postedQuantity, ENT_QUOTES, 'UTF-8'); ?>">
+                <input type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" data-numeric-only="1" name="accessoire_quantities[<?php echo $data_mod['cod_mod']?>]" value="<?php echo htmlspecialchars((string) $postedQuantity, ENT_QUOTES, 'UTF-8'); ?>">
               </span>
               <?php } ?>
             </span>
@@ -1321,8 +1475,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           $modelReference = 'INV-' . str_pad((string) max(1, (int) ($data_mod['cod_mod'] ?? 0)), 3, '0', STR_PAD_LEFT);
           $modelPriceValue = round((float) ($data_mod['unit_price'] ?? 0), 2);
           $modelPriceLabel = $modelPriceValue > 0 ? number_format($modelPriceValue, 2, '.', ' ') . ' $' : 'Sur demande';
+          $modelIsUnlimited = $isUnlimitedInvitationModel((string) ($data_mod['nom'] ?? ''));
       ?>
-      <div data-value="<?php echo $data_mod['cod_mod']?>" data-label="<?php echo htmlspecialchars($data_mod['nom'], ENT_QUOTES, 'UTF-8')?>" data-image="<?php echo htmlspecialchars($modelImage, ENT_QUOTES, 'UTF-8')?>" data-price="<?php echo htmlspecialchars($modelPriceLabel, ENT_QUOTES, 'UTF-8')?>">
+      <div data-value="<?php echo $data_mod['cod_mod']?>" data-label="<?php echo htmlspecialchars($data_mod['nom'], ENT_QUOTES, 'UTF-8')?>" data-image="<?php echo htmlspecialchars($modelImage, ENT_QUOTES, 'UTF-8')?>" data-price="<?php echo htmlspecialchars($modelPriceLabel, ENT_QUOTES, 'UTF-8')?>" data-unlimited="<?php echo $modelIsUnlimited ? '1' : '0'; ?>">
         <div class="model-option-card">
           <button type="button" class="model-option-image-trigger" data-preview-image="<?php echo htmlspecialchars($modelImage, ENT_QUOTES, 'UTF-8')?>" data-preview-title="<?php echo htmlspecialchars($data_mod['nom'], ENT_QUOTES, 'UTF-8')?>" data-preview-price="<?php echo htmlspecialchars($modelPriceLabel, ENT_QUOTES, 'UTF-8')?>">
             <img class="option-image" src="<?php echo $modelImage; ?>" alt="<?php echo htmlspecialchars($data_mod['nom'])?>">
@@ -1333,7 +1488,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               <span class="model-option-price"><?php echo htmlspecialchars($modelPriceLabel, ENT_QUOTES, 'UTF-8')?></span>
             </div>
             <span class="model-option-reference"><?php echo htmlspecialchars($modelReference, ENT_QUOTES, 'UTF-8')?></span>
-            <span class="model-option-meta">Cliquez pour ajouter ou retirer ce modèle dans votre commande.</span>
+            <span class="model-option-meta"><?php echo $modelIsUnlimited ? 'Modèle digital illimité, sans quantité à renseigner.' : 'Cliquez pour ajouter ou retirer ce modèle dans votre commande.'; ?></span>
             <span class="model-option-hint">Touchez la photo pour un aperçu agrandi.</span>
           </div>
         </div>
@@ -1357,11 +1512,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <script>
   const accessoryCatalog = <?php echo json_encode($accessoryCatalog, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
   const promoCatalog = <?php echo json_encode($promoCatalog, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+  const invitationAccessoryIds = <?php echo json_encode(array_values($invitationAccessoryIds), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+  const printedInvitationAccessoryIds = <?php echo json_encode(array_values($printedInvitationAccessoryIds), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+  const digitalWithoutQrAccessoryIds = <?php echo json_encode(array_values($digitalWithoutQrAccessoryIds), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+  const digitalWithQrAccessoryIds = <?php echo json_encode(array_values($digitalWithQrAccessoryIds), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
   const invitationModelCatalog = <?php echo json_encode(array_map(static fn(array $row): array => [
     'id' => (string) ($row['cod_mod'] ?? ''),
     'label' => (string) ($row['nom'] ?? ''),
     'image' => '../images/modeleis/' . (string) ($row['image'] ?? ''),
     'unitPrice' => round((float) ($row['unit_price'] ?? 0), 2),
+    'isUnlimited' => $isUnlimitedInvitationModel((string) ($row['nom'] ?? '')),
   ], $invitationModelRows), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
   const initialSelectedInvitationModels = <?php echo json_encode($selectedInvitationModels, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
 
@@ -1452,9 +1612,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       label: catalogItem.label,
       image: catalogItem.image,
       unitPrice: Number(catalogItem.unitPrice || 0),
-      quantity: Math.max(1, Number(model.quantity || 1)),
+      isUnlimited: Boolean(catalogItem.isUnlimited),
+      quantity: Boolean(catalogItem.isUnlimited) ? 1 : Math.max(1, Number(model.quantity || 1)),
     });
   });
+
+  function sanitizeNumericTextInput(input, commit = false) {
+    if (!input) {
+      return null;
+    }
+
+    const digitsOnlyValue = String(input.value || '').replace(/\D+/g, '');
+
+    if (digitsOnlyValue === '') {
+      if (commit) {
+        input.value = '1';
+        return 1;
+      }
+
+      input.value = '';
+      return null;
+    }
+
+    const normalizedValue = Math.max(1, Number(digitsOnlyValue));
+    input.value = String(normalizedValue);
+    return normalizedValue;
+  }
+
+  function bindNumericOnlyInputs(scope = document, onValueChange = null) {
+    scope.querySelectorAll('[data-numeric-only]').forEach((input) => {
+      if (input.dataset.numericBound === '1') {
+        return;
+      }
+
+      input.dataset.numericBound = '1';
+
+      input.addEventListener('input', () => {
+        sanitizeNumericTextInput(input, false);
+        if (typeof onValueChange === 'function') {
+          onValueChange(input, false);
+        }
+      });
+
+      input.addEventListener('blur', () => {
+        const normalizedValue = sanitizeNumericTextInput(input, true);
+        if (typeof onValueChange === 'function') {
+          onValueChange(input, true, normalizedValue);
+        }
+      });
+    });
+  }
 
   function showStep(stepNumber) {
     steps.forEach((step, index) => step.classList.toggle('active', index === stepNumber - 1));
@@ -1556,16 +1763,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   function hasInvitationAccessory() {
     const selectedIds = getSelectedAccessoryIds();
-    return selectedIds.includes('1') || selectedIds.includes('2');
+    return selectedIds.some((accessoryId) => invitationAccessoryIds.includes(accessoryId));
   }
 
   function invitationModelsNeedQuantity() {
-    return getSelectedAccessoryIds().includes('1');
+    return getSelectedAccessoryIds().some((accessoryId) => printedInvitationAccessoryIds.includes(accessoryId));
+  }
+
+  function selectedModelNeedsQuantity(model) {
+    return invitationModelsNeedQuantity() && !Boolean(model?.isUnlimited);
   }
 
   function getPrintedInvitationQuantity() {
     let totalQuantity = 0;
     selectedInvitationModels.forEach((model) => {
+      if (!selectedModelNeedsQuantity(model)) {
+        return;
+      }
+
       totalQuantity += Math.max(1, Number(model.quantity || 1));
     });
 
@@ -1573,7 +1788,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   }
 
   function getAccessoryQuantity(accessoryId) {
-    if (accessoryId === '1') {
+    if (printedInvitationAccessoryIds.includes(accessoryId)) {
       return getPrintedInvitationQuantity();
     }
 
@@ -1611,9 +1826,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     selectedIds.forEach((accessoryId) => {
       const catalogItem = accessoryCatalog[accessoryId] || {label: 'Accessoire', unit_price: 0, quantity_mode: 'variable'};
 
-      if (accessoryId === '1' && selectedInvitationModels.size > 0) {
+      if (printedInvitationAccessoryIds.includes(accessoryId) && selectedInvitationModels.size > 0) {
         selectedInvitationModels.forEach((model) => {
-          const quantity = Math.max(1, Number(model.quantity || 1));
+          const quantity = selectedModelNeedsQuantity(model)
+            ? Math.max(1, Number(model.quantity || 1))
+            : 1;
           const unitPrice = Number(model.unitPrice || 0);
           const lineTotal = unitPrice * quantity;
 
@@ -1632,9 +1849,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         return;
       }
 
-      const quantity = accessoryId === '1' ? getPrintedInvitationQuantity() : getAccessoryQuantity(accessoryId);
+      const quantity = printedInvitationAccessoryIds.includes(accessoryId) ? getPrintedInvitationQuantity() : getAccessoryQuantity(accessoryId);
       const normalizedQuantity = catalogItem.quantity_mode === 'fixed' ? 1 : quantity;
-      const lineQuantity = accessoryId === '1' && normalizedQuantity === 0 ? 0 : Math.max(1, normalizedQuantity || 0);
+      const lineQuantity = printedInvitationAccessoryIds.includes(accessoryId) && normalizedQuantity === 0 ? 0 : Math.max(1, normalizedQuantity || 0);
       const lineTotal = Number(catalogItem.unit_price || 0) * lineQuantity;
 
       subtotal += lineTotal;
@@ -1644,7 +1861,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         quantity: lineQuantity,
         unitPrice: Number(catalogItem.unit_price || 0),
         lineTotal,
-        modelsCount: accessoryId === '1' ? selectedInvitationModels.size : 0,
+        modelsCount: printedInvitationAccessoryIds.includes(accessoryId) ? selectedInvitationModels.size : 0,
       });
     });
 
@@ -1753,10 +1970,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <input type="hidden" name="invitation_models[]" value="${model.id}">
           <span class="selected-model-item-title">${model.label}</span>
           <span class="selected-model-item-price">${formatCatalogPrice(model.unitPrice)}</span>
-          <span class="selected-model-item-meta">${invitationModelsNeedQuantity() ? 'Définissez la quantité pour ce modèle imprimé.' : 'Ce modèle sera utilisé pour votre invitation.'}</span>
+          <span class="selected-model-item-meta">${selectedModelNeedsQuantity(model) ? 'Définissez la quantité pour ce modèle imprimé.' : model.isUnlimited ? 'Modèle digital illimité, sans quantité à renseigner.' : 'Ce modèle sera utilisé pour votre invitation.'}</span>
           <div class="selected-model-item-controls">
-            ${invitationModelsNeedQuantity()
-              ? `<label>Quantité <input type="number" min="1" step="1" name="invitation_model_quantities[${model.id}]" value="${Math.max(1, Number(model.quantity || 1))}" data-model-quantity="${model.id}"></label>`
+            ${selectedModelNeedsQuantity(model)
+              ? `<label>Quantité <input type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" data-numeric-only="1" name="invitation_model_quantities[${model.id}]" value="${Math.max(1, Number(model.quantity || 1))}" data-model-quantity="${model.id}"></label>`
               : `<input type="hidden" name="invitation_model_quantities[${model.id}]" value="1">`}
           </div>
         </div>
@@ -1766,17 +1983,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     });
 
     selectedModelsList.querySelectorAll('[data-model-quantity]').forEach((input) => {
-      input.addEventListener('input', () => {
-        const modelId = input.getAttribute('data-model-quantity') || '';
-        const model = selectedInvitationModels.get(modelId);
-        if (!model) {
-          return;
-        }
+      const modelId = input.getAttribute('data-model-quantity') || '';
+      const model = selectedInvitationModels.get(modelId);
+      if (!model) {
+        return;
+      }
 
-        model.quantity = Math.max(1, Number(input.value || 1));
-        input.value = String(model.quantity);
-        renderCheckoutSummary();
-      });
+      input.dataset.numericBound = '0';
+    });
+
+    bindNumericOnlyInputs(selectedModelsList, (input, commit, normalizedValue) => {
+      const modelId = input.getAttribute('data-model-quantity') || '';
+      const model = selectedInvitationModels.get(modelId);
+      if (!model) {
+        return;
+      }
+
+      if (normalizedValue === null && !commit) {
+        return;
+      }
+
+      model.quantity = Math.max(1, Number(normalizedValue || input.value || 1));
+      renderCheckoutSummary();
     });
 
     selectedModelsList.querySelectorAll('[data-remove-model]').forEach((button) => {
@@ -1806,7 +2034,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   function toggleFields() {
     const selectedIds = getSelectedAccessoryIds();
-    const showInvitation = selectedIds.includes('1') || selectedIds.includes('2');
+    const showInvitation = selectedIds.some((accessoryId) => invitationAccessoryIds.includes(accessoryId));
     const showChevalet = selectedIds.includes('3');
 
     toggle(document.getElementById('ModInvitation'), showInvitation);
@@ -1817,7 +2045,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       const wrapper = quantityTarget ? document.getElementById(quantityTarget) : null;
       const quantityInput = wrapper ? wrapper.querySelector('input') : null;
       const requiresQuantity = checkbox.dataset.requiresQuantity === '1';
-      const managedByModelSelection = checkbox.value === '1';
+      const managedByModelSelection = printedInvitationAccessoryIds.includes(checkbox.value);
 
       if (!wrapper || !quantityInput) {
         return;
@@ -1886,6 +2114,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     let invalidQuantity = false;
     selectedInvitationModels.forEach((model) => {
+      if (!selectedModelNeedsQuantity(model)) {
+        return;
+      }
+
       if (!Number.isFinite(Number(model.quantity)) || Number(model.quantity) < 1) {
         invalidQuantity = true;
       }
@@ -1914,6 +2146,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       second.addEventListener(eventName, () => syncFrom(second, first));
     });
   }
+
+  bindNumericOnlyInputs(document, () => {
+    renderCheckoutSummary();
+  });
 
   eventTypeSelect.addEventListener('change', function onTypeChange() {
     const value = this.value;
@@ -2026,6 +2262,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         label,
         image,
         unitPrice: Number(modelCatalogById.get(modelId)?.unitPrice || 0),
+        isUnlimited: Boolean(modelCatalogById.get(modelId)?.isUnlimited),
         quantity: 1,
       });
     }
