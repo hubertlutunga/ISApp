@@ -8,6 +8,14 @@
 	$stmtss = $pdo->prepare("SELECT * FROM is_users WHERE phone = ?");
 	$stmtss->execute([$_SESSION['user_phone']]);
 	$datasession = $stmtss->fetch(PDO::FETCH_ASSOC) ?: ['noms' => 'Utilisateur', 'type_user' => ''];
+	$isImpersonating = UserAccountService::isImpersonating();
+	$impersonator = $isImpersonating ? UserAccountService::impersonatorSessionUser($pdo) : null;
+
+	if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['stop_impersonation'])) {
+		$result = UserAccountService::stopImpersonation($pdo);
+		header('Location: index.php?page=' . (!empty($result['success']) ? 'clients' : 'logout'));
+		exit();
+	}
 
 	$eventContext = EventWorkspaceService::resolveCurrentEventContext($pdo, $datasession ?: [], $_GET);
 	extract($eventContext, EXTR_OVERWRITE);
@@ -15,6 +23,18 @@
 ?>
 
   <header class="main-header">
+	  <?php if ($isImpersonating) { ?>
+	  <div class="alert alert-warning mb-0 rounded-0 text-center">
+		Vous etes connecte sur le compte de <?php echo htmlspecialchars((string) ($datasession['noms'] ?? 'ce client'), ENT_QUOTES, 'UTF-8'); ?>.
+		<?php if ($impersonator) { ?>
+		Retour possible vers <?php echo htmlspecialchars((string) ($impersonator['noms'] ?? 'l\'administrateur'), ENT_QUOTES, 'UTF-8'); ?>.
+		<?php } ?>
+		<form action="" method="post" style="display:inline-block; margin-left: 10px;">
+			<input type="hidden" name="stop_impersonation" value="1">
+			<button type="submit" class="btn btn-sm btn-dark">Revenir a mon compte admin</button>
+		</form>
+	  </div>
+	  <?php } ?>
 	  <div class="inside-header">
 		<div class="d-flex align-items-center logo-box justify-content-start">
 			<a href="index.php?page=mb_accueil" class="logo">
@@ -40,6 +60,17 @@
 					<i class="fas fa-home" style="color: white;"></i>
 				</a>
 			</li>
+
+			<?php if ($isImpersonating) { ?>
+			<li class="dropdown notifications-menu btn-group">
+				<form action="" method="post" style="margin:0;">
+					<input type="hidden" name="stop_impersonation" value="1">
+					<button type="submit" class="waves-effect waves-light dropdown-toggle" title="Revenir admin" style="background:none;border:0;">
+						<i class="fas fa-user-shield" style="color: white;"></i>
+					</button>
+				</form>
+			</li>
+			<?php } ?>
 
 
 			<li class="dropdown notifications-menu btn-group">
@@ -175,6 +206,16 @@
 	  <ul id="main-menu" class="sm sm-blue">		
 		<li><a href="index.php?page=mb_accueil"><i data-feather="home"><span class="path1"></span><span class="path2"></span></i>Accueil</a> 
 		</li>  
+		<?php if ($isImpersonating) { ?>
+		<li>
+			<form action="" method="post" style="padding: 12px 18px;">
+				<input type="hidden" name="stop_impersonation" value="1">
+				<button type="submit" style="background:none;border:0;padding:0;color:inherit;">
+					<i data-feather="shield"></i>Retour admin
+				</button>
+			</form>
+		</li>
+		<?php } ?>
 		<li><a href="index.php?page=profile"><i data-feather="user"></i>Profil</a>
 		</li>
 		<li><a href="index.php?page=addinvite"><i data-feather="shopping-cart"></i>Invités</a> 

@@ -74,10 +74,116 @@ final class UserAccountService
         $_SESSION['user_phone'] = $user['phone'];
         $_SESSION['user_email'] = $user['email'];
 
+        self::clearImpersonation();
+
         return [
             'success' => true,
             'user' => $user,
         ];
+    }
+
+    public static function isImpersonating(): bool
+    {
+        return isset($_SESSION['impersonator_phone'], $_SESSION['impersonator_email']);
+    }
+
+    public static function impersonatorSessionUser(PDO $pdo): ?array
+    {
+        $phone = $_SESSION['impersonator_phone'] ?? null;
+        if (!$phone) {
+            return null;
+        }
+
+        $stmt = $pdo->prepare('SELECT * FROM is_users WHERE phone = ? LIMIT 1');
+        $stmt->execute([$phone]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $user ?: null;
+    }
+
+    public static function startImpersonation(PDO $pdo, int $targetUserId): array
+    {
+        $currentUser = self::currentSessionUser($pdo);
+        if (!$currentUser) {
+            return [
+                'success' => false,
+                'message' => 'Session invalide.',
+            ];
+        }
+
+        if ((string) ($currentUser['type_user'] ?? '') !== '1') {
+            return [
+                'success' => false,
+                'message' => 'Seul un administrateur peut acceder a cette fonctionnalite.',
+            ];
+        }
+
+        $stmt = $pdo->prepare('SELECT * FROM is_users WHERE cod_user = ? LIMIT 1');
+        $stmt->execute([$targetUserId]);
+        $targetUser = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+        if ($targetUser === []) {
+            return [
+                'success' => false,
+                'message' => 'Client introuvable.',
+            ];
+        }
+
+        if ((string) ($targetUser['cod_user'] ?? '') === (string) ($currentUser['cod_user'] ?? '')) {
+            return [
+                'success' => false,
+                'message' => 'Vous etes deja connecte sur ce compte.',
+            ];
+        }
+
+        if (!self::isImpersonating()) {
+            $_SESSION['impersonator_phone'] = $currentUser['phone'] ?? null;
+            $_SESSION['impersonator_email'] = $currentUser['email'] ?? null;
+        }
+
+        $_SESSION['user_phone'] = $targetUser['phone'] ?? null;
+        $_SESSION['user_email'] = $targetUser['email'] ?? null;
+
+        return [
+            'success' => true,
+            'user' => $targetUser,
+            'message' => 'Vous etes maintenant connecte comme ce client.',
+        ];
+    }
+
+    public static function stopImpersonation(PDO $pdo): array
+    {
+        if (!self::isImpersonating()) {
+            return [
+                'success' => false,
+                'message' => 'Aucune usurpation active.',
+            ];
+        }
+
+        $adminUser = self::impersonatorSessionUser($pdo);
+        if (!$adminUser || (string) ($adminUser['type_user'] ?? '') !== '1') {
+            self::clearImpersonation();
+
+            return [
+                'success' => false,
+                'message' => 'Session administrateur introuvable.',
+            ];
+        }
+
+        $_SESSION['user_phone'] = $adminUser['phone'];
+        $_SESSION['user_email'] = $adminUser['email'];
+        self::clearImpersonation();
+
+        return [
+            'success' => true,
+            'user' => $adminUser,
+            'message' => 'Retour au compte administrateur effectue.',
+        ];
+    }
+
+    public static function clearImpersonation(): void
+    {
+        unset($_SESSION['impersonator_phone'], $_SESSION['impersonator_email']);
     }
 
     public static function updateProfile(PDO $pdo, int $userId, array $input): array

@@ -1,6 +1,23 @@
 
-	
-<div class="wrapper"> 
+  <?php
+  $impersonationFlash = null;
+
+  if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['impersonate_user_id'])) {
+    $result = UserAccountService::startImpersonation($pdo, (int) $_POST['impersonate_user_id']);
+
+    if (!empty($result['success'])) {
+      header('Location: index.php?page=mb_accueil');
+      exit();
+    }
+
+    $impersonationFlash = [
+      'type' => 'danger',
+      'message' => (string) ($result['message'] ?? 'Impossible de changer de compte.'),
+    ];
+  }
+  ?>
+
+	<div class="wrapper"> 
 	 
 
   <?php include('header_admin.php');?>
@@ -113,6 +130,11 @@ $salut = 'Bonsoir';
 
 
 			<section class="content">
+        <?php if ($impersonationFlash !== null) { ?>
+        <div class="alert alert-<?php echo htmlspecialchars($impersonationFlash['type'], ENT_QUOTES, 'UTF-8'); ?>">
+          <?php echo htmlspecialchars($impersonationFlash['message'], ENT_QUOTES, 'UTF-8'); ?>
+        </div>
+        <?php } ?>
 				<div class="box box-body">
 					<div class="row"> 
 						<div class="col-xxl-3 col-xl-3 col-lg-3 col-md-6 col-12">
@@ -201,7 +223,15 @@ $salut = 'Bonsoir';
                                             <a class="d-block fw-500 fs-14" href="#"><?php echo htmlspecialchars(ucfirst($row_client['noms'])); ?></a>
                                             <!-- <em class="text-fade"><?php //echo $row_conf['phone']; ?> / <?php //echo $row_conf['email']; ?> </em><br> --> 
                                             <p><em style="color:#888;"><?php echo $row_client['email'].'<br> '.$row_client['phone']; ?> </em></p>
-                                            
+
+                                        <?php if ((string) ($row_client['type_user'] ?? '') === '2') { ?>
+                                        <form action="" method="post" class="mt-10">
+                                          <input type="hidden" name="impersonate_user_id" value="<?php echo (int) $row_client['cod_user']; ?>">
+                                          <button type="submit" class="btn btn-sm btn-primary">
+                                            Se connecter comme ce client
+                                          </button>
+                                        </form>
+                                        <?php } ?>
                                         </td>  
                                     </tr>
 
