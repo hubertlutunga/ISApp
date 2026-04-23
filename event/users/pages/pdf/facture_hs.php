@@ -36,7 +36,7 @@
 		$candidatePaths = [
 			$assetsDir . '/Logo_invitationSpeciale_2.png',
 			$assetsDir . '/Logo_invitationSpeciale_1.png',
-			$assetsDir . '/Logo_invitationSpeciale_4.png',
+			$assetsDir . '/Logo_invitationSpeciale_5.png',
 		];
 
 		foreach ($candidatePaths as $candidatePath) {
