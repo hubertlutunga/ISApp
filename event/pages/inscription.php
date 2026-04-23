@@ -22,14 +22,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'password' => $_POST['password'] ?? null,
         'confirm_password' => $_POST['confirm_password'] ?? null,
         'type_user' => '2',
-    ]);
+    ], $mail, $isAppConfig);
 
     if (!empty($registrationResult['success'])) {
         echo '<script src="../sweet/sweetalert2.all.min.js"></script>';
         echo '<script>
                 Swal.fire({
                 title: "Compte cree",
-                text: "Votre compte est cree avec succes. Votre identifiant a ete envoye par email.",
+                text: ' . json_encode((string) ($registrationResult['message'] ?? 'Votre compte est cree avec succes.')) . ',
                 icon: "success",
                 confirmButtonText: "Terminer"
                 }).then((result) => {

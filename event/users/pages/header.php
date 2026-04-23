@@ -1,14 +1,13 @@
  
 <?php 
-
-	$stmtss = $pdo->prepare("SELECT * FROM is_users WHERE phone = ?");
-	$stmtss->execute([$_SESSION['user_phone']]);
-	$datasession = $stmtss->fetch();
-
 	if (!isset($_SESSION['user_phone'])) {
 		header("Location: index.php?page=logout");
 		exit();
 	}
+
+	$stmtss = $pdo->prepare("SELECT * FROM is_users WHERE phone = ?");
+	$stmtss->execute([$_SESSION['user_phone']]);
+	$datasession = $stmtss->fetch(PDO::FETCH_ASSOC) ?: ['noms' => 'Utilisateur', 'type_user' => ''];
 
 	$eventContext = EventWorkspaceService::resolveCurrentEventContext($pdo, $datasession ?: [], $_GET);
 	extract($eventContext, EXTR_OVERWRITE);
@@ -46,6 +45,12 @@
 			<li class="dropdown notifications-menu btn-group">
 				<a href="index.php?page=events" class="waves-effect waves-light dropdown-toggle" title="Accueil">
 					<i class="fas fa-calendar" style="color: white;"></i>
+				</a>
+			</li>
+
+			<li class="dropdown notifications-menu btn-group">
+				<a href="index.php?page=profile" class="waves-effect waves-light dropdown-toggle" title="Mon profil">
+					<i class="fas fa-user-circle" style="color: white;"></i>
 				</a>
 			</li>
 
@@ -170,6 +175,8 @@
 	  <ul id="main-menu" class="sm sm-blue">		
 		<li><a href="index.php?page=mb_accueil"><i data-feather="home"><span class="path1"></span><span class="path2"></span></i>Accueil</a> 
 		</li>  
+		<li><a href="index.php?page=profile"><i data-feather="user"></i>Profil</a>
+		</li>
 		<li><a href="index.php?page=addinvite"><i data-feather="shopping-cart"></i>Invités</a> 
 		</li>
 		<li><a href="index.php?page=addtable"><i data-feather="shopping-cart"></i>Tables</a> 

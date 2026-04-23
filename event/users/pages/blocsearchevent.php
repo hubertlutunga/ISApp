@@ -336,7 +336,6 @@ if (!empty($events)) {
                   data-client-name="<?= htmlspecialchars((string) ($dataevent['client_nom'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
                   data-client-phone="<?= htmlspecialchars((string) ($dataevent['client_phone'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
                   data-client-email="<?= htmlspecialchars((string) ($dataevent['client_email'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
-                  data-client-password="<?= htmlspecialchars((string) ($dataevent['client_recpass'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
                 ><i class="fa fa-user"></i> Clients</a>
                 <a href="#" title="Suppression" onclick="confirmSuppEvent(event,'<?= htmlspecialchars($typeevent) ?>','<?= htmlspecialchars($fetard) ?>','<?= htmlspecialchars($dataevent['cod_event']) ?>')" class="dropdown-item action-item action-danger">
                   <i class="fa fa-remove"></i> Supprimer
@@ -397,7 +396,7 @@ if (!empty($events)) {
             ['Téléphone', dataset.clientPhone || '-'],
             ['Email', dataset.clientEmail || '-'],
             ['Type de compte', typeLabels[dataset.clientType] || dataset.clientType || '-'],
-            ['Mot de passe', dataset.clientPassword || 'Non renseigné'],
+            ['Accès compte', 'Mot de passe non affichable. Utiliser la réinitialisation par email.'],
           ].map(function (item) {
             return '<tr>' +
               '<th style="width:38%; background:#f8fafc; color:#334155; padding:10px 12px; border:1px solid #e2e8f0;">' + escapeClientModalHtml(item[0]) + '</th>' +

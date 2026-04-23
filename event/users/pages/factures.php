@@ -266,11 +266,12 @@ if ($stmtfact->rowCount() > 0) {
     while ($row_fact = $stmtfact->fetch(PDO::FETCH_ASSOC)) { 
         $stmtus = $pdo->prepare("SELECT * FROM is_users WHERE cod_user = :cod_user");
         $stmtus->execute(['cod_user' => $row_fact['cod_cli']]); 
-        $datauser = $stmtus->fetch(PDO::FETCH_ASSOC); 
+    $datauser = $stmtus->fetch(PDO::FETCH_ASSOC) ?: [];
+    $clientName = trim((string) ($datauser['noms'] ?? 'Client introuvable'));
 ?>
         <tr>
             <td class="pt-0 px-0 b-0">
-                <a class="d-block fw-500 fs-14" href="#"><?php echo htmlspecialchars(ucfirst($datauser['noms'])).', <em>'.$row_fact['type_paie'].'</em> '.number_format($row_fact['montant_paye'], 2, ' ', ' ').' $'; ?></a>
+        <a class="d-block fw-500 fs-14" href="#"><?php echo htmlspecialchars(ucfirst($clientName), ENT_QUOTES, 'UTF-8').', <em>'.htmlspecialchars((string) ($row_fact['type_paie'] ?? ''), ENT_QUOTES, 'UTF-8').'</em> '.number_format((float) ($row_fact['montant_paye'] ?? 0), 2, ' ', ' ').' $'; ?></a>
                 <span class="text-fade"><?php echo 'Référence : '.$row_fact['reference']; ?>, payé le <?php echo date('d M Y à H:i', strtotime($row_fact['date_enreg'])); ?></span>
             </td> 
 

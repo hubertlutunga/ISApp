@@ -11,7 +11,28 @@ if (!$configuredBaseUrl && !empty($_SERVER['HTTP_HOST'])) {
     $configuredBaseUrl = $scheme . '://' . $_SERVER['HTTP_HOST'] . rtrim((string) $basePath, '/');
 }
 
-return [
+$appConfig = [
     'base_url' => $configuredBaseUrl ?: 'https://invitationspeciale.com',
     'default_page' => 'accueil',
+    'mail' => [
+        'from_address' => getenv('ISAPP_MAIL_FROM') ?: 'support@invitationspeciale.com',
+        'from_name' => getenv('ISAPP_MAIL_FROM_NAME') ?: 'Invitation Speciale',
+        'reply_to' => getenv('ISAPP_MAIL_REPLY_TO') ?: 'support@invitationspeciale.com',
+        'transport' => getenv('ISAPP_MAIL_TRANSPORT') ?: 'mail',
+        'host' => getenv('ISAPP_SMTP_HOST') ?: 'invitationspeciale.com',
+        'port' => (int) (getenv('ISAPP_SMTP_PORT') ?: 587),
+        'encryption' => getenv('ISAPP_SMTP_ENCRYPTION') ?: 'tls',
+        'username' => getenv('ISAPP_SMTP_USERNAME') ?: '',
+        'password' => getenv('ISAPP_SMTP_PASSWORD') ?: '',
+    ],
 ];
+
+$localConfigPath = __DIR__ . '/app.local.php';
+if (is_file($localConfigPath)) {
+    $localConfig = require $localConfigPath;
+    if (is_array($localConfig)) {
+        $appConfig = array_replace_recursive($appConfig, $localConfig);
+    }
+}
+
+return $appConfig;

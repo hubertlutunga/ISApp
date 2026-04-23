@@ -94,7 +94,8 @@
 
                 $stmtrecus = $pdo->prepare("SELECT * FROM is_users WHERE cod_user = ?");
                 $stmtrecus->execute([$row_sup['cod_cli']]);
-                $recuser = $stmtrecus->fetch(); 
+                $recuser = $stmtrecus->fetch(PDO::FETCH_ASSOC) ?: [];
+                $supportName = trim((string) ($recuser['noms'] ?? 'Utilisateur introuvable'));
 
                     if ($row_sup['type_user'] === '2') {
                         $div1 = "chat-msg self";
@@ -112,7 +113,7 @@
                         <?php if ($row_sup['type_user'] === '2') {?>
 
                             <div class="mx-10" style="text-align:right;">
-                                <a href="#" class="text-dark hover-primary fw-bold"><?php echo $recuser['noms'];?></a>
+                                <a href="#" class="text-dark hover-primary fw-bold"><?php echo htmlspecialchars($supportName, ENT_QUOTES, 'UTF-8');?></a>
                                 <p class="text-muted fs-12 mb-0"><?php echo date('d M Y à H:i', strtotime($row_sup['date_env']))?></p>
                             </div>
                             <span class="msg-avatar">
@@ -125,7 +126,7 @@
                                 <img src="../images/default.jpg" class="avatar avatar-lg" style="border-radius:50%;">
                             </span>
                             <div class="mx-10">
-                                <a href="#" class="text-dark hover-primary fw-bold"><?php echo $recuser['noms'];?></a>
+                                <a href="#" class="text-dark hover-primary fw-bold"><?php echo htmlspecialchars($supportName, ENT_QUOTES, 'UTF-8');?></a>
                                 <p class="text-muted fs-12 mb-0"><?php echo date('d M Y à H:i', strtotime($row_sup['date_env']))?></p>
                             </div>
 

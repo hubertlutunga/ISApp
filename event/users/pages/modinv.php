@@ -17,27 +17,29 @@
 $cod_inv = $_GET['idinv'];
 $stmtin = $pdo->prepare("SELECT * FROM invite WHERE id_inv = ?");
 $stmtin->execute([$cod_inv]);
-$datainvite = $stmtin->fetch();
+$datainvite = $stmtin->fetch(PDO::FETCH_ASSOC) ?: [];
+$guestSeat = $datainvite['siege'] ?? null;
+$guestCivilite = (string) ($datainvite['sing'] ?? '');
 
 $stmttab = $pdo->prepare("SELECT * FROM tableevent WHERE cod_tab = ?");
-$stmttab->execute([$datainvite['siege']]);
-$datatab = $stmttab->fetch(PDO::FETCH_ASSOC); // Préciser le mode de récupération
+$stmttab->execute([$guestSeat]);
+$datatab = $stmttab->fetch(PDO::FETCH_ASSOC) ?: []; // Préciser le mode de récupération
 
 $table = isset($datatab['nom_tab']) ? $datatab['nom_tab'] : 'Non défini'; // Vérification explicite
  
-if ($datainvite['sing'] === "C") {
+if ($guestCivilite === "C") {
     $radioc = 'checked';
 }else{
     $radioc = '';
 }
 
-if ($datainvite['sing'] === "Mr") {
+if ($guestCivilite === "Mr") {
     $radiom = 'checked';
 }else{
     $radiom = '';
 }
 
-if ($datainvite['sing'] === "Mme") {
+if ($guestCivilite === "Mme") {
     $radiomm = 'checked';
 }else{
     $radiomm = '';
@@ -119,7 +121,7 @@ if ($datainvite['sing'] === "Mme") {
                     <div class="col-xl-6 col-lg-7 col-12 boxcontent">
                         <div class="bg-white rounded10 shadow-lg mb-action-card">
 							<div class="content-top-agile p-20 pb-0"> 
-                                <p class="mb-0 text-fade">Modifier <?php echo htmlspecialchars((string) $datainvite['nom']);?></p>
+                                <p class="mb-0 text-fade">Modifier <?php echo htmlspecialchars((string) ($datainvite['nom'] ?? ''), ENT_QUOTES, 'UTF-8');?></p>
                                 <h2 class="mb-action-heading">Fiche invite</h2>
                                 <p class="mb-action-copy">Ajustez le profil de l'invite et sa place a table depuis une fiche plus lisible.</p>
                                 
@@ -213,7 +215,7 @@ if(isset($_POST['submit'])){
                                 <div class="form-group">
                                     <div class="input-group mb-3">
                                         <span class="input-group-text bg-transparent"><i class="fas fa-user"></i></span>
-                                        <input type="text" class="form-control ps-15 bg-transparent" value="<?php echo $datainvite['nom'];?>" name="invite" placeholder="Noms">
+                                        <input type="text" class="form-control ps-15 bg-transparent" value="<?php echo htmlspecialchars((string) ($datainvite['nom'] ?? ''), ENT_QUOTES, 'UTF-8');?>" name="invite" placeholder="Noms">
                                     </div>
                                 </div>
 
@@ -221,7 +223,7 @@ if(isset($_POST['submit'])){
                                     <div class="input-group mb-3">
                                         <span class="input-group-text bg-transparent"><i class="fas fa-chair"></i></span>
                                         <select class="form-control ps-15 bg-transparent" name="tableevent">
-                                            <option style="color:#eee;" value="<?php echo $datainvite['siege'];?>"><?php echo $table;?></option>
+                                            <option style="color:#eee;" value="<?php echo htmlspecialchars((string) ($datainvite['siege'] ?? ''), ENT_QUOTES, 'UTF-8');?>"><?php echo htmlspecialchars((string) $table, ENT_QUOTES, 'UTF-8');?></option>
                                             <?php foreach (EventTableService::listByEvent($pdo, (int) $codevent) as $data_table) {
                                             ?>
                                             <option value="<?php echo $data_table['cod_tab']?>" <?php if(@$_POST['tableevent'] == $data_table['cod_tab']){echo "selected";} ?>><?php echo $data_table['nom_tab']?></option>
@@ -237,7 +239,7 @@ if(isset($_POST['submit'])){
                                     </div>
                                 </div>
 
-								<a href="#" class="mb-action-danger-link" title="Suppression" onclick="confirmSuppInv(event)"><i class="mdi mdi-delete-outline"></i> Supprimer <?php echo htmlspecialchars((string) $datainvite['nom']);?></a>
+                                <a href="#" class="mb-action-danger-link" title="Suppression" onclick="confirmSuppInv(event)"><i class="mdi mdi-delete-outline"></i> Supprimer <?php echo htmlspecialchars((string) ($datainvite['nom'] ?? ''), ENT_QUOTES, 'UTF-8');?></a>
                             </form>			
 								<div class="text-center">
                                    
@@ -247,7 +249,7 @@ if(isset($_POST['submit'])){
         event.preventDefault(); // Empêche le lien de se déclencher
         Swal.fire({
             title: "Supprimer !",
-            text: "Êtes-vous sûr de vouloir supprimer <?php echo $datainvite['nom'];?> ?",
+            text: "Êtes-vous sûr de vouloir supprimer <?php echo htmlspecialchars((string) ($datainvite['nom'] ?? ''), ENT_QUOTES, 'UTF-8');?> ?",
             icon: "warning", // Utilisez "warning" pour une alerte de confirmation
             showCancelButton: true,
             confirmButtonText: "Oui",

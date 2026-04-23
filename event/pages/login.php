@@ -68,6 +68,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                    placeholder="Mot de passe" required>
         </div>
     </div> 
+    <div class="text-end mb-15">
+        <a href="index.php?page=forgot_password" class="text-primary">Mot de passe oublié ?</a>
+    </div>
     <div class="row">
         <div class="col-12 text-center">
             <button type="submit" class="btn btn-primary w-p100 mt-10">Se Connecter</button>

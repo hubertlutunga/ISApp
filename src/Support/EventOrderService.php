@@ -319,6 +319,44 @@ final class EventOrderService
         return (int) $pdo->lastInsertId();
     }
 
+    public static function deleteCatalogModel(PDO $pdo, int $modelId): string
+    {
+        self::ensureCatalogInfrastructure($pdo);
+
+        if ($modelId <= 0) {
+            return 'deleted';
+        }
+
+        $referenceCount = 0;
+        $referenceQueries = [
+            ['SELECT COUNT(*) FROM event_invitation_models WHERE cod_mod = ?', [$modelId]],
+            ['SELECT COUNT(*) FROM accessoires_event WHERE cod_acc = ? OR modele_acc = ?', [$modelId, $modelId]],
+            ['SELECT COUNT(*) FROM events WHERE modele_inv = ? OR modele_chev = ?', [$modelId, $modelId]],
+        ];
+
+        foreach ($referenceQueries as [$sql, $params]) {
+            try {
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute($params);
+                $referenceCount += (int) $stmt->fetchColumn();
+            } catch (Throwable) {
+                continue;
+            }
+        }
+
+        if ($referenceCount > 0) {
+            $stmt = $pdo->prepare('UPDATE modele_is SET is_active = 0 WHERE cod_mod = ?');
+            $stmt->execute([$modelId]);
+
+            return 'archived';
+        }
+
+        $stmt = $pdo->prepare('DELETE FROM modele_is WHERE cod_mod = ?');
+        $stmt->execute([$modelId]);
+
+        return 'deleted';
+    }
+
     public static function paymentOptions(): array
     {
         return [

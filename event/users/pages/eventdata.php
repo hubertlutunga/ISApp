@@ -76,7 +76,10 @@
                                     $displayvue = $eventDisplay['displayvue'];
                                     $formatted_date = $eventDisplay['formatted_date'];
                                     $qrFile = $eventDisplay['qrFile'];
-                                    $stmtClientModal = $pdo->prepare("SELECT cod_user, type_user, noms, phone, email, recpass FROM is_users WHERE cod_user = ? LIMIT 1");
+                                    $eventInvitationModels = EventOrderService::loadInvitationModelsByEvent($pdo, (int) $codevent);
+                                    $eventCheckout = EventOrderService::loadCheckoutByEvent($pdo, (int) $codevent);
+                                    $paymentTypeLabel = EventOrderService::paymentLabel($eventCheckout['type_paiement'] ?? null);
+                                    $stmtClientModal = $pdo->prepare("SELECT cod_user, type_user, noms, phone, email FROM is_users WHERE cod_user = ? LIMIT 1");
                                     $stmtClientModal->execute([$dataevent['cod_user']]);
                                     $dataClientModal = $stmtClientModal->fetch(PDO::FETCH_ASSOC) ?: [];
 
@@ -131,13 +134,18 @@
                                      : ' <span style="display:inline-flex;align-items:center;margin-left:6px;padding:2px 8px;border-radius:999px;background:#ecfdf5;color:#166534;font-size:12px;font-weight:700;">Qté : ' . max(1, $quantiteAccessoire) . '</span>';
  
                                  if ($dataae['cod_acc'] == "1") {
- 
-                                     $stmtmi = $pdo->prepare("SELECT * FROM modele_is WHERE cod_mod = ?");
-                                     $stmtmi->execute([$dataevent['modele_inv']]); // Correction ici pour utiliser $codevent
-                                     $data_modele = $stmtmi->fetch();
- 
-                                     $modele_inv = isset($data_modele['nom']) ? '('.$data_modele['nom'].')' : '';
-                                     $image_inv = isset($data_modele['image']) ? $data_modele['image'] : '';
+
+                                     if ($eventInvitationModels !== []) {
+                                         $modele_inv = '(' . implode(', ', array_map(static fn(array $model): string => (string) ($model['nom'] ?? 'Modele'), $eventInvitationModels)) . ')';
+                                         $image_inv = (string) ($eventInvitationModels[0]['image'] ?? '');
+                                     } else {
+                                         $stmtmi = $pdo->prepare("SELECT * FROM modele_is WHERE cod_mod = ?");
+                                         $stmtmi->execute([$dataevent['modele_inv']]); // Correction ici pour utiliser $codevent
+                                         $data_modele = $stmtmi->fetch();
+
+                                         $modele_inv = isset($data_modele['nom']) ? '('.$data_modele['nom'].')' : '';
+                                         $image_inv = isset($data_modele['image']) ? $data_modele['image'] : '';
+                                     }
  
                                  }elseif ($dataae['cod_acc'] == "3") {
  
@@ -232,6 +240,9 @@
  
                      <?php } ?>                                
                                  
+                                 <br> <span><b>Type de paiement : </b><?php echo htmlspecialchars($paymentTypeLabel, ENT_QUOTES, 'UTF-8'); ?></span>
+                                 <br> <span><b>Code promo : </b><?php echo htmlspecialchars((string) ($eventCheckout['promo_code'] ?? 'Aucun'), ENT_QUOTES, 'UTF-8'); ?></span>
+                                 <br> <span><b>Total commande : </b><?php echo htmlspecialchars(number_format((float) ($eventCheckout['total'] ?? 0), 2, '.', ' '), ENT_QUOTES, 'UTF-8'); ?> <?php echo htmlspecialchars((string) ($eventCheckout['devise'] ?? 'USD'), ENT_QUOTES, 'UTF-8'); ?></span>
                                  <br> <span><b>Autres précisions : </b><?php echo nl2br(htmlspecialchars($dataevent['autres_precisions']));?></span>
                                  <br> <span><b>Lieu : </b><?php echo $dataevent['lieu']?></span>
                                  <br> <span><b>Adresse : </b><?php echo isset($dataevent['adresse']) ? '('.$dataevent['adresse'].')' : 'Non défini';?></span>
@@ -335,11 +346,12 @@
 
                                         $stmtrecus = $pdo->prepare("SELECT * FROM is_users WHERE cod_user = ?");
                                         $stmtrecus->execute([$datarapport['cod_user']]);
-                                        $datarecuser = $stmtrecus->fetch();
+                                        $datarecuser = $stmtrecus->fetch(PDO::FETCH_ASSOC) ?: [];
+                                        $creatorName = trim((string) ($datarecuser['noms'] ?? 'Utilisateur introuvable'));
 
 
 
-                                        echo '<br><br><em>Réalisé par '.$datarecuser['noms'].'</em><br>';
+                                        echo '<br><br><em>Réalisé par '.htmlspecialchars($creatorName, ENT_QUOTES, 'UTF-8').'</em><br>';
                                         echo '<p>'.$obser.'</p>';
                                 
 
@@ -434,7 +446,6 @@
                                   data-client-name="<?php echo htmlspecialchars((string) ($dataClientModal['noms'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
                                   data-client-phone="<?php echo htmlspecialchars((string) ($dataClientModal['phone'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
                                   data-client-email="<?php echo htmlspecialchars((string) ($dataClientModal['email'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
-                                  data-client-password="<?php echo htmlspecialchars((string) ($dataClientModal['recpass'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
                               ><i class="fa fa-user"></i> Clients</a>
             
                        <a href="#" title="Suppression" onclick="confirmSuppEvent(event, '<?php echo htmlspecialchars(ucfirst($typeevent)); ?>', '<?php echo htmlspecialchars($fetard); ?>', '<?php echo htmlspecialchars($dataevent['cod_event']); ?>')" class="dropdown-item action-item action-danger">
@@ -472,7 +483,7 @@
                                         ['Téléphone', dataset.clientPhone || '-'],
                                         ['Email', dataset.clientEmail || '-'],
                                         ['Type de compte', typeLabels[dataset.clientType] || dataset.clientType || '-'],
-                                        ['Mot de passe', dataset.clientPassword || 'Non renseigné']
+                                        ['Accès compte', 'Mot de passe non affichable. Utiliser la réinitialisation par email.']
                                     ].map(function (item) {
                                         return '<tr>' +
                                             '<th style="width:38%; background:#f8fafc; color:#334155; padding:10px 12px; border:1px solid #e2e8f0;">' + escapeClientModalHtml(item[0]) + '</th>' +

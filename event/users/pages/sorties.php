@@ -378,15 +378,19 @@ if ($stmtsorti->rowCount() > 0) {
 
         $stmtus = $pdo->prepare("SELECT * FROM is_users WHERE cod_user = :cod_user");
         $stmtus->execute(['cod_user' => $row_sorti['agent']]); 
-        $datauser = $stmtus->fetch(PDO::FETCH_ASSOC); 
+      $datauser = $stmtus->fetch(PDO::FETCH_ASSOC) ?: [];
 
         $stmtcat = $pdo->prepare("SELECT * FROM categorie_sortie WHERE cod_cat = :cod_cat");
         $stmtcat->execute(['cod_cat' => $row_sorti['cod_cat']]); 
-        $datacat = $stmtcat->fetch(PDO::FETCH_ASSOC); 
+      $datacat = $stmtcat->fetch(PDO::FETCH_ASSOC) ?: [];
 
         $stmtscat = $pdo->prepare("SELECT * FROM sous_cat_sortie WHERE cod_s_cat = :cod_s_cat");
         $stmtscat->execute(['cod_s_cat' => $row_sorti['cod_s_cat']]); 
-        $datascat = $stmtscat->fetch(PDO::FETCH_ASSOC); 
+      $datascat = $stmtscat->fetch(PDO::FETCH_ASSOC) ?: [];
+
+      $agentName = trim((string) ($datauser['noms'] ?? 'Utilisateur introuvable'));
+      $categoryName = trim((string) ($datacat['nom_cat'] ?? 'Categorie inconnue'));
+      $subCategoryName = trim((string) ($datascat['nom_s_cat'] ?? 'Sous-categorie inconnue'));
 
          if (!empty($row_sorti['description'])) {
             $description = '<br><em>' . htmlspecialchars($row_sorti['description']) . '</em><br>';
@@ -397,12 +401,12 @@ if ($stmtsorti->rowCount() > 0) {
 ?>
         <tr>
             <td class="pt-0 px-0 b-0">
-                <a class="d-block fw-500 fs-14" href="#"><?php echo htmlspecialchars(ucfirst($datacat['nom_cat'])).', <em>'.$datascat['nom_s_cat'].'</em> '.number_format($row_sorti['montant'], 2, '.', ' ').' $'; ?></a>
+        <a class="d-block fw-500 fs-14" href="#"><?php echo htmlspecialchars(ucfirst($categoryName), ENT_QUOTES, 'UTF-8').', <em>'.htmlspecialchars($subCategoryName, ENT_QUOTES, 'UTF-8').'</em> '.number_format((float) ($row_sorti['montant'] ?? 0), 2, '.', ' ').' $'; ?></a>
                 <em class="text-fade">Sortie le <?php echo date('d M Y à H:i', strtotime($row_sorti['date_enreg'])); ?></em>
                 
                 <?php echo $description; ?>
                
-                <span class="text-fade"> Par <?php echo htmlspecialchars(ucfirst($datauser['noms'])); ?></span>
+        <span class="text-fade"> Par <?php echo htmlspecialchars(ucfirst($agentName), ENT_QUOTES, 'UTF-8'); ?></span>
                 
             </td> 
 

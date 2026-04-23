@@ -17,7 +17,7 @@ SELECT
     e.modele_inv, e.modele_chev,
     e.invit_religieux, e.ajustenom, e.taillenominv, e.alignnominv, e.pagenom, e.pagebouton,
         e.colornom, e.bordgauchenominv, e.qrcode, e.pageqr, e.hautqr, e.gaucheqr, e.tailleqr, e.lang, e.ordrepri,
-    u.cod_user AS client_code, u.type_user AS client_type_user, u.noms AS client_nom, u.phone AS client_phone, u.email AS client_email, u.recpass AS client_recpass,
+    u.cod_user AS client_code, u.type_user AS client_type_user, u.noms AS client_nom, u.phone AS client_phone, u.email AS client_email,
   f.montant_total, f.montant_paye,
   us.short_code
 FROM events e

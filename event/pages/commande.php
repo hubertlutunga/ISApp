@@ -51,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'password' => $_POST['password_insc'] ?? null,
         'confirm_password' => $_POST['confirm_password'] ?? null,
         'type_user' => '2',
-    ]);
+    ], $mail, $isAppConfig);
 
     if (!empty($registrationResult['success'])) {
         $_SESSION['user_phone'] = $registrationResult['user']['phone'];
