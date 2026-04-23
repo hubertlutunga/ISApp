@@ -451,6 +451,35 @@ input[type="datetime-local"] {
         
     }
 
+    .main-header .inside-header {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        row-gap: 10px;
+        padding: 12px 14px 10px !important;
+    }
+
+    .main-header .logo-box {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+
+    .main-header .logo-box .logo {
+        width: 100% !important;
+        display: flex !important;
+        justify-content: center !important;
+    }
+
+    .main-header .logo-box .logo-lg img {
+        width: min(230px, 72vw) !important;
+        max-width: 100% !important;
+        height: auto !important;
+    }
+
+    .main-header .navbar,
+    .main-header .navbar-custom-menu.r-side {
+        width: 100% !important;
+    }
+
     #calendrier_mobile{
         display: none;
     }
@@ -474,16 +503,57 @@ input[type="datetime-local"] {
         width: 100% !important; /* Assurez-vous que la barre prend toute la largeur */
     }
     
-    .navbar-nav {
+    .phonemenupv {
         display: flex !important;
-        justify-content: center !important; /* Centre les éléments de la liste */
+        flex-wrap: nowrap !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: 6px;
+        width: 100% !important;
         padding: 0 !important; /* Supprime le padding par défaut */
         margin: 0 !important; /* Supprime la marge par défaut */
         list-style: none !important; /* Supprime les puces */
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .phonemenupv::-webkit-scrollbar {
+        display: none;
     }
     
-    .navbar-nav li {
-        margin: 0 15px !important; /* Espace entre les éléments */
+    .phonemenupv li {
+        flex: 1 1 0;
+        min-width: 0;
+        margin: 0 !important;
+        display: flex;
+        justify-content: center;
+    }
+
+    .phonemenupv li > a,
+    .phonemenupv li > label,
+    .phonemenupv li > label > a {
+        width: 44px;
+        height: 44px;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: 14px;
+        padding: 0 !important;
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .phonemenupv li > label {
+        width: 100%;
+        background: transparent;
+    }
+
+    .phonemenupv li > label > a {
+        margin: 0 auto;
+    }
+
+    .phonemenupv i {
+        font-size: 19px;
+        line-height: 1;
     }
 
     .navbar-nav a {
@@ -495,12 +565,12 @@ input[type="datetime-local"] {
     }
 
     .navbar-custom-menu{
-        border-top:1px solid #444;
-        padding-top:7px !important;
+        border-top:1px solid rgba(255, 255, 255, 0.14);
+        padding-top:8px !important;
     }
     
     .content-wrapper{
-        margin-top: 90px !important; 
+        margin-top: 104px !important; 
     }
 
     #myModal{
