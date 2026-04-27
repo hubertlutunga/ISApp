@@ -622,7 +622,7 @@ for ($i = 1; $i <= $pagecount; $i++) {
     }
 
     // page QRcode---------------------------------------
-    if (isset($dataevent['qrcode'])) { 
+    if (strtolower(trim((string) ($dataevent['qrcode'] ?? ''))) === 'oui') { 
         if ($i == $dataevent['pageqr']) {
             $PNG_TEMP_DIR = 'temp/';
             if (!file_exists($PNG_TEMP_DIR)) mkdir($PNG_TEMP_DIR);
