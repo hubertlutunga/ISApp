@@ -11,6 +11,30 @@ require_once __DIR__ . '/../../qrscan/phpqrcode/qrlib.php';
 
 use setasign\Fpdi\Fpdi;
 
+function parseHexColorToRgb($hexColor) {
+    $hexColor = trim((string) $hexColor);
+    if ($hexColor === '') {
+        return null;
+    }
+
+    $normalized = ltrim($hexColor, '#');
+    if (strlen($normalized) === 3) {
+        $normalized = $normalized[0] . $normalized[0]
+            . $normalized[1] . $normalized[1]
+            . $normalized[2] . $normalized[2];
+    }
+
+    if (!preg_match('/^[0-9A-Fa-f]{6}$/', $normalized)) {
+        return null;
+    }
+
+    return [
+        hexdec(substr($normalized, 0, 2)),
+        hexdec(substr($normalized, 2, 2)),
+        hexdec(substr($normalized, 4, 2)),
+    ];
+}
+
 function renderPdfErrorPage($title, $message) {
     http_response_code(404);
     ?>
@@ -597,19 +621,6 @@ for ($i = 1; $i <= $pagecount; $i++) {
         $lienconf = "";
     }
 
-    // Ajouter le nom de l'invité à la page 2
-    if ($i == $dataevent['pagenom']) {
-        $y = $dataevent['ajustenom'];
-        if (($dataevent['alignnominv'] ?? '') === 'center') {
-            $x = ($pdf->GetPageWidth() - $pdf->GetStringWidth($nominvite)) / 2;
-        } elseif (($dataevent['alignnominv'] ?? '') === 'left') {
-            $x = is_numeric($dataevent['bordgauchenominv']) ? (float) $dataevent['bordgauchenominv'] : 10;
-        } else {
-            $x = 10;
-        }
-        $pdf->Text($x, $y, mb_convert_encoding($nominvite, 'ISO-8859-1', 'UTF-8')); 
-    }
-
     // page QRcode---------------------------------------
     if (isset($dataevent['qrcode'])) { 
         if ($i == $dataevent['pageqr']) {
@@ -628,11 +639,9 @@ for ($i = 1; $i <= $pagecount; $i++) {
     }
 
     if ($i == $dataevent['pagenom']) {
-        // Définir la couleur en fonction de taillenominv
-        if (!empty($dataevent['colornom']) && $dataevent['cod_event'] !== '375') {
-            $pdf->SetTextColor(255, 255, 255);
-        } elseif (!empty($dataevent['colornom']) && $dataevent['cod_event'] === '375') {
-            $pdf->SetTextColor(195, 153, 107);
+        $nameColor = parseHexColorToRgb($dataevent['colornom'] ?? '');
+        if ($nameColor !== null) {
+            $pdf->SetTextColor($nameColor[0], $nameColor[1], $nameColor[2]);
         } else {
             $pdf->SetTextColor(0, 0, 0);
         }
