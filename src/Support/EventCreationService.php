@@ -3,6 +3,7 @@
 final class EventCreationService
 {
     private static ?bool $accessoiresEventHasQuantite = null;
+    private static ?bool $eventDetailsTableReady = null;
 
     public static function createManagedEvent(
         PDO $pdo,
@@ -66,6 +67,7 @@ final class EventCreationService
             (array) ($eventData['invitation_models'] ?? []),
             (array) ($eventData['checkout'] ?? [])
         );
+        self::persistEventDetails($pdo, $eventId, (array) ($eventData['event_details'] ?? []));
         self::persistPhotos($pdo, $eventId, $photos, $photoTargetDir, (string) ($eventData['initiale_mar'] ?? 'IS'));
 
         return $eventId;
@@ -122,6 +124,7 @@ final class EventCreationService
             (array) ($eventData['invitation_models'] ?? []),
             (array) ($eventData['checkout'] ?? [])
         );
+        self::persistEventDetails($pdo, $eventId, (array) ($eventData['event_details'] ?? []));
         self::persistPhotos($pdo, $eventId, $photos, $photoTargetDir, (string) ($eventData['initiale_mar'] ?? 'IS'));
 
         return $eventId;
@@ -213,5 +216,65 @@ final class EventCreationService
     private static function persistPhotos(PDO $pdo, int $eventId, ?array $photos, string $photoTargetDir, string $prefix): void
     {
         EventMediaService::storeEventPhotos($pdo, $eventId, $photos, $photoTargetDir, $prefix);
+    }
+
+    private static function persistEventDetails(PDO $pdo, int $eventId, array $details): void
+    {
+        $detailType = trim((string) ($details['detail_type'] ?? ''));
+        $dateDebut = trim((string) ($details['date_debut'] ?? ''));
+        $dateFin = trim((string) ($details['date_fin'] ?? ''));
+        $matiere = trim((string) ($details['matiere'] ?? ''));
+        $intervenant = trim((string) ($details['intervenant'] ?? ''));
+
+        if ($detailType === '' && $dateDebut === '' && $dateFin === '' && $matiere === '' && $intervenant === '') {
+            return;
+        }
+
+        if (!self::ensureEventDetailsTable($pdo)) {
+            return;
+        }
+
+        $stmt = $pdo->prepare(
+            'INSERT INTO event_details (cod_event, detail_type, date_debut, date_fin, matiere, intervenant, date_enreg, date_maj)
+             VALUES (:cod_event, :detail_type, :date_debut, :date_fin, :matiere, :intervenant, NOW(), NOW())'
+        );
+        $stmt->execute([
+            ':cod_event' => $eventId,
+            ':detail_type' => $detailType !== '' ? $detailType : null,
+            ':date_debut' => $dateDebut !== '' ? $dateDebut : null,
+            ':date_fin' => $dateFin !== '' ? $dateFin : null,
+            ':matiere' => $matiere !== '' ? $matiere : null,
+            ':intervenant' => $intervenant !== '' ? $intervenant : null,
+        ]);
+    }
+
+    private static function ensureEventDetailsTable(PDO $pdo): bool
+    {
+        if (self::$eventDetailsTableReady !== null) {
+            return self::$eventDetailsTableReady;
+        }
+
+        try {
+            $pdo->exec(
+                'CREATE TABLE IF NOT EXISTS event_details (
+                    cod_detail INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    cod_event INT NOT NULL,
+                    detail_type VARCHAR(60) NULL,
+                    date_debut DATETIME NULL,
+                    date_fin DATETIME NULL,
+                    matiere VARCHAR(255) NULL,
+                    intervenant VARCHAR(255) NULL,
+                    date_enreg DATETIME NOT NULL,
+                    date_maj DATETIME NOT NULL,
+                    UNIQUE KEY uniq_event_detail (cod_event),
+                    KEY idx_event_detail_type (detail_type)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
+            );
+            self::$eventDetailsTableReady = true;
+        } catch (Throwable $exception) {
+            self::$eventDetailsTableReady = false;
+        }
+
+        return self::$eventDetailsTableReady;
     }
 }

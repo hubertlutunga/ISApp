@@ -95,10 +95,11 @@
 			</style>
 
 			<div class="container h-p100 mb-action-page">
+				<?php $audienceLabels = EventWorkspaceService::audienceLabels((string) ($type_event ?? '')); ?>
 					<div class="mb-action-hero">
 						<span class="mb-action-kicker"><i class="mdi mdi-silverware-fork-knife"></i> Gestion du menu</span>
 						<h1 class="mb-action-title">Composez un menu clair et appétissant</h1>
-						<p class="mb-action-subtitle">Ajoutez les éléments du menu par catégorie pour structurer l’offre et faciliter l’affichage côté invités.</p>
+						<p class="mb-action-subtitle">Ajoutez les éléments du menu par catégorie pour structurer l’offre et faciliter l’affichage côté <?php echo htmlspecialchars($audienceLabels['plural'], ENT_QUOTES, 'UTF-8'); ?>.</p>
 						<div class="mb-action-stats">
 							<span class="mb-action-stat"><i class="mdi mdi-food-outline"></i> Menus <strong><?php echo $totalMenus; ?></strong></span>
 							<span class="mb-action-stat"><i class="mdi mdi-shape-outline"></i> Catégories <strong><?php echo $menuCategories; ?></strong></span>

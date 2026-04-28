@@ -6,6 +6,7 @@
 	} else {
 		$linkallinv = '../pages/liste_invites.php?event=' . $codevent;
 	}
+	$audienceLabels = EventWorkspaceService::audienceLabels((string) ($type_event ?? ''));
 	?>
 
 <style>
@@ -389,8 +390,8 @@
 		<div class="card rounded-4 mb-invite-card">
 			<div class="box-header d-flex b-0 justify-content-between align-items-center mb-invite-header">
 				<div>
-					<h4 class="box-title mb-invite-title">Mes invités</h4>
-					<p class="mb-invite-subtitle">Consultez, filtrez et gérez rapidement votre liste d'invités.</p>
+					<h4 class="box-title mb-invite-title"><?php echo htmlspecialchars($audienceLabels['mine'], ENT_QUOTES, 'UTF-8'); ?></h4>
+					<p class="mb-invite-subtitle"><?php echo htmlspecialchars($audienceLabels['manage_subtitle'], ENT_QUOTES, 'UTF-8'); ?></p>
 				</div>
                 <ul class="m-0" style="list-style: none;">
                     <li class="dropdown">
@@ -409,13 +410,13 @@
 			<div class="modal-dialog modal-dialog-centered">
 				<div class="modal-content rounded-3">
 				<div class="modal-header">
-					<h5 class="modal-title" id="modalPdfInvitesLabel">Télécharger la liste des invités</h5>
+					<h5 class="modal-title" id="modalPdfInvitesLabel"><?php echo htmlspecialchars($audienceLabels['pdf_title'], ENT_QUOTES, 'UTF-8'); ?></h5>
 					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
 				</div>
 				<div class="modal-body text-center">
 					<p>Choisissez le mode d’affichage :</p>
 					<a href="<?php echo htmlspecialchars($pdfListByNameLink ?? ('../pages/liste_invites.php?event=' . urlencode((string) $codevent)), ENT_QUOTES, 'UTF-8'); ?>" target="_blank" class="btn btn-primary m-2">
-						Classé par nom des invitées
+						<?php echo htmlspecialchars($audienceLabels['pdf_by_name'], ENT_QUOTES, 'UTF-8'); ?>
 					</a>
 					<a href="<?php echo htmlspecialchars($pdfListByTableLink ?? ('../pages/liste_invites_partb.php?event=' . urlencode((string) $codevent)), ENT_QUOTES, 'UTF-8'); ?>" target="_blank" class="btn btn-success m-2">
 						Classé par nom des Tables
@@ -523,9 +524,9 @@
 					   <div class="mb-invite-filter-control" style="width:100%;">
 						   <label for="hote_filter">Filtrer par administrateur</label>
 						   <select id="hote_filter" name="hote_filter" class="form-select mb-invite-filter-select" onchange="this.form.submit()">
-							   <option value="all" <?php echo $selectedHostFilter === 'all' ? 'selected' : ''; ?>>Tous les invités (<?php echo $totalInviteCount; ?>)</option>
+							   <option value="all" <?php echo $selectedHostFilter === 'all' ? 'selected' : ''; ?>><?php echo htmlspecialchars($audienceLabels['all'], ENT_QUOTES, 'UTF-8'); ?> (<?php echo $totalInviteCount; ?>)</option>
 							   <?php if ($currentUserId > 0) { ?>
-							   <option value="mine" <?php echo $selectedHostFilter === 'mine' ? 'selected' : ''; ?>>Mes invités (<?php echo $myInviteCount; ?>)</option>
+							   <option value="mine" <?php echo $selectedHostFilter === 'mine' ? 'selected' : ''; ?>><?php echo htmlspecialchars($audienceLabels['mine'], ENT_QUOTES, 'UTF-8'); ?> (<?php echo $myInviteCount; ?>)</option>
 							   <?php } ?>
 							   <?php foreach ($hostOptions as $hostOption) { ?>
 							   <option value="<?php echo htmlspecialchars((string) $hostOption['cod_user'], ENT_QUOTES, 'UTF-8'); ?>" <?php echo $selectedHostFilter === (string) $hostOption['cod_user'] ? 'selected' : ''; ?>><?php echo htmlspecialchars($extractFirstName(isset($hostOption['noms']) ? (string) $hostOption['noms'] : 'Administrateur inconnu'), ENT_QUOTES, 'UTF-8'); ?> (<?php echo (int) ($hostOption['invite_total'] ?? 0); ?>)</option>
@@ -536,7 +537,7 @@
 
 				   <div class="mb-invite-search-wrap">
 					   <i class="mdi mdi-magnify mb-invite-search-icon"></i>
-					   <input type="text" id="searchInput" class="form-control mb-invite-search" placeholder="Rechercher un invité ou une table">
+					   <input type="text" id="searchInput" class="form-control mb-invite-search" placeholder="<?php echo htmlspecialchars($audienceLabels['search'], ENT_QUOTES, 'UTF-8'); ?>">
 				   </div>
 
 				   <div class="table">
@@ -554,16 +555,16 @@
 									   $siege = $seatName ? ucfirst($seatName) : 'Non définie';
 									   if (($row_inv['sing'] ?? '') === 'C') {
 										   $sing = 'Couple';
-										   $inviteAccord = 'invités';
+										   $inviteAccord = (string) $audienceLabels['plural'];
 									   } elseif (($row_inv['sing'] ?? '') === 'Mr') {
 										   $sing = 'Monsieur';
-										   $inviteAccord = 'invité';
+										   $inviteAccord = (string) $audienceLabels['singular'];
 									   } elseif (($row_inv['sing'] ?? '') === 'Mme') {
 										   $sing = 'Madame';
-										   $inviteAccord = 'invitée';
+										   $inviteAccord = (string) $audienceLabels['singular'];
 									   } else {
 										   $sing = 'Non défini';
-										   $inviteAccord = 'invité';
+										   $inviteAccord = (string) $audienceLabels['singular'];
 									   }
 									   $confirmed = isset($confirmedNames[InviteStatusService::normalizeName((string) $row_inv['nom'])]);
 									   $reponseconf = InviteStatusService::confirmationLabel($confirmed, $row_inv['sing'] ?? null);
@@ -608,7 +609,7 @@
  
                        
 					   <a class="dropdown-item" href="#" onclick="openModal('<?php echo htmlspecialchars(ucfirst($row_inv['nom'])); ?>', '<?php echo $row_inv['id_inv']; ?>')" style="color:#aaa;">
-					   <i class="fa fa-share"></i> Notifier l'invité</a> 
+					   <i class="fa fa-share"></i> <?php echo htmlspecialchars($audienceLabels['notify'], ENT_QUOTES, 'UTF-8'); ?></a> 
 
 					   
 <?php if ($dataevent['invit_religieux'] !== NULL): ?>
@@ -622,7 +623,7 @@
 
 
 
-											   <a class="dropdown-item" href="index.php?page=modinv&idinv=<?php echo $row_inv['id_inv'];?>"><i class="fa fa-edit"></i> Modifier l'invité</a>
+											   <a class="dropdown-item" href="index.php?page=modinv&idinv=<?php echo $row_inv['id_inv'];?>"><i class="fa fa-edit"></i> <?php echo htmlspecialchars($audienceLabels['edit'], ENT_QUOTES, 'UTF-8'); ?></a>
    
  <a class="dropdown-item"
    href="#"
@@ -634,7 +635,7 @@
      '<?= htmlspecialchars($codevent, ENT_QUOTES) ?>',
      '<?= htmlspecialchars(ucfirst($row_inv['nom']), ENT_QUOTES) ?>'
    )">
-  <i class="fa fa-remove"></i> Supprimer l'invité
+					  <i class="fa fa-remove"></i> <?php echo htmlspecialchars($audienceLabels['delete'], ENT_QUOTES, 'UTF-8'); ?>
 </a>  
 
 
@@ -656,7 +657,7 @@
 								   }
    
 							   } else {
-								   echo '<tr class="mb-invite-row"><td colspan="3" class="mb-invite-empty"><strong>Aucun invité pour le moment</strong>Ajoutez vos premiers invités pour commencer à suivre vos confirmations.</td></tr>';
+								   echo '<tr class="mb-invite-row"><td colspan="3" class="mb-invite-empty"><strong>' . htmlspecialchars($audienceLabels['empty'], ENT_QUOTES, 'UTF-8') . '</strong>Ajoutez vos premiers ' . htmlspecialchars($audienceLabels['plural'], ENT_QUOTES, 'UTF-8') . ' pour commencer à suivre vos confirmations.</td></tr>';
 							   }
    
 							   ?>

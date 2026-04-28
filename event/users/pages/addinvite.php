@@ -267,12 +267,13 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
 
 
 <div class="container h-p100 mb-action-page">
+	<?php $audienceLabels = EventWorkspaceService::audienceLabels((string) ($type_event ?? '')); ?>
     <div class="mb-action-hero">
       <span class="mb-action-kicker"><i class="mdi mdi-account-multiple-plus"></i> Gestion des invites</span>
-      <h1 class="mb-action-title">Ajoutez et organisez vos invités rapidement</h1>
-      <p class="mb-action-subtitle">Centralisez les invitations, rattachez-les à une table et gardez une vue claire sur les confirmations sans quitter cette page.</p>
+	      <h1 class="mb-action-title"><?php echo htmlspecialchars($audienceLabels['manage_title'], ENT_QUOTES, 'UTF-8'); ?></h1>
+	      <p class="mb-action-subtitle"><?php echo htmlspecialchars($audienceLabels['manage_copy'], ENT_QUOTES, 'UTF-8'); ?></p>
       <div class="mb-action-stats">
-        <span class="mb-action-stat"><i class="mdi mdi-account-group-outline"></i> Invités <strong><?php echo (int) $total_inv; ?></strong></span>
+	        <span class="mb-action-stat"><i class="mdi mdi-account-group-outline"></i> <?php echo htmlspecialchars($audienceLabels['plural_cap'], ENT_QUOTES, 'UTF-8'); ?> <strong><?php echo (int) $total_inv; ?></strong></span>
         <span class="mb-action-stat"><i class="mdi mdi-check-decagram-outline"></i> Confirmés <strong><?php echo (int) $total_invconf; ?></strong></span>
         <span class="mb-action-stat"><i class="mdi mdi-table-furniture"></i> Tables <strong><?php echo (int) $totalTables; ?></strong></span>
       </div>
@@ -284,9 +285,9 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
           <div class="col-xl-6 col-lg-7 col-12 boxcontent">
             <div class="bg-white rounded10 shadow-lg mb-action-card">
 							<div class="content-top-agile p-20 pb-0"> 
-                                <p class="mb-0 text-fade">Ajout des invités</p>
-                <h2 class="mb-action-heading">Nouvel invité</h2>
-                <p class="mb-action-copy">Renseignez le type, le nom et la table associée pour garder une liste propre dès la saisie.</p>
+                                <p class="mb-0 text-fade"><?php echo htmlspecialchars($audienceLabels['add_plural_indef'], ENT_QUOTES, 'UTF-8'); ?></p>
+                        <h2 class="mb-action-heading"><?php echo htmlspecialchars($audienceLabels['new_singular'], ENT_QUOTES, 'UTF-8'); ?></h2>
+                        <p class="mb-action-copy"><?php echo htmlspecialchars($audienceLabels['form_copy'], ENT_QUOTES, 'UTF-8'); ?></p>
                                 
                                 
 
@@ -357,10 +358,10 @@ $invite = $inviteNettoye;
 
   
   if(!$invite){
-    echo "<div class='error' align=\"left\" style=\"color:red;font-weight:bold;text-align:center;\">Remplissez le nom de l'invité</div>";
+    echo "<div class='error' align=\"left\" style=\"color:red;font-weight:bold;text-align:center;\">" . htmlspecialchars($audienceLabels['name_required'], ENT_QUOTES, 'UTF-8') . "</div>";
   }elseif($row_invc['total_ex'] > 0){
 
-    echo "<div class='error' align=\"left\" style=\"color:red;font-weight:bold;text-align:center;\">Cet invité existe déjà</div>";
+    echo "<div class='error' align=\"left\" style=\"color:red;font-weight:bold;text-align:center;\">" . htmlspecialchars($audienceLabels['already_exists'], ENT_QUOTES, 'UTF-8') . "</div>";
 
   }else{
 
@@ -477,7 +478,7 @@ $invite = $inviteNettoye;
 
                                 <div class="row"> 
                                     <div class="col-12 text-center">
-                										<button type="submit" name="submit" class="btn btn-primary w-p100 mt-10 mb-action-submit">Ajouter l'invité</button>
+                                    <button type="submit" name="submit" class="btn btn-primary w-p100 mt-10 mb-action-submit"><?php echo htmlspecialchars($audienceLabels['add_singular'], ENT_QUOTES, 'UTF-8'); ?></button>
                                     </div>
                                 </div>
                             </form>			

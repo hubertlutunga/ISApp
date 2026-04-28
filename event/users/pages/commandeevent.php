@@ -147,7 +147,8 @@
                              ?> 
                                     <tr>
                                         <td class="pt-0 px-0 b-0">
-                                            <a class="d-block fw-500 fs-14" target='_blink' href="../../site/index.php?page=access_cible&codinv=<?php echo $row_com['codinv']?>&cod=<?php echo $row_com['codevent']?>">Invité : <?php echo htmlspecialchars(ucfirst($nominv)); ?> <br> <em style="color:#999;">Table : <?php echo $table; ?></em></a> 
+                                            <?php $audienceLabels = EventWorkspaceService::audienceLabels((string) ($type_event ?? '')); ?>
+                                            <a class="d-block fw-500 fs-14" target='_blink' href="../../site/index.php?page=access_cible&codinv=<?php echo $row_com['codinv']?>&cod=<?php echo $row_com['codevent']?>"><?php echo htmlspecialchars($audienceLabels['singular_cap'], ENT_QUOTES, 'UTF-8'); ?> : <?php echo htmlspecialchars(ucfirst($nominv)); ?> <br> <em style="color:#999;">Table : <?php echo $table; ?></em></a> 
                                             
 					   
 									

@@ -1,8 +1,34 @@
 <?php 
+if (!empty($_GET['idinv'])) {
+  $inviteId = (int) $_GET['idinv'];
+  if ($inviteId > 0) {
+    $redirectUrl = 'index.php?page=access_cible&codinv=' . $inviteId . '&cod=' . urlencode((string) $codevent);
+    if (!empty($_GET['presence'])) {
+      $redirectUrl .= '&presence=' . urlencode((string) $_GET['presence']);
+    }
+
+    header('Location: ' . $redirectUrl);
+    exit;
+  }
+}
+
 if ($dataevent['photostory'] === NULL) {
    $photo = 'defaulwed_1.png';
 }else{
    $photo = $dataevent['photostory'];
+}
+
+$accessHeroTitle = 'The Wedding';
+$accessHeroSubtitle = $fetard;
+
+if ((string) ($type_event ?? '') === '2') {
+  $accessHeroTitle = 'Birthday Event';
+  $accessHeroSubtitle = 'Anniversaire de ' . $fetard;
+} elseif ((string) ($type_event ?? '') === '3') {
+  $accessHeroTitle = 'Conference Event';
+  $accessHeroSubtitle = 'Conference de ' . $fetard;
+} elseif ((string) ($type_event ?? '') !== '1') {
+  $accessHeroTitle = 'Event Access';
 }
 ?>  
 
@@ -27,8 +53,10 @@ if ($dataevent['photostory'] === NULL) {
   <!--Container-->
   <div class="container spacer-one-bottom-lg"  style="margin-top:-50px;">
 
-    <h1 style="text-align:center;">The Wedding</h1>
-    <h2 style="text-align:center;font-size:50px;font-family: 'Playfair Display"><?php echo $fetard; ?></h2>
+    <h1 style="text-align:center;"><?php echo htmlspecialchars($accessHeroTitle, ENT_QUOTES, 'UTF-8'); ?></h1>
+    <h2 style="text-align:center;font-size:50px;font-family: 'Playfair Display'">
+      <?php echo htmlspecialchars($accessHeroSubtitle, ENT_QUOTES, 'UTF-8'); ?>
+    </h2>
     <p style="text-align:center;letter-spacing:15px;"><span><?php echo date('d/m/Y',strtotime($date_event));?></span></p>
 
     <?php 

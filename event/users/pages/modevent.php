@@ -606,10 +606,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['submittext']) && !is
                     <?php foreach ($accessoryCatalogRows as $accessoryRow) {
                         $accessoryId = (int) ($accessoryRow['cod_mod'] ?? 0);
                         $accessoryName = (string) ($accessoryRow['nom'] ?? 'Accessoire');
+                        $accessoryNameLower = function_exists('mb_strtolower') ? mb_strtolower($accessoryName, 'UTF-8') : strtolower($accessoryName);
+                        $accessoryNameNormalized = str_replace(['é', 'è', 'ê', 'ë'], 'e', $accessoryNameLower);
+                        $showsInvitationField = strpos($accessoryNameNormalized, 'invitation') !== false && strpos($accessoryNameNormalized, 'imprim') !== false;
+                        $showsChevaletField = in_array($accessoryNameNormalized, ['chevalet de tables l', 'chevalet de table xxl'], true);
                         $accessoryPrice = $formatAmount($accessoryRow['unit_price'] ?? null);
                     ?>
                     <label class="me-accessory-card">
-                        <input type="checkbox" name="accessoires[]" value="<?php echo $accessoryId; ?>" data-accessory-checkbox>
+                        <input type="checkbox" name="accessoires[]" value="<?php echo $accessoryId; ?>" data-accessory-checkbox data-invitation-trigger="<?php echo $showsInvitationField ? '1' : '0'; ?>" data-chevalet-trigger="<?php echo $showsChevaletField ? '1' : '0'; ?>">
                         <span class="me-accessory-card-copy">
                             <strong><?php echo htmlspecialchars($accessoryName, ENT_QUOTES, 'UTF-8'); ?></strong>
                             <small><?php echo htmlspecialchars($accessoryPrice, ENT_QUOTES, 'UTF-8'); ?></small>
@@ -971,10 +975,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['submittext']) && !is
                     return;
                 }
 
-                if (String(checkbox.value) === '1') {
+                if (checkbox.dataset.invitationTrigger === '1') {
                     showInvitation = true;
                 }
-                if (String(checkbox.value) === '3') {
+                if (checkbox.dataset.chevaletTrigger === '1') {
                     showChevalet = true;
                 }
             });

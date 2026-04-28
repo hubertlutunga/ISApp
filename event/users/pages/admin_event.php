@@ -370,6 +370,11 @@
        $fetard = $dataevent['nomfetard'] ?? 'Inconnu';
        $displayvue = 'display:none;';
    }
+
+       $sitePreviewUrl = EventUrlService::publicUrl(
+         is_array($dataevent ?? null) ? $dataevent : ['cod_event' => $codevent, 'type_event' => $type_event],
+         $isAppConfig
+       );
    ?> 
    
    
@@ -443,7 +448,7 @@
                                               <button class="btn btn-info dropdown-toggle" type="button" data-bs-toggle="dropdown">Site web de l'événement</button>
                                                <div class="dropdown-menu">
                                                 <a class="dropdown-item" href="index.php?page=conf_siteweb">Personnaliser</a>
-                                                <a class="dropdown-item" href="https://invitationspeciale.com/site/index.php?page=accueil&cod=<?php echo $codevent; ?>" target="_blink">Prévisualiser</a>
+                                                <a class="dropdown-item" href="<?php echo htmlspecialchars($sitePreviewUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blink">Prévisualiser</a>
                                                </div>
            
                                                </div>

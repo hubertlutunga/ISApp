@@ -19,6 +19,7 @@
 
 	$eventContext = EventWorkspaceService::resolveCurrentEventContext($pdo, $datasession ?: [], $_GET);
 	extract($eventContext, EXTR_OVERWRITE);
+	$showTableAndMenuActions = EventWorkspaceService::supportsTableAndMenu((string) $data_evenement, (string) $type_event);
 
 ?>
 
@@ -204,6 +205,7 @@
 
 	  <!-- Sample menu definition -->
 	  <ul id="main-menu" class="sm sm-blue">		
+		<?php $audienceLabels = EventWorkspaceService::audienceLabels((string) ($type_event ?? '')); ?>
 		<li><a href="index.php?page=mb_accueil"><i data-feather="home"><span class="path1"></span><span class="path2"></span></i>Accueil</a> 
 		</li>  
 		<?php if ($isImpersonating) { ?>
@@ -218,10 +220,12 @@
 		<?php } ?>
 		<li><a href="index.php?page=profile"><i data-feather="user"></i>Profil</a>
 		</li>
-		<li><a href="index.php?page=addinvite"><i data-feather="shopping-cart"></i>Invités</a> 
+		<li><a href="index.php?page=addinvite"><i data-feather="shopping-cart"></i><?php echo htmlspecialchars($audienceLabels['plural_cap'], ENT_QUOTES, 'UTF-8'); ?></a> 
 		</li>
+		<?php if ($showTableAndMenuActions) { ?>
 		<li><a href="index.php?page=addtable"><i data-feather="shopping-cart"></i>Tables</a> 
 		</li>
+		<?php } ?>
 		  
 		<li><a href="#"><i data-feather="calendar"></i>Evénements</a> 
 		</li>

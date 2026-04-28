@@ -86,8 +86,8 @@ if (isset($data_frame)) {
             <div class="row">
                <div class="col-lg-5">
                   <h2 class="column-title">
-                     <span>REJOINS-NOUS</span>
-                     Obtenir la direction vers le lieu de l'événement
+                     <span><?php echo htmlspecialchars((string) ($publicEventLabels['join_kicker'] ?? 'REJOIGNEZ-NOUS'), ENT_QUOTES, 'UTF-8'); ?></span>
+                     <?php echo htmlspecialchars((string) ($publicEventLabels['join_title'] ?? "Obtenir la direction vers le lieu de l'événement"), ENT_QUOTES, 'UTF-8'); ?>
                   </h2>
 
                   <div class="ts-map-tabs">
@@ -116,6 +116,9 @@ if (isset($data_frame)) {
                                           <?php echo $dataagency?> 
                                           <?php echo $dataphone?> 
                                           <?php echo $dataemail?> 
+                                          <?php foreach ($publicDetailItems as $detailItem) { ?>
+                                          <p><strong><?php echo htmlspecialchars((string) $detailItem['label'], ENT_QUOTES, 'UTF-8'); ?> :</strong> <?php echo htmlspecialchars((string) $detailItem['value'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                          <?php } ?>
                                        </div>
 
                                     </div> 
@@ -175,8 +178,8 @@ if (isset($data_frame)) {
             <div class="row">
                <div class="col-lg-8 mx-auto">
                   <h2 class="section-title text-center">
-                     <span>Comment participer ?</span>
-                     S'enregistrer
+                     <span><?php echo htmlspecialchars((string) ($publicEventLabels['form_kicker'] ?? 'Comment participer ?'), ENT_QUOTES, 'UTF-8'); ?></span>
+                     <?php echo htmlspecialchars((string) ($publicEventLabels['form_title'] ?? "S'enregistrer"), ENT_QUOTES, 'UTF-8'); ?>
                   </h2>
 
 
@@ -190,15 +193,17 @@ if (isset($data_frame)) {
 if(isset($_POST['submit'])){
    
 
-  $prenom = @$_POST['prenom'];
-  $nom = @$_POST['nom'];
+   $prenom = trim((string) (@$_POST['prenom'] ?? ''));
+   $nom = trim((string) (@$_POST['nom'] ?? ''));
 
-  $nomComplet = $prenom . ' ' . $nom;
+   $nomComplet = trim($prenom . ' ' . $nom);
 
-  $phone = @$_POST['phone'];  
+   $phone = trim((string) (@$_POST['phone'] ?? ''));  
+   $normalizedPhone = preg_replace('/[^0-9+]/', '', $phone);
     
     
-   $emailinvite = @$_POST['email'];
+    $emailinvite = trim((string) (@$_POST['email'] ?? ''));
+    $normalizedEmail = strtolower($emailinvite);
    $presence = "oui";
 
  
@@ -216,6 +221,34 @@ if(isset($_POST['submit'])){
        $error = 'Confirmer votre presence ou absence';
        echo '<span style="color:red;">'.$error.'</span>';
     }else{
+
+   $duplicateStmt = $pdo->prepare(
+      "SELECT cod_conf
+       FROM confirmation
+       WHERE cod_mar = :cod_mar
+         AND (
+           LOWER(TRIM(email)) = :email
+           OR REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(phone), ' ', ''), '-', ''), '.', ''), '(', ''), ')', '') = :phone
+         )
+       LIMIT 1"
+   );
+   $duplicateStmt->bindValue(':cod_mar', $codevent);
+   $duplicateStmt->bindValue(':email', $normalizedEmail);
+   $duplicateStmt->bindValue(':phone', $normalizedPhone);
+   $duplicateStmt->execute();
+   $alreadyRegistered = $duplicateStmt->fetch(PDO::FETCH_ASSOC);
+   $duplicateStmt->closeCursor();
+
+   if ($alreadyRegistered) {
+      echo '<script>
+         Swal.fire({
+            title: "Déjà enregistré",
+            text: '.json_encode((string) ($publicEventLabels['duplicate_message'] ?? "Cette adresse email ou ce numéro de téléphone a déjà été enregistré pour cet événement."), JSON_UNESCAPED_UNICODE).',
+            icon: "info",
+            confirmButtonText: "OK"
+         });
+      </script>';
+   } else {
  
        
    $sql = 'INSERT INTO confirmation (
@@ -236,8 +269,8 @@ if(isset($_POST['submit'])){
    $q = $pdo->prepare($sql);
    $q->bindValue(':cod_mar', $codevent);
    $q->bindValue(':noms', $nomComplet);
-   $q->bindValue(':email', $emailinvite);
-   $q->bindValue(':phone', $phone); 
+   $q->bindValue(':email', $normalizedEmail);
+   $q->bindValue(':phone', $normalizedPhone); 
    $q->bindValue(':presence', $presence);   
    $q->execute();
    $q->closeCursor(); 
@@ -257,8 +290,8 @@ if(isset($_POST['submit'])){
         // Envoi de l'email
         $speudo = $nom;
         $email = $emailinvite; // Assurez-vous que cette variable contient une adresse email valide
-        $subject = strtoupper($fetard.' RSVP');
-        $message = "Bonjour $speudo,\n\nVotre reservation nous est parvenue avec succès.\n\nMerci!";
+      $subject = strtoupper($fetard.' '.($publicEventLabels['subject_suffix'] ?? 'RSVP'));
+      $message = "Bonjour $speudo,\n\n".($publicEventLabels['email_message'] ?? "Votre inscription nous est parvenue avec succès.")."\n\nMerci!";
         
         // Ajout des en-têtes pour le format et l'encodage
         $headers = "From: contact@invitationspeciale.com\r\n";  // Adresse d'envoi
@@ -273,7 +306,7 @@ if(isset($_POST['submit'])){
            echo '<script>
               Swal.fire({
                  title: "RSVP!",
-                 text: "Votre présence a été confirmée avec succès",
+                 text: '.json_encode((string) ($publicEventLabels['success_message'] ?? 'Votre inscription a été confirmée avec succès'), JSON_UNESCAPED_UNICODE).',
                  icon: "success",
                  confirmButtonText: "OK"
               });
@@ -295,6 +328,8 @@ if(isset($_POST['submit'])){
       
 
  }
+
+    }
 
 }
 
@@ -354,7 +389,7 @@ if(isset($_POST['submit'])){
                   !-->
 
                      <div class="text-center"><br>
-                        <button type="submit" name="submit" class="btn" type="submit">Envoyer</button>
+                        <button type="submit" name="submit" class="btn" type="submit"><?php echo htmlspecialchars((string) ($publicEventLabels['form_submit'] ?? 'Envoyer'), ENT_QUOTES, 'UTF-8'); ?></button>
                      </div>
                   </form><!-- Contact form end -->
                </div>

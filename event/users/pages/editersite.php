@@ -3,6 +3,93 @@
 $cod_event  = $codevent;
 $cod_agent  = $datasession['cod_user'];
 
+$conferenceSiteSettings = [
+    'iframe' => '',
+    'agency' => '',
+    'phone' => '',
+    'email' => '',
+];
+
+try {
+    $conferenceSiteStmt = $pdo->prepare('SELECT iframe, agency, phone, email FROM websiteconference WHERE cod_event = ? LIMIT 1');
+    $conferenceSiteStmt->execute([(int) $cod_event]);
+    $conferenceSiteSettings = array_merge($conferenceSiteSettings, $conferenceSiteStmt->fetch(PDO::FETCH_ASSOC) ?: []);
+    $conferenceSiteStmt->closeCursor();
+} catch (Throwable $exception) {
+    $conferenceSiteSettings = $conferenceSiteSettings;
+}
+
+if (isset($_POST['submit_public_site_customization'])) {
+    $iframe = trim((string) ($_POST['public_iframe'] ?? ''));
+    $agency = trim((string) ($_POST['public_agency'] ?? ''));
+    $phone = trim((string) ($_POST['public_phone'] ?? ''));
+    $email = trim((string) ($_POST['public_email'] ?? ''));
+
+    if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+        echo '<script>Swal.fire({title:"Adresse invalide",text:"Veuillez renseigner une adresse email valide.",icon:"warning"});</script>';
+    } else {
+        try {
+            $existsStmt = $pdo->prepare('SELECT COUNT(*) FROM websiteconference WHERE cod_event = ?');
+            $existsStmt->execute([(int) $cod_event]);
+            $conferenceSiteExists = (bool) $existsStmt->fetchColumn();
+            $existsStmt->closeCursor();
+
+            if ($conferenceSiteExists) {
+                $writeConferenceSite = $pdo->prepare('UPDATE websiteconference SET iframe = :iframe, agency = :agency, phone = :phone, email = :email WHERE cod_event = :cod_event');
+            } else {
+                $writeConferenceSite = $pdo->prepare('INSERT INTO websiteconference (cod_event, iframe, agency, phone, email) VALUES (:cod_event, :iframe, :agency, :phone, :email)');
+            }
+
+            $writeConferenceSite->execute([
+                ':cod_event' => (int) $cod_event,
+                ':iframe' => $iframe !== '' ? $iframe : null,
+                ':agency' => $agency !== '' ? $agency : null,
+                ':phone' => $phone !== '' ? $phone : null,
+                ':email' => $email !== '' ? $email : null,
+            ]);
+
+            $eventFieldUpdates = [];
+
+            if (isset($_FILES['public_logo']) && ($_FILES['public_logo']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+                $eventFieldUpdates['logo'] = EventMediaService::storeUploadedImage($_FILES['public_logo'], '../../couple/images');
+            }
+
+            if (isset($_FILES['public_photo']) && ($_FILES['public_photo']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+                $eventFieldUpdates['photo'] = EventMediaService::storeUploadedImage($_FILES['public_photo'], '../../couple/images');
+            }
+
+            if ($eventFieldUpdates !== []) {
+                EventMediaService::updateEventFields($pdo, (int) $cod_event, $eventFieldUpdates);
+            }
+
+            echo '<script>window.location="index.php?page=conf_siteweb&codevent='.(int) $cod_event.'&okpublic=1";</script>';
+        } catch (RuntimeException $exception) {
+            echo '<script>Swal.fire({title:"Impossible d\'enregistrer",text:'.json_encode($exception->getMessage(), JSON_UNESCAPED_UNICODE).',icon:"error"});</script>';
+        } catch (Throwable $exception) {
+            echo '<script>Swal.fire({title:"Impossible d\'enregistrer",text:"Une erreur est survenue pendant la mise à jour du mini-site.",icon:"error"});</script>';
+        }
+    }
+}
+
+if (isset($_GET['okpublic']) && $_GET['okpublic'] == 1) {
+?>
+<script>
+Swal.fire({
+title:'Succès !',
+text:'Le mini-site public a été mis à jour.',
+icon:'success',
+timer:1500,
+showConfirmButton:false
+});
+
+if(window.history.replaceState){
+const url = new URL(window.location);
+url.searchParams.delete('okpublic');
+window.history.replaceState({}, document.title, url);
+}
+</script>
+<?php }
+
 
 /* =====================================================
 UPLOAD IMAGE FOND STORY

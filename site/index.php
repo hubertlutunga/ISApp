@@ -5,6 +5,7 @@
 require __DIR__ . '/../bootstrap/app.php';
 
 $codevent = $_GET['cod'];
+$requestedPage = (string) ($_GET['page'] ?? '');
 
 
 $codevent = $_GET['cod'];
@@ -25,11 +26,15 @@ $dataevent = $stmt2->fetch();
  
  
 
-if ($dataevent['type_event'] == "3") {
-    header("Location: conference/index.php?page=accueil&cod=".$codevent); 
- }elseif ($dataevent['type_event'] == "2") {
-    header("Location: anniversaire/index.php?page=accueil&cod=".$codevent); 
- }
+$genericAccessPages = ['access', 'access_cible', 'pointacces', 'search_invites'];
+
+if ($dataevent && !in_array($requestedPage, $genericAccessPages, true)) {
+    if ($dataevent['type_event'] == "3") {
+        header("Location: conference/index.php?page=accueil&cod=".$codevent); 
+    } elseif ($dataevent['type_event'] == "2") {
+        header("Location: anniversaire/index.php?page=accueil&cod=".$codevent); 
+    }
+}
  
 
 
@@ -120,11 +125,11 @@ if ($content === null) {
 <head>
   
 <meta charset="utf-8">
-<title><?php echo $dataevent['prenom_epoux'];?> & <?php echo $dataevent['prenom_epouse'];?> - Wedding</title>
+<title><?php echo htmlspecialchars((string) ($fetard ?? 'Invitation Speciale'), ENT_QUOTES, 'UTF-8'); ?> - <?php echo htmlspecialchars((string) ($typeevent ?? 'Evenement'), ENT_QUOTES, 'UTF-8'); ?></title>
      
      <meta http-equiv="X-UA-Compatible" content="IE=edge">
      <meta http-equiv="X-UA-Compatible" content="ie=edge">
-     <meta name="description" content="Le Mariage <?php echo $datamariage['type_mar'];?> de <?php echo $datamariage['prenom_epoux'];?> & <?php echo $datamariage['prenom_epouse'];?>">
+    <meta name="description" content="<?php echo htmlspecialchars((string) ($typeevent ?? 'Gestion des acces des invites'), ENT_QUOTES, 'UTF-8'); ?>">
      <meta name="keywords" content="Gestion des accès des invités">
      <meta name="author" content="inittheme">
      <meta name="viewport" content="width=device-width, initial-scale=1">

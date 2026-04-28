@@ -108,6 +108,128 @@ final class EventWorkspaceService
         return ucfirst((string) $formatter->format($date));
     }
 
+    public static function audienceLabels(string $typeEvent): array
+    {
+        if ($typeEvent === '1') {
+            return [
+                'plural' => 'invites',
+                'plural_cap' => 'Invités',
+                'singular' => 'invite',
+                'singular_cap' => 'Invité',
+                'notify' => "Notifier l'invité",
+                'edit' => "Modifier l'invité",
+                'delete' => "Supprimer l'invité",
+                'mine' => 'Mes invités',
+                'all' => 'Tous les invités',
+                'search' => 'Rechercher un invité ou une table',
+                'empty' => 'Aucun invité pour le moment',
+                'empty_reaction' => 'Aucun invité trouvé',
+                'add_plural' => 'Ajouter les invités',
+                'add_plural_indef' => 'Ajout des invités',
+                'add_singular' => "Ajouter l'invité",
+                'new_singular' => 'Nouvel invité',
+                'sheet' => 'Fiche invite',
+                'manage_title' => 'Ajoutez et organisez vos invités rapidement',
+                'manage_subtitle' => "Consultez, filtrez et gérez rapidement votre liste d'invités.",
+                'manage_copy' => 'Centralisez les invitations, rattachez-les à une table et gardez une vue claire sur les confirmations sans quitter cette page.',
+                'form_copy' => 'Renseignez le type, le nom et la table associée pour garder une liste propre dès la saisie.',
+                'edit_copy' => "Ajustez le profil de l'invite et sa place a table depuis une fiche plus lisible.",
+                'name_required' => "Remplissez le nom de l'invité",
+                'already_exists' => 'Cet invité existe déjà',
+                'pdf_title' => 'Télécharger la liste des invités',
+                'pdf_by_name' => 'Classé par nom des invitées',
+                'nonreaction_title' => "n'ont pas encore réagi",
+                'confirm_title' => 'Suivez les réponses des invités en un coup d\'oeil',
+                'confirm_copy' => 'Analysez les présences, identifiez les absences et gardez un historique clair des réponses envoyées pour votre événement.',
+                'confirm_subtitle' => 'Retrouvez les messages de confirmation, les repas choisis et les notes laissées par vos invités.',
+                'confirm_summary' => 'Invités',
+            ];
+        }
+
+        return [
+            'plural' => 'participants',
+            'plural_cap' => 'Participants',
+            'singular' => 'participant',
+            'singular_cap' => 'Participant',
+            'notify' => 'Notifier le participant',
+            'edit' => 'Modifier le participant',
+            'delete' => 'Supprimer le participant',
+            'mine' => 'Mes participants',
+            'all' => 'Tous les participants',
+            'search' => 'Rechercher un participant ou une table',
+            'empty' => 'Aucun participant pour le moment',
+            'empty_reaction' => 'Aucun participant trouvé',
+            'add_plural' => 'Ajouter des participants',
+            'add_plural_indef' => 'Ajout des participants',
+            'add_singular' => 'Ajouter le participant',
+            'new_singular' => 'Nouveau participant',
+            'sheet' => 'Fiche participant',
+            'manage_title' => 'Ajoutez et organisez vos participants rapidement',
+            'manage_subtitle' => 'Consultez, filtrez et gérez rapidement votre liste de participants.',
+            'manage_copy' => 'Centralisez les inscriptions, rattachez-les à une table et gardez une vue claire sur les confirmations sans quitter cette page.',
+            'form_copy' => 'Renseignez le type, le nom et la table associée pour garder une liste propre dès la saisie.',
+            'edit_copy' => 'Ajustez le profil du participant et sa place a table depuis une fiche plus lisible.',
+            'name_required' => 'Remplissez le nom du participant',
+            'already_exists' => 'Ce participant existe déjà',
+            'pdf_title' => 'Télécharger la liste des participants',
+            'pdf_by_name' => 'Classé par nom des participants',
+            'nonreaction_title' => "n'ont pas encore répondu",
+            'confirm_title' => 'Suivez les réponses des participants en un coup d\'oeil',
+            'confirm_copy' => 'Analysez les présences, identifiez les absences et gardez un historique clair des inscriptions envoyées pour votre événement.',
+            'confirm_subtitle' => 'Retrouvez les messages de confirmation, les repas choisis et les notes laissées par vos participants.',
+            'confirm_summary' => 'Participants',
+        ];
+    }
+
+    public static function supportsTableAndMenu(string $eventTypeName, string $typeEvent = ''): bool
+    {
+        if ($typeEvent === '1') {
+            return true;
+        }
+
+        $normalizedTypeName = self::normalizeEventTypeLabel($eventTypeName);
+
+        foreach (['formation', 'conference', 'concert'] as $hiddenType) {
+            if ($normalizedTypeName !== '' && strpos($normalizedTypeName, $hiddenType) !== false) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static function normalizeEventTypeLabel(string $value): string
+    {
+        $value = trim(mb_strtolower($value, 'UTF-8'));
+
+        return strtr($value, [
+            'à' => 'a',
+            'á' => 'a',
+            'â' => 'a',
+            'ä' => 'a',
+            'ç' => 'c',
+            'è' => 'e',
+            'é' => 'e',
+            'ê' => 'e',
+            'ë' => 'e',
+            'ì' => 'i',
+            'í' => 'i',
+            'î' => 'i',
+            'ï' => 'i',
+            'ò' => 'o',
+            'ó' => 'o',
+            'ô' => 'o',
+            'ö' => 'o',
+            'ù' => 'u',
+            'ú' => 'u',
+            'û' => 'u',
+            'ü' => 'u',
+            'ÿ' => 'y',
+            'œ' => 'oe',
+            'æ' => 'ae',
+        ]);
+    }
+
     public static function getGuestStats(PDO $pdo, string $eventId, ?string $dateEvent): array
     {
         if ($eventId === '') {

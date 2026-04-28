@@ -8,6 +8,7 @@
    }else{
 	   $linkallinv = "../pages/liste_invites.php?event=".$codevent;
    } 
+	$audienceLabels = EventWorkspaceService::audienceLabels((string) ($type_event ?? ''));
    
    ?>
    
@@ -15,7 +16,7 @@
 	   <div class="col-xxl-12 col-xl-12 col-lg-12">
 		   <div class="card rounded-4">
 			   <div class="box-header d-flex b-0 justify-content-between align-items-center">
-				   <h4 class="box-title">Mes invités</h4>
+				   <h4 class="box-title"><?php echo htmlspecialchars($audienceLabels['mine'], ENT_QUOTES, 'UTF-8'); ?></h4>
 				   <ul class="m-0" style="list-style: none;">
 					   <li class="dropdown">
 						   <a target="_blank" href="<?php echo $linkallinv; ?>" class="waves-effect waves-light btn btn-outline btn-rounded btn-primary btn-sm">
@@ -30,7 +31,7 @@
 					   <table class="table mb-0">
 						   <tbody id="inviteList">
  
-								 <input type="text" id="searchInput" class="form-control" placeholder="Rechercher un nom..." style="height:40px;font-size:16px;border:1px solid #ccc;margin-bottom:10px;">
+								 <input type="text" id="searchInput" class="form-control" placeholder="<?php echo htmlspecialchars($audienceLabels['search'], ENT_QUOTES, 'UTF-8'); ?>" style="height:40px;font-size:16px;border:1px solid #ccc;margin-bottom:10px;">
    
 								</td> 
 						   
@@ -98,7 +99,7 @@
  
                        
 					   <a class="dropdown-item" href="#" onclick="openModal('<?php echo htmlspecialchars(ucfirst($row_inv['nom'])); ?>', '<?php echo $row_inv['id_inv']; ?>')" style="color:#aaa;">
-					   <i class="fa fa-share"></i> Notifier l'invité</a> 
+					   <i class="fa fa-share"></i> <?php echo htmlspecialchars($audienceLabels['notify'], ENT_QUOTES, 'UTF-8'); ?></a> 
   
 <a class="dropdown-item" target="_blank"
    href="../pages/invitation_elect.php?cod=<?= $row_inv['id_inv'];?>&event=<?= $codevent; ?>">
@@ -110,7 +111,7 @@
 
 
 
-											   <a class="dropdown-item" href="index.php?page=modinv&idinv=<?php echo $row_inv['id_inv'];?>"><i class="fa fa-edit"></i> Modifier l'invité</a>
+											   <a class="dropdown-item" href="index.php?page=modinv&idinv=<?php echo $row_inv['id_inv'];?>"><i class="fa fa-edit"></i> <?php echo htmlspecialchars($audienceLabels['edit'], ENT_QUOTES, 'UTF-8'); ?></a>
    
  <a class="dropdown-item"
    href="#"
@@ -122,7 +123,7 @@
      '<?= htmlspecialchars($codevent, ENT_QUOTES) ?>',
      '<?= htmlspecialchars(ucfirst($row_inv['nom']), ENT_QUOTES) ?>'
    )">
-  <i class="fa fa-remove"></i> Supprimer l'invité
+					  <i class="fa fa-remove"></i> <?php echo htmlspecialchars($audienceLabels['delete'], ENT_QUOTES, 'UTF-8'); ?>
 </a>  
 
 
@@ -144,7 +145,7 @@
 								   }
    
 							   } else {
-								   echo '<tr><td colspan="3" class="text-left" style="font-style:italic;">Aucun invité trouvé</td></tr>';
+								   echo '<tr><td colspan="3" class="text-left" style="font-style:italic;">' . htmlspecialchars($audienceLabels['empty_reaction'], ENT_QUOTES, 'UTF-8') . '</td></tr>';
 							   }
    
 							   ?>

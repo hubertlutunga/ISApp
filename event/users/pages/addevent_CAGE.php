@@ -141,9 +141,14 @@
             $reqmod = $pdo->prepare("SELECT * FROM modele_is where type_mod = :type_mod ORDER by cod_mod ASC");
             $reqmod->execute([':type_mod' => 'accessoires']);  
             while ($data_mod = $reqmod->fetch()) {
+                $accessoireNom = (string) ($data_mod['nom'] ?? '');
+                $accessoireNomLower = function_exists('mb_strtolower') ? mb_strtolower($accessoireNom, 'UTF-8') : strtolower($accessoireNom);
+                $accessoireNomNormalized = str_replace(['é', 'è', 'ê', 'ë'], 'e', $accessoireNomLower);
+                $showsInvitationField = strpos($accessoireNomNormalized, 'invitation') !== false && strpos($accessoireNomNormalized, 'imprim') !== false;
+                $showsChevaletField = in_array($accessoireNomNormalized, ['chevalet de tables l', 'chevalet de table xxl'], true);
             ?>
             <div class="checkbox" style="margin-bottom:10px;margin-left:-5px;">
-                <input type="checkbox" id="<?php echo $data_mod['cod_mod']?>" name="accessoires[]" value="<?php echo $data_mod['cod_mod']?>" class="text-primary" onchange="toggleFields()">
+                <input type="checkbox" id="<?php echo $data_mod['cod_mod']?>" name="accessoires[]" value="<?php echo $data_mod['cod_mod']?>" class="text-primary" data-invitation-trigger="<?php echo $showsInvitationField ? '1' : '0'; ?>" data-chevalet-trigger="<?php echo $showsChevaletField ? '1' : '0'; ?>" onchange="toggleFields()">
                 <label for="<?php echo $data_mod['cod_mod']?>"><?php echo $data_mod['nom']?></label>
             </div>
             <?php } ?> 
@@ -421,9 +426,10 @@ function toggleFields() {
 
     checkboxes.forEach(checkbox => {
         if (checkbox.checked) {
-            if (checkbox.value == 1) {
+            if (checkbox.dataset.invitationTrigger === '1') {
                 showInvitation = true;
-            } else if (checkbox.value == 3) {
+            }
+            if (checkbox.dataset.chevaletTrigger === '1') {
                 showChevalet = true;
             }
         }

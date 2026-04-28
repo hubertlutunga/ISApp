@@ -8,6 +8,7 @@
    }else{
 	   $linkallinv = "../pages/liste_invites.php?event=".$codevent;
    } 
+	$audienceLabels = EventWorkspaceService::audienceLabels((string) ($type_event ?? ''));
    
    ?>
 
@@ -16,7 +17,7 @@
     <div class="col-xxl-12 col-xl-12 col-lg-12">
         <div class="card rounded-4">
             <div class="box-header d-flex b-0 justify-content-between align-items-center">
-                <h4 class="box-title">Mes invités</h4>
+				<h4 class="box-title"><?php echo htmlspecialchars($audienceLabels['mine'], ENT_QUOTES, 'UTF-8'); ?></h4>
                 <ul class="m-0" style="list-style: none;">
                     <li class="dropdown">
                         <!-- Bouton pour ouvrir la modale -->
@@ -39,13 +40,13 @@
 			<div class="modal-dialog modal-dialog-centered">
 				<div class="modal-content rounded-3">
 				<div class="modal-header">
-					<h5 class="modal-title" id="modalPdfInvitesLabel">Télécharger la liste des invités</h5>
+					<h5 class="modal-title" id="modalPdfInvitesLabel"><?php echo htmlspecialchars($audienceLabels['pdf_title'], ENT_QUOTES, 'UTF-8'); ?></h5>
 					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
 				</div>
 				<div class="modal-body text-center">
 					<p>Choisissez le mode d’affichage :</p>
 					<a href="../pages/liste_invites.php?event=<?php echo $codevent;?>" target="_blank" class="btn btn-primary m-2">
-						Classé par nom des invitées
+						<?php echo htmlspecialchars($audienceLabels['pdf_by_name'], ENT_QUOTES, 'UTF-8'); ?>
 					</a>
 					<a href="../pages/liste_invites_partb.php?event=<?php echo $codevent;?>" target="_blank" class="btn btn-success m-2">
 						Classé par nom des Tables
@@ -67,7 +68,7 @@
 					   <table class="table mb-0">
 						   <tbody id="inviteList">
  
-								 <input type="text" id="searchInput" class="form-control ps-15 bg-transparent" placeholder="Rechercher un nom..." style="height:40px;font-size:16px;border:1px solid #ccc;margin-bottom:10px;">
+								 <input type="text" id="searchInput" class="form-control ps-15 bg-transparent" placeholder="<?php echo htmlspecialchars($audienceLabels['search'], ENT_QUOTES, 'UTF-8'); ?>" style="height:40px;font-size:16px;border:1px solid #ccc;margin-bottom:10px;">
    
 								</td> 
 						   
@@ -150,7 +151,7 @@
  
                        
 					   <a class="dropdown-item" href="#" onclick="XXopenModal('<?php echo htmlspecialchars(ucfirst($row_inv['nom'])); ?>', '<?php echo $row_inv['id_inv']; ?>')" style="color:#aaa;">
-					   <i class="fa fa-share"></i> Notifier l'invité</a> 
+					   <i class="fa fa-share"></i> <?php echo htmlspecialchars($audienceLabels['notify'], ENT_QUOTES, 'UTF-8'); ?></a> 
 
 					   
 <?php if ($dataevent['invit_religieux'] !== NULL): ?>
@@ -164,7 +165,7 @@
 
 
 
-											   <a class="dropdown-item" href="index.php?page=modinv&idinv=<?php echo $row_inv['id_inv'];?>"><i class="fa fa-edit"></i> Modifier l'invité</a>
+											   <a class="dropdown-item" href="index.php?page=modinv&idinv=<?php echo $row_inv['id_inv'];?>"><i class="fa fa-edit"></i> <?php echo htmlspecialchars($audienceLabels['edit'], ENT_QUOTES, 'UTF-8'); ?></a>
    
  <a class="dropdown-item"
    href="#"
@@ -176,7 +177,7 @@
      '<?= htmlspecialchars($codevent, ENT_QUOTES) ?>',
      '<?= htmlspecialchars(ucfirst($row_inv['nom']), ENT_QUOTES) ?>'
    )">
-  <i class="fa fa-remove"></i> Supprimer l'invité
+					  <i class="fa fa-remove"></i> <?php echo htmlspecialchars($audienceLabels['delete'], ENT_QUOTES, 'UTF-8'); ?>
 </a>  
 
 
@@ -198,7 +199,7 @@
 								   }
    
 							   } else {
-								   echo '<tr><td colspan="3" class="text-left" style="font-style:italic;">Aucun invité trouvé</td></tr>';
+								   echo '<tr><td colspan="3" class="text-left" style="font-style:italic;">' . htmlspecialchars($audienceLabels['empty_reaction'], ENT_QUOTES, 'UTF-8') . '</td></tr>';
 							   }
    
 							   ?>

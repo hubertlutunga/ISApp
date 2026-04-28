@@ -150,6 +150,16 @@ if (!empty($_SESSION['user_phone'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $isAjaxRequest = strtolower((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')) === 'xmlhttprequest';
   $type_event = $_POST['event'] ?? null;
+  $typeEventName = '';
+  if ($type_event !== null && $type_event !== '') {
+    $eventTypeStmt = $pdo->prepare('SELECT nom FROM evenement WHERE cod_event = ? LIMIT 1');
+    $eventTypeStmt->execute([$type_event]);
+    $typeEventName = trim((string) ($eventTypeStmt->fetchColumn() ?: ''));
+  }
+  $normalizedTypeEventName = function_exists('mb_strtolower')
+    ? mb_strtolower($typeEventName, 'UTF-8')
+    : strtolower($typeEventName);
+  $isTrainingEvent = str_contains($normalizedTypeEventName, 'formation');
   $nomsAnniv = $_POST['nomsfetard'] ?? null;
   $prenomEpoux = $_POST['prenomEpoux'] ?? null;
   $prenomEpouse = $_POST['prenomEpouse'] ?? null;
@@ -166,7 +176,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'type_mar' => $_POST['weddingType'] ?? null,
         'modele_inv' => $primaryInvitationModel,
         'modele_chev' => $_POST['chevaletModel'] ?? null,
-        'date_event' => $_POST['dateHeure'] ?? null,
+        'date_event' => $isTrainingEvent ? ($_POST['formationStart'] ?? null) : ($_POST['dateHeure'] ?? null),
         'lieu' => $_POST['lieu'] ?? null,
         'adresse' => $_POST['adresse'] ?? null,
         'prenom_epoux' => $prenomEpoux,
@@ -174,11 +184,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'prenom_epouse' => $prenomEpouse,
         'nom_epouse' => $_POST['nomEpouse'] ?? null,
         'nomfetard' => $nomsAnniv,
-        'themeconf' => $_POST['themeConf'] ?? null,
+        'themeconf' => $isTrainingEvent ? ($_POST['formationSubject'] ?? null) : ($_POST['themeConf'] ?? null),
         'autres_precisions' => $_POST['details'] ?? null,
         'initiale_mar' => $initialemar,
         'lang' => $_POST['invitation_lang'] ?? null,
         'ordrepri' => $_POST['nameOrder'] ?? null,
+        'event_details' => [
+          'detail_type' => $isTrainingEvent ? 'formation' : null,
+          'date_debut' => $_POST['formationStart'] ?? null,
+          'date_fin' => $_POST['formationEnd'] ?? null,
+          'matiere' => $_POST['formationSubject'] ?? null,
+          'intervenant' => $_POST['formationInstructor'] ?? null,
+        ],
         'accessoire_quantities' => $_POST['accessoire_quantities'] ?? [],
         'invitation_models' => $selectedInvitationModels,
         'checkout' => array_merge($checkoutPreview, [
@@ -961,7 +978,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           $reqevent->execute();  
           while ($data_event = $reqevent->fetch()) {
         ?>
-        <option value="<?php echo $data_event['cod_event']?>" <?php if(@$_POST['event'] == $data_event['cod_event']){echo "selected";} ?>>
+        <option value="<?php echo $data_event['cod_event']?>" data-event-name="<?php echo htmlspecialchars((string) ($data_event['nom'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" <?php if(@$_POST['event'] == $data_event['cod_event']){echo "selected";} ?>>
           <?php echo $data_event['nom']?>
         </option>
         <?php } ?>  
@@ -1037,11 +1054,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               $accessoireIcon = 'fa-table-cells-large';
             }
 
+            $showsChevaletField = in_array($accessoireNomNormalized, ['chevalet de tables l', 'chevalet de table xxl'], true);
+
             $isChecked = in_array((string) $data_mod['cod_mod'], array_map('strval', $_POST['accessoires'] ?? []), true);
             $postedQuantity = $_POST['accessoire_quantities'][(string) $data_mod['cod_mod']] ?? '1';
         ?>
         <label class="accessory-option" for="acc_<?php echo $data_mod['cod_mod']?>">
-          <input type="checkbox" id="acc_<?php echo $data_mod['cod_mod']?>" name="accessoires[]" value="<?php echo $data_mod['cod_mod']?>" class="text-primary" data-requires-quantity="<?php echo $requiresQuantity ? '1' : '0'; ?>" data-quantity-target="acc_qty_<?php echo $data_mod['cod_mod']?>" onchange="toggleFields()" <?php echo $isChecked ? 'checked' : '';?>>
+          <input type="checkbox" id="acc_<?php echo $data_mod['cod_mod']?>" name="accessoires[]" value="<?php echo $data_mod['cod_mod']?>" class="text-primary" data-requires-quantity="<?php echo $requiresQuantity ? '1' : '0'; ?>" data-quantity-target="acc_qty_<?php echo $data_mod['cod_mod']?>" data-chevalet-trigger="<?php echo $showsChevaletField ? '1' : '0'; ?>" onchange="toggleFields()" <?php echo $isChecked ? 'checked' : '';?>>
           <span class="accessory-card">
             <span class="accessory-icon"><i class="fas <?php echo $accessoireIcon; ?>"></i></span>
             <span class="accessory-content">
@@ -1367,13 +1386,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </div>
     </div>
 
+    <div id="FormationFieldsGroup" style="display:none;">
+      <div class="section-head" style="margin-top:18px;">
+        <div>
+          <h3>Détails de la formation</h3>
+          <p>Renseignez les éléments utiles à la création d'une formation complète.</p>
+        </div>
+      </div>
+
+      <div class="form-grid two-col">
+        <div class="form-group form-span-full" id="FormationSubjectGroup">
+          <label for="formationSubject" class="form-label">Matière / module</label>
+          <div class="input-group mb-3">
+            <span class="input-group-text bg-transparent"><i class="fas fa-book-open"></i></span>
+            <input type="text" name="formationSubject" id="formationSubject" class="form-control ps-15 bg-transparent" placeholder="Ex. Gestion de projet" value="<?php echo htmlspecialchars((string) ($_POST['formationSubject'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
+          </div>
+        </div>
+
+        <div class="form-group" id="FormationStartGroup">
+          <label for="formationStart" class="form-label">Date de début</label>
+          <div class="input-group mb-3">
+            <span class="input-group-text bg-transparent"><i class="fas fa-calendar-day"></i></span>
+            <input type="datetime-local" name="formationStart" id="formationStart" class="form-control ps-15 bg-transparent" value="<?php echo htmlspecialchars((string) ($_POST['formationStart'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
+          </div>
+        </div>
+
+        <div class="form-group" id="FormationEndGroup">
+          <label for="formationEnd" class="form-label">Date de fin</label>
+          <div class="input-group mb-3">
+            <span class="input-group-text bg-transparent"><i class="fas fa-calendar-check"></i></span>
+            <input type="datetime-local" name="formationEnd" id="formationEnd" class="form-control ps-15 bg-transparent" value="<?php echo htmlspecialchars((string) ($_POST['formationEnd'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
+          </div>
+        </div>
+
+        <div class="form-group form-span-full" id="FormationInstructorGroup">
+          <label for="formationInstructor" class="form-label">Formateur / intervenant</label>
+          <div class="input-group mb-3">
+            <span class="input-group-text bg-transparent"><i class="fas fa-chalkboard-teacher"></i></span>
+            <input type="text" name="formationInstructor" id="formationInstructor" class="form-control ps-15 bg-transparent" placeholder="Ex. Dr Mbala" value="<?php echo htmlspecialchars((string) ($_POST['formationInstructor'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Commun (date/lieu/adresse/…/photos/CGU) -->
     <div class="form-grid two-col">
-      <div class="input-group date chmpdate form-span-full" style="margin-top:15px;">
+      <div class="input-group date chmpdate form-span-full" id="OtherDateTimeGroup" style="margin-top:15px;">
         <label for="datepicker2" class="form-label">Date et heure</label>
         <div class="input-group mb-3">
           <span class="input-group-text bg-transparent"><i class="fas fa-calendar"></i></span>
-          <input type="datetime-local" name="dateHeure" class="form-control ps-15 bg-transparent" id="datepicker2">
+          <input type="datetime-local" name="dateHeure" class="form-control ps-15 bg-transparent" id="datepicker2" value="<?php echo htmlspecialchars((string) ($_POST['dateHeure'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
         </div>
       </div>
 
@@ -1381,7 +1443,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <label for="lieu2" class="form-label">Salle / Espace</label>
         <div class="input-group mb-3">
           <span class="input-group-text bg-transparent"><i class="fas fa-map-marker-alt"></i></span>
-          <input type="text" name="lieu" id="lieu2" class="form-control ps-15 bg-transparent" placeholder="Ex. Salle Béatrice Hôtel">
+          <input type="text" name="lieu" id="lieu2" class="form-control ps-15 bg-transparent" placeholder="Ex. Salle Béatrice Hôtel" value="<?php echo htmlspecialchars((string) ($_POST['lieu'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
         </div>
       </div>
 
@@ -1389,7 +1451,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <label for="adresse2" class="form-label">Adresse</label>
         <div class="input-group mb-3">
           <span class="input-group-text bg-transparent"><i class="fas fa-map"></i></span>
-          <input type="text" name="adresse" id="adresse2" class="form-control ps-15 bg-transparent" placeholder="Ex. Gombe, Kinshasa">
+          <input type="text" name="adresse" id="adresse2" class="form-control ps-15 bg-transparent" placeholder="Ex. Gombe, Kinshasa" value="<?php echo htmlspecialchars((string) ($_POST['adresse'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
         </div>
       </div>
 
@@ -1556,8 +1618,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   const singleStepOthers = document.getElementById('singleStepOthers');
   const nomsAnnivGroup = document.getElementById('NomsAnnivGroup');
   const themeConfGroup = document.getElementById('ThemeConfGroup');
+  const formationFieldsGroup = document.getElementById('FormationFieldsGroup');
+  const otherDateTimeGroup = document.getElementById('OtherDateTimeGroup');
   const nomsfetard = document.getElementById('nomsfetard');
   const themeConf = document.getElementById('themeConf');
+  const formationSubject = document.getElementById('formationSubject');
+  const formationStart = document.getElementById('formationStart');
+  const formationEnd = document.getElementById('formationEnd');
+  const formationInstructor = document.getElementById('formationInstructor');
 
   const btnNext1 = document.getElementById('btnNext1');
   const btnNext2 = document.getElementById('btnNext2');
@@ -1676,6 +1744,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     element.style.display = shouldShow ? '' : 'none';
   }
 
+  function normalizeEventTypeName(label) {
+    const lower = String(label || '').toLowerCase();
+    return lower.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
+  function getSelectedEventTypeName() {
+    const selectedOption = eventTypeSelect?.selectedOptions?.[0];
+    return selectedOption ? (selectedOption.dataset.eventName || selectedOption.textContent || '') : '';
+  }
+
+  function isTrainingEventSelection() {
+    return normalizeEventTypeName(getSelectedEventTypeName()).includes('formation');
+  }
+
   function showWizard(shouldShow) {
     wizardStepper.classList.toggle('hidden', !shouldShow);
     wizardStepper.setAttribute('aria-hidden', shouldShow ? 'false' : 'true');
@@ -1763,7 +1845,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   function hasInvitationAccessory() {
     const selectedIds = getSelectedAccessoryIds();
-    return selectedIds.some((accessoryId) => invitationAccessoryIds.includes(accessoryId));
+    return selectedIds.some((accessoryId) => printedInvitationAccessoryIds.includes(accessoryId));
   }
 
   function invitationModelsNeedQuantity() {
@@ -2034,8 +2116,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   function toggleFields() {
     const selectedIds = getSelectedAccessoryIds();
-    const showInvitation = selectedIds.some((accessoryId) => invitationAccessoryIds.includes(accessoryId));
-    const showChevalet = selectedIds.includes('3');
+    const showInvitation = selectedIds.some((accessoryId) => printedInvitationAccessoryIds.includes(accessoryId));
+    const showChevalet = [...document.querySelectorAll('input[name="accessoires[]"]:checked')]
+      .some((checkbox) => checkbox.dataset.chevaletTrigger === '1');
 
     toggle(document.getElementById('ModInvitation'), showInvitation);
     toggle(document.getElementById('ModChevalet'), showChevalet);
@@ -2153,12 +2236,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   eventTypeSelect.addEventListener('change', function onTypeChange() {
     const value = this.value;
+    const isTrainingEvent = isTrainingEventSelection();
 
     if (!value) {
       toggle(accessoireGroup, false);
       toggle(invitationLanguageGroup, false);
       showWizard(false);
       singleStepOthers.style.display = 'none';
+      toggle(formationFieldsGroup, false);
+      toggle(otherDateTimeGroup, true);
       setSectionEnabled(step1, false);
       setSectionEnabled(step2, false);
       setSectionEnabled(step3, false);
@@ -2175,10 +2261,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       applyMode('wedding');
       toggle(nomsAnnivGroup, false);
       toggle(themeConfGroup, false);
+      toggle(formationFieldsGroup, false);
+      toggle(otherDateTimeGroup, true);
     } else {
       applyMode('single');
       toggle(nomsAnnivGroup, value === '2');
-      toggle(themeConfGroup, value === '3');
+      toggle(themeConfGroup, value === '3' && !isTrainingEvent);
+      toggle(formationFieldsGroup, isTrainingEvent);
+      toggle(otherDateTimeGroup, !isTrainingEvent);
     }
 
     toggleFields();
@@ -2213,7 +2303,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   dropdownToggle?.addEventListener('click', () => {
     if (!hasInvitationAccessory()) {
-      alert('Sélectionnez d\'abord une invitation imprimée ou électronique.');
+      alert('Sélectionnez d\'abord une invitation imprimée.');
       return;
     }
 
@@ -2392,10 +2482,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       const date2 = document.getElementById('datepicker2').value;
       const lieu2 = document.getElementById('lieu2').value;
       const adresse2 = document.getElementById('adresse2').value;
+      const isTrainingEvent = isTrainingEventSelection();
 
       if (typeEvent === '2' && !nomsfetard.value.trim()) { alert('Nom du/de la fêté(e) requis.'); return; }
-      if (typeEvent === '3' && !themeConf.value.trim()) { alert('Thème de la conférence requis.'); return; }
-      if (!date2) { alert('Date/heure requises.'); return; }
+      if (typeEvent === '3' && !isTrainingEvent && !themeConf.value.trim()) { alert('Thème de la conférence requis.'); return; }
+      if (isTrainingEvent && !formationSubject.value.trim()) { alert('Matière ou module requis.'); return; }
+      if (isTrainingEvent && !formationStart.value) { alert('Date de début requise.'); return; }
+      if (isTrainingEvent && !formationEnd.value) { alert('Date de fin requise.'); return; }
+      if (isTrainingEvent && new Date(formationEnd.value) < new Date(formationStart.value)) { alert('La date de fin doit être postérieure à la date de début.'); return; }
+      if (!isTrainingEvent && !date2) { alert('Date/heure requises.'); return; }
       if (!lieu2.trim()) { alert('Lieu requis.'); return; }
       if (!adresse2.trim()) { alert('Adresse requise.'); return; }
       if (!document.getElementById('basic_checkbox_1_o').checked) { alert('Veuillez accepter les termes.'); return; }

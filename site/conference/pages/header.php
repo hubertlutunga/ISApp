@@ -14,7 +14,7 @@
    if ($dataevent['logo']) {
       $logo = '<img src="../../couple/images/'.$dataevent['logo'].'" width="300px" alt="logo">';
    }else{
-      $logo = '<span style = "text-align:center;font-weight:bold;">VENEZ PARTICIPER<span>';
+       $logo = '<span style = "text-align:center;font-weight:bold;">'.htmlspecialchars((string) ($publicEventLabels['logo_cta'] ?? 'VENEZ PARTICIPER'), ENT_QUOTES, 'UTF-8').'<span>';
    }
 
 ?>

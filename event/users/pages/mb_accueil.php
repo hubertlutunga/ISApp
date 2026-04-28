@@ -38,6 +38,16 @@
 			$siteWebSummary = $siteWebSummary !== '' ? $siteWebSummary : 'Présentez votre événement avec un mini-site élégant, vos informations essentielles et vos confirmations en ligne.';
 			$eventLocationLabel = trim((string) ($dataevent['lieu'] ?? ''));
 			$eventLocationLabel = $eventLocationLabel !== '' ? $eventLocationLabel : 'Lieu à confirmer';
+			$isParticipantEvent = (string) $type_event !== '1';
+			$peopleLabelPlural = $isParticipantEvent ? 'Participants' : 'Invités';
+			$peopleLabelAdd = $isParticipantEvent ? 'Ajouter des participants' : 'Ajouter les invités';
+			$responseLabel = $isParticipantEvent ? 'Inscriptions' : 'Réponses';
+			$presenceLabel = $isParticipantEvent ? 'Présences confirmées' : 'Présences';
+			$showTableAndMenuActions = EventWorkspaceService::supportsTableAndMenu((string) $data_evenement, (string) $type_event);
+			$sitePreviewUrl = EventUrlService::publicUrl(
+				is_array($dataevent) ? $dataevent : ['cod_event' => $codevent, 'type_event' => $type_event],
+				$isAppConfig
+			);
 			?>
 
 			<div class="row salut">
@@ -355,13 +365,13 @@
 											   </div>
 											   <div class="mb-hero-metrics">
 												   <div class="mb-hero-metric">
-													   <span>Invités</span>
+													   <span><?php echo htmlspecialchars($peopleLabelPlural, ENT_QUOTES, 'UTF-8'); ?></span>
 													   <strong><?php echo (int) $total_inv; ?></strong>
 												   </div>
 												   <div class="mb-hero-metric">
 
 												   	   <a href="index.php?page=mb_conf_list"> 
-													   <span>Réponses</span>
+													   <span><?php echo htmlspecialchars($responseLabel, ENT_QUOTES, 'UTF-8'); ?></span>
 													   <strong><?php echo (int) $total_invconf; ?></strong>
 													   </a>
 												   </div>
@@ -369,7 +379,7 @@
 
 												   	   <a href="https://invitationspeciale.com/site/index.php?page=access&cod=<?php echo $codevent; ?>"> 
 
-													   <span>Présences</span>
+													   <span><?php echo htmlspecialchars($presenceLabel, ENT_QUOTES, 'UTF-8'); ?></span>
 													   <strong><?php echo (int) $total_invpre; ?></strong>
 
 													   </a>
@@ -383,8 +393,10 @@
 										   <p><?php echo htmlspecialchars($siteWebSummary, ENT_QUOTES, 'UTF-8'); ?></p>
 										   <div class="mb-inline-actions">
 											   <a class="mb-solid-action" href="index.php?page=conf_siteweb"><i class="mdi mdi-palette-outline"></i> Personnaliser</a>
-											   <a class="mb-outline-action" href="https://invitationspeciale.com/site/index.php?page=accueil&cod=<?php echo $codevent; ?>" target="_blank"><i class="mdi mdi-eye-outline"></i> Prévisualiser le site</a>
+											   <a class="mb-outline-action" href="<?php echo htmlspecialchars($sitePreviewUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank"><i class="mdi mdi-eye-outline"></i> Prévisualiser le site</a>
+											   <?php if ($showTableAndMenuActions) { ?>
 											   <a class="mb-outline-action" href="https://invitationspeciale.com/menu/index.php?page=accueil&cod=<?php echo $codevent; ?>" target="_blank"><i class="mdi mdi-food"></i> Voir le menu</a>
+											   <?php } ?>
 										   </div>
 									   </div>
 								   </div>
@@ -410,14 +422,16 @@
 									   <p>Accédez directement aux tâches les plus utilisées pour faire avancer votre événement.</p>
 									   <div class="mb-side-actions">
 										   <a class="mb-quick-btn mb-quick-btn-invite" href="index.php?page=addinvite&codevent=<?php echo $codevent?>">
-											   <i class="mdi mdi-plus me-2"></i> Ajouter les invités
+											   <i class="mdi mdi-plus me-2"></i> <?php echo htmlspecialchars($peopleLabelAdd, ENT_QUOTES, 'UTF-8'); ?>
 										   </a>
+										   <?php if ($showTableAndMenuActions) { ?>
 										   <a class="mb-quick-btn mb-quick-btn-table" href="index.php?page=addtable&codevent=<?php echo $codevent?>">
 											   <i class="mdi mdi-plus me-2"></i> Ajouter les tables
 										   </a>
 										   <a class="mb-quick-btn mb-quick-btn-menu" href="index.php?page=addmenu&codevent=<?php echo $codevent?>">
 											   <i class="mdi mdi-plus me-2"></i> Ajouter le menu
 										   </a>
+										   <?php } ?>
 										   <?php if ($displayvue === 'display:block;') { ?>
 										   <a class="mb-quick-btn mb-quick-btn-gift" href="javascript:void(0)">
 											   <i class="mdi mdi-plus me-2"></i> Liste des cadeaux

@@ -66,6 +66,11 @@ final class MailerService
         return true;
     }
 
+    public static function createMessage(object $mailer, array $config): object
+    {
+        return self::cloneMailer($mailer, $config);
+    }
+
     public static function sendPasswordReset(object $mailer, array $config, string $recipientEmail, string $recipientName, string $resetUrl): array
     {
         try {

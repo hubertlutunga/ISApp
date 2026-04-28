@@ -68,6 +68,7 @@ $date_formatted = (new DateTime($date_event))->format('Y-m-d H:i');
 ?>
 
 <p style="text-align:center;">
+	$audienceLabels = EventWorkspaceService::audienceLabels((string) ($type_event ?? ''));
 	<?php  // echo "La valeur de codevent est : " . $codevent; 
 	echo $salut;?> <b>
 	<?php echo mb_convert_case($datasession['noms'], MB_CASE_TITLE, "UTF-8");?> </b>!
@@ -150,7 +151,7 @@ $total_nonreagi = $row_citi - $total_invconf;
 	   <div class="col-xxl-12 col-xl-12 col-lg-12">
 		   <div class="card rounded-4">
 			   <div class="box-header d-flex b-0 justify-content-between align-items-center">
-				   <h4 class="box-title"><span class="text-primary"><?php echo $total_nonreagi; ?> n'ont pas encore réagi</span></h4>
+				   <h4 class="box-title"><span class="text-primary"><?php echo $total_nonreagi; ?> <?php echo htmlspecialchars($audienceLabels['nonreaction_title'], ENT_QUOTES, 'UTF-8'); ?></span></h4>
 				 
 			   </div>
    
@@ -159,7 +160,7 @@ $total_nonreagi = $row_citi - $total_invconf;
 					   <table class="table mb-0">
 						   <tbody id="inviteList">
  
-								 <input type="text" id="searchInput" class="form-control" placeholder="Rechercher un nom..." style="height:40px;font-size:16px;border:1px solid #ccc;margin-bottom:10px;">
+								 <input type="text" id="searchInput" class="form-control" placeholder="<?php echo htmlspecialchars($audienceLabels['search'], ENT_QUOTES, 'UTF-8'); ?>" style="height:40px;font-size:16px;border:1px solid #ccc;margin-bottom:10px;">
    
 								</td> 
 						   
@@ -224,11 +225,11 @@ $total_nonreagi = $row_citi - $total_invconf;
  
                        
 					   <a class="dropdown-item" href="#" onclick="openModal('<?php echo htmlspecialchars(ucfirst($row_inv['nom'])); ?>', '<?php echo $row_inv['id_inv']; ?>')" style="color:#aaa;">
-					   <i class="fa fa-share"></i> Notifier l'invité</a> 
+					   <i class="fa fa-share"></i> <?php echo htmlspecialchars($audienceLabels['notify'], ENT_QUOTES, 'UTF-8'); ?></a> 
 
 											   <a class="dropdown-item" href="../pages/invitation_elect.php?cod=<?php echo $row_inv['id_inv'];?>&event=<?php echo $codevent; ?>"><i class="fa fa-download"></i> Partager l'invitation</a>
 											   
-											   <a class="dropdown-item" href="index.php?page=modinv&idinv=<?php echo $row_inv['id_inv'];?>"><i class="fa fa-edit"></i> Modifier l'invité</a>
+											   <a class="dropdown-item" href="index.php?page=modinv&idinv=<?php echo $row_inv['id_inv'];?>"><i class="fa fa-edit"></i> <?php echo htmlspecialchars($audienceLabels['edit'], ENT_QUOTES, 'UTF-8'); ?></a>
             
 											   <!-- <a class="dropdown-item" href="#" style="color:red;" title="Suppression" onclick="confirmSuppInv(event)"><i class="fa fa-remove"></i> Supprimer l'invité</a> -->
 
@@ -266,7 +267,7 @@ $total_nonreagi = $row_citi - $total_invconf;
 								   }
    
 							   } else {
-								   echo '<tr><td colspan="3" class="text-left" style="font-style:italic;">Aucun invité trouvé</td></tr>';
+								   echo '<tr><td colspan="3" class="text-left" style="font-style:italic;">' . htmlspecialchars($audienceLabels['empty_reaction'], ENT_QUOTES, 'UTF-8') . '</td></tr>';
 							   }
    
 							   ?>

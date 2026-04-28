@@ -8,6 +8,17 @@
     
 <?php  include('editersite.php'); ?>   
 
+<?php
+$sitePreviewUrl = EventUrlService::publicUrl(
+  is_array($dataevent ?? null) ? $dataevent : ['cod_event' => $codevent, 'type_event' => $type_event],
+  $isAppConfig
+);
+
+$isPublicProgramEvent = (string) $type_event !== '1';
+$publicLogoPreview = trim((string) ($dataevent['logo'] ?? ''));
+$publicPhotoPreview = trim((string) ($dataevent['photo'] ?? ''));
+?>
+
 
 
 
@@ -100,13 +111,72 @@
           <h1 class="mb-siteconf-title">Façonnez une vitrine événementielle à la hauteur du parcours</h1>
           <p class="mb-siteconf-copy">Ajustez les visuels, les textes et les sections publiques depuis une interface plus cohérente avec le reste du tableau de bord.</p>
           <div class="mb-siteconf-actions">
-            <a class="mb-siteconf-preview" target="_blank" href="https://invitationspeciale.com/site/index.php?page=accueil&cod=<?php echo $codevent; ?>"><i class="mdi mdi-eye-outline"></i> Prévisualiser le site</a>
+            <a class="mb-siteconf-preview" target="_blank" href="<?php echo htmlspecialchars($sitePreviewUrl, ENT_QUOTES, 'UTF-8'); ?>"><i class="mdi mdi-eye-outline"></i> Prévisualiser le site</a>
           </div>
         </div>
 
 		<!-- Main content -->
 		<section class="content">
 			<div class="row">
+
+      <?php if ($isPublicProgramEvent) { ?>
+      <div class="col-12">
+        <div class="box open">
+        <div class="box-header">
+          <h4 class="box-title">Mini-site public</h4>
+        </div>
+
+        <div class="box-body">
+          <form action="" method="post" enctype="multipart/form-data" class="row g-3">
+          <div class="col-lg-6">
+            <label class="mb-5"><strong>Logo du site</strong></label>
+            <?php if ($publicLogoPreview !== '') { ?>
+            <img src="../../couple/images/<?php echo htmlspecialchars($publicLogoPreview, ENT_QUOTES, 'UTF-8'); ?>" alt="Logo actuel" style="display:block;width:100%;max-width:280px;max-height:140px;object-fit:contain;background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:12px;margin-bottom:12px;">
+            <?php } else { ?>
+            <div style="display:flex;align-items:center;justify-content:center;width:100%;max-width:280px;min-height:140px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:16px;margin-bottom:12px;color:#64748b;font-weight:700;">Aucun logo défini</div>
+            <?php } ?>
+            <input type="file" name="public_logo" accept="image/*" class="form-control">
+          </div>
+
+          <div class="col-lg-6">
+            <label class="mb-5"><strong>Photo principale</strong></label>
+            <?php if ($publicPhotoPreview !== '') { ?>
+            <img src="../../couple/images/<?php echo htmlspecialchars($publicPhotoPreview, ENT_QUOTES, 'UTF-8'); ?>" alt="Visuel actuel" style="display:block;width:100%;max-width:320px;max-height:180px;object-fit:cover;background:#fff;border:1px solid #e2e8f0;border-radius:16px;margin-bottom:12px;">
+            <?php } else { ?>
+            <div style="display:flex;align-items:center;justify-content:center;width:100%;max-width:320px;min-height:180px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:16px;margin-bottom:12px;color:#64748b;font-weight:700;">Aucun visuel principal défini</div>
+            <?php } ?>
+            <input type="file" name="public_photo" accept="image/*" class="form-control">
+          </div>
+
+          <div class="col-lg-6">
+            <label for="public_agency" class="mb-5"><strong>Nom de l'agence / organisateur</strong></label>
+            <input type="text" id="public_agency" name="public_agency" class="form-control" value="<?php echo htmlspecialchars((string) ($conferenceSiteSettings['agency'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" placeholder="Ex: Invitation Spéciale Events">
+          </div>
+
+          <div class="col-lg-3">
+            <label for="public_phone" class="mb-5"><strong>Téléphone</strong></label>
+            <input type="text" id="public_phone" name="public_phone" class="form-control" value="<?php echo htmlspecialchars((string) ($conferenceSiteSettings['phone'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" placeholder="Ex: +243000000000">
+          </div>
+
+          <div class="col-lg-3">
+            <label for="public_email" class="mb-5"><strong>Email</strong></label>
+            <input type="email" id="public_email" name="public_email" class="form-control" value="<?php echo htmlspecialchars((string) ($conferenceSiteSettings['email'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" placeholder="contact@exemple.com">
+          </div>
+
+          <div class="col-12">
+            <label for="public_iframe" class="mb-5"><strong>Iframe de localisation</strong></label>
+            <textarea id="public_iframe" name="public_iframe" class="form-control" rows="6" placeholder="Collez ici le code iframe Google Maps ou toute autre carte intégrée."><?php echo htmlspecialchars((string) ($conferenceSiteSettings['iframe'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></textarea>
+            <small style="display:block;margin-top:8px;color:#64748b;">Ce contenu alimente directement la carte affichée sur le mini-site public.</small>
+          </div>
+
+          <div class="col-12">
+            <button type="submit" name="submit_public_site_customization" class="btn btn-primary">Enregistrer le mini-site</button>
+          </div>
+          </form>
+        </div>
+        </div>
+      </div>
+      <?php } ?>
 			  
 
 <?php

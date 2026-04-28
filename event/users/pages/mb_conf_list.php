@@ -1,3 +1,92 @@
+<?php
+$confirmationMailFeedback = null;
+
+if (!function_exists('mbConfirmPreviewValue')) {
+	function mbConfirmPreviewValue(string $value, string $fallback = 'Non defini'): string
+	{
+		$value = trim($value);
+
+		return $value !== '' ? $value : $fallback;
+	}
+}
+
+if (!function_exists('mbConfirmEventSummary')) {
+	function mbConfirmEventSummary(array $event): string
+	{
+		$eventType = (string) ($event['type_event'] ?? '');
+
+		if ($eventType === '1') {
+			$firstName = trim((string) ($event['prenom_epoux'] ?? ''));
+			$secondName = trim((string) ($event['prenom_epouse'] ?? ''));
+			if ((string) ($event['ordrepri'] ?? '') !== 'm') {
+				$firstName = trim((string) ($event['prenom_epouse'] ?? ''));
+				$secondName = trim((string) ($event['prenom_epoux'] ?? ''));
+			}
+
+			$weddingType = trim((string) ($event['type_mar'] ?? ''));
+			$peopleLabel = trim($firstName . ' & ' . $secondName, ' &');
+			if ($weddingType === '' && $peopleLabel === '') {
+				return 'Evenement';
+			}
+
+			return trim('Mariage ' . $weddingType . ' de ' . $peopleLabel);
+		}
+
+		if ($eventType === '2') {
+			$name = trim((string) ($event['nomfetard'] ?? ''));
+
+			return $name !== '' ? trim('Anniversaire de ' . $name) : 'Evenement';
+		}
+
+		if ($eventType === '3') {
+			$name = trim((string) ($event['nomfetard'] ?? ''));
+
+			return $name !== '' ? trim('Conference ' . $name) : 'Evenement';
+		}
+
+		$name = trim((string) ($event['nomfetard'] ?? ''));
+
+		return $name !== '' ? $name : 'Evenement';
+	}
+}
+
+$eventPreviewSource = is_array($dataevent ?? null) ? $dataevent : [];
+if ($eventPreviewSource === [] && !empty($codevent)) {
+	$eventPreviewStmt = $pdo->prepare('SELECT * FROM events WHERE cod_event = :cod_event LIMIT 1');
+	$eventPreviewStmt->execute([':cod_event' => (int) $codevent]);
+	$eventPreviewSource = $eventPreviewStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+	$eventPreviewStmt->closeCursor();
+}
+
+$confirmationPreviewEvent = [
+	'type_event' => (string) ($eventPreviewSource['type_event'] ?? ($type_event ?? '')),
+	'prenom_epoux' => (string) ($eventPreviewSource['prenom_epoux'] ?? ($prenom_epoux ?? '')),
+	'prenom_epouse' => (string) ($eventPreviewSource['prenom_epouse'] ?? ($prenom_epouse ?? '')),
+	'ordrepri' => (string) ($eventPreviewSource['ordrepri'] ?? ($ordrepri ?? '')),
+	'type_mar' => (string) ($eventPreviewSource['type_mar'] ?? ($type_mar ?? '')),
+	'nomfetard' => (string) ($eventPreviewSource['nomfetard'] ?? ($nomfetard ?? '')),
+];
+
+$previewEventSummary = mbConfirmPreviewValue(mbConfirmEventSummary($confirmationPreviewEvent), 'Evenement');
+$previewDateSource = (string) ($eventPreviewSource['date_event'] ?? ($date_event ?? ''));
+$previewEventDate = $previewDateSource !== '' && strtotime($previewDateSource) !== false
+	? date('d/m/Y a H:i', strtotime($previewDateSource))
+	: 'Date non definie';
+$previewEventLieu = mbConfirmPreviewValue((string) ($eventPreviewSource['lieu'] ?? ($lieu ?? '')));
+$previewEventAdresse = mbConfirmPreviewValue((string) ($eventPreviewSource['adresse'] ?? ($adresse ?? '')));
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_confirmation_mail'])) {
+	$confirmationId = (int) ($_POST['confirmation_id'] ?? 0);
+	$confirmationMailFeedback = GuestConfirmationMailService::sendForConfirmation(
+		$pdo,
+		$mail,
+		$isAppConfig,
+		(int) $codevent,
+		$confirmationId,
+		isset($datasession['cod_user']) ? (int) $datasession['cod_user'] : null
+	);
+}
+?>
 
 <div class="wrapper"> 
 	<?php include('header.php');?>
@@ -31,6 +120,7 @@
 			$total_invconfnon = (int) ($confirmationStats['non'] ?? 0);
 			$total_invconfpt = (int) ($confirmationStats['plustard'] ?? 0);
 			$total_nonreagi = $row_citi - $total_invconf;
+			$audienceLabels = EventWorkspaceService::audienceLabels((string) ($type_event ?? ''));
 
 			if (!isset($_GET['reponse'])) {
 				$h4 = '<span class="text-info">Toutes les réponses</span>';
@@ -46,6 +136,9 @@
 			?>
 
 			<style>
+				.mb-confirm-alert{ margin:0 0 20px; padding:14px 18px; border-radius:18px; font-weight:700; }
+				.mb-confirm-alert.is-success{ background:#ecfdf5; border:1px solid #bbf7d0; color:#166534; }
+				.mb-confirm-alert.is-error{ background:#fef2f2; border:1px solid #fecaca; color:#991b1b; }
 				.mb-confirm-page{ padding:6px 0 34px; }
 				.mb-confirm-hero{ padding:30px; border-radius:30px; background:linear-gradient(135deg,#0f172a 0%,#13203a 56%,#0ea5e9 100%); color:#fff; box-shadow:0 24px 50px rgba(15,23,42,.16); margin-bottom:24px; }
 				.mb-confirm-kicker{ display:inline-flex; align-items:center; gap:8px; padding:7px 12px; border-radius:999px; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.16); font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; }
@@ -69,8 +162,14 @@
 				.mb-confirm-header{ padding:24px 26px 8px; }
 				.mb-confirm-subtitle{ margin:8px 0 0; color:#64748b; font-size:14px; }
 				.mb-confirm-body{ padding:0 26px 26px; }
-				.mb-confirm-table{ margin:0; }
+				.mb-confirm-toolbar{ display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px; flex-wrap:wrap; }
+				.mb-confirm-search-wrap{ position:relative; width:100%; max-width:420px; }
+				.mb-confirm-search-icon{ position:absolute; top:50%; left:16px; transform:translateY(-50%); color:#94a3b8; font-size:18px; pointer-events:none; }
+				.mb-confirm-search{ min-height:50px; padding-left:46px; border-radius:16px; border:1px solid #dbeafe; background:#f8fbff; box-shadow:none; }
+				.mb-confirm-table{ width:100%; margin:0; table-layout:fixed; }
 				.mb-confirm-row td{ padding:18px 0 !important; border-color:#eef2f7 !important; vertical-align:top; }
+				.mb-confirm-main-cell{ padding-right:18px !important; }
+				.mb-confirm-action-cell{ width:1%; white-space:nowrap; vertical-align:middle !important; }
 				.mb-confirm-name{ display:block; font-size:17px; font-weight:800; color:#0f172a; text-decoration:none; }
 				.mb-confirm-state{ display:inline-flex; align-items:center; margin-top:10px; padding:7px 11px; border-radius:999px; font-size:12px; font-weight:800; }
 				.mb-confirm-state.is-yes{ background:#ecfdf5; color:#15803d; border:1px solid #bbf7d0; }
@@ -79,25 +178,46 @@
 				.mb-confirm-meal{ display:inline-flex; align-items:center; padding:7px 11px; border-radius:999px; background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; font-size:12px; font-weight:700; }
 				.mb-confirm-note{ margin:12px 0 0; max-width:540px; color:#475569; line-height:1.7; font-size:14px; }
 				.mb-confirm-meta{ margin-top:10px; color:#94a3b8; font-size:12px; display:block; }
+				.mb-confirm-actions{ display:flex; align-items:center; justify-content:flex-end; gap:10px; }
+				.mb-confirm-mail-form{ margin:0; }
+				.mb-confirm-action-toggle{ display:inline-flex; align-items:center; justify-content:center; min-width:44px; min-height:36px; padding:0 12px; border-radius:999px; border:1px solid #fbbf24; background:#fff7ed; color:#b45309; }
+				.mb-confirm-action-toggle:hover{ background:#ffedd5; color:#92400e; }
+				.mb-confirm-action-menu{ border:0; border-radius:16px; box-shadow:0 20px 40px rgba(15,23,42,.16); padding:8px; min-width:220px; }
+				.mb-confirm-action-menu .dropdown-item{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:12px; font-weight:700; color:#475569; }
+				.mb-confirm-action-menu .dropdown-item:hover{ background:#f8fafc; color:#0f172a; }
+				.mb-confirm-mail-muted{ font-size:12px; font-weight:700; color:#94a3b8; }
+				.mb-confirm-mail-status{ display:inline-flex; align-items:center; gap:8px; margin-top:12px; padding:7px 11px; border-radius:999px; font-size:12px; font-weight:800; }
+				.mb-confirm-mail-status.is-sent{ background:#ecfeff; color:#0f766e; border:1px solid #a5f3fc; }
+				.mb-confirm-mail-status.is-pending{ background:#f8fafc; color:#64748b; border:1px solid #e2e8f0; }
 				.mb-confirm-empty{ padding:28px 0 !important; color:#64748b; text-align:center; font-style:italic; }
 				@media only screen and (max-width: 769px) {
 					.mb-confirm-page{ padding:0 0 28px; }
 					.mb-confirm-hero{ padding:22px 20px; border-radius:24px; }
 					.mb-confirm-title{ font-size:28px; }
+					.mb-confirm-toolbar{ align-items:stretch; }
+					.mb-confirm-search-wrap{ max-width:none; }
 					.mb-confirm-header,
 					.mb-confirm-body{ padding-left:18px; padding-right:18px; }
 					.mb-confirm-row td{ display:block; width:100%; padding:14px 0 !important; }
+					.mb-confirm-main-cell{ padding-right:0 !important; }
+					.mb-confirm-action-cell{ width:100%; white-space:normal; vertical-align:top !important; }
+					.mb-confirm-actions{ justify-content:flex-start; }
 				}
 			</style>
 
 			<section class="content">
 				<div class="mb-confirm-page">
+					<?php if ($confirmationMailFeedback !== null) { ?>
+					<div class="mb-confirm-alert <?php echo !empty($confirmationMailFeedback['success']) ? 'is-success' : 'is-error'; ?>">
+						<?php echo htmlspecialchars((string) ($confirmationMailFeedback['message'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>
+					</div>
+					<?php } ?>
 					<div class="mb-confirm-hero">
 						<span class="mb-confirm-kicker"><i class="mdi mdi-message-reply-text-outline"></i> Confirmations</span>
-						<h1 class="mb-confirm-title">Suivez les réponses des invités en un coup d'œil</h1>
-						<p class="mb-confirm-copy">Analysez les présences, identifiez les absences et gardez un historique clair des réponses envoyées pour votre événement.</p>
+						<h1 class="mb-confirm-title"><?php echo htmlspecialchars($audienceLabels['confirm_title'], ENT_QUOTES, 'UTF-8'); ?></h1>
+						<p class="mb-confirm-copy"><?php echo htmlspecialchars($audienceLabels['confirm_copy'], ENT_QUOTES, 'UTF-8'); ?></p>
 						<div class="mb-confirm-summary">
-							<span class="mb-confirm-pill"><i class="mdi mdi-account-group-outline"></i> Invités <strong><?php echo $row_citi; ?></strong></span>
+							<span class="mb-confirm-pill"><i class="mdi mdi-account-group-outline"></i> <?php echo htmlspecialchars($audienceLabels['confirm_summary'], ENT_QUOTES, 'UTF-8'); ?> <strong><?php echo $row_citi; ?></strong></span>
 							<span class="mb-confirm-pill"><i class="mdi mdi-email-check-outline"></i> Réponses <strong><?php echo $total_invconf; ?></strong></span>
 							<span class="mb-confirm-pill"><i class="mdi mdi-account-alert-outline"></i> Sans réponse <strong><?php echo $total_nonreagi; ?></strong></span>
 						</div>
@@ -112,14 +232,20 @@
 								<div class="box-header d-flex b-0 justify-content-between align-items-center mb-confirm-header">
 									<div>
 										<h4 class="box-title"><?php echo $h4; ?></h4>
-										<p class="mb-confirm-subtitle">Retrouvez les messages de confirmation, les repas choisis et les notes laissées par vos invités.</p>
+										<p class="mb-confirm-subtitle"><?php echo htmlspecialchars($audienceLabels['confirm_subtitle'], ENT_QUOTES, 'UTF-8'); ?></p>
 									</div>
 								</div>
 
 								<div class="card-body pt-0 mb-confirm-body">
+									<div class="mb-confirm-toolbar">
+										<div class="mb-confirm-search-wrap">
+											<i class="mdi mdi-magnify mb-confirm-search-icon"></i>
+											<input type="text" id="confirmationSearchInput" class="form-control mb-confirm-search" placeholder="Rechercher un invite, un email, un telephone ou un repas">
+										</div>
+									</div>
 									<div class="table-responsiveX">
 										<table class="tables mb-0 mb-confirm-table">
-											<tbody>
+											<tbody id="confirmationList">
 												<?php
 												$presenceFilter = isset($_GET['reponse']) ? (string) $_GET['reponse'] : null;
 												$confirmations = ConfirmationService::listByEvent($pdo, (int) $codevent, $presenceFilter);
@@ -129,10 +255,20 @@
 														$presence = $row_conf['presence'] === 'oui' ? "Présence confirmée" : 'Absence confirmée';
 														$presenceClass = $row_conf['presence'] === 'oui' ? 'is-yes' : 'is-no';
 														$note = $row_conf['note'] ? nl2br(htmlspecialchars($row_conf['note'])) : '';
+														$email = trim((string) ($row_conf['email'] ?? ''));
+														$hasEmail = filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
 														$phone = isset($row_conf['phone']) && $row_conf['phone'] !== '' ? 'Téléphone : ' . htmlspecialchars((string) $row_conf['phone']) : '';
+														$mailSendCount = (int) ($row_conf['mail_send_count'] ?? 0);
+														$searchHaystack = implode(' ', array_filter([
+															(string) ($row_conf['noms'] ?? ''),
+															$email,
+															(string) ($row_conf['phone'] ?? ''),
+															implode(' ', $row_conf['meal_names'] ?? []),
+															(string) ($row_conf['presence'] ?? ''),
+														]));
 														?>
-														<tr class="mb-confirm-row">
-															<td>
+														<tr id="conf-<?php echo (int) ($row_conf['cod_conf'] ?? 0); ?>" class="mb-confirm-row confirmation-item" data-search="<?php echo htmlspecialchars(mb_strtolower($searchHaystack, 'UTF-8'), ENT_QUOTES, 'UTF-8'); ?>">
+															<td class="pt-0 px-0 b-0 mb-confirm-main-cell">
 																<a class="mb-confirm-name" href="#"><?php echo htmlspecialchars(ucfirst($row_conf['noms'])); ?></a>
 																<span class="mb-confirm-state <?php echo $presenceClass; ?>"><?php echo $presence; ?></span>
 																<?php if (!empty($row_conf['meal_names'])) { ?>
@@ -144,6 +280,35 @@
 																<?php } ?>
 																<?php if ($note !== '') { ?><p class="mb-confirm-note"><?php echo $note; ?></p><?php } ?>
 																<span class="mb-confirm-meta"><?php echo $phone; ?><?php echo $phone !== '' ? ' • ' : ''; ?><?php echo 'Réponse envoyée le ' . date('d/m/Y', strtotime($row_conf['date_enreg'])); ?></span>
+																<?php if ($mailSendCount > 0) { ?>
+																<span class="mb-confirm-mail-status <?php echo $mailSendCount > 0 ? 'is-sent' : 'is-pending'; ?>">
+																	<i class="mdi mdi-email-check-outline"></i>
+																	<span>Mail envoyé</span>
+																</span>
+																<?php } ?>
+															</td>
+															<td class="text-end b-0 pt-0 px-0 mb-confirm-action-cell">
+																<div class="mb-confirm-actions">
+																<div class="list-icons d-inline-flex">
+																			<div class="list-icons-item dropdown">
+																				<a href="#" class="waves-effect waves-light btn btn-outline btn-rounded btn-warning mb-0 btn-sm list-icons-item dropdown-toggle mb-confirm-action-toggle" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-h" style="font-size:18px;"></i></a>
+																				<div class="dropdown-menu dropdown-menu-end mb-confirm-action-menu">
+																				<?php if ($hasEmail) { ?>
+																					<a class="dropdown-item js-confirm-mail-trigger" href="#" data-recipient="<?php echo htmlspecialchars((string) ucfirst($row_conf['noms']), ENT_QUOTES, 'UTF-8'); ?>" data-email="<?php echo htmlspecialchars($email, ENT_QUOTES, 'UTF-8'); ?>" data-event-summary="<?php echo htmlspecialchars($previewEventSummary, ENT_QUOTES, 'UTF-8'); ?>" data-event-date="<?php echo htmlspecialchars($previewEventDate, ENT_QUOTES, 'UTF-8'); ?>" data-event-lieu="<?php echo htmlspecialchars($previewEventLieu, ENT_QUOTES, 'UTF-8'); ?>" data-event-adresse="<?php echo htmlspecialchars($previewEventAdresse, ENT_QUOTES, 'UTF-8'); ?>" data-form-id="confirm-mail-<?php echo (int) ($row_conf['cod_conf'] ?? 0); ?>">
+																						<i class="mdi mdi-email-fast-outline"></i> Envoyer le mail
+																					</a>
+																				<?php } else { ?>
+																				<span class="dropdown-item" style="color:#94a3b8;cursor:not-allowed;"><i class="mdi mdi-email-off-outline"></i> Aucune adresse email</span>
+																				<?php } ?>
+																				<a class="dropdown-item" href="#" style="color:red;" onclick="confirmSuppConfirmation(event, '<?php echo (int) ($row_conf['cod_conf'] ?? 0); ?>', '<?php echo htmlspecialchars((string) $codevent, ENT_QUOTES, 'UTF-8'); ?>', '<?php echo htmlspecialchars(ucfirst((string) ($row_conf['noms'] ?? '')), ENT_QUOTES, 'UTF-8'); ?>')"><i class="fa fa-remove"></i> Supprimer la reponse</a>
+																			</div>
+																			</div>
+																		</div>
+																	<form method="post" id="confirm-mail-<?php echo (int) ($row_conf['cod_conf'] ?? 0); ?>" class="mb-confirm-mail-form" style="display:none;">
+																			<input type="hidden" name="confirmation_id" value="<?php echo (int) ($row_conf['cod_conf'] ?? 0); ?>">
+																			<input type="hidden" name="send_confirmation_mail" value="1">
+																		</form>
+																</div>
 															</td>
 														</tr>
 														<?php
@@ -279,6 +444,114 @@
 
 							function closeModal() {
 								document.getElementById('shareModal').style.display = 'none';
+							}
+
+							async function confirmSuppConfirmation(e, confirmationId, codEvent, nom) {
+								e.preventDefault();
+
+								if (typeof Swal === 'undefined') {
+									if (!window.confirm('Voulez-vous vraiment supprimer la reponse de ' + nom + ' ?')) {
+										return;
+									}
+								} else {
+									const result = await Swal.fire({
+										title: 'Supprimer ?',
+										html: 'Voulez-vous vraiment supprimer la reponse de <b>' + nom + '</b> ?',
+										icon: 'warning',
+										showCancelButton: true,
+										confirmButtonText: 'Oui, supprimer',
+										cancelButtonText: 'Annuler',
+										reverseButtons: true
+									});
+
+									if (!result.isConfirmed) {
+										return;
+									}
+								}
+
+								try {
+									const response = await fetch('pages/ajax_supprimer_confirmation.php', {
+										method: 'POST',
+										headers: { 'Content-Type': 'application/json' },
+										body: JSON.stringify({ confirmation_id: confirmationId, cod: codEvent })
+									});
+									const data = await response.json();
+
+									if (!response.ok || !data.success) {
+										throw new Error(data.message || 'Suppression impossible.');
+									}
+
+									const row = document.getElementById('conf-' + confirmationId);
+									if (row) {
+										row.remove();
+									}
+
+									if (typeof Swal !== 'undefined') {
+										Swal.fire({
+											title: 'Supprime',
+											text: nom + ' a ete retire de la liste des reponses.',
+											icon: 'success',
+											timer: 1800,
+											showConfirmButton: false
+										});
+									}
+								} catch (error) {
+									if (typeof Swal !== 'undefined') {
+										Swal.fire({
+											title: 'Erreur',
+											text: error.message,
+											icon: 'error'
+										});
+									} else {
+										window.alert(error.message);
+									}
+								}
+							}
+
+							document.querySelectorAll('.js-confirm-mail-trigger').forEach(function(trigger) {
+								trigger.addEventListener('click', function(event) {
+									event.preventDefault();
+
+									const data = trigger.dataset;
+									const form = document.getElementById(data.formId);
+									if (!form) {
+										return;
+									}
+
+									if (typeof Swal === 'undefined') {
+										if (window.confirm('Envoyer le mail a ' + data.recipient + ' (' + data.email + ') ?')) {
+											form.submit();
+										}
+										return;
+									}
+
+									Swal.fire({
+										title: 'Confirmer l envoi du mail',
+										text: 'Envoyer le mail a ' + data.recipient + ' (' + data.email + ') ?',
+										icon: 'question',
+										showCancelButton: true,
+										confirmButtonText: 'Envoyer maintenant',
+										cancelButtonText: 'Annuler',
+										focusCancel: true,
+										confirmButtonColor: '#0f766e',
+										cancelButtonColor: '#94a3b8'
+									}).then(function(result) {
+										if (result.isConfirmed) {
+											form.submit();
+										}
+									});
+								});
+							});
+
+							const confirmationSearchInput = document.getElementById('confirmationSearchInput');
+							if (confirmationSearchInput) {
+								confirmationSearchInput.addEventListener('input', function() {
+									const term = (confirmationSearchInput.value || '').toLowerCase().trim();
+									document.querySelectorAll('.confirmation-item').forEach(function(row) {
+										const haystack = row.getAttribute('data-search') || '';
+										row.style.display = term === '' || haystack.indexOf(term) !== -1 ? '' : 'none';
+									});
+								});
 							}
 						</script>
 </div>

@@ -122,8 +122,9 @@ if ($guestCivilite === "Mme") {
                         <div class="bg-white rounded10 shadow-lg mb-action-card">
 							<div class="content-top-agile p-20 pb-0"> 
                                 <p class="mb-0 text-fade">Modifier <?php echo htmlspecialchars((string) ($datainvite['nom'] ?? ''), ENT_QUOTES, 'UTF-8');?></p>
-                                <h2 class="mb-action-heading">Fiche invite</h2>
-                                <p class="mb-action-copy">Ajustez le profil de l'invite et sa place a table depuis une fiche plus lisible.</p>
+                                <?php $audienceLabels = EventWorkspaceService::audienceLabels((string) ($type_event ?? '')); ?>
+                                <h2 class="mb-action-heading"><?php echo htmlspecialchars($audienceLabels['sheet'], ENT_QUOTES, 'UTF-8'); ?></h2>
+                                <p class="mb-action-copy"><?php echo htmlspecialchars($audienceLabels['edit_copy'], ENT_QUOTES, 'UTF-8'); ?></p>
                                 
                                 
 
@@ -145,8 +146,8 @@ if(isset($_POST['submit'])){
  
 
   
-  if(!$invite){
-    echo "<div class='error' align=\"left\" style=\"color:red;font-weight:bold;text-align:center;\">Remplissez le nom de l'invité</div>";
+    if(!$invite){
+        echo "<div class='error' align=\"left\" style=\"color:red;font-weight:bold;text-align:center;\">" . htmlspecialchars($audienceLabels['name_required'], ENT_QUOTES, 'UTF-8') . "</div>";
   }else{
 
    

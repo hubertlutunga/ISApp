@@ -18,6 +18,10 @@ $formatted_date = $formatter->format($date);
 // Met la première lettre en majuscule
 $formatted_date = ucfirst($formatted_date); 
 
+$heroTitle = trim((string) ($dataevent['themeconf'] ?? ''));
+$heroTitle = $heroTitle !== '' ? $heroTitle : trim((string) ($typeevent ?? ''));
+$heroTitle = $heroTitle !== '' ? $heroTitle : trim((string) ($fetard ?? ''));
+
 
 
 ?>
@@ -30,7 +34,7 @@ $formatted_date = ucfirst($formatted_date);
                      <div class="banner-content-wrap text-center">
 
                         <p class="banner-info"><?php echo $formatted_date; ?>, <?php echo $lieu; ?></p>
-                        <h1 class="banner-title"><?php echo $dataevent['themeconf']; ?></h1>
+                        <h1 class="banner-title"><?php echo htmlspecialchars($heroTitle, ENT_QUOTES, 'UTF-8'); ?></h1>
 
                        
                         
@@ -89,7 +93,7 @@ $eventDate = isset($dataevent['date_event'])
 
                         <!-- Countdown end -->
                         <div class="banner-btn">
-                           <a href="#participer" class="btn">Participer</a>
+                           <a href="#participer" class="btn"><?php echo htmlspecialchars((string) ($publicEventLabels['hero_cta'] ?? 'Participer'), ENT_QUOTES, 'UTF-8'); ?></a>
                         </div>
 
                      </div>

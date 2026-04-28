@@ -92,10 +92,11 @@ $totalTables = EventTableService::countByEvent($pdo, (int) $codevent);
             </style>
 
             <div class="container h-p100 mb-action-page">
+				<?php $audienceLabels = EventWorkspaceService::audienceLabels((string) ($type_event ?? '')); ?>
                     <div class="mb-action-hero">
                         <span class="mb-action-kicker"><i class="mdi mdi-table-furniture"></i> Gestion des tables</span>
                         <h1 class="mb-action-title">Créez un plan de salle clair et professionnel</h1>
-                        <p class="mb-action-subtitle">Ajoutez vos tables, structurez la salle et gardez un repère simple pour affecter les invités au bon endroit.</p>
+						<p class="mb-action-subtitle">Ajoutez vos tables, structurez la salle et gardez un repère simple pour affecter les <?php echo htmlspecialchars($audienceLabels['plural'], ENT_QUOTES, 'UTF-8'); ?> au bon endroit.</p>
                         <div class="mb-action-stats">
                             <span class="mb-action-stat"><i class="mdi mdi-table-chair"></i> Tables <strong><?= $totalTables ?></strong></span>
                         </div>
@@ -109,7 +110,7 @@ $totalTables = EventTableService::countByEvent($pdo, (int) $codevent);
 							<div class="content-top-agile p-20 pb-0"> 
 								<p class="mb-0 text-fade">Ajout des tables</p>
 								<h2 class="mb-action-heading">Nouvelle table</h2>
-								<p class="mb-action-copy">Définissez un nom clair pour faciliter la répartition des invités et la lecture du plan de salle.</p>
+                                <p class="mb-action-copy">Définissez un nom clair pour faciliter la répartition des <?php echo htmlspecialchars($audienceLabels['plural'], ENT_QUOTES, 'UTF-8'); ?> et la lecture du plan de salle.</p>
 
  
                                 
