@@ -108,9 +108,22 @@ final class EventWorkspaceService
         return ucfirst((string) $formatter->format($date));
     }
 
-    public static function audienceLabels(string $typeEvent): array
+    public static function audienceLabels(string $typeEvent, string $eventTypeName = ''): array
     {
-        if ($typeEvent === '1') {
+        $normalizedTypeName = self::normalizeEventTypeLabel($eventTypeName);
+        $participantEventCodes = ['3', '5', '9'];
+        $isParticipantEvent = in_array($typeEvent, $participantEventCodes, true);
+
+        if (!$isParticipantEvent && $normalizedTypeName !== '') {
+            foreach (['formation', 'conference', 'concert'] as $participantType) {
+                if (strpos($normalizedTypeName, $participantType) !== false) {
+                    $isParticipantEvent = true;
+                    break;
+                }
+            }
+        }
+
+        if (!$isParticipantEvent) {
             return [
                 'plural' => 'invites',
                 'plural_cap' => 'Invités',

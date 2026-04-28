@@ -287,43 +287,28 @@ if(isset($_POST['submit'])){
 
 
 
-        // Envoi de l'email
+        // L'inscription en base fait foi, l'email reste un accusé de réception facultatif.
         $speudo = $nom;
-        $email = $emailinvite; // Assurez-vous que cette variable contient une adresse email valide
-      $subject = strtoupper($fetard.' '.($publicEventLabels['subject_suffix'] ?? 'RSVP'));
-      $message = "Bonjour $speudo,\n\n".($publicEventLabels['email_message'] ?? "Votre inscription nous est parvenue avec succès.")."\n\nMerci!";
-        
-        // Ajout des en-têtes pour le format et l'encodage
-        $headers = "From: contact@invitationspeciale.com\r\n";  // Adresse d'envoi
-        $headers .= "Reply-To: contact@invitationspeciale.com\r\n"; // Adresse de réponse
+        $email = $emailinvite;
+        $subject = strtoupper($fetard.' '.($publicEventLabels['subject_suffix'] ?? 'RSVP'));
+        $message = "Bonjour $speudo,\n\n".($publicEventLabels['email_message'] ?? "Votre inscription nous est parvenue avec succès.")."\n\nMerci!";
+
+        $headers = "From: contact@invitationspeciale.com\r\n";
+        $headers .= "Reply-To: contact@invitationspeciale.com\r\n";
         $headers .= "MIME-Version: 1.0\r\n";
         $headers .= "Content-Type: text/plain; charset=utf-8\r\n";
         $headers .= "Content-Transfer-Encoding: 8bit\r\n";
-   
-        if (mail($email, $subject, $message, $headers)) {
 
-           // Si l'envoi est réussi, afficher l'alerte 
-           echo '<script>
-              Swal.fire({
-                 title: "RSVP!",
-                 text: '.json_encode((string) ($publicEventLabels['success_message'] ?? 'Votre inscription a été confirmée avec succès'), JSON_UNESCAPED_UNICODE).',
-                 icon: "success",
-                 confirmButtonText: "OK"
-              });
-           </script>';
+        @mail($email, $subject, $message, $headers);
 
-        }else{
-           // Si l'envoi échoue, afficher l'erreur
-           echo "Le message n'a pas pu être envoyé"; 
-           echo '<script>
-              Swal.fire({
-                 title: "Erreur!",
-                 text: "Le message n\'a pas pu être envoyé",
-                 icon: "error",
-                 confirmButtonText: "OK"
-              });
-           </script>';
-        }
+        echo '<script>
+           Swal.fire({
+              title: "RSVP!",
+              text: '.json_encode((string) ($publicEventLabels['success_message'] ?? 'Votre inscription a été confirmée avec succès'), JSON_UNESCAPED_UNICODE).',
+              icon: "success",
+              confirmButtonText: "OK"
+           });
+        </script>';
      
       
 

@@ -38,9 +38,10 @@
 			$siteWebSummary = $siteWebSummary !== '' ? $siteWebSummary : 'Présentez votre événement avec un mini-site élégant, vos informations essentielles et vos confirmations en ligne.';
 			$eventLocationLabel = trim((string) ($dataevent['lieu'] ?? ''));
 			$eventLocationLabel = $eventLocationLabel !== '' ? $eventLocationLabel : 'Lieu à confirmer';
-			$isParticipantEvent = (string) $type_event !== '1';
-			$peopleLabelPlural = $isParticipantEvent ? 'Participants' : 'Invités';
-			$peopleLabelAdd = $isParticipantEvent ? 'Ajouter des participants' : 'Ajouter les invités';
+			$audienceLabels = EventWorkspaceService::audienceLabels((string) ($type_event ?? ''), (string) ($data_evenement ?? ''));
+			$isParticipantEvent = ($audienceLabels['plural'] ?? 'invites') === 'participants';
+			$peopleLabelPlural = $audienceLabels['plural_cap'] ?? 'Invités';
+			$peopleLabelAdd = $audienceLabels['add_plural'] ?? 'Ajouter les invités';
 			$responseLabel = $isParticipantEvent ? 'Inscriptions' : 'Réponses';
 			$presenceLabel = $isParticipantEvent ? 'Présences confirmées' : 'Présences';
 			$showTableAndMenuActions = EventWorkspaceService::supportsTableAndMenu((string) $data_evenement, (string) $type_event);
