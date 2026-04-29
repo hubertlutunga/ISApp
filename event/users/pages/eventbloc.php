@@ -740,7 +740,7 @@ if (!empty($events)) {
             ? '<div style="display:grid; gap:16px; margin-top:18px;">' +
                 '<form method="post" action="" style="margin:0;">' +
                   '<input type="hidden" name="impersonate_user_id" value="' + clientId + '">' +
-                  '<button type="submit" class="swal2-confirm swal2-styled" style="display:inline-flex; background:#2563eb;">Se connecter au compte client</button>' +
+                  '<button type="submit" style="display:inline-flex; align-items:center; justify-content:center; border:0; border-radius:0.25em; padding:0.625em 1.1em; background:#2563eb; color:#fff; font-size:1em; font-weight:500; cursor:pointer;">Se connecter au compte client</button>' +
                 '</form>' +
                 '<form method="post" action="" style="margin:0; padding:16px; border:1px solid #e2e8f0; border-radius:16px; background:#f8fafc;">' +
                   '<input type="hidden" name="admin_change_client_password" value="1">' +
@@ -748,7 +748,7 @@ if (!empty($events)) {
                   '<div style="font-weight:700; color:#0f172a; margin-bottom:10px;">Changer le mot de passe de ' + clientName + '</div>' +
                   '<input type="password" name="new_password" minlength="8" class="swal2-input" placeholder="Nouveau mot de passe" style="width:100%; margin:0 0 12px;">' +
                   '<input type="password" name="confirm_new_password" minlength="8" class="swal2-input" placeholder="Confirmer le mot de passe" style="width:100%; margin:0 0 12px;">' +
-                  '<button type="submit" class="swal2-confirm swal2-styled" style="display:inline-flex; background:#0f172a;">Modifier le mot de passe</button>' +
+                  '<button type="submit" style="display:inline-flex; align-items:center; justify-content:center; border:0; border-radius:0.25em; padding:0.625em 1.1em; background:#0f172a; color:#fff; font-size:1em; font-weight:500; cursor:pointer;">Modifier le mot de passe</button>' +
                 '</form>' +
               '</div>'
             : '<div style="margin-top:18px; padding:14px 16px; border-radius:14px; background:#fff7ed; color:#9a3412;">Les actions de connexion et de mot de passe sont disponibles uniquement pour les comptes clients.</div>';
@@ -757,8 +757,9 @@ if (!empty($events)) {
             title: 'Informations client',
             html: '<div style="text-align:left;"><table style="width:100%; border-collapse:collapse;">' + rows + '</table>' + accountActions + '</div>',
             width: 720,
+            showConfirmButton: false,
             showCloseButton: true,
-            confirmButtonText: 'Fermer'
+            focusConfirm: false
           });
         }
         </script>
