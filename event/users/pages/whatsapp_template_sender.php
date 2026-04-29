@@ -50,7 +50,77 @@ if (!function_exists('isapp_whatsapp_sender_display_name')) {
             $name = trim($fallback);
         }
 
-        return $name !== '' ? ucfirst(strip_tags($name)) : 'Invite';
+        return $name !== '' ? trim(strip_tags($name)) : 'Invite';
+    }
+}
+
+if (!function_exists('isapp_whatsapp_sender_invite_prefix')) {
+    function isapp_whatsapp_sender_invite_prefix(array $invite): string
+    {
+        $salutation = trim((string) ($invite['sing'] ?? ''));
+
+        if ($salutation === 'C') {
+            return 'Couple';
+        }
+
+        if ($salutation === 'Mr' || $salutation === 'M') {
+            return 'Monsieur';
+        }
+
+        if ($salutation === 'Mme') {
+            return 'Madame';
+        }
+
+        return '';
+    }
+}
+
+if (!function_exists('isapp_whatsapp_sender_full_invite_name')) {
+    function isapp_whatsapp_sender_full_invite_name(array $invite, string $fallback = 'Invite'): string
+    {
+        $displayName = isapp_whatsapp_sender_display_name($invite, $fallback);
+        $prefix = isapp_whatsapp_sender_invite_prefix($invite);
+
+        return trim($prefix . ' ' . $displayName);
+    }
+}
+
+if (!function_exists('isapp_whatsapp_sender_normalize_text')) {
+    function isapp_whatsapp_sender_normalize_text(string $text): string
+    {
+        $text = trim($text);
+        $text = preg_replace('/\s+/', ' ', $text);
+
+        return $text;
+    }
+}
+
+if (!function_exists('isapp_whatsapp_sender_normalize_wedding_type')) {
+    function isapp_whatsapp_sender_normalize_wedding_type(string $weddingType): string
+    {
+        $normalized = mb_strtolower(isapp_whatsapp_sender_normalize_text($weddingType), 'UTF-8');
+
+        if ($normalized === '') {
+            return 'religieux';
+        }
+
+        if (strpos($normalized, 'coutum') !== false) {
+            return 'coutumier';
+        }
+
+        if (strpos($normalized, 'civil') !== false) {
+            return 'civil';
+        }
+
+        if (strpos($normalized, 'bened') !== false || strpos($normalized, 'bénéd') !== false) {
+            return 'benediction';
+        }
+
+        if (strpos($normalized, 'relig') !== false || strpos($normalized, 'nupt') !== false) {
+            return 'religieux';
+        }
+
+        return $normalized;
     }
 }
 
@@ -85,53 +155,53 @@ if (!function_exists('isapp_whatsapp_sender_event_label')) {
     function isapp_whatsapp_sender_event_label(array $event): string
     {
         $eventType = (string) ($event['type_event'] ?? '');
-        $eventDate = trim((string) ($event['date_event'] ?? ''));
-        $dateLabel = '';
-
-        if ($eventDate !== '') {
-            $timestamp = strtotime($eventDate);
-            if ($timestamp !== false) {
-                $dateLabel = date('d M Y a H:i', $timestamp);
-            }
-        }
 
         if ($eventType === '1') {
-            $signature = isapp_whatsapp_sender_signature($event);
-            $weddingType = trim((string) ($event['type_mar'] ?? ''));
-            $prefix = trim('au Mariage ' . $weddingType . ' de ' . $signature);
+            $weddingType = isapp_whatsapp_sender_normalize_wedding_type((string) ($event['type_mar'] ?? ''));
 
-            return $dateLabel !== '' ? $prefix . ', le ' . $dateLabel : $prefix;
+            if ($weddingType === 'coutumier') {
+                return 'la soiree de notre mariage coutumier';
+            }
+
+            if ($weddingType === 'civil') {
+                return 'la ceremonie de notre mariage civil';
+            }
+
+            return 'la benediction nuptiale';
         }
 
         if ($eventType === '2') {
-            $name = trim((string) ($event['nomfetard'] ?? '')) ?: trim((string) ($event['nom_event'] ?? ''));
-            $prefix = $name !== '' ? "a l'anniversaire de " . $name : "a l'anniversaire";
-
-            return $dateLabel !== '' ? $prefix . ', le ' . $dateLabel : $prefix;
+            return 'notre anniversaire';
         }
 
-        $name = trim((string) ($event['nomfetard'] ?? '')) ?: trim((string) ($event['nom_event'] ?? $event['titre_event'] ?? ''));
-        $prefix = $name !== '' ? 'a la conference de ' . $name : 'a la conference';
+        if ($eventType === '3') {
+            return 'notre conference';
+        }
 
-        return $dateLabel !== '' ? $prefix . ', le ' . $dateLabel : $prefix;
+        $eventName = trim((string) ($event['nom_event'] ?? $event['titre_event'] ?? ''));
+        if ($eventName !== '') {
+            return $eventName;
+        }
+
+        return 'notre evenement';
     }
 }
 
 if (!function_exists('isapp_whatsapp_sender_filename_base')) {
     function isapp_whatsapp_sender_filename_base(array $event, array $invite, string $fallbackInviteName): string
     {
-        $displayName = isapp_whatsapp_sender_display_name($invite, $fallbackInviteName);
-        $salutation = trim((string) ($invite['sing'] ?? ''));
-
-        if ($salutation === 'M') {
-            $displayName = 'Monsieur ' . $displayName;
-        } elseif ($salutation === 'Mme') {
-            $displayName = 'Madame ' . $displayName;
-        }
+        $displayName = isapp_whatsapp_sender_full_invite_name($invite, $fallbackInviteName);
 
         $eventType = (string) ($event['type_event'] ?? '');
         if ($eventType === '1') {
-            $signature = isapp_whatsapp_sender_signature($event);
+            $firstName = trim((string) ($event['prenom_epoux'] ?? ''));
+            $secondName = trim((string) ($event['prenom_epouse'] ?? ''));
+            if ((string) ($event['ordrepri'] ?? '') !== 'm') {
+                $firstName = trim((string) ($event['prenom_epouse'] ?? ''));
+                $secondName = trim((string) ($event['prenom_epoux'] ?? ''));
+            }
+
+            $signature = trim($firstName . ' & ' . $secondName, ' &');
 
             return trim($signature . ' - INVITATION ' . $displayName);
         }
@@ -147,6 +217,7 @@ if (!function_exists('isapp_whatsapp_sender_sanitize_filename')) {
     {
         $filename = trim($filename);
         $filename = preg_replace('/\.pdf$/i', '', $filename);
+        $filename = rawurldecode($filename);
         $filename = preg_replace('/[\/:*?"<>|]/', '', $filename);
         $filename = mb_convert_encoding($filename, 'UTF-8', 'UTF-8');
         $asciiFilename = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $filename);
@@ -245,7 +316,18 @@ if (!function_exists('isapp_whatsapp_sender_ensure_public_pdf')) {
             throw new RuntimeException('Impossible de publier le PDF pour le template WhatsApp.');
         }
 
-        return isapp_whatsapp_sender_public_media_url($encodedStem);
+        $mediaUrl = isapp_whatsapp_sender_public_media_url($encodedStem);
+        $publicHeaders = @get_headers($mediaUrl);
+        if ($publicHeaders === false) {
+            throw new RuntimeException('Impossible de verifier l’URL publique finale du PDF WhatsApp.');
+        }
+
+        $statusLine = (string) ($publicHeaders[0] ?? '');
+        if (stripos($statusLine, '200') === false) {
+            throw new RuntimeException('L’URL publique finale du PDF WhatsApp n’est pas accessible: ' . $mediaUrl);
+        }
+
+        return $mediaUrl;
     }
 }
 
@@ -378,7 +460,7 @@ if (!function_exists('isapp_whatsapp_send_template_invitation')) {
         $encodedStem = isapp_whatsapp_sender_encoded_stem($filenameBase);
         $mediaUrl = isapp_whatsapp_sender_ensure_public_pdf($relativePdfLink, $encodedStem);
 
-        $contentSid = (string) (getenv('TWILIO_WHATSAPP_TEMPLATE_SID') ?: 'HX89f7cc8f64f0b71ade4a22cdffcb744d');
+        $contentSid = (string) (getenv('TWILIO_WHATSAPP_TEMPLATE_SID') ?: 'HX2815dcf0b7e5757a4daef57c588e0d4');
         $twilioSid = (string) (getenv('TWILIO_ACCOUNT_SID') ?: 'AC5cbb94f85695ce16d97ce2ca2c3f7db0');
         $twilioToken = (string) (getenv('TWILIO_AUTH_TOKEN') ?: '2fc99f87d42f61c691c01df995fb8290');
         $twilioFrom = (string) (getenv('TWILIO_WHATSAPP_FROM') ?: 'whatsapp:+17167403177');
