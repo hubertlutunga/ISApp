@@ -239,10 +239,17 @@ if (!function_exists('isapp_whatsapp_sender_encoded_stem')) {
     }
 }
 
-if (!function_exists('isapp_whatsapp_sender_absolute_file_path')) {
-    function isapp_whatsapp_sender_absolute_file_path(string $encodedStem): string
+if (!function_exists('isapp_whatsapp_sender_disk_stem')) {
+    function isapp_whatsapp_sender_disk_stem(string $filenameBase): string
     {
-        return dirname(__DIR__, 2) . '/pages/fichiers/' . $encodedStem . '.pdf';
+        return isapp_whatsapp_sender_sanitize_filename($filenameBase);
+    }
+}
+
+if (!function_exists('isapp_whatsapp_sender_absolute_file_path')) {
+    function isapp_whatsapp_sender_absolute_file_path(string $diskStem): string
+    {
+        return dirname(__DIR__, 2) . '/pages/fichiers/' . $diskStem . '.pdf';
     }
 }
 
@@ -291,7 +298,7 @@ if (!function_exists('isapp_whatsapp_sender_download_pdf')) {
 }
 
 if (!function_exists('isapp_whatsapp_sender_ensure_public_pdf')) {
-    function isapp_whatsapp_sender_ensure_public_pdf(string $relativePdfLink, string $encodedStem): string
+    function isapp_whatsapp_sender_ensure_public_pdf(string $relativePdfLink, string $diskStem, string $encodedStem): string
     {
         if ($relativePdfLink === '') {
             throw new RuntimeException('Le lien du PDF est introuvable.');
@@ -299,7 +306,7 @@ if (!function_exists('isapp_whatsapp_sender_ensure_public_pdf')) {
 
         $relativePdfLink = preg_replace('#^\.\./#', '', $relativePdfLink);
         $sourceUrl = isapp_whatsapp_sender_public_event_url(ltrim($relativePdfLink, '/'));
-        $targetPath = isapp_whatsapp_sender_absolute_file_path($encodedStem);
+        $targetPath = isapp_whatsapp_sender_absolute_file_path($diskStem);
         $targetDirectory = dirname($targetPath);
 
         if (!is_dir($targetDirectory) && !mkdir($targetDirectory, 0775, true) && !is_dir($targetDirectory)) {
@@ -457,10 +464,11 @@ if (!function_exists('isapp_whatsapp_send_template_invitation')) {
         $eventLabel = isapp_whatsapp_sender_event_label($event);
         $signature = isapp_whatsapp_sender_signature($event);
         $filenameBase = isapp_whatsapp_sender_filename_base($event, $invite, $recipientName);
+        $diskStem = isapp_whatsapp_sender_disk_stem($filenameBase);
         $encodedStem = isapp_whatsapp_sender_encoded_stem($filenameBase);
-        $mediaUrl = isapp_whatsapp_sender_ensure_public_pdf($relativePdfLink, $encodedStem);
+        $mediaUrl = isapp_whatsapp_sender_ensure_public_pdf($relativePdfLink, $diskStem, $encodedStem);
 
-        $contentSid = (string) (getenv('TWILIO_WHATSAPP_TEMPLATE_SID') ?: 'HX2815dcf0b7e5757a4daef57c588e0d4');
+        $contentSid = (string) (getenv('TWILIO_WHATSAPP_TEMPLATE_SID') ?: 'HX4865eb7fdd890b18ae776de21692c3');
         $twilioSid = (string) (getenv('TWILIO_ACCOUNT_SID') ?: 'AC5cbb94f85695ce16d97ce2ca2c3f7db0');
         $twilioToken = (string) (getenv('TWILIO_AUTH_TOKEN') ?: '2fc99f87d42f61c691c01df995fb8290');
         $twilioFrom = (string) (getenv('TWILIO_WHATSAPP_FROM') ?: 'whatsapp:+17167403177');
