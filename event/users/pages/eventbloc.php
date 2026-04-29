@@ -464,6 +464,14 @@ if (!empty($events)) {
                       data-tailleqr="<?= htmlspecialchars((string) ($dataevent['tailleqr'] ?? '90'), ENT_QUOTES, 'UTF-8') ?>"
                       data-lang="<?= htmlspecialchars((string) ($dataevent['lang'] ?? 'fr'), ENT_QUOTES, 'UTF-8') ?>"
                     ><i class="fa fa-file"></i> Inv électronique</a>
+                    <?php if ((string) ($dataevent['client_type_user'] ?? '') === '2') { ?>
+                      <form method="post" action="" style="margin:0;">
+                        <input type="hidden" name="impersonate_user_id" value="<?= htmlspecialchars((string) ($dataevent['client_code'] ?? $dataevent['cod_user'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                        <button type="submit" class="dropdown-item action-item action-client" style="width:100%; border:0; background:transparent; text-align:left;">
+                          <i class="fa fa-sign-in"></i> Se connecter au compte client
+                        </button>
+                      </form>
+                    <?php } ?>
                     <a
                       onclick="openClientModal(this); return false;"
                       class="dropdown-item action-item action-client"
@@ -738,10 +746,6 @@ if (!empty($events)) {
           const isClientAccount = (dataset.clientType || '') === '2';
           const accountActions = isClientAccount
             ? '<div style="display:grid; gap:16px; margin-top:18px;">' +
-                '<form method="post" action="" style="margin:0;">' +
-                  '<input type="hidden" name="impersonate_user_id" value="' + clientId + '">' +
-                  '<button type="submit" style="display:inline-flex; align-items:center; justify-content:center; border:0; border-radius:0.25em; padding:0.625em 1.1em; background:#2563eb; color:#fff; font-size:1em; font-weight:500; cursor:pointer;">Se connecter au compte client</button>' +
-                '</form>' +
                 '<form method="post" action="" style="margin:0; padding:16px; border:1px solid #e2e8f0; border-radius:16px; background:#f8fafc;">' +
                   '<input type="hidden" name="admin_change_client_password" value="1">' +
                   '<input type="hidden" name="target_user_id" value="' + clientId + '">' +
@@ -751,7 +755,7 @@ if (!empty($events)) {
                   '<button type="submit" style="display:inline-flex; align-items:center; justify-content:center; border:0; border-radius:0.25em; padding:0.625em 1.1em; background:#0f172a; color:#fff; font-size:1em; font-weight:500; cursor:pointer;">Modifier le mot de passe</button>' +
                 '</form>' +
               '</div>'
-            : '<div style="margin-top:18px; padding:14px 16px; border-radius:14px; background:#fff7ed; color:#9a3412;">Les actions de connexion et de mot de passe sont disponibles uniquement pour les comptes clients.</div>';
+            : '<div style="margin-top:18px; padding:14px 16px; border-radius:14px; background:#fff7ed; color:#9a3412;">Le changement de mot de passe est disponible uniquement pour les comptes clients.</div>';
 
           Swal.fire({
             title: 'Informations client',
