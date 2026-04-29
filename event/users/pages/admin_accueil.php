@@ -17,6 +17,39 @@
        $salut = 'Bonsoir';
      }
 
+     $adminClientActionFlash = null;
+
+     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['impersonate_user_id'])) {
+       $result = UserAccountService::startImpersonation($pdo, (int) $_POST['impersonate_user_id']);
+
+       if (!empty($result['success'])) {
+         header('Location: index.php?page=mb_accueil');
+         exit();
+       }
+
+       $adminClientActionFlash = [
+         'type' => 'error',
+         'title' => 'Connexion impossible',
+         'message' => (string) ($result['message'] ?? 'Impossible de se connecter au compte client.'),
+       ];
+     }
+
+     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_change_client_password'])) {
+       $result = UserAccountService::adminChangeUserPassword(
+         $pdo,
+         (int) ($datasession['cod_user'] ?? 0),
+         (int) ($_POST['target_user_id'] ?? 0),
+         $_POST['new_password'] ?? null,
+         $_POST['confirm_new_password'] ?? null
+       );
+
+       $adminClientActionFlash = [
+         'type' => !empty($result['success']) ? 'success' : 'error',
+         'title' => !empty($result['success']) ? 'Mot de passe modifie' : 'Modification impossible',
+         'message' => (string) ($result['message'] ?? 'Impossible de modifier le mot de passe du client.'),
+       ];
+     }
+
      extract(AdminDashboardStatsService::build($pdo, $datasession ?? []), EXTR_OVERWRITE);
      ?>
  
@@ -32,6 +65,18 @@
       </div>
 
       <section class="content">
+        <?php if ($adminClientActionFlash !== null) { ?>
+        <script>
+          document.addEventListener('DOMContentLoaded', function () {
+            Swal.fire({
+              title: <?php echo json_encode((string) $adminClientActionFlash['title']); ?>,
+              text: <?php echo json_encode((string) $adminClientActionFlash['message']); ?>,
+              icon: <?php echo json_encode((string) $adminClientActionFlash['type']); ?>,
+              confirmButtonText: 'Fermer'
+            });
+          });
+        </script>
+        <?php } ?>
         <div class="row">
           <div class="col-12">
             <div class="box rounded-4 finance-panel">

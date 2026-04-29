@@ -305,6 +305,78 @@ final class UserAccountService
         ];
     }
 
+    public static function adminChangeUserPassword(PDO $pdo, int $adminUserId, int $targetUserId, ?string $newPassword, ?string $confirmPassword): array
+    {
+        $newPassword = (string) $newPassword;
+        $confirmPassword = (string) $confirmPassword;
+
+        if ($adminUserId <= 0 || $targetUserId <= 0) {
+            return [
+                'success' => false,
+                'message' => 'Utilisateur introuvable.',
+            ];
+        }
+
+        if ($newPassword === '' || $confirmPassword === '') {
+            return [
+                'success' => false,
+                'message' => 'Veuillez renseigner et confirmer le nouveau mot de passe.',
+            ];
+        }
+
+        if ($newPassword !== $confirmPassword) {
+            return [
+                'success' => false,
+                'message' => 'Les nouveaux mots de passe ne correspondent pas.',
+            ];
+        }
+
+        if (strlen($newPassword) < 8) {
+            return [
+                'success' => false,
+                'message' => 'Le nouveau mot de passe doit contenir au moins 8 caracteres.',
+            ];
+        }
+
+        $adminStmt = $pdo->prepare('SELECT cod_user, type_user FROM is_users WHERE cod_user = ? LIMIT 1');
+        $adminStmt->execute([$adminUserId]);
+        $adminUser = $adminStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+        if ($adminUser === [] || (string) ($adminUser['type_user'] ?? '') !== '1') {
+            return [
+                'success' => false,
+                'message' => 'Seul un administrateur peut modifier le mot de passe d un client.',
+            ];
+        }
+
+        $targetStmt = $pdo->prepare('SELECT cod_user, type_user FROM is_users WHERE cod_user = ? LIMIT 1');
+        $targetStmt->execute([$targetUserId]);
+        $targetUser = $targetStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+        if ($targetUser === []) {
+            return [
+                'success' => false,
+                'message' => 'Client introuvable.',
+            ];
+        }
+
+        if ((string) ($targetUser['type_user'] ?? '') !== '2') {
+            return [
+                'success' => false,
+                'message' => 'La modification directe est reservee aux comptes clients.',
+            ];
+        }
+
+        $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+        $updateStmt = $pdo->prepare('UPDATE is_users SET password = ?, recpass = NULL WHERE cod_user = ? LIMIT 1');
+        $updateStmt->execute([$hashedPassword, $targetUserId]);
+
+        return [
+            'success' => true,
+            'message' => 'Le mot de passe du client a ete modifie avec succes.',
+        ];
+    }
+
     public static function requestPasswordReset(PDO $pdo, object $mailer, array $config, ?string $email): array
     {
         self::ensurePasswordResetInfrastructure($pdo);

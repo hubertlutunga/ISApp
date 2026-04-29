@@ -468,6 +468,7 @@ if (!empty($events)) {
                       onclick="openClientModal(this); return false;"
                       class="dropdown-item action-item action-client"
                       href="#"
+                      data-client-id="<?= htmlspecialchars((string) ($dataevent['client_code'] ?? $dataevent['cod_user'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
                       data-client-code="<?= htmlspecialchars((string) ($dataevent['client_code'] ?? $dataevent['cod_user'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
                       data-client-type="<?= htmlspecialchars((string) ($dataevent['client_type_user'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
                       data-client-name="<?= htmlspecialchars((string) ($dataevent['client_nom'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
@@ -725,7 +726,6 @@ if (!empty($events)) {
             ['Téléphone', dataset.clientPhone || '-'],
             ['Email', dataset.clientEmail || '-'],
             ['Type de compte', typeLabels[dataset.clientType] || dataset.clientType || '-'],
-            ['Accès compte', 'Mot de passe non affichable. Utiliser la réinitialisation par email.'],
           ].map(function (item) {
             return '<tr>' +
               '<th style="width:38%; background:#f8fafc; color:#334155; padding:10px 12px; border:1px solid #e2e8f0;">' + escapeClientModalHtml(item[0]) + '</th>' +
@@ -733,10 +733,31 @@ if (!empty($events)) {
             '</tr>';
           }).join('');
 
+          const clientId = escapeClientModalHtml(dataset.clientId || dataset.clientCode || '');
+          const clientName = escapeClientModalHtml(dataset.clientName || 'ce client');
+          const isClientAccount = (dataset.clientType || '') === '2';
+          const accountActions = isClientAccount
+            ? '<div style="display:grid; gap:16px; margin-top:18px;">' +
+                '<form method="post" action="" style="margin:0;">' +
+                  '<input type="hidden" name="impersonate_user_id" value="' + clientId + '">' +
+                  '<button type="submit" class="swal2-confirm swal2-styled" style="display:inline-flex; background:#2563eb;">Se connecter au compte client</button>' +
+                '</form>' +
+                '<form method="post" action="" style="margin:0; padding:16px; border:1px solid #e2e8f0; border-radius:16px; background:#f8fafc;">' +
+                  '<input type="hidden" name="admin_change_client_password" value="1">' +
+                  '<input type="hidden" name="target_user_id" value="' + clientId + '">' +
+                  '<div style="font-weight:700; color:#0f172a; margin-bottom:10px;">Changer le mot de passe de ' + clientName + '</div>' +
+                  '<input type="password" name="new_password" minlength="8" class="swal2-input" placeholder="Nouveau mot de passe" style="width:100%; margin:0 0 12px;">' +
+                  '<input type="password" name="confirm_new_password" minlength="8" class="swal2-input" placeholder="Confirmer le mot de passe" style="width:100%; margin:0 0 12px;">' +
+                  '<button type="submit" class="swal2-confirm swal2-styled" style="display:inline-flex; background:#0f172a;">Modifier le mot de passe</button>' +
+                '</form>' +
+              '</div>'
+            : '<div style="margin-top:18px; padding:14px 16px; border-radius:14px; background:#fff7ed; color:#9a3412;">Les actions de connexion et de mot de passe sont disponibles uniquement pour les comptes clients.</div>';
+
           Swal.fire({
             title: 'Informations client',
-            html: '<div style="text-align:left;"><table style="width:100%; border-collapse:collapse;">' + rows + '</table></div>',
-            width: 680,
+            html: '<div style="text-align:left;"><table style="width:100%; border-collapse:collapse;">' + rows + '</table>' + accountActions + '</div>',
+            width: 720,
+            showCloseButton: true,
             confirmButtonText: 'Fermer'
           });
         }
