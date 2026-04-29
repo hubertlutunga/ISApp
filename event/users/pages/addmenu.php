@@ -347,9 +347,12 @@ $nomcat = $row_menu['categorie_nom'] ?? '';
    require_once '../../twilio-php-main/src/Twilio/autoload.php'; 
    use Twilio\Rest\Client;
    
-   if (isset($_POST['submitwhat'])) {
+  if (isset($_POST['submitwhat']) || isset($_POST['submitwhat_legacy'])) {
 	   // Préparation de la requête pour récupérer les événements
-	   $inviteName = $_POST['inviteName'];
+	   $inviteName = trim((string) ($_POST['inviteName'] ?? 'Invité'));
+	   $inviteName = ucfirst(strip_tags($inviteName));
+	   $shareErrorMessage = null;
+	   $shareSuccessMessage = null;
 	   $stmtevz = $pdo->prepare("SELECT * FROM events WHERE cod_event = :cod_event");
 	   $stmtevz->execute(['cod_event' => $codevent]);
 	   $dataeventv = $stmtevz->fetch();
@@ -380,48 +383,50 @@ $nomcat = $row_menu['categorie_nom'] ?? '';
    
 
 	    
+	   $twilioSid = getenv('TWILIO_ACCOUNT_SID') ?: 'AC5cbb94f85695ce16d97ce2ca2c3f7db0';
+	   $twilioToken = getenv('TWILIO_AUTH_TOKEN') ?: '2fc99f87d42f61c691c01df995fb8290';
+	   $twilioFrom = getenv('TWILIO_WHATSAPP_FROM') ?: 'whatsapp:+17167403177';
+	   $client = new Client($twilioSid, $twilioToken);
+	   $pdfLink = trim((string) ($_POST['pdf_link'] ?? ''));
+	   $sendMode = isset($_POST['submitwhat']) ? 'pdf' : 'legacy';
 
-		// Vos identifiants Twilio
-		$accountSid = 'AC5cbb94f85695ce16d97ce2ca2c3f7db0';
-		$authToken = '2fc99f87d42f61c691c01df995fb8290'; 
-		$twilionumber = 'whatsapp:+17167403177'; // Votre Messaging Service SID
-		$recipientNumber = 'whatsapp:+243852266590'; // Numéro du destinataire
+	   if ($pdfLink === '') {
+		   $shareErrorMessage = "Le lien du PDF est introuvable. Rechargez la page puis réessayez.";
+	   } else {
+		   $pdfLink = preg_replace('#^\.\./#', '', $pdfLink);
+		   $newlinkpdf = 'https://invitationspeciale.com/event/' . ltrim($pdfLink, '/');
+		   $msgnotif = $sendMode === 'pdf'
+			   ? "Cher(e) $inviteName,\n\nVous êtes invité $typeevent.\n\nPour plus d'infos, visitez :\nhttps://invitationspeciale.com/site/index.php?page=accueil&cod=$codevent\n\nVotre invitation PDF est jointe à ce message."
+			   : "Cher(e) $inviteName,\n\nVous êtes invité $typeevent.\n\nPour plus d'infos, visitez :\nhttps://invitationspeciale.com/site/index.php?page=accueil&cod=$codevent\n\nCi-dessous votre invitation :\n$newlinkpdf";
 
-		// Créer une instance du client Twilio
-		$client = new Client($accountSid, $authToken);
+		   try {
+			   $messageData = [
+				   'from' => $twilioFrom,
+				   'body' => $msgnotif,
+			   ];
 
-		// Envoi d'un message avec un modèle
-		$messageTemplate = $client->messages->create(
-			$recipientNumber,
-			[
-				'from' => $twilionumber,
-				//'template' => 'tempinvitation', // Nom du modèle
-				//'contentSid' => 'HX89f7cc8f64f0b71ade4a22cdffcb744d', // NEW
-				'contentSid' => 'HX5e527d4a4e566b51065fcebade782c17',
-				'templateData' => json_encode([
-					'params' => [
-						'1' => $inviteName, // Nom
-						'2' => $typeevent, // Événement
-						'3' => 'www.invitationspeciale.com/site/index.php?page=accueil&cod='.$codevent, // Lien
-						'4' => 'www.invitationspeciale.com/site/index.php?page=accueil&cod='.$codevent // Invitation
-					],
-				]),
-				'language' => 'fr', // Langue du modèle
-			]
-		);
-   
-	   echo '<script>
-	   Swal.fire({
-		   title: "Notification !",
-		   text: "Votre invitation a été envoyée avec succès.",
-		   icon: "success",
-		   confirmButtonText: "OK"
-	   }).then((result) => {
-		   if (result.isConfirmed) {
-			   window.location.href = "index.php?page=mb_accueil"; // Rédirection vers la page de détails
+			   if ($sendMode === 'pdf') {
+				   $messageData['mediaUrl'] = [$newlinkpdf];
+			   }
+
+			   $client->messages->create('whatsapp:' . $_POST['phoneinv'], $messageData);
+			   $shareSuccessMessage = $sendMode === 'pdf'
+				   ? "L’invitation PDF a été envoyée sur WhatsApp avec succès."
+				   : "L’invitation a été envoyée sur WhatsApp avec la méthode classique.";
+		   } catch (\Throwable $exception) {
+			   $shareErrorMessage = $sendMode === 'pdf'
+				   ? "L’envoi WhatsApp a échoué. Vérifiez le numéro, la configuration Twilio et l’accessibilité publique du PDF."
+				   : "L’envoi WhatsApp classique a échoué. Vérifiez le numéro et la configuration Twilio.";
 		   }
-	   });
-	   </script>';
+	   }
+
+	   if ($shareSuccessMessage !== null) {
+		   echo '<script>Swal.fire({title:"Notification !",text:' . json_encode($shareSuccessMessage) . ',icon:"success",confirmButtonText:"OK"}).then((result)=>{if(result.isConfirmed){window.location.href="index.php?page=mb_accueil";}});</script>';
+	   }
+
+	   if ($shareErrorMessage !== null) {
+		   echo '<script>Swal.fire({title:"Échec de l’envoi",text:' . json_encode($shareErrorMessage) . ',icon:"error",confirmButtonText:"OK"});</script>';
+	   }
    }
    ?>
 			   <div class="form-group"> 
@@ -430,10 +435,13 @@ $nomcat = $row_menu['categorie_nom'] ?? '';
 				   <input type="text" required pattern="^\+\d{1,3}\d{9,}$" 
 				   title="Veuillez entrer un numéro au format international (ex: +243810678785)" id="whatsappNumber" name="phoneinv" class="input-group-text bg-transparent" style="border-radius:7px 7px 0px 0px;height:45px;width:100%;" placeholder="Numéro WhatsApp" />
 				   <input type="hidden" id="inviteName" name="inviteName" />
-				   <button class="btn btn-primary" type="submit" name="submitwhat" style="border-radius:0px 0px 7px 7px;width:100%;">Partager</button>
+				   <input type="hidden" id="pdfLink" name="pdf_link" />
+				   <div style="display:grid;gap:10px;">
+					   <button class="btn btn-primary" type="submit" name="submitwhat" style="width:100%;">Nouvelle méthode : envoyer le PDF</button>
+					   <button class="btn btn-outline-secondary" type="submit" name="submitwhat_legacy" style="width:100%;border:1px solid #cbd5e1;background:#fff;color:#0f172a;">Méthode actuelle : envoyer le lien</button>
+				   </div>
 			   </div>
-			   <br>
-			   <a href="#" id="downloadLink">Télécharger l'invitation</a>
+				   <p style="margin:12px 0 0;color:#475569;font-size:13px;">La nouvelle méthode envoie directement le PDF. La méthode actuelle conserve l’envoi classique du lien WhatsApp pendant vos tests.</p>
 			   </form>
 		   </div>
 	   </div>
@@ -478,9 +486,8 @@ $nomcat = $row_menu['categorie_nom'] ?? '';
 			   document.getElementById('modalTitle').innerText = 'Partager avec ' + inviteName;
 			   document.getElementById('shareModal').style.display = 'flex';
 			   const linkpdf = "../pages/invitation_elect.php?cod=" + inviteId + "&event=<?php echo $codevent; ?>";
-			   document.getElementById('downloadLink').setAttribute('href', linkpdf);
-			   document.getElementById('downloadLink').setAttribute('target', "_blank");
-			   document.getElementById('inviteName').value = inviteName; // Récupération du nom de l'invité
+			   document.getElementById('inviteName').value = inviteName;
+			   document.getElementById('pdfLink').value = linkpdf;
 		   }
    
 		   function closeModal() {
