@@ -260,73 +260,54 @@ $salut = 'Bonsoir';
 require_once '../../twilio-php-main/src/Twilio/autoload.php'; 
 use Twilio\Rest\Client;
 
+require_once __DIR__ . '/whatsapp_template_sender.php';
+
 if (isset($_POST['submitwhat'])) {
-    // Préparation de la requête pour récupérer les événements
-    $stmtevz = $pdo->prepare("SELECT * FROM events WHERE cod_event = :cod_event");
-    $stmtevz->execute(['cod_event' => $codevent]);
-    $dataeventv = $stmtevz->fetch();
+  $shareErrorMessage = null;
+  $shareSuccessMessage = null;
 
-    if (!$dataeventv) {
-        $codevent = '';
-        $date_event = '';
-        $type_event = '';
-        $display = 'none';
-    } else {  
-        $codevent = $dataeventv['cod_event'];
-        $date_event = $dataeventv['date_event'];
-        $type_event = $dataeventv['type_event'];
-        $display = 'block';
+  try {
+    $result = isapp_whatsapp_send_template_invitation($pdo, [
+      'event_code' => $codevent,
+      'invite_id' => $_POST['inviteId'] ?? null,
+      'phone' => $_POST['phoneinv'] ?? '',
+      'invite_name' => $_POST['inviteName'] ?? 'Invite',
+      'pdf_link' => $_POST['pdf_link'] ?? '',
+      'success_redirect' => 'index.php?page=mb_accueil',
+    ]);
+    $shareSuccessMessage = $result['success_message'];
+  } catch (\Throwable $exception) {
+    $shareErrorMessage = (string) $exception->getMessage();
+    if ($shareErrorMessage === '') {
+      $shareErrorMessage = 'L’envoi WhatsApp via template approuve a echoue.';
     }
+  }
 
-    // Détermination du type d'événement
-    if ($type_event == "1") {
-        $fetard = (($dataeventv['prenom_epouse'] ?? '') . ' & ' . ($dataeventv['prenom_epoux'] ?? '')) ?: 'Inconnu';
-        $typeevent = 'au Mariage ' . $dataeventv['type_mar'] .' de '.$fetard. ', le ' . date('d M Y à H:i', strtotime($dataeventv['date_event']));
-    } elseif ($type_event == "2") {
-        $fetard = $dataeventv['nomfetard'] ?? 'Inconnu';
-        $typeevent = "à l'anniversaire de " . $fetard . ', le ' . date('d m Y à H:i', strtotime($dataeventv['date_event']));
-    } elseif ($type_event == "3") {
-        $fetard = $dataeventv['nomfetard'] ?? 'Inconnu';
-        $typeevent = "à la conférence de " . $fetard . ', le ' . date('d m Y à H:i', strtotime($dataeventv['date_event']));
-    }
-
-    // Configuration Twilio 
-    // $sid    = "MGda4703942abe16f4e1e8962e19d4da39"; //service Invitation Speciale
-    // $sid    = "AC5cbb94f85695ce16d97ce2ca2c3f7db0";// numero par defaut
-     $sid    = "HXb38395e719833595e0c4d0be1691bddc";
-    $token  = "2fc99f87d42f61c691c01df995fb8290";
-    $twilio = new Client($sid, $token); 
-
-    // Récupération du nom de l'invité
-    $inviteName = htmlspecialchars(ucfirst($_POST['inviteName'])); // Assurez-vous de récupérer le nom de l'invité
-
-	// lien PDF harmoniser
-	$linkpdf = substr($linkpdf, 3);
-	$newlinkpdf ="https://invitationspeciale.com/event/".$linkpdf; 
-    // Message à envoyer
-    $msgnotif = "Cher(e) $inviteName,\n\nVous êtes invité $typeevent.\n\nPour plus d'infos, visitez :\n https://invitationspeciale.com/site/index.php?page=accueil&cod=$codevent\n\nCi-dessous votre invitation :\n $newlinkpdf";
-
-    $message = $twilio->messages
-        ->create("whatsapp:" . $_POST['phoneinv'], // à
-            array(
-                "from" => "whatsapp:+13612649244", // votre numéro Twilio
-                //"from" => "whatsapp:+14155238886", // votre numéro Twilio
-                "body" => $msgnotif // Utilisez le nouveau message ici
-            )
-        );
-
+  if ($shareSuccessMessage !== null) {
     echo '<script>
     Swal.fire({
-        title: "Notification !",
-        text: "Votre invitation a été envoyée avec succès.",
-        icon: "success",
-        confirmButtonText: "OK"
+      title: "Notification !",
+      text: ' . json_encode($shareSuccessMessage) . ',
+      icon: "success",
+      confirmButtonText: "OK"
     }).then((result) => {
-        if (result.isConfirmed) {
-            window.location.href = "index.php?page=mb_accueil"; // Rédirection vers la page de détails
-        }
+      if (result.isConfirmed) {
+        window.location.href = "index.php?page=mb_accueil";
+      }
     });
     </script>';
+  }
+
+  if ($shareErrorMessage !== null) {
+    echo '<script>
+    Swal.fire({
+      title: "Échec de l’envoi",
+      text: ' . json_encode($shareErrorMessage) . ',
+      icon: "error",
+      confirmButtonText: "OK"
+    });
+    </script>';
+  }
 }
 ?>
             <div class="form-group"> 
@@ -335,7 +316,9 @@ if (isset($_POST['submitwhat'])) {
                 <input type="text" required pattern="^\+\d{1,3}\d{9,}$" 
 				title="Veuillez entrer un numéro au format international (ex: +243810678785)" id="whatsappNumber" name="phoneinv" class="input-group-text bg-transparent" style="border-radius:7px 7px 0px 0px;height:45px;width:100%;" placeholder="Numéro WhatsApp" />
                 <input type="hidden" id="inviteName" name="inviteName" />
-                <button class="btn btn-primary" type="submit" name="submitwhat" style="border-radius:0px 0px 7px 7px;width:100%;">Partager</button>
+                <input type="hidden" id="inviteId" name="inviteId" />
+                <input type="hidden" id="pdfLink" name="pdf_link" />
+                <button class="btn btn-primary" type="submit" name="submitwhat" style="border-radius:0px 0px 7px 7px;width:100%;">Envoyer avec le template WhatsApp approuvé</button>
             </div>
 			<br>
             <a href="#" id="downloadLink">Télécharger le PDF</a>
@@ -385,7 +368,9 @@ if (isset($_POST['submitwhat'])) {
             const linkpdf = "../pages/invitation_elect.php?cod=" + inviteId + "&event=<?php echo $codevent; ?>";
             document.getElementById('downloadLink').setAttribute('href', linkpdf);
             document.getElementById('downloadLink').setAttribute('target', "_blank");
-            document.getElementById('inviteName').value = inviteName; // Récupération du nom de l'invité
+          document.getElementById('inviteName').value = inviteName;
+          document.getElementById('inviteId').value = inviteId;
+          document.getElementById('pdfLink').value = linkpdf;
         }
 
         function closeModal() {

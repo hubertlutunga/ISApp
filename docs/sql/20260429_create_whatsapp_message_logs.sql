@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS whatsapp_message_logs (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    event_code VARCHAR(191) NOT NULL,
+    invite_id INT NULL,
+    recipient_number VARCHAR(64) NOT NULL,
+    recipient_name VARCHAR(191) NOT NULL,
+    send_mode VARCHAR(32) NOT NULL,
+    template_sid VARCHAR(64) NOT NULL,
+    content_variables_json JSON NULL,
+    media_filename VARCHAR(255) NULL,
+    media_url TEXT NULL,
+    twilio_message_sid VARCHAR(64) NULL,
+    send_status VARCHAR(32) NOT NULL,
+    error_message TEXT NULL,
+    sent_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_whatsapp_logs_event_code (event_code),
+    INDEX idx_whatsapp_logs_invite_id (invite_id),
+    INDEX idx_whatsapp_logs_status (send_status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
