@@ -409,7 +409,7 @@ $nomcat = $row_menu['categorie_nom'] ?? '';
 			   width: 100%;
 			   height: 100%;
 			   background-color: rgba(0, 0, 0, 0.5);
-			   display: flex;
+			   display: none;
 			   justify-content: center;
 			   align-items: center;
 			   z-index: 3000;
