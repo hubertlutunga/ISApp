@@ -363,7 +363,7 @@ $nomcat = $row_menu['categorie_nom'] ?? '';
 	   } catch (\Throwable $exception) {
 		   $shareErrorMessage = (string) $exception->getMessage();
 		   if ($shareErrorMessage === '') {
-			   $shareErrorMessage = 'L’envoi WhatsApp via template approuve a echoue.';
+			   $shareErrorMessage = 'L’envoi de l’invitation WhatsApp a echoue.';
 		   }
 	   }
 
@@ -378,15 +378,20 @@ $nomcat = $row_menu['categorie_nom'] ?? '';
    ?>
 			   <div class="form-group"> 
 				   <span class="close" onclick="closeModal()" style="cursor: pointer; float: right; font-size: 24px;">&times;</span><br>
-				   <h4 id="modalTitle">Partager avec </h4> <br><br>
+				   <h4 id="modalTitle">Envoyer l'invitation</h4> <br><br>
 				   <input type="text" required pattern="^\+\d{1,3}\d{9,}$" 
 				   title="Veuillez entrer un numéro au format international (ex: +243810678785)" id="whatsappNumber" name="phoneinv" class="input-group-text bg-transparent" style="border-radius:7px 7px 0px 0px;height:45px;width:100%;" placeholder="Numéro WhatsApp" />
 				   <input type="hidden" id="inviteName" name="inviteName" />
 				   <input type="hidden" id="inviteId" name="inviteId" />
 				   <input type="hidden" id="pdfLink" name="pdf_link" />
-				   <button class="btn btn-primary" type="submit" name="submitwhat" style="width:100%;">Envoyer avec le template WhatsApp approuvé</button>
+				   <button class="btn btn-primary" type="submit" name="submitwhat" style="width:100%;">Envoyer l'invitation</button>
 			   </div>
-				   <p style="margin:12px 0 0;color:#475569;font-size:13px;">Le PDF est publie dans un chemin public puis envoye via le template Twilio approuve, y compris hors fenetre WhatsApp de 24h.</p>
+				   <p style="margin:12px 0 0;color:#475569;font-size:13px;">En validant cette action, l'invitation PDF sera envoyee sur WhatsApp au numero indique pour cet invite.</p>
+				   <div style="margin-top:12px;padding:12px;border-radius:10px;background:#f8fafc;border:1px solid #e2e8f0;color:#334155;font-size:13px;line-height:1.6;">
+					   <strong style="display:block;margin-bottom:6px;color:#0f172a;">Exemple de message automatique</strong>
+					   Bonjour <span id="previewInviteName">votre invite</span>,<br>
+					   nous vous envoyons votre invitation sur WhatsApp avec le fichier PDF pour consultation et confirmation de presence.
+				   </div>
 			   </form>
 		   </div>
 	   </div>
@@ -428,7 +433,8 @@ $nomcat = $row_menu['categorie_nom'] ?? '';
    
 	   <script>
 		   function openModal(inviteName, inviteId) {
-			   document.getElementById('modalTitle').innerText = 'Partager avec ' + inviteName;
+			   document.getElementById('modalTitle').innerText = "Envoyer l'invitation a " + inviteName;
+			   document.getElementById('previewInviteName').innerText = inviteName;
 			   document.getElementById('shareModal').style.display = 'flex';
 			   const linkpdf = "../pages/invitation_elect.php?cod=" + inviteId + "&event=<?php echo $codevent; ?>";
 			   document.getElementById('inviteName').value = inviteName;

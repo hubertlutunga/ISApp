@@ -517,11 +517,11 @@ if (!function_exists('isapp_whatsapp_send_template_invitation')) {
         ]);
 
         if ($sendStatus !== 'sent') {
-            throw new RuntimeException($errorMessage !== '' ? $errorMessage : 'Echec de l’envoi WhatsApp via template Twilio.');
+            throw new RuntimeException($errorMessage !== '' ? $errorMessage : 'Echec de l’envoi de l’invitation WhatsApp.');
         }
 
         return [
-            'success_message' => 'L’invitation WhatsApp a ete envoyee via le template approuve Twilio.',
+            'success_message' => 'L’invitation a bien ete envoyee sur WhatsApp.',
             'success_redirect' => $successRedirect,
             'twilio_sid' => $twilioMessageSid,
             'media_url' => $mediaUrl,
