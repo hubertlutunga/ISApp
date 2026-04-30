@@ -159,17 +159,6 @@ if (!function_exists('isapp_whatsapp_sender_event_label')) {
         if ($eventType === '1') {
             $weddingType = isapp_whatsapp_sender_normalize_wedding_type((string) ($event['type_mar'] ?? ''));
 
-if (!function_exists('isapp_whatsapp_sender_preview_context')) {
-    function isapp_whatsapp_sender_preview_context(PDO $pdo, $eventCode): array
-    {
-        $event = isapp_whatsapp_sender_fetch_event($pdo, $eventCode);
-
-        return [
-            'event_label' => isapp_whatsapp_sender_event_label($event),
-            'signature' => isapp_whatsapp_sender_signature($event),
-        ];
-    }
-}
             if ($weddingType === 'coutumier') {
                 return 'la soiree de notre mariage coutumier';
             }

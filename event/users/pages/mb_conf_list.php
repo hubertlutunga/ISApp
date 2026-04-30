@@ -329,7 +329,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_confirmation_mai
 								<form action="" method="post">
 									<?php
 									require_once __DIR__ . '/whatsapp_template_sender.php';
-   $sharePreviewContext = isapp_whatsapp_sender_preview_context($pdo, $codevent);
 
 									if (isset($_POST['submitwhat'])) {
 										$shareErrorMessage = null;
@@ -391,11 +390,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_confirmation_mai
 									<div style="margin-top:12px;padding:12px;border-radius:10px;background:#f8fafc;border:1px solid #e2e8f0;color:#334155;font-size:13px;line-height:1.6;">
 										<strong style="display:block;margin-bottom:6px;color:#0f172a;">Exemple de message automatique</strong>
 										Bonjour <span id="previewInviteName">votre invite</span>,<br>
-										Nous avons le plaisir de vous transmettre votre invitation a <?php echo htmlspecialchars($sharePreviewContext['event_label'], ENT_QUOTES, 'UTF-8'); ?>.<br><br>
-										Nous vous remercions de bien vouloir confirmer votre presence.<br><br>
-										Cordialement,<br>
-										<?php echo htmlspecialchars($sharePreviewContext['signature'], ENT_QUOTES, 'UTF-8'); ?>.<br>
-										Merci.
+										nous vous envoyons votre invitation sur WhatsApp avec le fichier PDF pour consultation et confirmation de presence.
 									</div>
 								</form>
 							</div>
@@ -409,7 +404,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_confirmation_mai
 								width: 100%;
 								height: 100%;
 								background-color: rgba(0, 0, 0, 0.5);
-								display: none;
+								display: flex;
 								justify-content: center;
 								align-items: center;
 								z-index: 3000;
