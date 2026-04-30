@@ -187,6 +187,18 @@ if (!function_exists('isapp_whatsapp_sender_event_label')) {
     }
 }
 
+if (!function_exists('isapp_whatsapp_sender_preview_context')) {
+    function isapp_whatsapp_sender_preview_context(PDO $pdo, $eventCode): array
+    {
+        $event = isapp_whatsapp_sender_fetch_event($pdo, $eventCode);
+
+        return [
+            'event_label' => isapp_whatsapp_sender_event_label($event),
+            'signature' => isapp_whatsapp_sender_signature($event),
+        ];
+    }
+}
+
 if (!function_exists('isapp_whatsapp_sender_filename_base')) {
     function isapp_whatsapp_sender_filename_base(array $event, array $invite, string $fallbackInviteName): string
     {
