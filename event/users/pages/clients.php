@@ -1,6 +1,30 @@
 
   <?php
   $impersonationFlash = null;
+  $quotaFlash = null;
+
+  if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['quota_event_code'], $_POST['quota_client_user_id'], $_POST['bonus_quota_add'])) {
+    $eventCode = trim((string) $_POST['quota_event_code']);
+    $clientUserId = (int) $_POST['quota_client_user_id'];
+    $bonusQuotaAdd = (int) $_POST['bonus_quota_add'];
+
+    try {
+      if ($eventCode === '' || $clientUserId <= 0) {
+        throw new RuntimeException('Informations de credit invalides.');
+      }
+
+      $updatedQuota = WhatsAppQuotaService::addBonusQuota($pdo, $eventCode, $clientUserId, $bonusQuotaAdd);
+      $quotaFlash = [
+        'type' => 'success',
+        'message' => 'Le credit WhatsApp a ete mis a jour. Nouveau solde restant : ' . (int) ($updatedQuota['remaining_quota'] ?? 0) . '.',
+      ];
+    } catch (\Throwable $exception) {
+      $quotaFlash = [
+        'type' => 'danger',
+        'message' => (string) ($exception->getMessage() ?: 'Impossible de modifier le credit WhatsApp.'),
+      ];
+    }
+  }
 
   if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['impersonate_user_id'])) {
     $result = UserAccountService::startImpersonation($pdo, (int) $_POST['impersonate_user_id']);
@@ -111,14 +135,17 @@ $salut = 'Bonsoir';
 		 
 
 		// ----------------tous les invités confirmés--------------------
-		$stmtccli = $pdo->prepare("SELECT COUNT(*) as total_client FROM is_users");
-		$stmtccli->execute();
+    $stmtccli = $pdo->prepare("SELECT COUNT(*) as total_client FROM is_users WHERE type_user = :type_user");
+    $stmtccli->execute([':type_user' => '2']);
 
 		// Récupération du résultat
 		$row_ccli = $stmtccli->fetch(PDO::FETCH_ASSOC);
 
 		// Retourne 0 si aucun invité n'est trouvé, sinon retourne le total
 		$total_ccli = $row_ccli ? (int)$row_ccli['total_client'] : 0;
+    $adminQuotaOverview = WhatsAppQuotaService::buildAdminOverview($pdo);
+    $adminQuotaTotals = (array) ($adminQuotaOverview['totals'] ?? []);
+    $clientQuotaRows = (array) ($adminQuotaOverview['clients'] ?? []);
 
 
   
@@ -133,6 +160,11 @@ $salut = 'Bonsoir';
         <?php if ($impersonationFlash !== null) { ?>
         <div class="alert alert-<?php echo htmlspecialchars($impersonationFlash['type'], ENT_QUOTES, 'UTF-8'); ?>">
           <?php echo htmlspecialchars($impersonationFlash['message'], ENT_QUOTES, 'UTF-8'); ?>
+        </div>
+        <?php } ?>
+        <?php if ($quotaFlash !== null) { ?>
+        <div class="alert alert-<?php echo htmlspecialchars($quotaFlash['type'], ENT_QUOTES, 'UTF-8'); ?>">
+          <?php echo htmlspecialchars($quotaFlash['message'], ENT_QUOTES, 'UTF-8'); ?>
         </div>
         <?php } ?>
 				<div class="box box-body">
@@ -154,6 +186,51 @@ $salut = 'Bonsoir';
 								</div>
 							</div>
 						</div>  
+            <div class="col-xxl-3 col-xl-3 col-lg-3 col-md-6 col-12">
+              <div class="box-body rounded-0 p-0 pb-lg-0 pb-sm-15 pb-xs-15 be-1 fill-icon">
+                <div class="d-flex align-items-center">
+                  <div class="w-70 h-70 me-15 bg-success-light rounded-circle text-center p-10">
+                    <div class="w-50 h-50 bg-success rounded-circle">
+                      <i class="fas fa-paper-plane fs-24 l-h-50"></i>
+                    </div>
+                  </div>
+                  <div class="d-flex flex-column">
+                    <span class="text-fade fs-12">Envois WhatsApp</span>
+                    <h2 class="text-dark m-0 fw-600"><?php echo (int) ($adminQuotaTotals['sent_count'] ?? 0); ?></h2>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-xxl-3 col-xl-3 col-lg-3 col-md-6 col-12">
+              <div class="box-body rounded-0 p-0 pb-lg-0 pb-sm-15 pb-xs-15 be-1 fill-icon">
+                <div class="d-flex align-items-center">
+                  <div class="w-70 h-70 me-15 bg-primary-light rounded-circle text-center p-10">
+                    <div class="w-50 h-50 bg-primary rounded-circle">
+                      <i class="fas fa-layer-group fs-24 l-h-50"></i>
+                    </div>
+                  </div>
+                  <div class="d-flex flex-column">
+                    <span class="text-fade fs-12">Quota total</span>
+                    <h2 class="text-dark m-0 fw-600"><?php echo (int) ($adminQuotaTotals['total_quota'] ?? 0); ?></h2>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-xxl-3 col-xl-3 col-lg-3 col-md-6 col-12">
+              <div class="box-body rounded-0 p-0 pb-lg-0 pb-sm-15 pb-xs-15 be-1 fill-icon">
+                <div class="d-flex align-items-center">
+                  <div class="w-70 h-70 me-15 bg-warning-light rounded-circle text-center p-10">
+                    <div class="w-50 h-50 bg-warning rounded-circle">
+                      <i class="fas fa-battery-three-quarters fs-24 l-h-50"></i>
+                    </div>
+                  </div>
+                  <div class="d-flex flex-column">
+                    <span class="text-fade fs-12">Restants</span>
+                    <h2 class="text-dark m-0 fw-600"><?php echo (int) ($adminQuotaTotals['remaining_quota'] ?? 0); ?></h2>
+                  </div>
+                </div>
+              </div>
+            </div>
 					</div>
 				</div>
 
@@ -211,11 +288,10 @@ $salut = 'Bonsoir';
                     <table class="table mb-0">
                         <tbody>
                             <?php 
-                            $stmtclient = $pdo->prepare("SELECT * FROM is_users ORDER BY cod_user DESC");
-                            $stmtclient->execute();
-
-                            if ($stmtclient->rowCount() > 0) {
-                                while ($row_client = $stmtclient->fetch(PDO::FETCH_ASSOC)) { 
+                            if ($clientQuotaRows !== []) {
+                                foreach ($clientQuotaRows as $row_client) {
+                                  $quotaOverview = (array) ($row_client['quota_overview'] ?? []);
+                                  $clientEvents = (array) ($quotaOverview['events'] ?? []);
 
                              ?> 
                                     <tr>
@@ -223,6 +299,39 @@ $salut = 'Bonsoir';
                                             <a class="d-block fw-500 fs-14" href="#"><?php echo htmlspecialchars(ucfirst($row_client['noms'])); ?></a>
                                             <!-- <em class="text-fade"><?php //echo $row_conf['phone']; ?> / <?php //echo $row_conf['email']; ?> </em><br> --> 
                                             <p><em style="color:#888;"><?php echo $row_client['email'].'<br> '.$row_client['phone']; ?> </em></p>
+                      <p style="margin:0 0 12px;color:#475569;font-size:13px;">
+                        Envois : <strong><?php echo (int) ($quotaOverview['sent_count'] ?? 0); ?></strong>
+                         | Quota : <strong><?php echo (int) ($quotaOverview['total_quota'] ?? 0); ?></strong>
+                         | Restants : <strong><?php echo (int) ($quotaOverview['remaining_quota'] ?? 0); ?></strong>
+                      </p>
+
+                      <?php if ($clientEvents !== []) { ?>
+                      <div style="display:grid;gap:10px;margin-bottom:14px;">
+                        <?php foreach ($clientEvents as $clientEvent) { ?>
+                        <div style="padding:12px 14px;border:1px solid #e5e7eb;border-radius:14px;background:#f8fafc;">
+                          <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;">
+                            <div>
+                              <div style="font-weight:700;color:#0f172a;"><?php echo htmlspecialchars((string) ($clientEvent['event_label'] ?? 'Evenement'), ENT_QUOTES, 'UTF-8'); ?></div>
+                              <div style="font-size:12px;color:#64748b;">Code evenement : <?php echo htmlspecialchars((string) ($clientEvent['event_code'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></div>
+                            </div>
+                            <div style="font-size:13px;color:#334155;">
+                              Envoyes <strong><?php echo (int) ($clientEvent['sent_count'] ?? 0); ?></strong>
+                               | Restants <strong><?php echo (int) ($clientEvent['remaining_quota'] ?? 0); ?></strong>
+                               | Bonus <strong>+<?php echo (int) ($clientEvent['bonus_quota'] ?? 0); ?></strong>
+                            </div>
+                          </div>
+                          <form action="" method="post" class="mt-10" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                            <input type="hidden" name="quota_event_code" value="<?php echo htmlspecialchars((string) ($clientEvent['event_code'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
+                            <input type="hidden" name="quota_client_user_id" value="<?php echo (int) ($row_client['cod_user'] ?? 0); ?>">
+                            <input type="number" name="bonus_quota_add" class="form-control" min="1" step="1" value="50" style="max-width:140px;" required>
+                            <button type="submit" class="btn btn-sm btn-outline btn-success">Ajouter du credit</button>
+                          </form>
+                        </div>
+                        <?php } ?>
+                      </div>
+                      <?php } else { ?>
+                      <p style="margin:0 0 14px;color:#64748b;font-size:13px;">Aucun evenement rattache a ce client pour le moment.</p>
+                      <?php } ?>
 
                                         <?php if ((string) ($row_client['type_user'] ?? '') === '2') { ?>
                                         <form action="" method="post" class="mt-10">
@@ -240,7 +349,7 @@ $salut = 'Bonsoir';
                                 }
 
                             } else {
-                                echo '<tr><td colspan="3" class="text-left" style="font-style:italic;">Aucune confirmation trouvée</td></tr>';
+                echo '<tr><td colspan="3" class="text-left" style="font-style:italic;">Aucun client trouve</td></tr>';
                             }
 
                             ?>

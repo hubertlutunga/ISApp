@@ -1,5 +1,9 @@
 <?php
 
+if (!class_exists('WhatsAppQuotaService')) {
+    require_once dirname(__DIR__, 3) . '/src/Support/WhatsAppQuotaService.php';
+}
+
 if (!function_exists('isapp_whatsapp_sender_base_url')) {
     function isapp_whatsapp_sender_base_url(): string
     {
@@ -479,6 +483,9 @@ if (!function_exists('isapp_whatsapp_send_template_invitation')) {
             throw new RuntimeException('Evenement introuvable pour cet envoi WhatsApp.');
         }
 
+        $clientUserId = WhatsAppQuotaService::resolveClientUserId($event, (int) ($options['client_user_id'] ?? 0));
+        $quotaBeforeSend = WhatsAppQuotaService::assertQuotaAvailable($pdo, $eventCode, $clientUserId);
+
         $invite = isapp_whatsapp_sender_fetch_invite($pdo, $inviteId);
         $recipientName = isapp_whatsapp_sender_display_name($invite, $fallbackInviteName);
         $eventLabel = isapp_whatsapp_sender_event_label($event);
@@ -540,12 +547,19 @@ if (!function_exists('isapp_whatsapp_send_template_invitation')) {
             throw new RuntimeException($errorMessage !== '' ? $errorMessage : 'Echec de l’envoi de l’invitation WhatsApp.');
         }
 
+        $quotaAfterSend = WhatsAppQuotaService::getEventQuota($pdo, $eventCode, $clientUserId);
+        $successMessage = 'L’invitation a bien ete envoyee sur WhatsApp.';
+        if ($clientUserId > 0) {
+            $successMessage .= ' Il vous reste ' . (int) ($quotaAfterSend['remaining_quota'] ?? max(0, ((int) ($quotaBeforeSend['remaining_quota'] ?? 1)) - 1)) . ' envois pour cet evenement.';
+        }
+
         return [
-            'success_message' => 'L’invitation a bien ete envoyee sur WhatsApp.',
+            'success_message' => $successMessage,
             'success_redirect' => $successRedirect,
             'twilio_sid' => $twilioMessageSid,
             'media_url' => $mediaUrl,
             'content_variables' => $contentVariables,
+            'quota' => $quotaAfterSend,
         ];
     }
 }

@@ -7,6 +7,8 @@
 		$linkallinv = '../pages/liste_invites.php?event=' . $codevent;
 	}
 	$audienceLabels = EventWorkspaceService::audienceLabels((string) ($type_event ?? ''));
+	$quotaClientUserId = WhatsAppQuotaService::resolveClientUserId((array) $dataevent, (int) ($datasession['cod_user'] ?? 0));
+	$eventQuota = WhatsAppQuotaService::getEventQuota($pdo, (string) $codevent, $quotaClientUserId);
 	?>
 
 <style>
@@ -33,6 +35,35 @@
 		margin:6px 0 0;
 		font-size:14px;
 		color:#64748b;
+	}
+
+	.mb-invite-quota{
+		display:flex;
+		flex-wrap:wrap;
+		gap:10px;
+		margin-top:14px;
+	}
+
+	.mb-invite-quota-chip{
+		display:inline-flex;
+		align-items:center;
+		gap:8px;
+		padding:10px 14px;
+		border-radius:999px;
+		background:#eff6ff;
+		color:#1e3a8a;
+		font-size:13px;
+		font-weight:700;
+	}
+
+	.mb-invite-quota-chip.is-sent{
+		background:#fff7ed;
+		color:#9a3412;
+	}
+
+	.mb-invite-quota-chip.is-bonus{
+		background:#ecfdf5;
+		color:#166534;
 	}
 
 	.mb-invite-export{
@@ -392,6 +423,14 @@
 				<div>
 					<h4 class="box-title mb-invite-title"><?php echo htmlspecialchars($audienceLabels['mine'], ENT_QUOTES, 'UTF-8'); ?></h4>
 					<p class="mb-invite-subtitle"><?php echo htmlspecialchars($audienceLabels['manage_subtitle'], ENT_QUOTES, 'UTF-8'); ?></p>
+					<div class="mb-invite-quota">
+						<span class="mb-invite-quota-chip">Quota total : <?php echo (int) ($eventQuota['total_quota'] ?? 0); ?></span>
+						<span class="mb-invite-quota-chip is-sent">Envoyes : <?php echo (int) ($eventQuota['sent_count'] ?? 0); ?></span>
+						<span class="mb-invite-quota-chip">Restants : <?php echo (int) ($eventQuota['remaining_quota'] ?? 0); ?></span>
+						<?php if ((int) ($eventQuota['bonus_quota'] ?? 0) > 0) { ?>
+						<span class="mb-invite-quota-chip is-bonus">Bonus admin : +<?php echo (int) $eventQuota['bonus_quota']; ?></span>
+						<?php } ?>
+					</div>
 				</div>
                 <ul class="m-0" style="list-style: none;">
                     <li class="dropdown">

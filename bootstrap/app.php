@@ -22,6 +22,7 @@ if (!defined('ISAPP_BOOTSTRAPPED')) {
     require_once __DIR__ . '/../src/Support/LoveStoryService.php';
     require_once __DIR__ . '/../src/Support/InviteStatsService.php';
     require_once __DIR__ . '/../src/Support/InviteStatusService.php';
+    require_once __DIR__ . '/../src/Support/WhatsAppQuotaService.php';
     require_once __DIR__ . '/../src/Support/ConfirmationService.php';
     require_once __DIR__ . '/../src/Support/GuestConfirmationMailService.php';
     require_once __DIR__ . '/../src/Support/EventBackofficeService.php';
