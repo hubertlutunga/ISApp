@@ -2,6 +2,8 @@
   <?php
   $impersonationFlash = null;
   $quotaFlash = null;
+  $clientFlash = null;
+  $currentAdminUser = UserAccountService::currentSessionUser($pdo) ?? [];
 
   if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['quota_event_code'], $_POST['quota_client_user_id'], $_POST['bonus_quota_add'])) {
     $eventCode = trim((string) $_POST['quota_event_code']);
@@ -39,7 +41,465 @@
       'message' => (string) ($result['message'] ?? 'Impossible de changer de compte.'),
     ];
   }
+
+  if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_client_id'])) {
+    $result = UserAccountService::adminUpdateUserProfile(
+      $pdo,
+      (int) ($currentAdminUser['cod_user'] ?? 0),
+      (int) $_POST['save_client_id'],
+      $_POST
+    );
+
+    $clientFlash = [
+      'type' => !empty($result['success']) ? 'success' : 'danger',
+      'message' => (string) ($result['message'] ?? 'Impossible de modifier ce client.'),
+    ];
+  }
+
+  if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_client_id'])) {
+    $result = UserAccountService::adminDeleteClient(
+      $pdo,
+      (int) ($currentAdminUser['cod_user'] ?? 0),
+      (int) $_POST['delete_client_id']
+    );
+
+    $clientFlash = [
+      'type' => !empty($result['success']) ? 'success' : 'danger',
+      'message' => (string) ($result['message'] ?? 'Impossible de supprimer ce client.'),
+    ];
+  }
+
+  $formatSearchValue = static function ($value): string {
+    $value = trim((string) $value);
+
+    return function_exists('mb_strtolower') ? mb_strtolower($value, 'UTF-8') : strtolower($value);
+  };
   ?>
+
+  <style>
+    .clients-admin-card {
+      border: 0;
+      border-radius: 28px;
+      overflow: hidden;
+      box-shadow: 0 22px 48px rgba(15, 23, 42, 0.08);
+      background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    }
+
+    .clients-admin-toolbar {
+      display: grid;
+      grid-template-columns: minmax(240px, 1.7fr) minmax(170px, 0.7fr) auto auto;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .clients-admin-search {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 14px;
+      height: 48px;
+      border: 1px solid #dbe4f0;
+      border-radius: 16px;
+      background: #fff;
+    }
+
+    .clients-admin-search input {
+      border: 0;
+      outline: none;
+      width: 100%;
+      background: transparent;
+      color: #0f172a;
+      font-size: 14px;
+    }
+
+    .clients-admin-search i {
+      color: #64748b;
+    }
+
+    .clients-admin-filters {
+      height: 48px;
+      border-radius: 16px;
+      border: 1px solid #dbe4f0;
+      background: #fff;
+      color: #0f172a;
+    }
+
+    .clients-admin-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 14px 0 4px;
+    }
+
+    .clients-admin-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+
+    .clients-admin-pill.is-warning {
+      background: #fff7ed;
+      color: #c2410c;
+    }
+
+    .clients-admin-pill.is-neutral {
+      background: #f1f5f9;
+      color: #334155;
+    }
+
+    .clients-admin-grid {
+      display: grid;
+      gap: 18px;
+    }
+
+    .clients-admin-table-wrap {
+      border: 1px solid #e2e8f0;
+      border-radius: 22px;
+      overflow: hidden;
+      background: #fff;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    }
+
+    .clients-admin-table {
+      width: 100%;
+      margin: 0;
+      min-width: 0;
+      table-layout: fixed;
+    }
+
+    .clients-admin-table th:last-child,
+    .clients-admin-table td:last-child {
+      width: 88px;
+    }
+
+    .clients-admin-table thead th {
+      padding: 16px 18px;
+      border: 0;
+      background: #eff6ff;
+      color: #334155;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      white-space: nowrap;
+    }
+
+    .clients-admin-table tbody td {
+      padding: 18px;
+      vertical-align: middle;
+      border-color: #eef2f7;
+      background: #fff;
+    }
+
+    .clients-admin-row.is-hidden {
+      display: none;
+    }
+
+    .clients-admin-main {
+      display: grid;
+      gap: 6px;
+    }
+
+    .clients-admin-main strong {
+      color: #0f172a;
+      font-size: 15px;
+    }
+
+    .clients-admin-sub {
+      color: #64748b;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .clients-admin-statstack {
+      display: grid;
+      gap: 4px;
+      color: #334155;
+      font-size: 13px;
+    }
+
+    .clients-admin-actions {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .clients-admin-detail-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .clients-admin-detail-card {
+      border-radius: 18px;
+      padding: 16px;
+      border: 1px solid #e2e8f0;
+      background: #f8fafc;
+    }
+
+    .clients-admin-detail-card span {
+      display: block;
+      color: #64748b;
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+
+    .clients-admin-detail-card strong {
+      display: block;
+      color: #0f172a;
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .clients-admin-modal-events {
+      display: grid;
+      gap: 12px;
+    }
+
+    .clients-admin-form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .clients-admin-form-grid label {
+      display: grid;
+      gap: 8px;
+      color: #0f172a;
+      font-weight: 700;
+    }
+
+    .clients-admin-form-grid label span {
+      font-size: 13px;
+    }
+
+    .clients-admin-form-grid input {
+      min-height: 48px;
+      border: 1px solid #dbe4f0;
+      border-radius: 14px;
+      padding: 0 14px;
+    }
+
+    .clients-admin-form-grid .is-full {
+      grid-column: 1 / -1;
+    }
+
+    .clients-admin-danger-note {
+      margin: 0 0 14px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+      line-height: 1.6;
+    }
+
+    .clients-admin-client {
+      border: 1px solid #e2e8f0;
+      border-radius: 24px;
+      background: #fff;
+      padding: 20px;
+      box-shadow: 0 16px 36px rgba(15, 23, 42, 0.06);
+    }
+
+    .clients-admin-client-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .clients-admin-client-name {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .clients-admin-client-contact {
+      margin: 6px 0 0;
+      color: #64748b;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .clients-admin-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .clients-admin-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 7px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+
+    .clients-admin-badge.is-alert {
+      background: #fef2f2;
+      color: #b91c1c;
+    }
+
+    .clients-admin-badge.is-success {
+      background: #ecfdf5;
+      color: #047857;
+    }
+
+    .clients-admin-stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .clients-admin-stat {
+      border-radius: 18px;
+      padding: 14px 16px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+    }
+
+    .clients-admin-stat-label {
+      display: block;
+      color: #64748b;
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+
+    .clients-admin-stat-value {
+      display: block;
+      color: #0f172a;
+      font-size: 22px;
+      line-height: 1;
+      font-weight: 800;
+    }
+
+    .clients-admin-events {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .clients-admin-event {
+      border: 1px solid #e2e8f0;
+      border-radius: 18px;
+      padding: 14px;
+      background: #f8fafc;
+    }
+
+    .clients-admin-event-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .clients-admin-event-title {
+      color: #0f172a;
+      font-size: 14px;
+      font-weight: 800;
+      margin: 0;
+    }
+
+    .clients-admin-event-code {
+      color: #64748b;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .clients-admin-event-stats {
+      color: #334155;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .clients-admin-progress {
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      background: #dbeafe;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+
+    .clients-admin-progress-bar {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #0f766e 0%, #14b8a6 100%);
+    }
+
+    .clients-admin-empty {
+      padding: 34px 20px;
+      border: 1px dashed #cbd5e1;
+      border-radius: 20px;
+      text-align: center;
+      color: #64748b;
+      background: #fff;
+    }
+
+    .clients-admin-note {
+      color: #64748b;
+      font-size: 13px;
+      margin: 0 0 16px;
+    }
+
+    @media (max-width: 991px) {
+      .clients-admin-toolbar {
+        grid-template-columns: 1fr;
+      }
+
+      .clients-admin-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .clients-admin-detail-grid,
+      .clients-admin-form-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 575px) {
+      .clients-admin-table thead th,
+      .clients-admin-table tbody td {
+        padding: 14px 12px;
+      }
+
+      .clients-admin-table th:last-child,
+      .clients-admin-table td:last-child {
+        width: 72px;
+      }
+
+      .clients-admin-actions .btn {
+        padding-left: 10px;
+        padding-right: 10px;
+      }
+
+      .clients-admin-stats {
+        grid-template-columns: 1fr;
+      }
+
+      .clients-admin-detail-grid,
+      .clients-admin-form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 
 	<div class="wrapper"> 
 	 
@@ -146,6 +606,79 @@ $salut = 'Bonsoir';
     $adminQuotaOverview = WhatsAppQuotaService::buildAdminOverview($pdo);
     $adminQuotaTotals = (array) ($adminQuotaOverview['totals'] ?? []);
     $clientQuotaRows = (array) ($adminQuotaOverview['clients'] ?? []);
+    $clientSearch = trim((string) ($_GET['q'] ?? ''));
+    $clientFilter = trim((string) ($_GET['filter'] ?? 'all'));
+    $allowedClientFilters = ['all', 'with-events', 'without-events', 'low-credit', 'active-sends'];
+
+    if (!in_array($clientFilter, $allowedClientFilters, true)) {
+      $clientFilter = 'all';
+    }
+
+    $filteredClientQuotaRows = array_values(array_filter($clientQuotaRows, static function (array $row_client) use ($clientSearch, $clientFilter, $formatSearchValue): bool {
+      $quotaOverview = (array) ($row_client['quota_overview'] ?? []);
+      $clientEvents = (array) ($quotaOverview['events'] ?? []);
+      $searchableFields = [
+        (string) ($row_client['noms'] ?? ''),
+        (string) ($row_client['email'] ?? ''),
+        (string) ($row_client['phone'] ?? ''),
+      ];
+
+      foreach ($clientEvents as $clientEvent) {
+        $searchableFields[] = (string) ($clientEvent['event_label'] ?? '');
+        $searchableFields[] = (string) ($clientEvent['event_code'] ?? '');
+      }
+
+      if ($clientSearch !== '') {
+        $haystack = $formatSearchValue(implode(' ', $searchableFields));
+        if (strpos($haystack, $formatSearchValue($clientSearch)) === false) {
+          return false;
+        }
+      }
+
+      if ($clientFilter === 'with-events') {
+        return count($clientEvents) > 0;
+      }
+
+      if ($clientFilter === 'without-events') {
+        return count($clientEvents) === 0;
+      }
+
+      if ($clientFilter === 'low-credit') {
+        return (int) ($quotaOverview['remaining_quota'] ?? 0) <= 50;
+      }
+
+      if ($clientFilter === 'active-sends') {
+        return (int) ($quotaOverview['sent_count'] ?? 0) > 0;
+      }
+
+      return true;
+    }));
+
+    usort($filteredClientQuotaRows, static function (array $left, array $right): int {
+      $leftOverview = (array) ($left['quota_overview'] ?? []);
+      $rightOverview = (array) ($right['quota_overview'] ?? []);
+
+      $remainingDiff = (int) ($leftOverview['remaining_quota'] ?? 0) <=> (int) ($rightOverview['remaining_quota'] ?? 0);
+      if ($remainingDiff !== 0) {
+        return $remainingDiff;
+      }
+
+      return (int) ($rightOverview['sent_count'] ?? 0) <=> (int) ($leftOverview['sent_count'] ?? 0);
+    });
+
+    $visibleClientCount = count($filteredClientQuotaRows);
+    $clientsWithoutEventCount = 0;
+    $clientsLowCreditCount = 0;
+
+    foreach ($filteredClientQuotaRows as $clientQuotaRow) {
+      $quotaOverview = (array) ($clientQuotaRow['quota_overview'] ?? []);
+      if ((int) ($quotaOverview['event_count'] ?? 0) === 0) {
+        $clientsWithoutEventCount++;
+      }
+      if ((int) ($quotaOverview['remaining_quota'] ?? 0) <= 50) {
+        $clientsLowCreditCount++;
+      }
+    }
 
 
   
@@ -165,6 +698,11 @@ $salut = 'Bonsoir';
         <?php if ($quotaFlash !== null) { ?>
         <div class="alert alert-<?php echo htmlspecialchars($quotaFlash['type'], ENT_QUOTES, 'UTF-8'); ?>">
           <?php echo htmlspecialchars($quotaFlash['message'], ENT_QUOTES, 'UTF-8'); ?>
+        </div>
+        <?php } ?>
+        <?php if ($clientFlash !== null) { ?>
+        <div class="alert alert-<?php echo htmlspecialchars($clientFlash['type'], ENT_QUOTES, 'UTF-8'); ?>">
+          <?php echo htmlspecialchars($clientFlash['message'], ENT_QUOTES, 'UTF-8'); ?>
         </div>
         <?php } ?>
 				<div class="box box-body">
@@ -277,223 +815,275 @@ $salut = 'Bonsoir';
  
 <div class="row" id='mesinv'>
     <div class="col-xxl-12 col-xl-12 col-lg-12">
-        <div class="card rounded-4">
-            <div class="box-header d-flex b-0 justify-content-between align-items-center">
-                <h4 class="box-title">Nos Clients</h4>
-                
+        <div class="card rounded-4 clients-admin-card">
+            <div class="box-header d-flex b-0 justify-content-between align-items-center flex-wrap" style="gap:16px;">
+                <div>
+                  <h4 class="box-title mb-0">Gestion des clients</h4>
+                  <p class="mb-0" style="margin-top:6px;color:#64748b;font-size:14px;">Recherchez un client, suivez ses quotas WhatsApp et gerez ses evenements plus rapidement.</p>
+                </div>
+                <div class="clients-admin-meta">
+                  <span class="clients-admin-pill" id="clientsVisibleCounter">Visibles : <?php echo (int) $visibleClientCount; ?></span>
+                  <span class="clients-admin-pill is-warning">Credits faibles : <?php echo (int) $clientsLowCreditCount; ?></span>
+                  <span class="clients-admin-pill is-neutral">Sans evenement : <?php echo (int) $clientsWithoutEventCount; ?></span>
+                </div>
             </div>
 
             <div class="card-body pt-0">
-                <div class="table-responsive">
-                    <table class="table mb-0">
-                        <tbody>
-                            <?php 
-                            if ($clientQuotaRows !== []) {
-                                foreach ($clientQuotaRows as $row_client) {
-                                  $quotaOverview = (array) ($row_client['quota_overview'] ?? []);
-                                  $clientEvents = (array) ($quotaOverview['events'] ?? []);
+                <form action="" method="get" class="clients-admin-toolbar">
+                  <input type="hidden" name="page" value="clients">
+                  <label class="clients-admin-search" for="clientSearchInput">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="clientSearchInput" name="q" value="<?php echo htmlspecialchars($clientSearch, ENT_QUOTES, 'UTF-8'); ?>" placeholder="Rechercher par nom, email, telephone ou code evenement">
+                  </label>
+                  <select name="filter" id="clientFilterSelect" class="form-control clients-admin-filters">
+                    <option value="all" <?php echo $clientFilter === 'all' ? 'selected' : ''; ?>>Tous les clients</option>
+                    <option value="with-events" <?php echo $clientFilter === 'with-events' ? 'selected' : ''; ?>>Avec evenement</option>
+                    <option value="without-events" <?php echo $clientFilter === 'without-events' ? 'selected' : ''; ?>>Sans evenement</option>
+                    <option value="low-credit" <?php echo $clientFilter === 'low-credit' ? 'selected' : ''; ?>>Credits faibles</option>
+                    <option value="active-sends" <?php echo $clientFilter === 'active-sends' ? 'selected' : ''; ?>>Envois actifs</option>
+                  </select>
+                  <button type="submit" class="btn btn-primary">Filtrer</button>
+                  <?php if ($clientSearch !== '' || $clientFilter !== 'all') { ?>
+                  <a href="index.php?page=clients" class="btn btn-outline btn-secondary">Reinitialiser</a>
+                  <?php } else { ?>
+                  <span></span>
+                  <?php } ?>
+                </form>
 
-                             ?> 
-                                    <tr>
-                                        <td class="pt-0 px-0 b-0">
-                                            <a class="d-block fw-500 fs-14" href="#"><?php echo htmlspecialchars(ucfirst($row_client['noms'])); ?></a>
-                                            <!-- <em class="text-fade"><?php //echo $row_conf['phone']; ?> / <?php //echo $row_conf['email']; ?> </em><br> --> 
-                                            <p><em style="color:#888;"><?php echo $row_client['email'].'<br> '.$row_client['phone']; ?> </em></p>
-                      <p style="margin:0 0 12px;color:#475569;font-size:13px;">
-                        Envois : <strong><?php echo (int) ($quotaOverview['sent_count'] ?? 0); ?></strong>
-                         | Quota : <strong><?php echo (int) ($quotaOverview['total_quota'] ?? 0); ?></strong>
-                         | Restants : <strong><?php echo (int) ($quotaOverview['remaining_quota'] ?? 0); ?></strong>
-                      </p>
+                <p class="clients-admin-note">Astuce : la recherche agit deja sur le nom, l'email, le telephone et les codes d'evenements affiches.</p>
 
-                      <?php if ($clientEvents !== []) { ?>
-                      <div style="display:grid;gap:10px;margin-bottom:14px;">
-                        <?php foreach ($clientEvents as $clientEvent) { ?>
-                        <div style="padding:12px 14px;border:1px solid #e5e7eb;border-radius:14px;background:#f8fafc;">
-                          <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;">
-                            <div>
-                              <div style="font-weight:700;color:#0f172a;"><?php echo htmlspecialchars((string) ($clientEvent['event_label'] ?? 'Evenement'), ENT_QUOTES, 'UTF-8'); ?></div>
-                              <div style="font-size:12px;color:#64748b;">Code evenement : <?php echo htmlspecialchars((string) ($clientEvent['event_code'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></div>
-                            </div>
-                            <div style="font-size:13px;color:#334155;">
-                              Envoyes <strong><?php echo (int) ($clientEvent['sent_count'] ?? 0); ?></strong>
-                               | Restants <strong><?php echo (int) ($clientEvent['remaining_quota'] ?? 0); ?></strong>
-                               | Bonus <strong>+<?php echo (int) ($clientEvent['bonus_quota'] ?? 0); ?></strong>
-                            </div>
-                          </div>
-                          <form action="" method="post" class="mt-10" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-                            <input type="hidden" name="quota_event_code" value="<?php echo htmlspecialchars((string) ($clientEvent['event_code'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
-                            <input type="hidden" name="quota_client_user_id" value="<?php echo (int) ($row_client['cod_user'] ?? 0); ?>">
-                            <input type="number" name="bonus_quota_add" class="form-control" min="1" step="1" value="50" style="max-width:140px;" required>
-                            <button type="submit" class="btn btn-sm btn-outline btn-success">Ajouter du credit</button>
-                          </form>
+                <div class="clients-admin-table-wrap">
+                  <div class="table-responsive">
+                    <table class="table clients-admin-table align-middle" id="clientsAdminGrid">
+                      <thead>
+                        <tr>
+                          <th>Client</th>
+                          <th class="text-end">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                    <?php if ($filteredClientQuotaRows !== []) {
+                      foreach ($filteredClientQuotaRows as $row_client) {
+                        $quotaOverview = (array) ($row_client['quota_overview'] ?? []);
+                        $clientEvents = (array) ($quotaOverview['events'] ?? []);
+                        $clientName = ucfirst((string) ($row_client['noms'] ?? 'Client'));
+                        $clientId = (int) ($row_client['cod_user'] ?? 0);
+                        $detailModalId = 'clientDetailModal' . $clientId;
+                        $editModalId = 'clientEditModal' . $clientId;
+                        $deleteModalId = 'clientDeleteModal' . $clientId;
+                        $clientSearchIndex = $formatSearchValue($clientName . ' ' . (string) ($row_client['email'] ?? '') . ' ' . (string) ($row_client['phone'] ?? ''));
+                        foreach ($clientEvents as $clientEvent) {
+                          $clientSearchIndex .= ' ' . $formatSearchValue((string) ($clientEvent['event_label'] ?? '') . ' ' . (string) ($clientEvent['event_code'] ?? ''));
+                        }
+                    ?>
+                    <tr class="clients-admin-row" data-client-search="<?php echo htmlspecialchars($clientSearchIndex, ENT_QUOTES, 'UTF-8'); ?>">
+                      <td>
+                        <div class="clients-admin-main">
+                          <strong><?php echo htmlspecialchars($clientName, ENT_QUOTES, 'UTF-8'); ?></strong>
+                          <span class="clients-admin-sub">Compte client #<?php echo $clientId; ?></span>
+                          <span class="clients-admin-sub"><?php echo htmlspecialchars((string) ($row_client['email'] ?? 'Aucun email'), ENT_QUOTES, 'UTF-8'); ?><br><?php echo htmlspecialchars((string) ($row_client['phone'] ?? 'Aucun telephone'), ENT_QUOTES, 'UTF-8'); ?></span>
                         </div>
-                        <?php } ?>
+                        <div class="clients-admin-badges">
+                          <span class="clients-admin-badge"><?php echo (int) ($quotaOverview['event_count'] ?? 0); ?> evenement(s)</span>
+                          <?php if ((int) ($quotaOverview['sent_count'] ?? 0) > 0) { ?>
+                          <span class="clients-admin-badge is-success"><?php echo (int) $quotaOverview['sent_count']; ?> envoi(s)</span>
+                          <?php } ?>
+                          <?php if ((int) ($quotaOverview['remaining_quota'] ?? 0) <= 50) { ?>
+                          <span class="clients-admin-badge is-alert">Credit faible</span>
+                          <?php } ?>
+                          <?php if ((int) ($quotaOverview['event_count'] ?? 0) === 0) { ?>
+                          <span class="clients-admin-badge is-neutral">Sans evenement</span>
+                          <?php } ?>
+                        </div>
+                      </td>
+                      <td class="clients-admin-actions">
+                        <div class="dropdown">
+                          <a href="#" class="waves-effect waves-light btn btn-outline btn-rounded btn-warning mb-0 btn-sm list-icons-item dropdown-toggle" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-h" style="font-size:18px;"></i></a>
+                          <div class="dropdown-menu dropdown-menu-end">
+                            <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#<?php echo $detailModalId; ?>">Detail</button>
+                            <?php if ((string) ($row_client['type_user'] ?? '') === '2') { ?>
+                            <form action="" method="post">
+                              <input type="hidden" name="impersonate_user_id" value="<?php echo $clientId; ?>">
+                              <button type="submit" class="dropdown-item">Se connecter</button>
+                            </form>
+                            <?php } ?>
+                            <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#<?php echo $editModalId; ?>">Modifier</button>
+                            <button type="button" class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#<?php echo $deleteModalId; ?>">Supprimer</button>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+
+                    <div class="modal fade" id="<?php echo $detailModalId; ?>" tabindex="-1" aria-hidden="true">
+                      <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+                        <div class="modal-content rounded-4">
+                          <div class="modal-header">
+                            <div>
+                              <h5 class="modal-title mb-0"><?php echo htmlspecialchars($clientName, ENT_QUOTES, 'UTF-8'); ?></h5>
+                              <small class="text-muted">Vue detaillee du client et de ses quotas.</small>
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                          </div>
+                          <div class="modal-body">
+                            <div class="clients-admin-detail-grid">
+                              <div class="clients-admin-detail-card"><span>Envois</span><strong><?php echo (int) ($quotaOverview['sent_count'] ?? 0); ?></strong></div>
+                              <div class="clients-admin-detail-card"><span>Quota total</span><strong><?php echo (int) ($quotaOverview['total_quota'] ?? 0); ?></strong></div>
+                              <div class="clients-admin-detail-card"><span>Restants</span><strong><?php echo (int) ($quotaOverview['remaining_quota'] ?? 0); ?></strong></div>
+                              <div class="clients-admin-detail-card"><span>Evenements</span><strong><?php echo (int) ($quotaOverview['event_count'] ?? 0); ?></strong></div>
+                            </div>
+                            <div class="clients-admin-main" style="margin-bottom:18px;">
+                              <strong><?php echo htmlspecialchars($clientName, ENT_QUOTES, 'UTF-8'); ?></strong>
+                              <strong><?php echo htmlspecialchars((string) ($row_client['email'] ?? 'Aucun email'), ENT_QUOTES, 'UTF-8'); ?></strong>
+                              <span class="clients-admin-sub"><?php echo htmlspecialchars((string) ($row_client['phone'] ?? 'Aucun telephone'), ENT_QUOTES, 'UTF-8'); ?></span>
+                            </div>
+                            <div class="clients-admin-badges" style="margin-bottom:18px;">
+                              <span class="clients-admin-badge"><?php echo (int) ($quotaOverview['event_count'] ?? 0); ?> evenement(s)</span>
+                              <?php if ((int) ($quotaOverview['sent_count'] ?? 0) > 0) { ?>
+                              <span class="clients-admin-badge is-success"><?php echo (int) ($quotaOverview['sent_count'] ?? 0); ?> envoi(s)</span>
+                              <?php } ?>
+                              <?php if ((int) ($quotaOverview['remaining_quota'] ?? 0) <= 50) { ?>
+                              <span class="clients-admin-badge is-alert">Credit faible</span>
+                              <?php } ?>
+                              <?php if ((int) ($quotaOverview['event_count'] ?? 0) === 0) { ?>
+                              <span class="clients-admin-badge is-neutral">Sans evenement</span>
+                              <?php } ?>
+                            </div>
+                            <?php if ($clientEvents !== []) { ?>
+                            <div class="clients-admin-modal-events">
+                              <?php foreach ($clientEvents as $clientEvent) {
+                                $eventTotalQuota = max(1, (int) ($clientEvent['total_quota'] ?? 0));
+                                $eventRemainingQuota = (int) ($clientEvent['remaining_quota'] ?? 0);
+                                $eventUsagePercent = min(100, max(0, (int) round(($eventRemainingQuota / $eventTotalQuota) * 100)));
+                              ?>
+                              <section class="clients-admin-event">
+                                <div class="clients-admin-event-head">
+                                  <div>
+                                    <h6 class="clients-admin-event-title"><?php echo htmlspecialchars((string) ($clientEvent['event_label'] ?? 'Evenement'), ENT_QUOTES, 'UTF-8'); ?></h6>
+                                    <div class="clients-admin-event-code">Code evenement : <?php echo htmlspecialchars((string) ($clientEvent['event_code'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></div>
+                                  </div>
+                                  <div class="clients-admin-event-stats">
+                                    Envoyes <strong><?php echo (int) ($clientEvent['sent_count'] ?? 0); ?></strong>
+                                    | Restants <strong><?php echo $eventRemainingQuota; ?></strong>
+                                    | Bonus <strong>+<?php echo (int) ($clientEvent['bonus_quota'] ?? 0); ?></strong>
+                                  </div>
+                                </div>
+                                <div class="clients-admin-progress">
+                                  <div class="clients-admin-progress-bar" style="width: <?php echo $eventUsagePercent; ?>%;"></div>
+                                </div>
+                                <form action="" method="post" class="d-flex align-items-center flex-wrap" style="gap:8px;">
+                                  <input type="hidden" name="quota_event_code" value="<?php echo htmlspecialchars((string) ($clientEvent['event_code'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
+                                  <input type="hidden" name="quota_client_user_id" value="<?php echo $clientId; ?>">
+                                  <input type="number" name="bonus_quota_add" class="form-control" min="1" step="1" value="50" style="max-width:150px;" required>
+                                  <button type="submit" class="btn btn-sm btn-outline btn-success">Ajouter du credit</button>
+                                </form>
+                              </section>
+                              <?php } ?>
+                            </div>
+                            <?php } else { ?>
+                            <div class="clients-admin-empty">Aucun evenement rattache a ce client pour le moment.</div>
+                            <?php } ?>
+                          </div>
+                        </div>
                       </div>
-                      <?php } else { ?>
-                      <p style="margin:0 0 14px;color:#64748b;font-size:13px;">Aucun evenement rattache a ce client pour le moment.</p>
-                      <?php } ?>
+                    </div>
 
-                                        <?php if ((string) ($row_client['type_user'] ?? '') === '2') { ?>
-                                        <form action="" method="post" class="mt-10">
-                                          <input type="hidden" name="impersonate_user_id" value="<?php echo (int) $row_client['cod_user']; ?>">
-                                          <button type="submit" class="btn btn-sm btn-primary">
-                                            Se connecter comme ce client
-                                          </button>
-                                        </form>
-                                        <?php } ?>
-                                        </td>  
-                                    </tr>
+                    <div class="modal fade" id="<?php echo $editModalId; ?>" tabindex="-1" aria-hidden="true">
+                      <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content rounded-4">
+                          <div class="modal-header">
+                            <h5 class="modal-title mb-0">Modifier <?php echo htmlspecialchars($clientName, ENT_QUOTES, 'UTF-8'); ?></h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                          </div>
+                          <div class="modal-body">
+                            <form action="" method="post" class="clients-admin-form-grid">
+                              <input type="hidden" name="save_client_id" value="<?php echo $clientId; ?>">
+                              <label class="is-full">
+                                <span>Noms</span>
+                                <input type="text" name="noms" value="<?php echo htmlspecialchars((string) ($row_client['noms'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" required>
+                              </label>
+                              <label>
+                                <span>Telephone</span>
+                                <input type="text" name="phone" value="<?php echo htmlspecialchars((string) ($row_client['phone'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" required>
+                              </label>
+                              <label>
+                                <span>Email</span>
+                                <input type="email" name="email" value="<?php echo htmlspecialchars((string) ($row_client['email'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" required>
+                              </label>
+                              <div class="is-full d-flex justify-content-end">
+                                <button type="submit" class="btn btn-primary">Enregistrer</button>
+                              </div>
+                            </form>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
 
-                            <?php 
-
-                                }
-
-                            } else {
-                echo '<tr><td colspan="3" class="text-left" style="font-style:italic;">Aucun client trouve</td></tr>';
-                            }
-
-                            ?>
-
-                        </tbody>
+                    <div class="modal fade" id="<?php echo $deleteModalId; ?>" tabindex="-1" aria-hidden="true">
+                      <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content rounded-4">
+                          <div class="modal-header">
+                            <h5 class="modal-title mb-0">Supprimer <?php echo htmlspecialchars($clientName, ENT_QUOTES, 'UTF-8'); ?></h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                          </div>
+                          <div class="modal-body">
+                            <p class="clients-admin-danger-note">Cette suppression est definitive. Elle reste bloquee si le client possede encore des evenements.</p>
+                            <form action="" method="post" class="d-flex justify-content-end gap-2">
+                              <input type="hidden" name="delete_client_id" value="<?php echo $clientId; ?>">
+                              <button type="button" class="btn btn-light" data-bs-dismiss="modal">Annuler</button>
+                              <button type="submit" class="btn btn-danger">Supprimer</button>
+                            </form>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <?php }
+                    } else { ?>
+                    <tr id="clientsAdminEmptyRow"><td colspan="2"><div class="clients-admin-empty" id="clientsAdminEmpty">Aucun client ne correspond a votre recherche ou a votre filtre.</div></td></tr>
+                    <?php } ?>
+                      </tbody>
                     </table>
+                  </div>
                 </div>
+                <?php if ($filteredClientQuotaRows !== []) { ?>
+                <div class="clients-admin-empty" id="clientsAdminEmpty" style="display:none;">Aucun client ne correspond a la recherche en cours.</div>
+                <?php } ?>
             </div>	
         </div>
     </div>
+</div>
 
-    <!-- Fenêtre modale -->
-    <div id="shareModal" class="modalinv" style="display: none;">
-        <div class="modal-content">
-			<form action="" method="post">
-<?php 
-require_once '../../twilio-php-main/src/Twilio/autoload.php'; 
-use Twilio\Rest\Client;
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const input = document.getElementById('clientSearchInput');
+  const cards = Array.from(document.querySelectorAll('[data-client-search]'));
+  const emptyState = document.getElementById('clientsAdminEmpty');
+  const visibleCounter = document.getElementById('clientsVisibleCounter');
 
-require_once __DIR__ . '/whatsapp_template_sender.php';
-
-if (isset($_POST['submitwhat'])) {
-  $shareErrorMessage = null;
-  $shareSuccessMessage = null;
-
-  try {
-    $result = isapp_whatsapp_send_template_invitation($pdo, [
-      'event_code' => $codevent,
-      'invite_id' => $_POST['inviteId'] ?? null,
-      'phone' => $_POST['phoneinv'] ?? '',
-      'invite_name' => $_POST['inviteName'] ?? 'Invite',
-      'pdf_link' => $_POST['pdf_link'] ?? '',
-      'success_redirect' => 'index.php?page=mb_accueil',
-    ]);
-    $shareSuccessMessage = $result['success_message'];
-  } catch (\Throwable $exception) {
-    $shareErrorMessage = (string) $exception->getMessage();
-    if ($shareErrorMessage === '') {
-      $shareErrorMessage = 'L’envoi de l’invitation WhatsApp a echoue.';
-    }
+  if (!input || cards.length === 0 || !emptyState || !visibleCounter) {
+    return;
   }
 
-  if ($shareSuccessMessage !== null) {
-    echo '<script>
-    Swal.fire({
-      title: "Notification !",
-      text: ' . json_encode($shareSuccessMessage) . ',
-      icon: "success",
-      confirmButtonText: "OK"
-    }).then((result) => {
-      if (result.isConfirmed) {
-        window.location.href = "index.php?page=mb_accueil";
+  const render = function () {
+    const query = (input.value || '').toLocaleLowerCase();
+    let visibleCount = 0;
+
+    cards.forEach(function (card) {
+      const haystack = (card.getAttribute('data-client-search') || '').toLocaleLowerCase();
+      const visible = query === '' || haystack.indexOf(query) !== -1;
+      card.classList.toggle('is-hidden', !visible);
+      if (visible) {
+        visibleCount += 1;
       }
     });
-    </script>';
-  }
 
-  if ($shareErrorMessage !== null) {
-    echo '<script>
-    Swal.fire({
-      title: "Échec de l’envoi",
-      text: ' . json_encode($shareErrorMessage) . ',
-      icon: "error",
-      confirmButtonText: "OK"
-    });
-    </script>';
-  }
-}
-?>
-            <div class="form-group"> 
-                <span class="close" onclick="closeModal()" style="cursor: pointer; float: right; font-size: 24px;">&times;</span><br>
-                <h4 id="modalTitle">Envoyer l'invitation</h4> <br><br>
-                <input type="text" required pattern="^\+\d{1,3}\d{9,}$" 
-				title="Veuillez entrer un numéro au format international (ex: +243810678785)" id="whatsappNumber" name="phoneinv" class="input-group-text bg-transparent" style="border-radius:7px 7px 0px 0px;height:45px;width:100%;" placeholder="Numéro WhatsApp" />
-                <input type="hidden" id="inviteName" name="inviteName" />
-                <input type="hidden" id="inviteId" name="inviteId" />
-                <input type="hidden" id="pdfLink" name="pdf_link" />
-                <button class="btn btn-primary" type="submit" name="submitwhat" style="border-radius:0px 0px 7px 7px;width:100%;">Envoyer l'invitation</button>
-            </div>
-      <p style="margin:12px 0 0;color:#475569;font-size:13px;">En validant cette action, l'invitation PDF sera envoyee sur WhatsApp au numero indique pour cet invite.</p>
-      <div style="margin-top:12px;padding:12px;border-radius:10px;background:#f8fafc;border:1px solid #e2e8f0;color:#334155;font-size:13px;line-height:1.6;">
-        <strong style="display:block;margin-bottom:6px;color:#0f172a;">Exemple de message automatique</strong>
-        Bonjour <span id="previewInviteName">votre invite</span>,<br>
-        nous vous envoyons votre invitation sur WhatsApp avec le fichier PDF pour consultation et confirmation de presence.
-      </div>
-			<br>
-            <a href="#" id="downloadLink">Télécharger le PDF</a>
-        	</form>
-        </div>
-    </div>
+    visibleCounter.textContent = 'Visibles : ' + visibleCount;
+    emptyState.style.display = visibleCount === 0 ? '' : 'none';
+  };
 
-    <style>
-        .modalinv {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 3000;
-        }
-
-        .modal-content {
-            background-color: white;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-            position: relative;
-        }
-
-        .close {
-            position: absolute;
-            top: 10px;
-            right: 15px;
-            color: #aaa;
-            font-size: 24px;
-        }
-
-        .close:hover {
-            color: #000;
-        }
-    </style>
-
-    <script>
-        function openModal(inviteName, inviteId) {
-            document.getElementById('modalTitle').innerText = "Envoyer l'invitation a " + inviteName;
-            document.getElementById('previewInviteName').innerText = inviteName;
-            document.getElementById('shareModal').style.display = 'flex';
-            const linkpdf = "../pages/invitation_elect.php?cod=" + inviteId + "&event=<?php echo $codevent; ?>";
-            document.getElementById('downloadLink').setAttribute('href', linkpdf);
-            document.getElementById('downloadLink').setAttribute('target', "_blank");
-          document.getElementById('inviteName').value = inviteName;
-          document.getElementById('inviteId').value = inviteId;
-          document.getElementById('pdfLink').value = linkpdf;
-        }
-
-        function closeModal() {
-            document.getElementById('shareModal').style.display = 'none';
-        }
-    </script>
-</div>
+  input.addEventListener('input', render);
+  render();
+});
+</script>
 
 
 

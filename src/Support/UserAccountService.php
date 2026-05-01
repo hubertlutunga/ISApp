@@ -377,6 +377,141 @@ final class UserAccountService
         ];
     }
 
+    public static function adminUpdateUserProfile(PDO $pdo, int $adminUserId, int $targetUserId, array $input): array
+    {
+        $adminStmt = $pdo->prepare('SELECT cod_user, type_user FROM is_users WHERE cod_user = ? LIMIT 1');
+        $adminStmt->execute([$adminUserId]);
+        $adminUser = $adminStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+        if ($adminUser === [] || (string) ($adminUser['type_user'] ?? '') !== '1') {
+            return [
+                'success' => false,
+                'message' => 'Seul un administrateur peut modifier un client.',
+            ];
+        }
+
+        $targetStmt = $pdo->prepare('SELECT cod_user, type_user FROM is_users WHERE cod_user = ? LIMIT 1');
+        $targetStmt->execute([$targetUserId]);
+        $targetUser = $targetStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+        if ($targetUser === [] || (string) ($targetUser['type_user'] ?? '') !== '2') {
+            return [
+                'success' => false,
+                'message' => 'Client introuvable.',
+            ];
+        }
+
+        $name = trim((string) ($input['noms'] ?? ''));
+        $phone = preg_replace('/\s+/', '', (string) ($input['phone'] ?? ''));
+        $email = trim((string) ($input['email'] ?? ''));
+
+        if ($name === '' || $phone === '' || $email === '') {
+            return [
+                'success' => false,
+                'message' => 'Veuillez remplir tous les champs obligatoires.',
+            ];
+        }
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return [
+                'success' => false,
+                'message' => 'Veuillez entrer une adresse email valide.',
+            ];
+        }
+
+        if (!preg_match('/^\+\d{1,3}\d{9,}$/', $phone)) {
+            return [
+                'success' => false,
+                'message' => 'Veuillez entrer un numero de telephone valide au format international. (Ex: +243810678785)',
+            ];
+        }
+
+        $duplicatePhoneStmt = $pdo->prepare('SELECT COUNT(*) FROM is_users WHERE phone = ? AND cod_user <> ?');
+        $duplicatePhoneStmt->execute([$phone, $targetUserId]);
+        if ((int) $duplicatePhoneStmt->fetchColumn() > 0) {
+            return [
+                'success' => false,
+                'message' => 'Ce numero de telephone est deja utilise.',
+            ];
+        }
+
+        $duplicateEmailStmt = $pdo->prepare('SELECT COUNT(*) FROM is_users WHERE email = ? AND cod_user <> ?');
+        $duplicateEmailStmt->execute([$email, $targetUserId]);
+        if ((int) $duplicateEmailStmt->fetchColumn() > 0) {
+            return [
+                'success' => false,
+                'message' => 'Cette adresse email est deja utilisee.',
+            ];
+        }
+
+        $stmt = $pdo->prepare('UPDATE is_users SET noms = ?, phone = ?, email = ? WHERE cod_user = ? LIMIT 1');
+        $stmt->execute([$name, $phone, $email, $targetUserId]);
+
+        return [
+            'success' => true,
+            'message' => 'Le profil du client a ete mis a jour.',
+        ];
+    }
+
+    public static function adminDeleteClient(PDO $pdo, int $adminUserId, int $targetUserId): array
+    {
+        $adminStmt = $pdo->prepare('SELECT cod_user, type_user FROM is_users WHERE cod_user = ? LIMIT 1');
+        $adminStmt->execute([$adminUserId]);
+        $adminUser = $adminStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+        if ($adminUser === [] || (string) ($adminUser['type_user'] ?? '') !== '1') {
+            return [
+                'success' => false,
+                'message' => 'Seul un administrateur peut supprimer un client.',
+            ];
+        }
+
+        if ($targetUserId <= 0 || $targetUserId === $adminUserId) {
+            return [
+                'success' => false,
+                'message' => 'Client introuvable.',
+            ];
+        }
+
+        $targetStmt = $pdo->prepare('SELECT cod_user, type_user FROM is_users WHERE cod_user = ? LIMIT 1');
+        $targetStmt->execute([$targetUserId]);
+        $targetUser = $targetStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+        if ($targetUser === [] || (string) ($targetUser['type_user'] ?? '') !== '2') {
+            return [
+                'success' => false,
+                'message' => 'Client introuvable.',
+            ];
+        }
+
+        $eventCountStmt = $pdo->prepare('SELECT COUNT(*) FROM events WHERE cod_user = ?');
+        $eventCountStmt->execute([$targetUserId]);
+        if ((int) $eventCountStmt->fetchColumn() > 0) {
+            return [
+                'success' => false,
+                'message' => 'Suppression bloquee: ce client possede encore un ou plusieurs evenements.',
+            ];
+        }
+
+        $deleteCreditsStmt = $pdo->prepare('DELETE FROM whatsapp_event_credits WHERE client_user_id = ?');
+        $deleteCreditsStmt->execute([$targetUserId]);
+
+        $deleteUserStmt = $pdo->prepare('DELETE FROM is_users WHERE cod_user = ? LIMIT 1');
+        $deleteUserStmt->execute([$targetUserId]);
+
+        if ($deleteUserStmt->rowCount() < 1) {
+            return [
+                'success' => false,
+                'message' => 'La suppression du client a echoue.',
+            ];
+        }
+
+        return [
+            'success' => true,
+            'message' => 'Le client a ete supprime avec succes.',
+        ];
+    }
+
     public static function requestPasswordReset(PDO $pdo, object $mailer, array $config, ?string $email): array
     {
         self::ensurePasswordResetInfrastructure($pdo);
