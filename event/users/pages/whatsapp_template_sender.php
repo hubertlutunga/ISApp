@@ -358,12 +358,16 @@ if (!function_exists('isapp_whatsapp_sender_normalize_recipient')) {
     function isapp_whatsapp_sender_normalize_recipient(string $phone): string
     {
         $phone = trim($phone);
+        if (stripos($phone, 'whatsapp:') === 0) {
+            $phone = substr($phone, 9);
+        }
         $phone = preg_replace('/\s+/', '', $phone);
-        if (stripos($phone, 'whatsapp:') !== 0) {
-            $phone = 'whatsapp:' . $phone;
+
+        if (!preg_match('/^\+243\d{9}$/', $phone)) {
+            throw new RuntimeException('Le numero WhatsApp doit commencer par +243 et contenir 9 chiffres apres l indicatif.');
         }
 
-        return $phone;
+        return 'whatsapp:' . $phone;
     }
 }
 

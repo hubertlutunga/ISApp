@@ -501,6 +501,7 @@
 								$_SESSION[$filterSessionKey][$eventFilterKey] = $selectedHostFilter;
 
 								$confirmedNames = InviteStatusService::confirmedNamesIndex($pdo, (int) $codevent);
+								$sentInviteIds = InviteStatusService::sentInviteIdsIndex($pdo, (string) $codevent);
 								$pdfFilterQuery = http_build_query([
 									'event' => $codevent,
 									'hote_filter' => $selectedHostFilter,
@@ -567,8 +568,9 @@
 										   $inviteAccord = (string) $audienceLabels['singular'];
 									   }
 									   $confirmed = isset($confirmedNames[InviteStatusService::normalizeName((string) $row_inv['nom'])]);
-									   $reponseconf = InviteStatusService::confirmationLabel($confirmed, $row_inv['sing'] ?? null);
-									   $responseClass = $confirmed ? 'success' : 'muted';
+									$sentInvitation = isset($sentInviteIds[(int) ($row_inv['id_inv'] ?? 0)]);
+									$reponseconf = InviteStatusService::invitationStatusLabel($confirmed, $sentInvitation, $row_inv['sing'] ?? null);
+								$hasInvitationPreview = trim((string) ($dataevent['invit_religieux'] ?? '')) !== '';
 									   $hoteNom = $extractFirstName(isset($row_inv['hote_nom']) ? (string) $row_inv['hote_nom'] : '');
 
 							 
@@ -608,16 +610,16 @@
   
  
                        
-					   <a class="dropdown-item" href="#" onclick="openModal('<?php echo htmlspecialchars(ucfirst($row_inv['nom'])); ?>', '<?php echo $row_inv['id_inv']; ?>')" style="color:#aaa;">
-					   <i class="fa fa-share"></i> <?php echo htmlspecialchars($audienceLabels['notify'], ENT_QUOTES, 'UTF-8'); ?></a> 
+					   <a class="dropdown-item" href="#" onclick="<?php echo $hasInvitationPreview ? 'openModal(' . json_encode(ucfirst((string) $row_inv['nom']), JSON_UNESCAPED_UNICODE) . ', ' . json_encode((string) ((int) $row_inv['id_inv'])) . ')' : 'showInvitationDesignPending(event)'; ?>" style="color:<?php echo $hasInvitationPreview ? '#495057' : '#adb5bd'; ?>;">
+					   <i class="fa fa-share"></i> Partager l'invitation</a> 
 
 					   
-<?php if ($dataevent['invit_religieux'] !== NULL): ?>
-    <a class="dropdown-item" target="_blank"
-       href="../pages/invitation_speciale.php?cod=<?= htmlspecialchars($row_inv['id_inv']); ?>&event=<?= htmlspecialchars($codevent); ?>">
-        <i class="fa fa-download"></i> Partager l'invitation
+		<a class="dropdown-item" <?php echo $hasInvitationPreview ? 'target="_blank"' : ''; ?>
+			 href="<?php echo $hasInvitationPreview ? '../pages/invitation_speciale.php?cod=' . rawurlencode((string) $row_inv['id_inv']) . '&event=' . rawurlencode((string) $codevent) : '#'; ?>"
+			 onclick="<?php echo $hasInvitationPreview ? '' : 'showInvitationDesignPending(event)'; ?>"
+			 style="color:<?php echo $hasInvitationPreview ? '#495057' : '#adb5bd'; ?>;">
+		<i class="fa fa-eye"></i> Aperçu de l'invitation
     </a>
-<?php endif; ?>
  
  
 
@@ -766,8 +768,8 @@ async function confirmSuppInv(e, idInv, codEvent, nom) {
 			   <div class="form-group"> 
 				   <span class="close" onclick="closeModal()" style="cursor: pointer; float: right; font-size: 24px;">&times;</span><br>
 				   <h4 id="modalTitle">Envoyer l'invitation</h4> <br><br>
-				   <input type="text" required pattern="^\+\d{1,3}\d{9,}$" 
-				   title="Veuillez entrer un numéro au format international (ex: +243810678785)" id="whatsappNumber" name="phoneinv" class="input-group-text bg-transparent" style="border-radius:7px 7px 0px 0px;height:45px;width:100%;" placeholder="Numéro WhatsApp" />
+				   <input type="text" required pattern="^\+243\d{9}$" inputmode="tel"
+				   title="Veuillez entrer un numero WhatsApp valide au format +243XXXXXXXXX." id="whatsappNumber" name="phoneinv" class="input-group-text bg-transparent" style="border-radius:7px 7px 0px 0px;height:45px;width:100%;" placeholder="+243XXXXXXXXX" />
 				   <input type="hidden" id="inviteName" name="inviteName" />
 				   <input type="hidden" id="inviteId" name="inviteId" />
 				   <input type="hidden" id="pdfLink" name="pdf_link" />
@@ -830,6 +832,19 @@ async function confirmSuppInv(e, idInv, codEvent, nom) {
 	   </style>
    
 	   <script>
+		   function showInvitationDesignPending(event) {
+			   if (event) {
+				   event.preventDefault();
+			   }
+
+			   Swal.fire({
+				   title: "Invitation en cours de conception",
+				   text: "Cette invitation n'est pas encore disponible.",
+				   icon: "info",
+				   confirmButtonText: "OK"
+			   });
+		   }
+
 		   function openModal(inviteName, inviteId) {
 			   document.getElementById('modalTitle').innerText = "Envoyer l'invitation a " + inviteName;
 			   document.getElementById('previewInviteName').innerText = inviteName;
