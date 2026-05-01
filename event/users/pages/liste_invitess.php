@@ -320,12 +320,12 @@ async function confirmSuppInv(e, idInv, codEvent, nom) {
 					   <strong style="display:block;margin-bottom:6px;color:#0f172a;">Exemple de message automatique</strong>
 					   Bonjour <span id="previewInviteName">votre invite</span>,<br>
 					   <br>
-					   Nous avons le plaisir de vous transmettre votre invitation a <?php echo htmlspecialchars($sharePreviewContext['event_label'], ENT_QUOTES, 'UTF-8'); ?>.<br>
+					   Nous avons le plaisir de vous transmettre votre invitation <?php echo htmlspecialchars($sharePreviewContext['event_label'], ENT_QUOTES, 'UTF-8'); ?> de <?php echo htmlspecialchars($sharePreviewContext['signature'], ENT_QUOTES, 'UTF-8'); ?>.<br>
 					   <br>
 					   Nous vous remercions de bien vouloir confirmer votre presence.<br>
 					   <br>
 					   Cordialement,<br>
-					   <?php echo htmlspecialchars($sharePreviewContext['signature'], ENT_QUOTES, 'UTF-8'); ?>.<br>
+					   Invitation Speciale,<br>
 					   Merci.
 				   </div>
 			   </form>

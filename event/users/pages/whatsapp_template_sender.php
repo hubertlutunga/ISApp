@@ -160,22 +160,26 @@ if (!function_exists('isapp_whatsapp_sender_event_label')) {
             $weddingType = isapp_whatsapp_sender_normalize_wedding_type((string) ($event['type_mar'] ?? ''));
 
             if ($weddingType === 'coutumier') {
-                return 'la soiree de notre mariage coutumier';
+                return 'a la soiree du mariage coutumier';
             }
 
             if ($weddingType === 'civil') {
-                return 'la ceremonie de notre mariage civil';
+                return 'a la ceremonie du mariage civil';
             }
 
-            return 'la benediction nuptiale';
+            if ($weddingType === 'religieux') {
+                return 'a la soiree du mariage religieux';
+            }
+
+            return 'a la benediction nuptiale';
         }
 
         if ($eventType === '2') {
-            return 'notre anniversaire';
+            return 'a l\'anniversaire';
         }
 
         if ($eventType === '3') {
-            return 'notre conference';
+            return 'a la conference';
         }
 
         $eventName = trim((string) ($event['nom_event'] ?? $event['titre_event'] ?? ''));
@@ -480,7 +484,7 @@ if (!function_exists('isapp_whatsapp_send_template_invitation')) {
         $encodedStem = isapp_whatsapp_sender_encoded_stem($filenameBase);
         $mediaUrl = isapp_whatsapp_sender_ensure_public_pdf($relativePdfLink, $diskStem, $encodedStem);
 
-        $contentSid = (string) (getenv('TWILIO_WHATSAPP_TEMPLATE_SID') ?: 'HX4865eb7fdd890b18ae776de21692c3');
+        $contentSid = (string) (getenv('TWILIO_WHATSAPP_TEMPLATE_SID') ?: 'HX9e9fd770e34bf0241af9f803e0e009b8');
         $twilioSid = (string) (getenv('TWILIO_ACCOUNT_SID') ?: 'AC5cbb94f85695ce16d97ce2ca2c3f7db0');
         $twilioToken = (string) (getenv('TWILIO_AUTH_TOKEN') ?: '2fc99f87d42f61c691c01df995fb8290');
         $twilioFrom = (string) (getenv('TWILIO_WHATSAPP_FROM') ?: 'whatsapp:+17167403177');
