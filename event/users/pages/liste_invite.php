@@ -7,6 +7,9 @@
 		$linkallinv = '../pages/liste_invites.php?event=' . $codevent;
 	}
 	$audienceLabels = EventWorkspaceService::audienceLabels((string) ($type_event ?? ''));
+	$audienceWhatsAppLabel = ($audienceLabels['singular'] ?? 'invite') === 'participant'
+		? 'WhatsApp du participant'
+		: "WhatsApp de l'invite";
 	$quotaClientUserId = WhatsAppQuotaService::resolveClientUserId((array) $dataevent, (int) ($datasession['cod_user'] ?? 0));
 	$eventQuota = WhatsAppQuotaService::getEventQuota($pdo, (string) $codevent, $quotaClientUserId);
 	?>
@@ -807,8 +810,11 @@ async function confirmSuppInv(e, idInv, codEvent, nom) {
 			   <div class="form-group"> 
 				   <span class="close" onclick="closeModal()" style="cursor: pointer; float: right; font-size: 24px;">&times;</span><br>
 				   <h4 id="modalTitle">Envoyer l'invitation</h4> <br><br>
+				   <label for="whatsappNumber" id="whatsappNumberLabel" style="display:block;margin-bottom:8px;color:#0f172a;font-size:13px;font-weight:700;"><?php echo htmlspecialchars($audienceWhatsAppLabel, ENT_QUOTES, 'UTF-8'); ?></label>
 				   <input type="text" required pattern="^\+243\d{9}$" inputmode="tel"
 				   title="Veuillez entrer un numero WhatsApp valide au format +243XXXXXXXXX." id="whatsappNumber" name="phoneinv" class="input-group-text bg-transparent" style="border-radius:7px 7px 0px 0px;height:45px;width:100%;" placeholder="+243XXXXXXXXX" />
+				   <button class="btn btn-light isapp-contact-picker" type="button" id="importContactButton" onclick="importPhoneContact()" style="width:100%;margin-top:10px;border:1px solid #cbd5e1;color:#0f172a;display:none;">Importer depuis mes contacts</button>
+				   <p id="contactPickerHelp" style="display:none;margin:8px 0 0;color:#64748b;font-size:12px;">L'import du repertoire est disponible sur certains navigateurs mobiles compatibles.</p>
 				   <input type="hidden" id="inviteName" name="inviteName" />
 				   <input type="hidden" id="inviteId" name="inviteId" />
 				   <input type="hidden" id="pdfLink" name="pdf_link" />
@@ -871,6 +877,8 @@ async function confirmSuppInv(e, idInv, codEvent, nom) {
 	   </style>
    
 	   <script>
+		   	const whatsappAudienceLabel = <?php echo json_encode($audienceWhatsAppLabel); ?>;
+
 		   function showInvitationDesignPending(event) {
 			   if (event) {
 				   event.preventDefault();
@@ -884,9 +892,87 @@ async function confirmSuppInv(e, idInv, codEvent, nom) {
 			   });
 		   }
 
+		   	function sanitizeImportedPhoneNumber(value) {
+		   		if (!value) {
+		   			return '';
+		   		}
+
+		   		let digits = String(value).replace(/\D+/g, '');
+
+		   		if (digits.startsWith('00')) {
+		   			digits = digits.slice(2);
+		   		}
+
+		   		if (digits.startsWith('243') && digits.length === 12) {
+		   			return '+' + digits;
+		   		}
+
+		   		if (digits.startsWith('0') && digits.length === 10) {
+		   			return '+243' + digits.slice(1);
+		   		}
+
+		   		if (digits.length === 9) {
+		   			return '+243' + digits;
+		   		}
+
+		   		return value.trim();
+		   	}
+
+		   	async function importPhoneContact() {
+		   		if (!('contacts' in navigator) || !('ContactsManager' in window)) {
+		   			Swal.fire({
+		   				title: 'Import non disponible',
+		   				text: "Votre navigateur ne permet pas l'acces direct au repertoire.",
+		   				icon: 'info',
+		   				confirmButtonText: 'OK'
+		   			});
+		   			return;
+		   		}
+
+		   		try {
+		   			const props = ['name', 'tel'];
+		   			const options = { multiple: false };
+		   			const contacts = await navigator.contacts.select(props, options);
+
+		   			if (!Array.isArray(contacts) || contacts.length === 0 || !Array.isArray(contacts[0].tel) || contacts[0].tel.length === 0) {
+		   				return;
+		   			}
+
+		   			const importedPhone = sanitizeImportedPhoneNumber(contacts[0].tel[0]);
+		   			document.getElementById('whatsappNumber').value = importedPhone;
+		   		} catch (error) {
+		   			if (error && error.name === 'AbortError') {
+		   				return;
+		   			}
+
+		   			Swal.fire({
+		   				title: 'Import impossible',
+		   				text: "Le numero n'a pas pu etre importe depuis le repertoire.",
+		   				icon: 'error',
+		   				confirmButtonText: 'OK'
+		   			});
+		   		}
+		   	}
+
+		   	function initContactPickerButton() {
+		   		const importButton = document.getElementById('importContactButton');
+		   		const importHelp = document.getElementById('contactPickerHelp');
+
+		   		if (!importButton || !importHelp) {
+		   			return;
+		   		}
+
+		   		if ('contacts' in navigator && 'ContactsManager' in window) {
+		   			importButton.style.display = 'block';
+		   			importHelp.style.display = 'block';
+		   		}
+		   	}
+
 		   function openModal(inviteName, inviteId) {
 			   document.getElementById('modalTitle').innerText = "Envoyer l'invitation a " + inviteName;
 			   document.getElementById('previewInviteName').innerText = inviteName;
+		   		document.getElementById('whatsappNumberLabel').innerText = whatsappAudienceLabel;
+		   		document.getElementById('whatsappNumber').value = '';
 			   document.getElementById('shareModal').style.display = 'flex';
 			   const linkpdf = "../pages/invitation_speciale.php?cod=" + inviteId + "&event=<?php echo $codevent; ?>";
 			   document.getElementById('inviteName').value = inviteName;
@@ -897,6 +983,8 @@ async function confirmSuppInv(e, idInv, codEvent, nom) {
 		   function closeModal() {
 			   document.getElementById('shareModal').style.display = 'none';
 		   }
+
+		   	initContactPickerButton();
 	   </script>
 
 
