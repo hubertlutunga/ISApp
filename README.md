@@ -53,3 +53,20 @@ Le depot est prepare pour un usage GitHub simple :
 ## Notes
 
 Certaines ressources lourdes encore presentes dans le projet peuvent rester necessaires a l'application, par exemple certaines images de fond. Si vous souhaitez alleger davantage le depot, la prochaine etape coherente est de deplacer les medias indispensables vers un stockage externe ou Git LFS.
+
+## Configuration Twilio
+
+Les identifiants Twilio ne doivent jamais etre stockes en dur dans le code PHP. Configurez-les uniquement via des variables d'environnement sur le serveur.
+
+Variables requises pour l'envoi WhatsApp:
+
+- `TWILIO_ACCOUNT_SID`
+- `TWILIO_AUTH_TOKEN`
+- `TWILIO_WHATSAPP_FROM`
+- `TWILIO_WHATSAPP_TEMPLATE_SID`
+
+Variable optionnelle:
+
+- `ISAPP_PUBLIC_BASE_URL`
+
+Les anciennes pages d'essai Twilio du projet ont ete desactivees pour eviter toute exposition publique ou reutilisation accidentelle.

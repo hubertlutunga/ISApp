@@ -252,10 +252,21 @@ if (!function_exists('isapp_whatsapp_sender_sanitize_filename')) {
     }
 }
 
+if (!function_exists('preparerNomFichierPdfPourTwilio')) {
+    function preparerNomFichierPdfPourTwilio($nomFichier): string
+    {
+        $nomFichier = trim((string) $nomFichier);
+        $nomFichier = preg_replace('/\.pdf$/i', '', $nomFichier);
+        $nomFichier = rawurldecode($nomFichier);
+
+        return rawurlencode($nomFichier);
+    }
+}
+
 if (!function_exists('isapp_whatsapp_sender_encoded_stem')) {
     function isapp_whatsapp_sender_encoded_stem(string $filenameBase): string
     {
-        return rawurlencode(isapp_whatsapp_sender_sanitize_filename($filenameBase));
+        return preparerNomFichierPdfPourTwilio(isapp_whatsapp_sender_sanitize_filename($filenameBase));
     }
 }
 
@@ -466,6 +477,102 @@ if (!function_exists('isapp_whatsapp_sender_log_result')) {
     }
 }
 
+if (!function_exists('isapp_whatsapp_sender_invite_tracking_columns')) {
+    function isapp_whatsapp_sender_invite_tracking_columns(PDO $pdo): array
+    {
+        static $columns = null;
+
+        if (is_array($columns)) {
+            return $columns;
+        }
+
+        $columns = [];
+        foreach (['statut_envoi_whatsapp', 'twilio_message_sid', 'date_envoi_whatsapp', 'erreur_twilio'] as $columnName) {
+            try {
+                $stmt = $pdo->query("SHOW COLUMNS FROM invite LIKE '" . str_replace("'", "''", $columnName) . "'");
+                $columns[$columnName] = $stmt !== false && $stmt->fetch(PDO::FETCH_ASSOC) !== false;
+                if ($stmt !== false) {
+                    $stmt->closeCursor();
+                }
+            } catch (\Throwable $exception) {
+                $columns[$columnName] = false;
+            }
+        }
+
+        return $columns;
+    }
+}
+
+if (!function_exists('isapp_whatsapp_sender_update_invite_tracking')) {
+    function isapp_whatsapp_sender_update_invite_tracking(PDO $pdo, $inviteId, array $payload): void
+    {
+        $inviteId = (int) $inviteId;
+        if ($inviteId <= 0) {
+            return;
+        }
+
+        $availableColumns = isapp_whatsapp_sender_invite_tracking_columns($pdo);
+        $setClauses = [];
+        $params = [':invite_id' => $inviteId];
+
+        if (!empty($availableColumns['statut_envoi_whatsapp'])) {
+            $setClauses[] = 'statut_envoi_whatsapp = :statut_envoi_whatsapp';
+            $params[':statut_envoi_whatsapp'] = (string) ($payload['statut_envoi_whatsapp'] ?? 'echoue');
+        }
+
+        if (!empty($availableColumns['twilio_message_sid'])) {
+            $setClauses[] = 'twilio_message_sid = :twilio_message_sid';
+            $params[':twilio_message_sid'] = (string) ($payload['twilio_message_sid'] ?? '');
+        }
+
+        if (!empty($availableColumns['date_envoi_whatsapp'])) {
+            $setClauses[] = 'date_envoi_whatsapp = :date_envoi_whatsapp';
+            $params[':date_envoi_whatsapp'] = (string) ($payload['date_envoi_whatsapp'] ?? date('Y-m-d H:i:s'));
+        }
+
+        if (!empty($availableColumns['erreur_twilio'])) {
+            $setClauses[] = 'erreur_twilio = :erreur_twilio';
+            $params[':erreur_twilio'] = (string) ($payload['erreur_twilio'] ?? '');
+        }
+
+        if ($setClauses === []) {
+            return;
+        }
+
+        $stmt = $pdo->prepare('UPDATE invite SET ' . implode(', ', $setClauses) . ' WHERE id_inv = :invite_id LIMIT 1');
+        $stmt->execute($params);
+        $stmt->closeCursor();
+    }
+}
+
+if (!function_exists('isapp_whatsapp_sender_template_sid')) {
+    function isapp_whatsapp_sender_template_sid(): string
+    {
+        $templateSid = trim((string) getenv('TWILIO_WHATSAPP_TEMPLATE_SID'));
+        if ($templateSid === '') {
+            throw new RuntimeException('Le SID complet du template Twilio WhatsApp approuve est introuvable. Renseignez TWILIO_WHATSAPP_TEMPLATE_SID avec le template envoi_invitationspeciale_pdf.');
+        }
+
+        if (!preg_match('/^HX[0-9a-fA-F]{32}$/', $templateSid)) {
+            throw new RuntimeException('Le SID du template Twilio WhatsApp est invalide. Il doit commencer par HX et contenir 34 caracteres.');
+        }
+
+        return $templateSid;
+    }
+}
+
+if (!function_exists('isapp_whatsapp_sender_required_env')) {
+    function isapp_whatsapp_sender_required_env(string $envName, string $label): string
+    {
+        $value = trim((string) getenv($envName));
+        if ($value === '') {
+            throw new RuntimeException($label . ' est introuvable. Renseignez la variable d\'environnement ' . $envName . '.');
+        }
+
+        return $value;
+    }
+}
+
 if (!function_exists('isapp_whatsapp_send_template_invitation')) {
     function isapp_whatsapp_send_template_invitation(PDO $pdo, array $options): array
     {
@@ -495,10 +602,10 @@ if (!function_exists('isapp_whatsapp_send_template_invitation')) {
         $encodedStem = isapp_whatsapp_sender_encoded_stem($filenameBase);
         $mediaUrl = isapp_whatsapp_sender_ensure_public_pdf($relativePdfLink, $diskStem, $encodedStem);
 
-        $contentSid = (string) (getenv('TWILIO_WHATSAPP_TEMPLATE_SID') ?: 'HX9e9fd770e34bf0241af9f803e0e009b8');
-        $twilioSid = (string) (getenv('TWILIO_ACCOUNT_SID') ?: 'AC5cbb94f85695ce16d97ce2ca2c3f7db0');
-        $twilioToken = (string) (getenv('TWILIO_AUTH_TOKEN') ?: '2fc99f87d42f61c691c01df995fb8290');
-        $twilioFrom = (string) (getenv('TWILIO_WHATSAPP_FROM') ?: 'whatsapp:+17167403177');
+        $contentSid = isapp_whatsapp_sender_template_sid();
+        $twilioSid = isapp_whatsapp_sender_required_env('TWILIO_ACCOUNT_SID', 'Le compte Twilio');
+        $twilioToken = isapp_whatsapp_sender_required_env('TWILIO_AUTH_TOKEN', 'Le jeton Twilio');
+        $twilioFrom = isapp_whatsapp_sender_required_env('TWILIO_WHATSAPP_FROM', 'Le numero WhatsApp Twilio');
 
         $contentVariables = [
             '1' => $recipientName,
@@ -541,6 +648,13 @@ if (!function_exists('isapp_whatsapp_send_template_invitation')) {
             'twilio_message_sid' => $twilioMessageSid,
             'send_status' => $sendStatus,
             'error_message' => $errorMessage,
+        ]);
+
+        isapp_whatsapp_sender_update_invite_tracking($pdo, $inviteId, [
+            'statut_envoi_whatsapp' => $sendStatus === 'sent' ? 'envoye' : 'echoue',
+            'twilio_message_sid' => $twilioMessageSid,
+            'date_envoi_whatsapp' => date('Y-m-d H:i:s'),
+            'erreur_twilio' => $errorMessage,
         ]);
 
         if ($sendStatus !== 'sent') {
