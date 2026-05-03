@@ -11,7 +11,18 @@ final class EnvLoader
             return;
         }
 
-        foreach ([$normalizedRoot . '/.env', $normalizedRoot . '/.env.local'] as $envPath) {
+        $envPaths = [];
+
+        $parentRoot = dirname($normalizedRoot);
+        if ($parentRoot !== '' && $parentRoot !== '.' && $parentRoot !== $normalizedRoot) {
+            $envPaths[] = $parentRoot . '/.isapp.env';
+            $envPaths[] = $parentRoot . '/.isapp.env.local';
+        }
+
+        $envPaths[] = $normalizedRoot . '/.env';
+        $envPaths[] = $normalizedRoot . '/.env.local';
+
+        foreach ($envPaths as $envPath) {
             self::loadFile($envPath);
         }
 

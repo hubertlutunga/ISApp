@@ -60,6 +60,8 @@ Les identifiants Twilio ne doivent jamais etre stockes en dur dans le code PHP. 
 
 En local, le projet charge automatiquement les fichiers prives `.env` et `.env.local` situes a la racine du depot s'ils existent. Les variables deja definies par le serveur gardent la priorite.
 
+En production, si le projet est deploie dans un dossier web public de type `public_html`, l'application charge aussi un fichier prive dedie place un niveau au-dessus du webroot: `../.isapp.env` puis `../.isapp.env.local`. Cela permet de garder les secrets hors du dossier publiquement servi.
+
 Exemple minimal de fichier `.env` local:
 
 ```dotenv
@@ -70,6 +72,20 @@ TWILIO_WHATSAPP_TEMPLATE_SID=REMPLACER_PAR_LE_TEMPLATE_ACTUEL
 ```
 
 Le fichier `.env` est ignore par Git et bloque cote Apache via `.htaccess`, pour eviter toute exposition publique accidentelle. En production, privilegiez toujours des variables d'environnement definies au niveau du serveur.
+
+Exemple de structure serveur recommandee:
+
+```text
+home/
+	.isapp.env
+	public_html/
+		index.php
+		bootstrap/
+		config/
+		...
+```
+
+Dans cette configuration, placez les variables Twilio dans `.isapp.env`, pas dans `public_html/.env`.
 
 Variables requises pour l'envoi WhatsApp:
 
