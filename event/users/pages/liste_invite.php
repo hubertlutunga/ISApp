@@ -893,7 +893,11 @@ async function confirmSuppInv(e, idInv, codEvent, nom) {
 		   }
 
 		   function sanitizeWhatsAppInput(value) {
-			   return String(value || '').replace(/\s+/g, '');
+			   const sanitizedValue = String(value || '').replace(/[^\d+]/g, '');
+			   const hasLeadingPlus = sanitizedValue.startsWith('+');
+			   const digitsOnly = sanitizedValue.replace(/\D+/g, '');
+
+			   return (hasLeadingPlus ? '+' : '') + digitsOnly;
 		   }
 
 		   	function sanitizeImportedPhoneNumber(value) {
@@ -991,7 +995,16 @@ async function confirmSuppInv(e, idInv, codEvent, nom) {
 		   const whatsappNumberInput = document.getElementById('whatsappNumber');
 		   if (whatsappNumberInput) {
 			   whatsappNumberInput.addEventListener('keydown', function (event) {
-				   if (event.key === ' ') {
+				   const allowedControlKeys = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'Home', 'End'];
+
+				   if (event.ctrlKey || event.metaKey || allowedControlKeys.includes(event.key)) {
+					   return;
+				   }
+
+				   const isDigit = /^\d$/.test(event.key);
+				   const isLeadingPlus = event.key === '+' && this.selectionStart === 0 && !this.value.includes('+');
+
+				   if (!isDigit && !isLeadingPlus) {
 					   event.preventDefault();
 				   }
 			   });
