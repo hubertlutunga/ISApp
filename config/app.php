@@ -1,5 +1,8 @@
 <?php
 
+require_once __DIR__ . '/../src/Support/EnvLoader.php';
+EnvLoader::loadProjectEnv(dirname(__DIR__));
+
 $configuredBaseUrl = getenv('ISAPP_BASE_URL');
 
 if (!$configuredBaseUrl && !empty($_SERVER['HTTP_HOST'])) {

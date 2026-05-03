@@ -29,4 +29,7 @@ qrscan/phpqrcode/*.png-errors.txt
 qrscan/phpqrcode/cache/generated/
 
 # Local environment overrides
+.env
+.env.local
 config/database.local.php
+config/app.local.php

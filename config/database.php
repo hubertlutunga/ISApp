@@ -1,5 +1,8 @@
 <?php
 
+require_once __DIR__ . '/../src/Support/EnvLoader.php';
+EnvLoader::loadProjectEnv(dirname(__DIR__));
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }

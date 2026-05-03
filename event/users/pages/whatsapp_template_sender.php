@@ -573,6 +573,26 @@ if (!function_exists('isapp_whatsapp_sender_required_env')) {
     }
 }
 
+if (!function_exists('isapp_whatsapp_sender_sanitize_error_message')) {
+    function isapp_whatsapp_sender_sanitize_error_message(string $message): string
+    {
+        $message = preg_replace('/Authorization:\s*Basic\s+[A-Za-z0-9+\/=._-]+/i', 'Authorization: [REDACTED]', $message) ?? $message;
+        $message = preg_replace('/"Authorization"\s*:\s*"[^"]+"/i', '"Authorization":"[REDACTED]"', $message) ?? $message;
+
+        $secrets = [
+            trim((string) getenv('TWILIO_AUTH_TOKEN')),
+        ];
+
+        foreach ($secrets as $secret) {
+            if ($secret !== '') {
+                $message = str_replace($secret, '[REDACTED]', $message);
+            }
+        }
+
+        return trim($message);
+    }
+}
+
 if (!function_exists('isapp_whatsapp_send_template_invitation')) {
     function isapp_whatsapp_send_template_invitation(PDO $pdo, array $options): array
     {
@@ -632,7 +652,7 @@ if (!function_exists('isapp_whatsapp_send_template_invitation')) {
             $sendStatus = 'sent';
             $twilioMessageSid = (string) ($message->sid ?? '');
         } catch (\Throwable $exception) {
-            $errorMessage = (string) $exception->getMessage();
+            $errorMessage = isapp_whatsapp_sender_sanitize_error_message((string) $exception->getMessage());
         }
 
         isapp_whatsapp_sender_log_result($pdo, [

@@ -58,6 +58,19 @@ Certaines ressources lourdes encore presentes dans le projet peuvent rester nece
 
 Les identifiants Twilio ne doivent jamais etre stockes en dur dans le code PHP. Configurez-les uniquement via des variables d'environnement sur le serveur.
 
+En local, le projet charge automatiquement les fichiers prives `.env` et `.env.local` situes a la racine du depot s'ils existent. Les variables deja definies par le serveur gardent la priorite.
+
+Exemple minimal de fichier `.env` local:
+
+```dotenv
+TWILIO_ACCOUNT_SID=AC5cbb94f85695ce16d97ce2ca2c3f7db0
+TWILIO_AUTH_TOKEN=REMPLACER_MANUELLEMENT
+TWILIO_WHATSAPP_FROM=whatsapp:+17167403177
+TWILIO_WHATSAPP_TEMPLATE_SID=REMPLACER_PAR_LE_TEMPLATE_ACTUEL
+```
+
+Le fichier `.env` est ignore par Git et bloque cote Apache via `.htaccess`, pour eviter toute exposition publique accidentelle. En production, privilegiez toujours des variables d'environnement definies au niveau du serveur.
+
 Variables requises pour l'envoi WhatsApp:
 
 - `TWILIO_ACCOUNT_SID`
