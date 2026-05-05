@@ -17,6 +17,10 @@ if (!$configuredBaseUrl && !empty($_SERVER['HTTP_HOST'])) {
 $appConfig = [
     'base_url' => $configuredBaseUrl ?: 'https://invitationspeciale.com',
     'default_page' => 'accueil',
+    'seo' => [
+        'google_site_verification' => getenv('ISAPP_GOOGLE_SITE_VERIFICATION') ?: '',
+        'facebook_domain_verification' => getenv('ISAPP_FACEBOOK_DOMAIN_VERIFICATION') ?: '',
+    ],
     'mail' => [
         'from_address' => getenv('ISAPP_MAIL_FROM') ?: 'eventpass@invitationspeciale.com',
         'from_name' => getenv('ISAPP_MAIL_FROM_NAME') ?: 'Invitation Speciale',

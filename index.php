@@ -39,6 +39,57 @@ if ($content === null) {
 }
 
 
+$pageSlug = (string) ($_GET['page'] ?? ($isAppConfig['default_page'] ?? 'accueil'));
+$baseUrl = rtrim((string) ($isAppConfig['base_url'] ?? ''), '/');
+$siteName = 'Invitation Spéciale';
+$siteDescription = "Invitation Spéciale conçoit des invitations haut de gamme, e-invitations, QR codes et sites d'événement sur mesure pour les mariages et réceptions à Kinshasa et à l'international.";
+$pageTitle = $siteName . ' | Invitations haut de gamme à Kinshasa';
+$pageDescription = $siteDescription;
+
+if ($pageSlug === 'catalogue') {
+  $pageTitle = $siteName . ' | Catalogue de modèles';
+  $pageDescription = "Découvrez les modèles d'invitations haut de gamme d'Invitation Spéciale pour mariages, cérémonies privées et événements d'image.";
+} elseif ($pageSlug === 'commande') {
+  $pageTitle = $siteName . ' | Commande d\'invitations';
+  $pageDescription = "Lancez votre commande d'invitations premium avec Invitation Spéciale et faites-vous accompagner de la création à la livraison.";
+} elseif ($pageSlug === 'contact') {
+  $pageTitle = $siteName . ' | Contact';
+  $pageDescription = "Contactez Invitation Spéciale pour vos invitations premium, e-invitations, sites de mariage et projets sur mesure.";
+}
+
+$canonicalUrl = $baseUrl !== ''
+  ? ($pageSlug === 'accueil' ? $baseUrl . '/' : $baseUrl . '/index.php?page=' . rawurlencode($pageSlug))
+  : '';
+$pageImage = $baseUrl !== '' ? $baseUrl . '/images/Logo_invitationSpeciale_2.png' : '';
+$googleSiteVerification = trim((string) (($isAppConfig['seo']['google_site_verification'] ?? '')));
+$facebookDomainVerification = trim((string) (($isAppConfig['seo']['facebook_domain_verification'] ?? '')));
+$structuredData = [
+  [
+    '@context' => 'https://schema.org',
+    '@type' => 'Organization',
+    'name' => $siteName,
+    'url' => $baseUrl !== '' ? $baseUrl . '/' : null,
+    'logo' => $pageImage !== '' ? $pageImage : null,
+    'sameAs' => [
+      'https://www.instagram.com/invitationspeciale/',
+      'https://www.tiktok.com/@invitationspeciale',
+      'https://wa.me/243810678785',
+    ],
+  ],
+  [
+    '@context' => 'https://schema.org',
+    '@type' => 'WebSite',
+    'name' => $siteName,
+    'url' => $baseUrl !== '' ? $baseUrl . '/' : null,
+  ],
+];
+$structuredData = array_map(static function (array $item): array {
+  return array_filter($item, static function ($value): bool {
+    return $value !== null && $value !== '';
+  });
+}, $structuredData);
+
+
 }
 
 
@@ -51,26 +102,43 @@ if ($content === null) {
 <html lang="fr">
 
 <head>
-
-
-  <title>Invitation Spéciale</title>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <meta name="description" content="Une entreprise spécialisée dans la création d'invitations haut de gamme et sur mesure pour des événements mémorables.">
-    <meta name="keywords" content="Invitation spéciale">
-    <meta name="author" content="inittheme">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta property="og:type" content="Application">
-    <meta property="og:title" content="Invitation spéciale">
-    <meta property="og:site_name" content="ADN"> 
-    <meta property="og:description" content="Invitation spéciale"> 
-    <!-- Google site verification -->
-    <meta name="google-site-verification" content="...">
-    <meta name="facebook-domain-verification" content="...">
-    <meta name="csrf-token" content="...">
-    <meta name="currency" content="$">
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><?php echo htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8'); ?></title>
+  <meta name="description" content="<?php echo htmlspecialchars($pageDescription, ENT_QUOTES, 'UTF-8'); ?>">
+  <meta name="keywords" content="invitation spéciale, invitations haut de gamme, e-invitation, mariage, Kinshasa, QR code, site de mariage">
+  <meta name="author" content="Hubert Solutions">
+  <meta name="robots" content="index,follow,max-image-preview:large">
+  <meta name="googlebot" content="index,follow,max-image-preview:large">
+  <meta name="theme-color" content="#fcf8f2">
+  <?php if ($canonicalUrl !== ''): ?>
+  <link rel="canonical" href="<?php echo htmlspecialchars($canonicalUrl, ENT_QUOTES, 'UTF-8'); ?>">
+  <?php endif; ?>
+  <meta property="og:locale" content="fr_FR">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="<?php echo htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8'); ?>">
+  <meta property="og:description" content="<?php echo htmlspecialchars($pageDescription, ENT_QUOTES, 'UTF-8'); ?>">
+  <meta property="og:site_name" content="<?php echo htmlspecialchars($siteName, ENT_QUOTES, 'UTF-8'); ?>">
+  <?php if ($canonicalUrl !== ''): ?>
+  <meta property="og:url" content="<?php echo htmlspecialchars($canonicalUrl, ENT_QUOTES, 'UTF-8'); ?>">
+  <?php endif; ?>
+  <?php if ($pageImage !== ''): ?>
+  <meta property="og:image" content="<?php echo htmlspecialchars($pageImage, ENT_QUOTES, 'UTF-8'); ?>">
+  <?php endif; ?>
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="<?php echo htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8'); ?>">
+  <meta name="twitter:description" content="<?php echo htmlspecialchars($pageDescription, ENT_QUOTES, 'UTF-8'); ?>">
+  <?php if ($pageImage !== ''): ?>
+  <meta name="twitter:image" content="<?php echo htmlspecialchars($pageImage, ENT_QUOTES, 'UTF-8'); ?>">
+  <?php endif; ?>
+  <?php if ($googleSiteVerification !== ''): ?>
+  <meta name="google-site-verification" content="<?php echo htmlspecialchars($googleSiteVerification, ENT_QUOTES, 'UTF-8'); ?>">
+  <?php endif; ?>
+  <?php if ($facebookDomainVerification !== ''): ?>
+  <meta name="facebook-domain-verification" content="<?php echo htmlspecialchars($facebookDomainVerification, ENT_QUOTES, 'UTF-8'); ?>">
+  <?php endif; ?>
+  <script type="application/ld+json"><?php echo json_encode($structuredData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?></script>
 
   
   <link rel="preconnect" href="https://fonts.googleapis.com">

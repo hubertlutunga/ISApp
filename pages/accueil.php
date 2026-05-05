@@ -53,7 +53,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && (string) ($_POST['form_n
       $safeEmail = htmlspecialchars($contactEmail, ENT_QUOTES, 'UTF-8');
       $safeMessage = nl2br(htmlspecialchars($contactMessage, ENT_QUOTES, 'UTF-8'));
 
-      $message->Subject = 'Nouveau message depuis le site Invitation Speciale';
+      $message->Subject = 'Nouveau message depuis le site Invitation Spéciale';
       $message->Body = '
         <div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.7;color:#22312b;">
           <p><strong>Nom :</strong> ' . $safeName . '</p>
@@ -65,7 +65,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && (string) ($_POST['form_n
 
       $contactFormState = [
         'status' => 'success',
-        'message' => 'Votre message a bien ete envoye a contact@invitationspeciale.com.',
+        'message' => 'Votre message a bien été envoyé à contact@invitationspeciale.com.',
       ];
       $contactFormValues = [
         'name' => '',
@@ -85,7 +85,7 @@ $totalEventsStmt = $pdo->query('SELECT COUNT(*) AS total_event FROM events');
 $totalEventsData = $totalEventsStmt->fetch(PDO::FETCH_ASSOC);
 $totalEvents = $totalEventsData ? (int) $totalEventsData['total_event'] : 0;
 
-$modelsStmt = $pdo->prepare('SELECT image FROM modele_is WHERE siteposition IS NOT NULL ORDER BY siteposition ASC LIMIT 8');
+$modelsStmt = $pdo->prepare('SELECT nom, image FROM modele_is WHERE siteposition IS NOT NULL AND is_active = 1 ORDER BY siteposition ASC LIMIT 12');
 $modelsStmt->execute();
 $showcaseModels = $modelsStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
@@ -146,6 +146,7 @@ if ($availableMonths !== [] && $initialCalendarMonth === $currentMonthKey && !in
 
 $weddingDateCount = count($calendarEventsByDate);
 $catalogueCount = count($showcaseModels);
+$heroVerticalModels = $showcaseModels !== [] ? array_merge($showcaseModels, $showcaseModels) : [];
 ?>
 
 <style>
@@ -185,6 +186,15 @@ $catalogueCount = count($showcaseModels);
 
   .is-homepage a {
     color: inherit;
+  }
+
+  .is-homepage h1,
+  .is-homepage h2,
+  .is-homepage h3,
+  .is-homepage h4 {
+    font-family: "Poppins", sans-serif;
+    font-weight: 800;
+    letter-spacing: -0.03em;
   }
 
   .sr-only {
@@ -353,14 +363,47 @@ $catalogueCount = count($showcaseModels);
   }
 
   .is-home-hero {
-    padding: 46px 0 28px;
+    position: relative;
+    min-height: calc(100vh - 88px);
+    padding: 0;
+    display: flex;
+    align-items: stretch;
+    overflow: hidden;
+  }
+
+  .is-home-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(90deg, rgba(21, 28, 25, 0.82) 0%, rgba(21, 28, 25, 0.68) 34%, rgba(21, 28, 25, 0.38) 58%, rgba(21, 28, 25, 0.18) 100%),
+      linear-gradient(180deg, rgba(255, 247, 237, 0.08) 0%, rgba(255, 247, 237, 0.02) 100%);
+    z-index: 1;
   }
 
   .is-home-hero-grid {
+    position: relative;
+    z-index: 2;
     display: grid;
-    grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.92fr);
-    gap: 28px;
-    align-items: stretch;
+    grid-template-columns: minmax(0, 0.88fr) minmax(320px, 1.12fr);
+    gap: 34px;
+    align-items: center;
+    min-height: calc(100vh - 88px);
+    padding: 42px 0 34px;
+  }
+
+  .is-home-hero-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+  }
+
+  .is-home-hero-bg img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+    display: block;
   }
 
   .is-home-card {
@@ -371,7 +414,11 @@ $catalogueCount = count($showcaseModels);
   }
 
   .is-home-hero-copy {
-    padding: 42px;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    color: #fff8ef;
   }
 
   .is-home-kicker {
@@ -380,26 +427,33 @@ $catalogueCount = count($showcaseModels);
     gap: 8px;
     padding: 9px 14px;
     border-radius: 999px;
-    background: var(--home-accent-soft);
-    color: var(--home-accent-strong);
+    background: rgba(255, 248, 239, 0.14);
+    color: #fff3e6;
     font-size: 12px;
     font-weight: 700;
     letter-spacing: 0.12em;
     text-transform: uppercase;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    backdrop-filter: blur(10px);
+  }
+
+  .is-home-kicker.is-hidden {
+    display: none;
   }
 
   .is-home-hero-copy h1 {
-    margin: 20px 0 18px;
-    font: 700 clamp(42px, 6vw, 76px)/0.98 "Playfair Display", serif;
+    margin: 0;
+    font: 800 40px/1.35 "Poppins", sans-serif;
     letter-spacing: -0.03em;
-    color: #1f2b26;
+    color: #fff8ef;
+    max-width: 760px;
   }
 
   .is-home-hero-copy p {
     margin: 0;
-    max-width: 660px;
-    font-size: 17px;
-    color: var(--home-muted);
+    max-width: 580px;
+    font-size: 18px;
+    color: rgba(255, 245, 236, 0.84);
   }
 
   .is-home-hero-actions {
@@ -407,6 +461,53 @@ $catalogueCount = count($showcaseModels);
     flex-wrap: wrap;
     gap: 14px;
     margin-top: 28px;
+  }
+
+  .is-home-hero-actions .is-home-btn,
+  .is-home-hero-actions .is-home-btn:visited {
+    background: rgba(255, 248, 239, 0.1);
+    border-color: rgba(255, 255, 255, 0.18);
+    color: #fff8ef;
+  }
+
+  .is-home-hero-actions .is-home-btn-primary,
+  .is-home-hero-actions .is-home-btn-primary:visited {
+    background: linear-gradient(180deg, #7e9e88 0%, #5f7c6b 100%);
+    border-color: transparent;
+    color: #f9f6ef;
+  }
+
+  .is-home-hero-order-btn,
+  .is-home-hero-order-btn:visited {
+    position: relative;
+    min-height: 58px;
+    padding: 0 28px;
+    border-radius: 18px;
+    font-family: "Poppins", sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    box-shadow:
+      0 20px 38px rgba(35, 23, 13, 0.18),
+      inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    overflow: hidden;
+  }
+
+  .is-home-hero-order-btn::before {
+    content: '';
+    position: absolute;
+    inset: 1px;
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
+    pointer-events: none;
+  }
+
+  .is-home-hero-order-btn:hover,
+  .is-home-hero-order-btn:focus-visible {
+    transform: translateY(-2px);
+    box-shadow:
+      0 24px 46px rgba(35, 23, 13, 0.22),
+      inset 0 1px 0 rgba(255, 255, 255, 0.62);
   }
 
   .is-home-stats {
@@ -419,66 +520,158 @@ $catalogueCount = count($showcaseModels);
   .is-home-stat {
     padding: 18px;
     border-radius: var(--home-radius-md);
-    background: rgba(243, 236, 225, 0.78);
-    border: 1px solid rgba(87, 116, 99, 0.1);
+    background: rgba(255, 248, 239, 0.11);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    backdrop-filter: blur(10px);
   }
 
   .is-home-stat strong {
     display: block;
     font-size: 30px;
     line-height: 1;
-    color: var(--home-accent-strong);
+    color: #fff8ef;
   }
 
   .is-home-stat span {
     display: block;
     margin-top: 8px;
-    color: var(--home-muted);
+    color: rgba(255, 245, 236, 0.78);
     font-size: 14px;
   }
 
   .is-home-hero-visual {
-    display: grid;
-    gap: 18px;
-    padding: 22px;
-  }
-
-  .is-home-visual-frame {
+    position: relative;
     overflow: hidden;
-    border-radius: 28px;
+    min-height: 560px;
+    padding: 28px 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+  }
+
+  .is-home-visual-content {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
     min-height: 100%;
+    padding: 0;
   }
 
-  .is-home-visual-frame img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+  .is-home-visual-copy {
+    display: none;
   }
 
-  .is-home-visual-note {
+  .is-home-services-panel {
+    position: relative;
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    width: min(100%, 560px);
+    margin-left: auto;
+    padding: 28px;
+    border-radius: 34px;
+    background: rgba(255, 250, 244, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    backdrop-filter: blur(14px);
+    box-shadow: 0 28px 60px rgba(10, 14, 13, 0.18);
+  }
+
+  .is-home-services-panel-head {
+    display: none;
+  }
+
+  .is-home-services-panel-head span {
+    display: inline-flex;
+    width: fit-content;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff5e8;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .is-home-services-panel-head h3 {
+    margin: 0;
+    font: 800 clamp(28px, 4vw, 44px)/0.98 "Poppins", sans-serif;
+    color: #fff8ef;
+  }
+
+  .is-home-services-panel-head p {
+    margin: 0;
+    color: rgba(255, 248, 239, 0.86);
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  .is-home-services-marquee {
+    position: relative;
+    display: block;
+    height: 434px;
+    overflow: hidden;
+  }
+
+  .is-home-service-lane {
+    position: relative;
+    overflow: hidden;
+    border-radius: 26px;
+    background: rgba(255, 252, 246, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(10px);
+  }
+
+  .is-home-service-lane.is-reverse {
+    display: none;
+  }
+
+  .is-home-service-track {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    height: max-content;
+    padding: 14px;
+    animation: homeSliderUp 24s linear infinite;
+  }
+
+  .is-home-service-lane.is-reverse .is-home-service-track {
+    animation-duration: 28s;
+  }
+
+  .is-home-service-chip {
+    width: 100%;
+    min-height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    color: #ffffff;
+    font-family: "Poppins", sans-serif;
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    box-shadow: none;
+    border: 0;
     gap: 14px;
   }
 
-  .is-home-note {
-    padding: 18px;
-    border-radius: 20px;
-    background: rgba(245, 240, 231, 0.85);
-    border: 1px solid rgba(87, 116, 99, 0.12);
+  .is-home-service-chip::before {
+    content: '\2022';
+    flex: 0 0 auto;
+    font-size: 30px;
+    line-height: 1;
   }
 
-  .is-home-note strong {
-    display: block;
-    font-size: 14px;
-    color: var(--home-text);
-  }
-
-  .is-home-note span {
-    display: block;
-    margin-top: 8px;
-    color: var(--home-muted);
-    font-size: 13px;
+  @keyframes homeSliderUp {
+    from {
+      transform: translateY(0);
+    }
+    to {
+      transform: translateY(-50%);
+    }
   }
 
   .is-home-section {
@@ -504,7 +697,7 @@ $catalogueCount = count($showcaseModels);
 
   .is-home-section-head h2 {
     margin: 8px 0 0;
-    font: 700 clamp(30px, 4vw, 48px)/1.02 "Playfair Display", serif;
+    font: 800 clamp(22px, 2.6vw, 32px)/1.12 "Poppins", sans-serif;
     color: #1f2b26;
   }
 
@@ -588,7 +781,7 @@ $catalogueCount = count($showcaseModels);
 
   .is-home-mini-card h3 {
     margin: 0 0 10px;
-    font-size: 16px;
+    font: 800 16px/1.2 "Poppins", sans-serif;
   }
 
   .is-home-about-meta,
@@ -617,7 +810,7 @@ $catalogueCount = count($showcaseModels);
 
   .is-home-calendar-toolbar h3 {
     margin: 0;
-    font: 700 clamp(22px, 2.6vw, 30px)/1.1 "Playfair Display", serif;
+    font: 800 clamp(22px, 2.6vw, 30px)/1.1 "Poppins", sans-serif;
   }
 
   .is-home-calendar-nav {
@@ -733,7 +926,7 @@ $catalogueCount = count($showcaseModels);
 
   .is-home-calendar-details h3 {
     margin: 0;
-    font: 700 30px/1.02 "Playfair Display", serif;
+    font: 800 30px/1.02 "Poppins", sans-serif;
   }
 
   .is-home-calendar-details p {
@@ -874,8 +1067,29 @@ $catalogueCount = count($showcaseModels);
       grid-template-columns: 1fr;
     }
 
+    .is-home-hero {
+      min-height: auto;
+    }
+
+    .is-home-hero-grid {
+      min-height: auto;
+      padding: 34px 0;
+    }
+
+    .is-home-visual-content {
+      justify-content: stretch;
+    }
+
     .is-home-catalogue-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .is-home-services-panel {
+      width: 100%;
+    }
+
+    .is-home-services-marquee {
+      height: 434px;
     }
   }
 
@@ -922,15 +1136,40 @@ $catalogueCount = count($showcaseModels);
     .is-home-about-sidebar,
     .is-home-calendar-shell,
     .is-home-catalogue-card,
-    .is-home-contact-shell,
-    .is-home-hero-copy {
+    .is-home-contact-shell {
       padding: 22px;
     }
 
+    .is-home-hero-copy {
+      padding: 0;
+    }
+
     .is-home-stats,
-    .is-home-visual-note,
     .is-home-catalogue-grid {
       grid-template-columns: 1fr;
+    }
+
+    .is-home-visual-content {
+      padding: 0;
+    }
+
+    .is-home-services-panel {
+      padding: 22px;
+      border-radius: 26px;
+    }
+
+    .is-home-services-marquee {
+      height: 434px;
+    }
+
+    .is-home-hero-copy h1 {
+      font: 800 40px/1.35 "Poppins", sans-serif;
+    }
+
+    .is-home-service-chip {
+      min-height: 30px;
+      padding: 0;
+      font-size: 30px;
     }
 
     .is-home-hero-actions,
@@ -1016,24 +1255,23 @@ $catalogueCount = count($showcaseModels);
   </header>
 
   <section class="is-home-hero" id="accueil">
+    <div class="is-home-hero-bg" aria-hidden="true">
+      <img src="images/IMG_2415.png" alt="" />
+    </div>
+
     <div class="is-home-wrap is-home-hero-grid">
-      <div class="is-home-card is-home-hero-copy">
-        <span class="is-home-kicker">Invitation haut de gamme · mariage · digital</span>
-        <h1>Une nouvelle vitrine plus lumineuse, raffinee et pensee pour les evenements d'exception.</h1>
-        <p>
-          Invitation Speciale concoit des invitations premium, des sites de mariage elegants et des experiences digitales sur mesure.
-          L'approche reste editoriale, delicate et claire, avec une presentation qui inspire confiance autant sur mobile que sur ordinateur.
-        </p>
+      <div class="is-home-hero-copy">
+        <span class="is-home-kicker is-hidden" aria-hidden="true"></span>
+        <h1>Invitation Spéciale est une entité de Hubert Solutions dédiée à la création et à la conception d'invitations haut de gamme</h1>
 
         <div class="is-home-hero-actions">
-          <a class="is-home-btn is-home-btn-primary" href="event/index.php?page=commande" target="_blank" rel="noopener">Commander une invitation</a>
           <a class="is-home-btn" href="#calendrier-mariages">Voir le calendrier des mariages</a>
         </div>
 
         <div class="is-home-stats" aria-label="Chiffres cles">
           <div class="is-home-stat">
             <strong><?php echo $totalEvents; ?></strong>
-            <span>evenements accompagnes depuis la plateforme</span>
+            <span>événements accompagnés depuis la plateforme</span>
           </div>
           <div class="is-home-stat">
             <strong><?php echo $weddingDateCount; ?></strong>
@@ -1041,24 +1279,35 @@ $catalogueCount = count($showcaseModels);
           </div>
           <div class="is-home-stat">
             <strong><?php echo $catalogueCount; ?></strong>
-            <span>modeles mis en avant dans la selection du moment</span>
+            <span>modèles mis en avant dans la sélection du moment</span>
           </div>
         </div>
       </div>
 
-      <div class="is-home-card is-home-hero-visual">
-        <figure class="is-home-visual-frame" aria-label="Apercu Invitation Speciale">
-          <img src="images/IMG_2415.png" alt="Showroom Invitation Speciale" />
-        </figure>
+      <div class="is-home-hero-visual" aria-label="Services Invitation Speciale">
+        <div class="is-home-visual-content">
+          <div class="is-home-services-panel">
+            <div class="is-home-services-marquee" aria-label="Défilement des modèles Invitation Spéciale">
+              <div class="is-home-service-lane">
+                <div class="is-home-service-track">
+                  <?php foreach ($heroVerticalModels as $index => $model): ?>
+                    <span class="is-home-service-chip"><?php echo htmlspecialchars((string) ($model['nom'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></span>
+                  <?php endforeach; ?>
+                </div>
+              </div>
 
-        <div class="is-home-visual-note">
-          <div class="is-home-note">
-            <strong>Direction artistique plus claire</strong>
-            <span>Un ton creme, vegetal et editorial, avec un rendu premium et lumineux qui reste sobre, lisible et distinctif.</span>
-          </div>
-          <div class="is-home-note">
-            <strong>Lecture simple des mariages</strong>
-            <span>Chaque date de mariage cochee dans le calendrier ouvre instantanement les prenoms des maries au survol ou au clic.</span>
+              <div class="is-home-service-lane is-reverse">
+                <div class="is-home-service-track">
+                  <?php foreach ($heroVerticalModels as $index => $model): ?>
+                    <span class="is-home-service-chip"><?php echo htmlspecialchars((string) ($model['nom'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></span>
+                  <?php endforeach; ?>
+                </div>
+              </div>
+            </div>
+
+            <div class="is-home-hero-actions">
+              <a class="is-home-btn is-home-btn-primary is-home-hero-order-btn" href="event/index.php?page=commande" target="_blank" rel="noopener">Passer une commande</a>
+            </div>
           </div>
         </div>
       </div>
@@ -1069,31 +1318,31 @@ $catalogueCount = count($showcaseModels);
     <div class="is-home-wrap">
       <div class="is-home-section-head">
         <div>
-          <span>A propos</span>
-          <h2>Invitation Speciale, une maison dediee aux invitations haut de gamme.</h2>
+          <span>À propos</span>
+          <h2>Invitation Spéciale, une maison dédiée aux invitations haut de gamme.</h2>
         </div>
         <p>
-          Une entite de Hubert Solutions consacree a la creation, la conception et la mise en scene des invitations premium pour les mariages,
-          receptions privees et evenements d'image.
+          Une entité de Hubert Solutions consacrée à la création, à la conception et à la mise en scène des invitations premium pour les mariages,
+          réceptions privées et événements d'image.
         </p>
       </div>
 
       <div class="is-home-about-grid">
         <article class="is-home-card is-home-about-copy">
           <p>
-            Creee en 2024, Invitation Speciale est une entite de Hubert Solutions dediee a la creation et a la conception d'invitations haut de gamme,
-            physiques et digitales, pour une clientele exigeante en Republique Democratique du Congo et a l'international. Notre ambition est simple :
-            transformer une invitation en premiere experience de marque pour un couple, une famille ou une organisation.
+            Créée en 2024, Invitation Spéciale est une entité de Hubert Solutions dédiée à la création et à la conception d'invitations haut de gamme,
+            physiques et digitales, pour une clientèle exigeante en République Démocratique du Congo et à l'international. Notre ambition est simple :
+            transformer une invitation en première expérience de marque pour un couple, une famille ou une organisation.
           </p>
           <p>
-            Basee a Kinshasa, dans la commune de la Gombe, sur le Boulevard du 30 Juin, a l'Immeuble Interfina au 2e niveau,
-            notre equipe travaille des directions artistiques elegantes, des finitions premium et des dispositifs digitaux utiles : e-invitations,
-            confirmations de presence, QR codes et sites d'evenement plus soignes. Nous accompagnons aussi bien les ceremonies locales que les projets destines
-            a la diaspora et nous expedions a l'etranger selon les besoins du client et la nature du support commande.
+            Basée à Kinshasa, dans la commune de la Gombe, sur le Boulevard du 30 Juin, à l'Immeuble Interfina au 2e niveau,
+            notre équipe travaille des directions artistiques élégantes, des finitions premium et des dispositifs digitaux utiles : e-invitations,
+            confirmations de présence, QR codes et sites d'événement plus soignés. Nous accompagnons aussi bien les cérémonies locales que les projets destinés
+            à la diaspora et nous expédions à l'étranger selon les besoins du client et la nature du support commandé.
           </p>
           <p>
-            Ce positionnement nous permet de reunir le sens du detail, la rigueur technique et une execution adaptee aux attentes d'une clientele qui veut une image nette,
-            un rendu noble et une experience harmonieuse avant, pendant et apres l'evenement.
+            Ce positionnement nous permet de réunir le sens du détail, la rigueur technique et une exécution adaptée aux attentes d'une clientèle qui veut une image nette,
+            un rendu noble et une expérience harmonieuse avant, pendant et après l'événement.
           </p>
 
           <div class="is-home-about-points">
@@ -1101,21 +1350,21 @@ $catalogueCount = count($showcaseModels);
               <div class="is-home-point-badge">01</div>
               <div>
                 <strong>Conception premium</strong>
-                <span>Invitations papier, digitales et sites d'evenement avec un langage visuel haut de gamme, coherent et memorisable.</span>
+                <span>Invitations papier, digitales et sites d'événement avec un langage visuel haut de gamme, cohérent et mémorisable.</span>
               </div>
             </div>
             <div class="is-home-point">
               <div class="is-home-point-badge">02</div>
               <div>
                 <strong>Production locale, rayonnement international</strong>
-                <span>Nous accompagnons des clients a Kinshasa, partout en RDC et pour des expeditions ou coordinations vers l'etranger.</span>
+                <span>Nous accompagnons des clients à Kinshasa, partout en RDC et pour des expéditions ou coordinations vers l'étranger.</span>
               </div>
             </div>
             <div class="is-home-point">
               <div class="is-home-point-badge">03</div>
               <div>
-                <strong>Precision et suivi</strong>
-                <span>Direction artistique, validation, personnalisation et mise a disposition des elements utiles au client et a ses invites.</span>
+                <strong>Précision et suivi</strong>
+                <span>Direction artistique, validation, personnalisation et mise à disposition des éléments utiles au client et à ses invités.</span>
               </div>
             </div>
           </div>
@@ -1135,16 +1384,16 @@ $catalogueCount = count($showcaseModels);
             <h3>Ce que nous livrons</h3>
             <ul class="is-home-about-meta">
               <li>Invitations physiques premium</li>
-              <li>E-invitations et experiences digitales</li>
+              <li>E-invitations et expériences digitales</li>
               <li>Sites de mariage et parcours invite</li>
-              <li>Support clients base en RDC et a l'etranger</li>
+              <li>Support clients basé en RDC et à l'étranger</li>
             </ul>
           </div>
 
           <div class="is-home-mini-card">
             <h3>Positionnement</h3>
             <p>
-              Une signature plus couture que generaliste : chaque detail doit respirer la qualite, la clarte et la justesse.
+              Une signature plus couture que généraliste : chaque détail doit respirer la qualité, la clarté et la justesse.
             </p>
           </div>
         </aside>
@@ -1157,11 +1406,10 @@ $catalogueCount = count($showcaseModels);
       <div class="is-home-section-head">
         <div>
           <span>Calendrier</span>
-          <h2>Les mariages du calendrier apparaissent date par date.</h2>
+          <h2>Les mariages programmés</h2>
         </div>
         <p>
-          Les dates cochees correspondent aux mariages enregistres dans la table events. Au survol sur ordinateur ou au clic sur mobile,
-          le detail affiche uniquement les prenoms des maries prevus ce jour-la.
+          Découvrez en un regard les mariages déjà programmés et consultez, pour chaque date, les prénoms des mariés concernés.
         </p>
       </div>
 
@@ -1170,11 +1418,11 @@ $catalogueCount = count($showcaseModels);
           <div>
             <div class="is-home-calendar-toolbar">
               <div>
-                <span class="is-home-kicker">Mariages programmes</span>
+                <span class="is-home-kicker">Mariages programmés</span>
                 <h3 id="calendarMonthLabel">Mois</h3>
               </div>
               <div class="is-home-calendar-nav" aria-label="Navigation calendrier">
-                <button type="button" id="calendarPrev" aria-label="Mois precedent">&#8249;</button>
+                <button type="button" id="calendarPrev" aria-label="Mois précédent">&#8249;</button>
                 <button type="button" id="calendarNext" aria-label="Mois suivant">&#8250;</button>
               </div>
             </div>
@@ -1194,8 +1442,8 @@ $catalogueCount = count($showcaseModels);
 
           <aside class="is-home-card is-home-calendar-details" id="calendarDetails">
             <span class="is-home-kicker">Detail du jour</span>
-            <h3 id="calendarDetailsTitle">Selectionnez une date</h3>
-            <p id="calendarDetailsSubtitle">Le detail des mariages apparait ici pour la date survolee ou choisie.</p>
+            <h3 id="calendarDetailsTitle">Sélectionnez une date</h3>
+            <p id="calendarDetailsSubtitle">Le détail des mariages apparaît ici pour la date survolée ou choisie.</p>
             <ul class="is-home-calendar-list" id="calendarDetailsList"></ul>
           </aside>
         </div>
@@ -1208,18 +1456,18 @@ $catalogueCount = count($showcaseModels);
       <div class="is-home-section-head">
         <div>
           <span>Catalogue</span>
-          <h2>Une selection de modeles pour poser la tonalite de votre evenement.</h2>
+          <h2>Une sélection de modèles pour poser la tonalité de votre événement.</h2>
         </div>
         <p>
-          Cette grille met en avant des modeles visibles en facade pour guider le visiteur sans saturer la lecture.
+          Parcourez une sélection de modèles choisis pour vous inspirer et trouver plus facilement l’univers qui correspond à votre événement.
         </p>
       </div>
 
       <div class="is-home-card is-home-catalogue-card">
-        <div class="is-home-catalogue-grid" aria-label="Selection de modeles Invitation Speciale">
+        <div class="is-home-catalogue-grid" aria-label="Sélection de modèles Invitation Spéciale">
           <?php foreach ($showcaseModels as $model): ?>
-            <a href="index.php?page=catalogue" aria-label="Voir le catalogue Invitation Speciale">
-              <img src="event/images/modeleis/<?php echo htmlspecialchars((string) $model['image'], ENT_QUOTES, 'UTF-8'); ?>" alt="Modele Invitation Speciale" />
+            <a href="index.php?page=catalogue" aria-label="Voir le catalogue Invitation Spéciale">
+              <img src="event/images/modeleis/<?php echo htmlspecialchars((string) $model['image'], ENT_QUOTES, 'UTF-8'); ?>" alt="Modèle Invitation Spéciale" />
             </a>
           <?php endforeach; ?>
         </div>
@@ -1232,10 +1480,10 @@ $catalogueCount = count($showcaseModels);
       <div class="is-home-section-head">
         <div>
           <span>Contact</span>
-          <h2>Parlons de votre invitation, de votre mariage ou de votre prochaine reception.</h2>
+          <h2>Parlons de votre invitation, de votre mariage ou de votre prochaine réception.</h2>
         </div>
         <p>
-          Vous pouvez demarrer une commande, demander un devis ou nous presenter un projet a produire localement ou pour l'etranger.
+          Vous pouvez démarrer une commande, demander un devis ou nous présenter un projet à produire localement ou pour l'étranger.
         </p>
       </div>
 
@@ -1243,12 +1491,12 @@ $catalogueCount = count($showcaseModels);
         <div class="is-home-card is-home-contact-shell">
           <div class="is-home-contact-copy">
             <p>
-              L'equipe vous repond pour les conceptions premium, les e-invitations, les sites de mariage et la coordination de production.
-              Pour les commandes internationales, nous adaptons la preparation et l'expedition au support retenu.
+              L'équipe vous répond pour les conceptions premium, les e-invitations, les sites de mariage et la coordination de production.
+              Pour les commandes internationales, nous adaptons la préparation et l'expédition au support retenu.
             </p>
           </div>
 
-          <form class="is-home-contact-form" id="contactForm" method="post" action="" aria-label="Formulaire de contact Invitation Speciale">
+          <form class="is-home-contact-form" id="contactForm" method="post" action="" aria-label="Formulaire de contact Invitation Spéciale">
             <input type="hidden" name="form_name" value="home_contact" />
 
             <label class="sr-only" for="homeContactName">Nom</label>
@@ -1258,7 +1506,7 @@ $catalogueCount = count($showcaseModels);
             <input id="homeContactEmail" name="email" type="email" required placeholder="Votre email" value="<?php echo htmlspecialchars($contactFormValues['email'], ENT_QUOTES, 'UTF-8'); ?>" />
 
             <label class="sr-only" for="homeContactMessage">Message</label>
-            <textarea id="homeContactMessage" name="msg" rows="5" required placeholder="Parlez-nous de votre evenement, de votre style souhaite et de votre calendrier."><?php echo htmlspecialchars($contactFormValues['msg'], ENT_QUOTES, 'UTF-8'); ?></textarea>
+            <textarea id="homeContactMessage" name="msg" rows="5" required placeholder="Parlez-nous de votre événement, de votre style souhaité et de votre calendrier."><?php echo htmlspecialchars($contactFormValues['msg'], ENT_QUOTES, 'UTF-8'); ?></textarea>
 
             <div class="is-home-contact-actions">
               <button class="is-home-btn is-home-btn-primary" type="submit">Envoyer le message</button>
@@ -1268,9 +1516,9 @@ $catalogueCount = count($showcaseModels);
         </div>
 
         <aside class="is-home-card is-home-contact-shell">
-          <h3 style="margin:0;font:700 30px/1.02 'Playfair Display', serif;">Invitation Speciale</h3>
+          <h3 style="margin:0;font:800 30px/1.02 'Poppins', sans-serif;letter-spacing:-0.03em;">Invitation Spéciale</h3>
           <ul class="is-home-contact-meta">
-            <li>Hubert Solutions - entite dediee aux invitations haut de gamme</li>
+            <li>Hubert Solutions - entité dédiée aux invitations haut de gamme</li>
             <li>Kinshasa - Gombe, Boulevard du 30 Juin, Immeuble Interfina, 2e niveau</li>
             <li>Accompagnement local et international</li>
           </ul>
@@ -1279,13 +1527,13 @@ $catalogueCount = count($showcaseModels);
             <span class="is-home-tag">Direction artistique</span>
             <span class="is-home-tag">Invitations premium</span>
             <span class="is-home-tag">QR & RSVP</span>
-            <span class="is-home-tag">Expedition etrangere</span>
+            <span class="is-home-tag">Expédition étrangère</span>
           </div>
 
           <div class="is-home-contact-actions">
-            <a class="is-home-btn is-home-btn-soft" href="<?php echo htmlspecialchars($homeWhatsappUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener">WhatsApp</a>
-            <a class="is-home-btn is-home-btn-soft" href="https://www.instagram.com/invitationspeciale/" target="_blank" rel="noopener">Instagram</a>
-            <a class="is-home-btn is-home-btn-soft" href="https://www.tiktok.com/@invitationspeciale" target="_blank" rel="noopener">TikTok</a>
+            <a class="is-home-btn is-home-btn-soft" href="<?php echo htmlspecialchars($homeWhatsappUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener"><i class="fab fa-whatsapp" aria-hidden="true"></i><span>WhatsApp</span></a>
+            <a class="is-home-btn is-home-btn-soft" href="https://www.instagram.com/invitationspeciale/" target="_blank" rel="noopener"><i class="fab fa-instagram" aria-hidden="true"></i><span>Instagram</span></a>
+            <a class="is-home-btn is-home-btn-soft" href="https://www.tiktok.com/@invitationspeciale" target="_blank" rel="noopener"><i class="fab fa-tiktok" aria-hidden="true"></i><span>TikTok</span></a>
           </div>
         </aside>
       </div>
@@ -1294,10 +1542,10 @@ $catalogueCount = count($showcaseModels);
 
   <footer class="is-home-footer">
     <div class="is-home-wrap is-home-footer-row">
-      <small>&copy; <span id="homeYear"></span> Invitation Speciale - Hubert Solutions</small>
+      <small>&copy; <span id="homeYear"></span> Invitation Spéciale - Hubert Solutions</small>
       <div class="is-home-tags">
         <span class="is-home-tag">RDC · Kinshasa - Gombe</span>
-        <span class="is-home-tag">Cree en 2024</span>
+        <span class="is-home-tag">Créée en 2024</span>
       </div>
     </div>
   </footer>
@@ -1379,14 +1627,14 @@ $catalogueCount = count($showcaseModels);
       detailsList.innerHTML = '';
 
       if (!dateKey || !homeCalendarEvents[dateKey] || homeCalendarEvents[dateKey].length === 0) {
-        detailsTitle.textContent = 'Aucun mariage sur cette date';
-        detailsSubtitle.textContent = 'Choisissez une date cochee pour afficher les prenoms des maries.';
+        detailsTitle.textContent = 'Aucun mariage à cette date';
+        detailsSubtitle.textContent = 'Choisissez une date cochée pour afficher les prénoms des mariés.';
         return;
       }
 
       const selectedDate = new Date(dateKey + 'T00:00:00');
       detailsTitle.textContent = dayFormatter.format(selectedDate);
-      detailsSubtitle.textContent = String(homeCalendarEvents[dateKey].length) + ' mariage(s) programme(s) ce jour-la.';
+      detailsSubtitle.textContent = String(homeCalendarEvents[dateKey].length) + ' mariage(s) programmé(s) ce jour-là.';
 
       homeCalendarEvents[dateKey].forEach(function (entry, index) {
         const item = document.createElement('li');
@@ -1508,7 +1756,7 @@ $catalogueCount = count($showcaseModels);
 
   if (contactFeedback && contactFeedback.status) {
     Swal.fire({
-      title: contactFeedback.status === 'success' ? 'Message envoye' : 'Envoi impossible',
+      title: contactFeedback.status === 'success' ? 'Message envoyé' : 'Envoi impossible',
       text: contactFeedback.message || '',
       icon: contactFeedback.status === 'success' ? 'success' : 'error',
       confirmButtonText: 'Fermer',
