@@ -923,27 +923,151 @@ $buildReference = static function (array $catalogModel): string {
       padding:14px;
     }
   }
+
+  .catalogue-site-header{
+    position:sticky;
+    top:0;
+    z-index:60;
+    background:rgba(252, 248, 242, 0.92);
+    backdrop-filter:blur(14px) saturate(160%);
+    border-bottom:1px solid rgba(93, 65, 46, 0.12);
+  }
+  .catalogue-site-header-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:24px;
+    min-height:88px;
+    padding:18px 0;
+  }
+  .catalogue-site-brand{
+    display:inline-flex;
+    align-items:center;
+    min-width:0;
+  }
+  .catalogue-site-brand img{
+    width:206px;
+    max-width:min(52vw, 206px);
+    height:auto;
+  }
+  .catalogue-site-menu{
+    display:flex;
+    align-items:center;
+    gap:22px;
+    color:#6c584b;
+    font-size:14px;
+  }
+  .catalogue-site-menu a{
+    position:relative;
+    padding-bottom:4px;
+  }
+  .catalogue-site-menu a::after{
+    content:'';
+    position:absolute;
+    left:0;
+    bottom:0;
+    width:100%;
+    height:1px;
+    background:#6c584b;
+    transform:scaleX(0);
+    transform-origin:left;
+    transition:transform .2s ease;
+  }
+  .catalogue-site-menu a:hover::after,
+  .catalogue-site-menu a:focus-visible::after{
+    transform:scaleX(1);
+  }
+  .catalogue-site-actions{
+    display:inline-flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:10px;
+    margin-left:auto;
+  }
+  .catalogue-site-icon,
+  .catalogue-site-icon:visited,
+  .catalogue-site-toggle{
+    width:46px;
+    min-width:46px;
+    height:46px;
+    min-height:46px;
+    border-radius:999px;
+    border:1px solid rgba(93, 65, 46, 0.12);
+    background:rgba(255,255,255,0.82);
+    color:#5d412e;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:0 12px 26px rgba(93, 65, 46, 0.08);
+  }
+  .catalogue-site-icon i,
+  .catalogue-site-toggle i{
+    font-size:18px;
+  }
+  .catalogue-site-toggle{
+    display:none;
+    padding:0;
+  }
+  @media (max-width: 920px){
+    .catalogue-site-header-row{
+      position:relative;
+      flex-wrap:nowrap;
+      gap:14px;
+      min-height:78px;
+      padding:14px 0;
+    }
+    .catalogue-site-brand img{
+      width:170px;
+      max-width:52vw;
+    }
+    .catalogue-site-menu{
+      position:absolute;
+      top:calc(100% + 10px);
+      left:0;
+      right:0;
+      display:none;
+      flex-direction:column;
+      align-items:flex-start;
+      gap:14px;
+      padding:18px;
+      border-radius:24px;
+      background:rgba(255, 253, 249, 0.98);
+      border:1px solid rgba(93, 65, 46, 0.12);
+      box-shadow:0 24px 60px rgba(89, 43, 26, 0.14);
+    }
+    .catalogue-site-menu.is-open{
+      display:flex;
+    }
+    .catalogue-site-toggle{
+      display:inline-flex;
+    }
+  }
 </style>
 
 <script>
   document.body.classList.add('catalogue-page');
 </script>
 
-<header>
-  <div class="container nav">
-    <a class="brand" href="index.php?page=accueil" aria-label="Accueil Invitation Spéciale">
-      <img src="images/Logo_invitationSpeciale_4.png" width="250px" alt="Invitation Spéciale">
+<header class="catalogue-site-header">
+  <div class="catalogue-container catalogue-site-header-row">
+    <a class="catalogue-site-brand" href="index.php?page=accueil" aria-label="Accueil Invitation Speciale">
+      <img src="images/Logo_invitationSpeciale_SF.png" alt="Invitation Speciale">
     </a>
-    <nav aria-label="Navigation principale" class="menu">
-      <a href="index.php?page=accueil#services">Services</a>
+    <nav aria-label="Navigation principale" class="catalogue-site-menu" id="cataloguePrimaryMenu">
+      <a href="index.php?page=accueil">Accueil</a>
+      <a href="index.php?page=accueil#a-propos">A propos</a>
       <a href="index.php?page=catalogue">Catalogue</a>
-      <a href="index.php?page=accueil#galerie">Galerie</a>
-      <a href="index.php?page=accueil#tarifs">Tarifs</a>
       <a href="index.php?page=accueil#contact">Contact</a>
-      <a href="event/index.php?page=login">Mon Compte</a>
+      <a href="event/index.php?page=login">Mon compte</a>
     </nav>
-    <button class="btn hamb" aria-expanded="false" aria-controls="mobileMenu" style="color:#eab308;" id="catalogueHamb">Menu</button>
-    <a href="<?php echo htmlspecialchars($catalogWhatsappUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener noreferrer" aria-label="Discuter sur WhatsApp" style="color:#eab308;"><i class="fab fa-whatsapp icon" style="font-size:40px;margin-right:25px;"></i></a>
+    <div class="catalogue-site-actions">
+      <a class="catalogue-site-icon" href="<?php echo htmlspecialchars($catalogWhatsappUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp Invitation Speciale">
+        <i class="fab fa-whatsapp" aria-hidden="true"></i>
+      </a>
+      <button class="catalogue-site-toggle" type="button" aria-expanded="false" aria-controls="cataloguePrimaryMenu" id="catalogueHamb" aria-label="Ouvrir le menu">
+        <i class="fas fa-bars" aria-hidden="true"></i>
+      </button>
+    </div>
   </div>
 </header>
 
@@ -1111,7 +1235,17 @@ $buildReference = static function (array $catalogModel): string {
 
 <script>
   document.getElementById('catalogueHamb')?.addEventListener('click', function () {
-    document.querySelector('.menu')?.classList.toggle('open');
+    const navigation = document.getElementById('cataloguePrimaryMenu');
+    const isExpanded = this.getAttribute('aria-expanded') === 'true';
+    this.setAttribute('aria-expanded', String(!isExpanded));
+    navigation?.classList.toggle('is-open');
+  });
+
+  document.querySelectorAll('#cataloguePrimaryMenu a').forEach(function (link) {
+    link.addEventListener('click', function () {
+      document.getElementById('cataloguePrimaryMenu')?.classList.remove('is-open');
+      document.getElementById('catalogueHamb')?.setAttribute('aria-expanded', 'false');
+    });
   });
 
   const catalogueLightbox = document.getElementById('catalogueLightbox');
