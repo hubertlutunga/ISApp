@@ -67,8 +67,6 @@ Exemple minimal de fichier `.env` local:
 ```dotenv
 TWILIO_ACCOUNT_SID=AC5cbb94f85695ce16d97ce2ca2c3f7db0
 TWILIO_AUTH_TOKEN=REMPLACER_MANUELLEMENT
-TWILIO_WHATSAPP_FROM=whatsapp:+17167403177
-TWILIO_WHATSAPP_TEMPLATE_SID=REMPLACER_PAR_LE_TEMPLATE_ACTUEL
 ```
 
 Le fichier `.env` est ignore par Git et bloque cote Apache via `.htaccess`, pour eviter toute exposition publique accidentelle. En production, privilegiez toujours des variables d'environnement definies au niveau du serveur.
@@ -91,11 +89,14 @@ Variables requises pour l'envoi WhatsApp:
 
 - `TWILIO_ACCOUNT_SID`
 - `TWILIO_AUTH_TOKEN`
-- `TWILIO_WHATSAPP_FROM`
-- `TWILIO_WHATSAPP_TEMPLATE_SID`
 
 Variable optionnelle:
 
 - `ISAPP_PUBLIC_BASE_URL`
+
+Le numero expéditeur WhatsApp et le Content SID utilises par l'envoi des invitations sont maintenant verrouilles dans [event/users/pages/whatsapp_template_sender.php](event/users/pages/whatsapp_template_sender.php) avec les valeurs approuvees suivantes:
+
+- `whatsapp:+14787726313`
+- `HXf98af23be47cc1dab6d5162b2ad2a5b7`
 
 Les anciennes pages d'essai Twilio du projet ont ete desactivees pour eviter toute exposition publique ou reutilisation accidentelle.

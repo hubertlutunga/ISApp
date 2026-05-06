@@ -4,6 +4,14 @@ if (!class_exists('WhatsAppQuotaService')) {
     require_once dirname(__DIR__, 3) . '/src/Support/WhatsAppQuotaService.php';
 }
 
+if (!defined('ISAPP_TWILIO_WHATSAPP_FROM')) {
+    define('ISAPP_TWILIO_WHATSAPP_FROM', 'whatsapp:+14787726313');
+}
+
+if (!defined('ISAPP_TWILIO_WHATSAPP_TEMPLATE_SID')) {
+    define('ISAPP_TWILIO_WHATSAPP_TEMPLATE_SID', 'HXf98af23be47cc1dab6d5162b2ad2a5b7');
+}
+
 if (!function_exists('isapp_whatsapp_sender_base_url')) {
     function isapp_whatsapp_sender_base_url(): string
     {
@@ -548,16 +556,26 @@ if (!function_exists('isapp_whatsapp_sender_update_invite_tracking')) {
 if (!function_exists('isapp_whatsapp_sender_template_sid')) {
     function isapp_whatsapp_sender_template_sid(): string
     {
-        $templateSid = trim((string) getenv('TWILIO_WHATSAPP_TEMPLATE_SID'));
-        if ($templateSid === '') {
-            throw new RuntimeException('Le SID complet du template Twilio WhatsApp approuve est introuvable. Renseignez TWILIO_WHATSAPP_TEMPLATE_SID avec le template envoi_invitationspeciale_pdf.');
-        }
+        $templateSid = trim(ISAPP_TWILIO_WHATSAPP_TEMPLATE_SID);
 
         if (!preg_match('/^HX[0-9a-fA-F]{32}$/', $templateSid)) {
             throw new RuntimeException('Le SID du template Twilio WhatsApp est invalide. Il doit commencer par HX et contenir 34 caracteres.');
         }
 
         return $templateSid;
+    }
+}
+
+if (!function_exists('isapp_whatsapp_sender_from_number')) {
+    function isapp_whatsapp_sender_from_number(): string
+    {
+        $from = trim(ISAPP_TWILIO_WHATSAPP_FROM);
+
+        if (!preg_match('/^whatsapp:\+[1-9]\d{7,14}$/', $from)) {
+            throw new RuntimeException('Le numero expéditeur WhatsApp Twilio est invalide.');
+        }
+
+        return $from;
     }
 }
 
@@ -625,7 +643,7 @@ if (!function_exists('isapp_whatsapp_send_template_invitation')) {
         $contentSid = isapp_whatsapp_sender_template_sid();
         $twilioSid = isapp_whatsapp_sender_required_env('TWILIO_ACCOUNT_SID', 'Le compte Twilio');
         $twilioToken = isapp_whatsapp_sender_required_env('TWILIO_AUTH_TOKEN', 'Le jeton Twilio');
-        $twilioFrom = isapp_whatsapp_sender_required_env('TWILIO_WHATSAPP_FROM', 'Le numero WhatsApp Twilio');
+        $twilioFrom = isapp_whatsapp_sender_from_number();
 
         $contentVariables = [
             '1' => $recipientName,
