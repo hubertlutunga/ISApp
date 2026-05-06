@@ -579,6 +579,23 @@ if (!function_exists('isapp_whatsapp_sender_from_number')) {
     }
 }
 
+if (!function_exists('isapp_whatsapp_sender_messaging_service_sid')) {
+    function isapp_whatsapp_sender_messaging_service_sid(): string
+    {
+        $messagingServiceSid = trim((string) getenv('TWILIO_MESSAGING_SERVICE_SID'));
+
+        if ($messagingServiceSid === '') {
+            throw new RuntimeException('Le Messaging Service SID Twilio est introuvable. Renseignez TWILIO_MESSAGING_SERVICE_SID pour l’envoi des templates WhatsApp.');
+        }
+
+        if (!preg_match('/^MG[0-9a-fA-F]{32}$/', $messagingServiceSid)) {
+            throw new RuntimeException('Le Messaging Service SID Twilio est invalide. Il doit commencer par MG et contenir 34 caracteres.');
+        }
+
+        return $messagingServiceSid;
+    }
+}
+
 if (!function_exists('isapp_whatsapp_sender_required_env')) {
     function isapp_whatsapp_sender_required_env(string $envName, string $label): string
     {
@@ -644,6 +661,7 @@ if (!function_exists('isapp_whatsapp_send_template_invitation')) {
         $twilioSid = isapp_whatsapp_sender_required_env('TWILIO_ACCOUNT_SID', 'Le compte Twilio');
         $twilioToken = isapp_whatsapp_sender_required_env('TWILIO_AUTH_TOKEN', 'Le jeton Twilio');
         $twilioFrom = isapp_whatsapp_sender_from_number();
+        $messagingServiceSid = isapp_whatsapp_sender_messaging_service_sid();
 
         $contentVariables = [
             '1' => $recipientName,
@@ -662,6 +680,7 @@ if (!function_exists('isapp_whatsapp_send_template_invitation')) {
                 isapp_whatsapp_sender_normalize_recipient($phone),
                 [
                     'from' => $twilioFrom,
+                    'messagingServiceSid' => $messagingServiceSid,
                     'contentSid' => $contentSid,
                     'contentVariables' => json_encode($contentVariables, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
                 ]

@@ -89,6 +89,7 @@ Variables requises pour l'envoi WhatsApp:
 
 - `TWILIO_ACCOUNT_SID`
 - `TWILIO_AUTH_TOKEN`
+- `TWILIO_MESSAGING_SERVICE_SID`
 
 Variable optionnelle:
 
@@ -98,5 +99,7 @@ Le numero expéditeur WhatsApp et le Content SID utilises par l'envoi des invita
 
 - `whatsapp:+14787726313`
 - `HXf98af23be47cc1dab6d5162b2ad2a5b7`
+
+Pour les Content Templates WhatsApp, Twilio doit aussi recevoir un Messaging Service SID valide dans `TWILIO_MESSAGING_SERVICE_SID`.
 
 Les anciennes pages d'essai Twilio du projet ont ete desactivees pour eviter toute exposition publique ou reutilisation accidentelle.
