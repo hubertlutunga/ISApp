@@ -653,14 +653,14 @@
  
                        
 					   <a class="dropdown-item" href="#" onclick="<?php echo htmlspecialchars($hasInvitationPreview ? 'openModal(' . json_encode(ucfirst((string) $row_inv['nom']), JSON_UNESCAPED_UNICODE) . ', ' . json_encode((string) ((int) $row_inv['id_inv'])) . ')' : 'showInvitationDesignPending(event)', ENT_QUOTES, 'UTF-8'); ?>" style="color:<?php echo $hasInvitationPreview ? '#495057' : '#adb5bd'; ?>;">
-					   <i class="fa fa-share"></i> Partager l'invitation</a> 
+					   <i class="fa fa-share"></i> Notifier l'invité</a> 
 
 					   
 		<a class="dropdown-item" <?php echo $hasInvitationPreview ? 'target="_blank"' : ''; ?>
 			 href="<?php echo $hasInvitationPreview ? '../pages/invitation_speciale.php?cod=' . rawurlencode((string) $row_inv['id_inv']) . '&event=' . rawurlencode((string) $codevent) : '#'; ?>"
 			 onclick="<?php echo $hasInvitationPreview ? '' : 'showInvitationDesignPending(event)'; ?>"
 			 style="color:<?php echo $hasInvitationPreview ? '#495057' : '#adb5bd'; ?>;">
-		<i class="fa fa-eye"></i> Aperçu de l'invitation
+		<i class="fa fa-eye"></i> Partager l'invitation
     </a>
  
  
