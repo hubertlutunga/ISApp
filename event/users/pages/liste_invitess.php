@@ -322,11 +322,10 @@ async function confirmSuppInv(e, idInv, codEvent, nom) {
 					   <br>
 					   Nous avons le plaisir de vous transmettre votre invitation <?php echo htmlspecialchars($sharePreviewContext['event_label'], ENT_QUOTES, 'UTF-8'); ?> de <?php echo htmlspecialchars($sharePreviewContext['signature'], ENT_QUOTES, 'UTF-8'); ?>.<br>
 					   <br>
-					   Nous vous remercions de bien vouloir confirmer votre presence.<br>
+					   Nous vous remercions de bien vouloir confirmer votre presence ou votre absence via les boutons disponibles sur votre invitation.<br>
 					   <br>
 					   Cordialement,<br>
-					   Invitation Speciale,<br>
-					   Merci.
+					   Invitation Speciale.
 				   </div>
 			   </form>
 		   </div>
