@@ -9,7 +9,7 @@ if (!defined('ISAPP_TWILIO_WHATSAPP_FROM')) {
 }
 
 if (!defined('ISAPP_TWILIO_WHATSAPP_TEMPLATE_SID')) {
-    define('ISAPP_TWILIO_WHATSAPP_TEMPLATE_SID', 'HX9e9fd770e34bf0241af9f803e0e009b8');
+    define('ISAPP_TWILIO_WHATSAPP_TEMPLATE_SID', 'HX19ec61e298a83f99ec815a184b9d9a0e');
 }
 
 if (!function_exists('isapp_whatsapp_sender_base_url')) {

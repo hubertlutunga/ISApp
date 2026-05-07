@@ -98,7 +98,7 @@ Variable optionnelle:
 Le numero expéditeur WhatsApp et le Content SID utilises par l'envoi des invitations sont maintenant verrouilles dans [event/users/pages/whatsapp_template_sender.php](event/users/pages/whatsapp_template_sender.php) avec les valeurs approuvees suivantes:
 
 - `whatsapp:+14787726313`
-- `HX9e9fd770e34bf0241af9f803e0e009b8`
+- `HX19ec61e298a83f99ec815a184b9d9a0e`
 
 Pour les Content Templates WhatsApp, Twilio doit aussi recevoir un Messaging Service SID valide dans `TWILIO_MESSAGING_SERVICE_SID`.
 
