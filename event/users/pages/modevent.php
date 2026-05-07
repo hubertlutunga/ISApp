@@ -207,7 +207,14 @@ if ($invitationModels !== []) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['submittext']) && !isset($_POST['submiacces']) && isset($_FILES['photos'])) {
     try {
-        EventMediaService::storeEventPhotos($pdo, $cod_getevent, $_FILES['photos']);
+        $photoPrefix = trim((string) ($datagetevent['initiale_mar'] ?? ''));
+        EventMediaService::storeEventPhotos(
+            $pdo,
+            $cod_getevent,
+            $_FILES['photos'],
+            '../photosevent',
+            $photoPrefix !== '' ? $photoPrefix : 'IS'
+        );
         http_response_code(200);
         exit;
     } catch (Throwable $exception) {
