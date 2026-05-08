@@ -43,10 +43,36 @@
                    
                     
                     
+
+                <?php
+                $eventDateTime = null;
+                $eventDateDay = null;
+                $todayDay = date('Y-m-d');
+
+                if (!empty($date_event)) {
+                    try {
+                        $eventDateTime = new DateTimeImmutable((string) $date_event);
+                        $eventDateDay = $eventDateTime->format('Y-m-d');
+                    } catch (Exception $exception) {
+                        $eventDateTime = null;
+                        $eventDateDay = null;
+                    }
+                }
+
+                $isBeforeEventDay = $eventDateDay !== null && $todayDay < $eventDateDay;
+                $isEventDay = $eventDateDay !== null && $todayDay === $eventDateDay;
+                $canAccessEventControls = !$isBeforeEventDay;
+                $accessPageUrl = 'index.php?page=access&cod=' . urlencode((string) $codevent);
+                ?>
+
                          
       <div id="resultat" style="margin-left:-45px;">
           
-                            <ul style="width:100%;"> </ul>    
+                                     <?php if ($canAccessEventControls) { ?>
+                                     <a href="<?php echo htmlspecialchars($accessPageUrl, ENT_QUOTES, 'UTF-8'); ?>"><img src="../images/Logo_invitationSpeciale_1.png" width="300px;"></a>
+                                     <?php } else { ?>
+                                     <span style="display:inline-block;cursor:not-allowed;opacity:.55;" title="Le lien sera disponible le jour du mariage."><img src="../images/Logo_invitationSpeciale_1.png" width="300px;"></span>
+                                     <?php } ?>
                     
       </div>
 
@@ -270,43 +296,17 @@
 
 
                                                                                 <?php 
-                                        // On compare la date de l'événement et la date du jour
-                                        $today = date('Y-m-d');
-                                        $date_event_jour = date('Y-m-d', strtotime($date_event));
-
                                         if (!$row_inv['acces']) {
 
-                                            // Si la date de l'événement est aujourd'hui
-                                            if ($date_event_jour === $today) {
+                                            if ($isBeforeEventDay) {
                                         ?>
                                                 <div style="display: flex; justify-content: center;"> 
-                                                    <a class="btn btn-primary btn-lg" href="#" style="color:#fff;" title="Signaler l'arrivée" onclick="confirmAcces(event)">
-                                                        <i class="fa fa-remove"></i> Confirmer l'arrivée
-                                                    </a>
+                                                    <button type="button" class="btn btn-primary btn-lg" style="color:#fff;opacity:.55;cursor:not-allowed;" title="Le bouton sera disponible le jour du mariage." disabled>
+                                                        <i class="fa fa-lock"></i> Confirmer l'arrivée
+                                                    </button>
                                                 </div>  
-
-                                                <script>
-                                                function confirmAcces(event) {
-                                                    event.preventDefault(); // Empêche le lien de se déclencher
-                                                    Swal.fire({
-                                                        title: "Alert !",
-                                                        text: "Voulez-vous confirmer l'arrivée de <?php echo addslashes($nom_invite); ?> ?",
-                                                        icon: "warning",
-                                                        showCancelButton: true,
-                                                        confirmButtonText: "Oui",
-                                                        cancelButtonText: "Non"
-                                                    }).then((result) => {
-                                                        if (result.isConfirmed) {
-                                                            window.location.href = "index.php?page=pointacces&codinv=<?php echo $row_inv['id_inv']; ?>&cod=<?php echo $codevent; ?>";
-                                                        }
-                                                    });
-                                                }
-                                                </script> 
                                         <?php 
                                             } else {
-                                                // Si la date est différente, bouton désactivé
-
-                                                $cle_confirmation = "1234"; // <-- ta clé secrète
                                         ?>
  
 
@@ -330,13 +330,32 @@
                                                     function confirmAcces(event) {
                                                     event.preventDefault();
 
+                                                    const requiresConfirmationCode = <?php echo $isEventDay ? 'true' : 'false'; ?>;
+                                                    const confirmationCode = <?php echo json_encode((string) $codevent, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+
+                                                    if (!requiresConfirmationCode) {
+                                                        Swal.fire({
+                                                            title: "Confirmer l’arrivée",
+                                                            text: "Voulez-vous confirmer l'arrivée de <?php echo addslashes($nom_invite); ?> ?",
+                                                            icon: "warning",
+                                                            showCancelButton: true,
+                                                            confirmButtonText: "Oui",
+                                                            cancelButtonText: "Non"
+                                                        }).then((result) => {
+                                                            if (result.isConfirmed) {
+                                                                window.location.href = "index.php?page=pointacces&codinv=<?php echo (int) $row_inv['id_inv']; ?>&cod=<?php echo urlencode((string) $codevent); ?>";
+                                                            }
+                                                        });
+                                                        return;
+                                                    }
+
                                                     Swal.fire({
                                                         title: "Confirmer l’arrivée",
                                                         html: `
                                                         <div style="text-align:left;margin-top:10px;">
-                                                            <label style="display:block;margin-bottom:6px;">Clé de confirmation</label>
-                                                            <input id="cleConfirm" type="password" class="swal2-input"
-                                                                placeholder="Entrez la clé"
+                                                            <label style="display:block;margin-bottom:6px;">Code de confirmation</label>
+                                                            <input id="cleConfirm" type="text" class="swal2-input"
+                                                                placeholder="Entrez le code de l'événement"
                                                                 autocomplete="off"
                                                                 style="margin:0;width:100%;">
                                                         </div>
@@ -359,19 +378,15 @@
 
                                                         const cleSaisie = result.value;
 
-                                                        // clé attendue (injectée depuis PHP)
-                                                        const cleAttendue = <?php echo json_encode($cle_confirmation); ?>;
-
-                                                        if (cleSaisie !== cleAttendue) {
+                                                        if (cleSaisie !== confirmationCode) {
                                                         Swal.fire({
                                                             icon: "error",
-                                                            title: "Clé incorrecte",
-                                                            text: "La clé de confirmation est invalide."
+                                                            title: "Code incorrect",
+                                                            text: "Le code de confirmation ne correspond pas au code de l'événement."
                                                         });
                                                         return;
                                                         }
 
-                                                        // ✅ OK => redirection
                                                         window.location.href =
                                                         "index.php?page=pointacces&codinv=<?php echo (int)$row_inv['id_inv']; ?>&cod=<?php echo urlencode($codevent); ?>";
                                                     });
@@ -407,32 +422,6 @@
 
 
 
-
-
-
-
-
-
-
-                                        <script>
-                                            
-                                            function confirmAcces(event) {
-                                                event.preventDefault(); // Empêche le lien de se déclencher
-                                                Swal.fire({
-                                                    title: "Alert !",
-                                                    text: "Voulez - vous confirmer l'arrivée de <?php echo $nom_invite;?> ?",
-                                                    icon: "warning", // Utilisez "warning" pour une alerte de confirmation
-                                                    showCancelButton: true,
-                                                    confirmButtonText: "Oui",
-                                                    cancelButtonText: "Non"
-                                                }).then((result) => {
-                                                    if (result.isConfirmed) {
-                                                        window.location.href = "index.php?page=pointacces&codinv=<?php echo $row_inv['id_inv'];?>&cod=<?php echo $codevent;?>";
-                                                    }
-                                                });
-                                            }
-
-                                        </script> 
 
 <?php 
 
