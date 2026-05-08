@@ -30,6 +30,20 @@ if ((string) ($type_event ?? '') === '2') {
 } elseif ((string) ($type_event ?? '') !== '1') {
   $accessHeroTitle = 'Event Access';
 }
+
+$eventDateDay = null;
+$todayDay = date('Y-m-d');
+
+if (!empty($date_event)) {
+  try {
+    $eventDateDay = (new DateTimeImmutable((string) $date_event))->format('Y-m-d');
+  } catch (Exception $exception) {
+    $eventDateDay = null;
+  }
+}
+
+$canOpenAccessPage = $eventDateDay !== null && $todayDay >= $eventDateDay;
+$accessPageUrl = 'index.php?page=access&cod=' . urlencode((string) $codevent);
 ?>  
 
 
@@ -46,7 +60,11 @@ if ((string) ($type_event ?? '') === '2') {
 <!-- End preloader-->
 
 <div style="display: flex; justify-content: center;">
-  <a href="index.php?page=access&cod=<?php echo $codevent?>"><img src="../images/Logo_invitationSpeciale_1.png" width="300px;"></a>
+  <?php if ($canOpenAccessPage) { ?>
+  <a href="<?php echo htmlspecialchars($accessPageUrl, ENT_QUOTES, 'UTF-8'); ?>"><img src="../images/Logo_invitationSpeciale_1.png" width="300px;"></a>
+  <?php } else { ?>
+  <span style="display:inline-block;cursor:not-allowed;opacity:.55;" title="Le lien sera disponible le jour de l'événement."><img src="../images/Logo_invitationSpeciale_1.png" width="300px;"></span>
+  <?php } ?>
 </div>
 
 <section id="rsvp" class="bg-secondary spacer-one-top-lg o-hidden ">

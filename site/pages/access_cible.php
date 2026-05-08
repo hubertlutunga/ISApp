@@ -18,10 +18,32 @@
       <!-- End preloader-->
        
 
+<?php
+$eventDateDay = null;
+$todayDay = date('Y-m-d');
+
+if (!empty($date_event)) {
+    try {
+        $eventDateDay = (new DateTimeImmutable((string) $date_event))->format('Y-m-d');
+    } catch (Exception $exception) {
+        $eventDateDay = null;
+    }
+}
+
+$isBeforeEventDay = $eventDateDay !== null && $todayDay < $eventDateDay;
+$isEventDay = $eventDateDay !== null && $todayDay === $eventDateDay;
+$canOpenAccessPage = $eventDateDay !== null && $todayDay >= $eventDateDay;
+$accessPageUrl = 'index.php?page=access&cod=' . urlencode((string) $codevent);
+?>
+
  
 
                  <div style="display: flex; justify-content: center;">
-                     <a href="index.php?page=access&cod=<?php echo $codevent?>"><img src="../images/Logo_invitationSpeciale_1.png" width="300px;"></a>
+                     <?php if ($canOpenAccessPage) { ?>
+                     <a href="<?php echo htmlspecialchars($accessPageUrl, ENT_QUOTES, 'UTF-8'); ?>"><img src="../images/Logo_invitationSpeciale_1.png" width="300px;"></a>
+                     <?php } else { ?>
+                     <span style="display:inline-block;cursor:not-allowed;opacity:.55;" title="Le lien sera disponible le jour de l'événement."><img src="../images/Logo_invitationSpeciale_1.png" width="300px;"></span>
+                     <?php } ?>
 
 
 
@@ -43,35 +65,13 @@
                    
                     
                     
-
-                <?php
-                $eventDateTime = null;
-                $eventDateDay = null;
-                $todayDay = date('Y-m-d');
-
-                if (!empty($date_event)) {
-                    try {
-                        $eventDateTime = new DateTimeImmutable((string) $date_event);
-                        $eventDateDay = $eventDateTime->format('Y-m-d');
-                    } catch (Exception $exception) {
-                        $eventDateTime = null;
-                        $eventDateDay = null;
-                    }
-                }
-
-                $isBeforeEventDay = $eventDateDay !== null && $todayDay < $eventDateDay;
-                $isEventDay = $eventDateDay !== null && $todayDay === $eventDateDay;
-                $canAccessEventControls = !$isBeforeEventDay;
-                $accessPageUrl = 'index.php?page=access&cod=' . urlencode((string) $codevent);
-                ?>
-
                          
       <div id="resultat" style="margin-left:-45px;">
           
-                                     <?php if ($canAccessEventControls) { ?>
+                                     <?php if ($canOpenAccessPage) { ?>
                                      <a href="<?php echo htmlspecialchars($accessPageUrl, ENT_QUOTES, 'UTF-8'); ?>"><img src="../images/Logo_invitationSpeciale_1.png" width="300px;"></a>
                                      <?php } else { ?>
-                                     <span style="display:inline-block;cursor:not-allowed;opacity:.55;" title="Le lien sera disponible le jour du mariage."><img src="../images/Logo_invitationSpeciale_1.png" width="300px;"></span>
+                                     <span style="display:inline-block;cursor:not-allowed;opacity:.55;" title="Le lien sera disponible le jour de l'événement."><img src="../images/Logo_invitationSpeciale_1.png" width="300px;"></span>
                                      <?php } ?>
                     
       </div>
@@ -223,10 +223,11 @@
                           
 
 
-
-
-
-                  <a href="index.php?page=access&cod=<?php echo $codevent?>"><h1 style="text-align:center;">Table <?php echo $nom_table;?></h1></a>
+                  <?php if ($canOpenAccessPage) { ?>
+                  <a href="<?php echo htmlspecialchars($accessPageUrl, ENT_QUOTES, 'UTF-8'); ?>"><h1 style="text-align:center;">Table <?php echo $nom_table;?></h1></a>
+                  <?php } else { ?>
+                  <h1 style="text-align:center;opacity:.8;">Table <?php echo $nom_table;?></h1>
+                  <?php } ?>
                   <h2 style="text-align:center;font-size:50px;font-family: 'Playfair Display"><?php echo $fetard; ?></h2>
                   <p style="text-align:center;letter-spacing:15px;"><span><?php echo date('d/m/Y',strtotime($date_event));?></span></p>
                 
@@ -448,6 +449,7 @@
            
 
 
+           <?php if (!$isBeforeEventDay) { ?>
            <table width="100%" style="margin-bottom:140px;">
                     
 
@@ -488,6 +490,7 @@
                               
                               ?> 
                   </table>
+                  <?php } ?>
 
                     </div>
                 </div> 
