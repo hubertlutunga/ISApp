@@ -443,7 +443,7 @@ $heroVerticalModels = $showcaseModels !== [] ? array_merge($showcaseModels, $sho
 
   .is-home-hero-copy h1 {
     margin: 0;
-    font: 800 40px/1.35 "Poppins", sans-serif;
+    font: 900 40px/1.16 "Poppins", sans-serif;
     letter-spacing: -0.03em;
     color: #fff8ef;
     max-width: 760px;
@@ -641,7 +641,7 @@ $heroVerticalModels = $showcaseModels !== [] ? array_merge($showcaseModels, $sho
 
   .is-home-service-chip {
     width: 100%;
-    min-height: 30px;
+    min-height: 24px;
     display: inline-flex;
     align-items: center;
     justify-content: flex-start;
@@ -650,19 +650,22 @@ $heroVerticalModels = $showcaseModels !== [] ? array_merge($showcaseModels, $sho
     background: transparent;
     color: #ffffff;
     font-family: "Poppins", sans-serif;
-    font-size: 30px;
-    font-weight: 700;
-    letter-spacing: 0.02em;
+    font-size: 22px;
+    font-weight: 900;
+    line-height: 1.02;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
     box-shadow: none;
     border: 0;
-    gap: 14px;
+    gap: 10px;
   }
 
   .is-home-service-chip::before {
     content: '\2022';
     flex: 0 0 auto;
-    font-size: 30px;
+    font-size: 18px;
     line-height: 1;
+    color: rgba(255, 248, 239, 0.78);
   }
 
   @keyframes homeSliderUp {
@@ -1163,13 +1166,19 @@ $heroVerticalModels = $showcaseModels !== [] ? array_merge($showcaseModels, $sho
     }
 
     .is-home-hero-copy h1 {
-      font: 800 40px/1.35 "Poppins", sans-serif;
+      font: 900 32px/1.02 "Poppins", sans-serif;
+      letter-spacing: -0.05em;
+      max-width: 100%;
     }
 
     .is-home-service-chip {
-      min-height: 30px;
+      min-height: 20px;
       padding: 0;
-      font-size: 30px;
+      font-size: 17px;
+      font-weight: 900;
+      line-height: 0.98;
+      letter-spacing: -0.03em;
+      gap: 8px;
     }
 
     .is-home-hero-actions,

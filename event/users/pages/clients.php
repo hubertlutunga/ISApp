@@ -74,6 +74,53 @@
 
     return function_exists('mb_strtolower') ? mb_strtolower($value, 'UTF-8') : strtolower($value);
   };
+
+  $clientsView = trim((string) ($_GET['view'] ?? 'clients'));
+  if (!in_array($clientsView, ['clients', 'whatsapp-sends'], true)) {
+    $clientsView = 'clients';
+  }
+
+  $whatsAppHistoryRows = [];
+  if ($clientsView === 'whatsapp-sends') {
+    require_once __DIR__ . '/whatsapp_template_sender.php';
+
+    try {
+      if (function_exists('isapp_whatsapp_sender_ensure_log_table')) {
+        isapp_whatsapp_sender_ensure_log_table($pdo);
+      }
+
+      $historyStmt = $pdo->query(
+        'SELECT
+            logs.id,
+            logs.event_code,
+            logs.invite_id,
+            logs.recipient_number,
+            logs.recipient_name,
+            logs.media_url,
+            logs.send_status,
+            logs.sent_at,
+            logs.error_message,
+            COALESCE(users.noms, "Utilisateur inconnu") AS client_name,
+            COALESCE(invites.nom, logs.recipient_name) AS invite_name
+         FROM whatsapp_message_logs logs
+         LEFT JOIN events events ON events.cod_event = logs.event_code
+         LEFT JOIN is_users users ON users.cod_user = COALESCE(NULLIF(events.cod_user, 0), NULLIF(events.cod_user2, 0))
+         LEFT JOIN invite invites ON invites.id_inv = logs.invite_id
+         ORDER BY logs.sent_at DESC, logs.id DESC
+         LIMIT 500'
+      );
+
+      $whatsAppHistoryRows = $historyStmt ? ($historyStmt->fetchAll(PDO::FETCH_ASSOC) ?: []) : [];
+      if ($historyStmt) {
+        $historyStmt->closeCursor();
+      }
+    } catch (\Throwable $exception) {
+      $clientFlash = [
+        'type' => 'danger',
+        'message' => 'Impossible de charger l\'historique des envois WhatsApp.',
+      ];
+    }
+  }
   ?>
 
   <style>
@@ -459,6 +506,145 @@
       margin: 0 0 16px;
     }
 
+    .clients-admin-summary-link {
+      display: block;
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .clients-admin-summary-link:hover,
+    .clients-admin-summary-link:focus-visible {
+      color: inherit;
+    }
+
+    .clients-admin-summary-link .box-body {
+      transition: transform .2s ease, box-shadow .2s ease;
+      border-radius: 20px;
+    }
+
+    .clients-admin-summary-link:hover .box-body,
+    .clients-admin-summary-link:focus-visible .box-body {
+      transform: translateY(-2px);
+      box-shadow: 0 16px 32px rgba(15, 23, 42, 0.08);
+    }
+
+    .clients-admin-summary-link.is-active .box-body {
+      box-shadow: inset 0 0 0 2px rgba(14, 165, 233, 0.24), 0 16px 32px rgba(15, 23, 42, 0.08);
+      background: linear-gradient(180deg, #ffffff 0%, #f0f9ff 100%);
+    }
+
+    .clients-admin-history-wrap {
+      border: 1px solid #e2e8f0;
+      border-radius: 24px;
+      background: #fff;
+      box-shadow: 0 18px 36px rgba(15, 23, 42, 0.06);
+      overflow: hidden;
+    }
+
+    .clients-admin-history-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      padding: 22px 24px 0;
+    }
+
+    .clients-admin-history-head h4 {
+      margin: 0;
+      color: #0f172a;
+      font-size: 20px;
+      font-weight: 900;
+    }
+
+    .clients-admin-history-head p {
+      margin: 6px 0 0;
+      color: #64748b;
+      font-size: 14px;
+    }
+
+    .clients-admin-history-table thead th {
+      background: #f8fafc;
+      color: #475569;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .clients-admin-history-table tbody td {
+      border-color: #eef2f7;
+      vertical-align: middle;
+      padding: 16px 18px;
+    }
+
+    .clients-admin-history-user,
+    .clients-admin-history-invite {
+      display: grid;
+      gap: 4px;
+    }
+
+    .clients-admin-history-user strong,
+    .clients-admin-history-invite strong {
+      color: #0f172a;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .clients-admin-history-user span,
+    .clients-admin-history-invite span,
+    .clients-admin-history-event,
+    .clients-admin-history-date {
+      color: #64748b;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .clients-admin-status-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 7px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      background: #f1f5f9;
+      color: #334155;
+    }
+
+    .clients-admin-status-badge.is-success {
+      background: #ecfdf5;
+      color: #047857;
+    }
+
+    .clients-admin-status-badge.is-danger {
+      background: #fef2f2;
+      color: #b91c1c;
+    }
+
+    .clients-admin-link-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-size: 12px;
+      font-weight: 800;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .clients-admin-link-btn:hover,
+    .clients-admin-link-btn:focus-visible {
+      color: #1e3a8a;
+      background: #dbeafe;
+    }
+
     @media (max-width: 991px) {
       .clients-admin-toolbar {
         grid-template-columns: 1fr;
@@ -725,6 +911,7 @@ $salut = 'Bonsoir';
 							</div>
 						</div>  
             <div class="col-xxl-3 col-xl-3 col-lg-3 col-md-6 col-12">
+              <a href="index.php?page=clients&view=whatsapp-sends" class="clients-admin-summary-link <?php echo $clientsView === 'whatsapp-sends' ? 'is-active' : ''; ?>">
               <div class="box-body rounded-0 p-0 pb-lg-0 pb-sm-15 pb-xs-15 be-1 fill-icon">
                 <div class="d-flex align-items-center">
                   <div class="w-70 h-70 me-15 bg-success-light rounded-circle text-center p-10">
@@ -738,6 +925,7 @@ $salut = 'Bonsoir';
                   </div>
                 </div>
               </div>
+              </a>
             </div>
             <div class="col-xxl-3 col-xl-3 col-lg-3 col-md-6 col-12">
               <div class="box-body rounded-0 p-0 pb-lg-0 pb-sm-15 pb-xs-15 be-1 fill-icon">
@@ -815,6 +1003,86 @@ $salut = 'Bonsoir';
  
 <div class="row" id='mesinv'>
     <div class="col-xxl-12 col-xl-12 col-lg-12">
+        <?php if ($clientsView === 'whatsapp-sends') { ?>
+        <div class="clients-admin-history-wrap">
+            <div class="clients-admin-history-head">
+                <div>
+                  <h4>Historique des envois WhatsApp</h4>
+                  <p>Consultez les derniers envois avec l'utilisateur, l'invite, son numero et le lien de consultation de l'invitation.</p>
+                </div>
+                <a href="index.php?page=clients" class="btn btn-outline btn-secondary">Retour aux clients</a>
+            </div>
+            <div class="card-body pt-20">
+              <div class="table-responsive">
+                <table class="table clients-admin-history-table align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Nom d'utilisateur</th>
+                      <th>Invite et telephone</th>
+                      <th>Evenement</th>
+                      <th>Invitation</th>
+                      <th>Statut</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <?php if ($whatsAppHistoryRows !== []) {
+                      foreach ($whatsAppHistoryRows as $historyRow) {
+                        $historyRecipientNumber = str_replace('whatsapp:', '', (string) ($historyRow['recipient_number'] ?? ''));
+                        $historyMediaUrl = trim((string) ($historyRow['media_url'] ?? ''));
+                        $historyFallbackUrl = '';
+                        if ((int) ($historyRow['invite_id'] ?? 0) > 0 && (string) ($historyRow['event_code'] ?? '') !== '') {
+                          $historyFallbackUrl = '../pages/invitation_elect.php?cod=' . urlencode((string) $historyRow['invite_id']) . '&event=' . urlencode((string) $historyRow['event_code']);
+                        }
+                        $historyInvitationUrl = $historyMediaUrl !== '' ? $historyMediaUrl : $historyFallbackUrl;
+                        $historyStatus = (string) ($historyRow['send_status'] ?? 'inconnu');
+                        $historyStatusClass = $historyStatus === 'sent' ? 'is-success' : ($historyStatus === 'failed' ? 'is-danger' : '');
+                    ?>
+                    <tr>
+                      <td>
+                        <span class="clients-admin-history-date"><?php echo htmlspecialchars((string) ($historyRow['sent_at'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></span>
+                      </td>
+                      <td>
+                        <div class="clients-admin-history-user">
+                          <strong><?php echo htmlspecialchars((string) ($historyRow['client_name'] ?? 'Utilisateur inconnu'), ENT_QUOTES, 'UTF-8'); ?></strong>
+                          <span>Code evenement : <?php echo htmlspecialchars((string) ($historyRow['event_code'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></span>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="clients-admin-history-invite">
+                          <strong><?php echo htmlspecialchars((string) ($historyRow['invite_name'] ?? $historyRow['recipient_name'] ?? 'Invite'), ENT_QUOTES, 'UTF-8'); ?></strong>
+                          <span><?php echo htmlspecialchars($historyRecipientNumber !== '' ? $historyRecipientNumber : 'Numero indisponible', ENT_QUOTES, 'UTF-8'); ?></span>
+                        </div>
+                      </td>
+                      <td>
+                        <span class="clients-admin-history-event">Invite ID : <?php echo (int) ($historyRow['invite_id'] ?? 0); ?></span>
+                      </td>
+                      <td>
+                        <?php if ($historyInvitationUrl !== '') { ?>
+                        <a href="<?php echo htmlspecialchars($historyInvitationUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener noreferrer" class="clients-admin-link-btn">
+                          <i class="fas fa-eye"></i>
+                          Voir l'invitation
+                        </a>
+                        <?php } else { ?>
+                        <span class="clients-admin-history-event">Lien indisponible</span>
+                        <?php } ?>
+                      </td>
+                      <td>
+                        <span class="clients-admin-status-badge <?php echo $historyStatusClass; ?>"><?php echo htmlspecialchars($historyStatus === 'sent' ? 'Envoye' : ($historyStatus === 'failed' ? 'Echoue' : $historyStatus), ENT_QUOTES, 'UTF-8'); ?></span>
+                      </td>
+                    </tr>
+                    <?php }
+                    } else { ?>
+                    <tr>
+                      <td colspan="6"><div class="clients-admin-empty">Aucun envoi WhatsApp n'a encore ete historise.</div></td>
+                    </tr>
+                    <?php } ?>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+        </div>
+        <?php } else { ?>
         <div class="card rounded-4 clients-admin-card">
             <div class="box-header d-flex b-0 justify-content-between align-items-center flex-wrap" style="gap:16px;">
                 <div>
@@ -1049,6 +1317,7 @@ $salut = 'Bonsoir';
                 <?php } ?>
             </div>	
         </div>
+          <?php } ?>
     </div>
 </div>
 
