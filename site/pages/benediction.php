@@ -6,8 +6,8 @@
                <div class="row justify-content-center">
                   <div class="col">
                      <div class=" text-center mb-5 pb-5">
-                        <h1 class="display-4 mb-0">Wedding Events</h1>
-                        <p class="w-md-40 mb-0 mx-auto text-dark-gray opacity-8 ">Cérémonies principales - Fête de mariage</p>
+                        <h1 class="display-4 mb-0"><?php echo isset($wedText, $wedE) ? $wedE($wedText('wedding_title', 'Wedding Events')) : 'Wedding Events'; ?></h1>
+                        <p class="w-md-40 mb-0 mx-auto text-dark-gray opacity-8 "><?php echo isset($wedText, $wedE) ? $wedE($wedText('wedding_subtitle', 'Cérémonies principales - Fête de mariage')) : 'Cérémonies principales - Fête de mariage'; ?></p>
                      </div>
                   </div>
                </div>
@@ -16,7 +16,7 @@
                <div class="row">
                   <div class="col-md-6 col-lg-4 d-flex mb-4 mb-lg-0 display-state ">
                      <div class="card card-icon-2 card-body justify-content-between">
-                        <img class="bg-image" src="images/<?php echo $dataevent['photostory'];?>" alt="">
+                        <img class="bg-image" src="../couple/images/<?php echo isset($wedImage, $wedE) ? $wedE($wedImage('wedding_bg', (string) ($dataevent['photostory'] ?? 'defaulwed_1.png'))) : htmlspecialchars((string) ($dataevent['photostory'] ?? 'defaulwed_1.png'), ENT_QUOTES, 'UTF-8'); ?>" alt="">
                      </div>
                   </div>
                   <div class="col-md-6 col-lg-4 d-flex mb-4 mb-lg-0">
@@ -153,10 +153,9 @@
                               </g>
                            </svg>
                         </div>
-                        <h5 class="mb-0">Bénédiction nuptiale</h5>
-                        <h6 class="mb-5"><?php echo date('H:i', strtotime($dataevent['date_event']))?></h6>
-                        <p class="text-align-center"><?php echo $lieu?>
-						<?php echo $dataevent['adresse'];?>
+                        <h5 class="mb-0"><?php echo isset($wedText, $wedE) ? $wedE($wedText('ceremony_title', 'Bénédiction nuptiale')) : 'Bénédiction nuptiale'; ?></h5>
+                        <h6 class="mb-5"><?php echo isset($wedText, $wedE) ? $wedE($wedText('ceremony_time', date('H:i', strtotime($dataevent['date_event'])))) : date('H:i', strtotime($dataevent['date_event'])); ?></h6>
+                        <p class="text-align-center"><?php echo isset($wedText, $wedE) ? nl2br($wedE($wedText('ceremony_place', trim((string) $lieu . ' ' . (string) ($dataevent['adresse'] ?? ''))))) : $lieu . ' ' . $dataevent['adresse'];?>
                         </p>
                      </div>
                   </div>
@@ -233,10 +232,9 @@
                         </div>
 
 
-                        <h5 class="mb-0 text-white">Soirée dansante</h5>
-                        <h6 class="mb-5 text-white"><?php echo date('H:i', strtotime($dataevent['date_event']))?></h6>
-                        <p class="text-align-center"><?php echo $lieu?>
-						<?php echo $dataevent['adresse'];?>
+                        <h5 class="mb-0 text-white"><?php echo isset($wedText, $wedE) ? $wedE($wedText('party_title', 'Soirée dansante')) : 'Soirée dansante'; ?></h5>
+                        <h6 class="mb-5 text-white"><?php echo isset($wedText, $wedE) ? $wedE($wedText('party_time', date('H:i', strtotime($dataevent['date_event'])))) : date('H:i', strtotime($dataevent['date_event'])); ?></h6>
+                        <p class="text-align-center"><?php echo isset($wedText, $wedE) ? nl2br($wedE($wedText('party_place', trim((string) $lieu . ' ' . (string) ($dataevent['adresse'] ?? ''))))) : $lieu . ' ' . $dataevent['adresse'];?>
                         </p>
                      </div>
                   </div>

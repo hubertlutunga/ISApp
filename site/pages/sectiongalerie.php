@@ -25,6 +25,12 @@ $patterns = [
 
                 <?php
                 $i = 0;
+                if (empty($photos)): ?>
+                <div class="col-12 text-center">
+                    <p class="text-dark-gray opacity-8 mb-0">La galerie sera affichée dès que des photos seront ajoutées.</p>
+                </div>
+                <?php endif;
+
                 foreach ($photos as $photo):
 
                     $class = $patterns[$i % count($patterns)];

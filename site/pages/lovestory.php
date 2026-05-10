@@ -4,6 +4,13 @@
         $stmtlove = $pdo->prepare("SELECT * FROM lovestory WHERE cod_event = ? LIMIT 1");
         $stmtlove->execute([$codevent]);
         $datalove = $stmtlove->fetch(PDO::FETCH_ASSOC);
+      $loveStoryText = is_array($datalove) ? (string) ($datalove['text_lovestory'] ?? '') : '';
+      $loveFirstImage = is_array($datalove) ? (string) ($datalove['imgcoeur1'] ?? '') : '';
+      $loveSecondImage = is_array($datalove) ? (string) ($datalove['imgcoeur2'] ?? '') : '';
+      $loveFirstImage = trim($loveFirstImage) !== '' ? $loveFirstImage : (string) ($dataevent['photo'] ?? 'defaulwed_1.png');
+      $loveSecondImage = trim($loveSecondImage) !== '' ? $loveSecondImage : (string) ($dataevent['photostory'] ?? 'defaulwed_1.png');
+      $loveStoryText = trim($loveStoryText) !== '' ? $loveStoryText : 'Notre histoire s’écrit avec amour, complicité et confiance. Chaque étape nous rapproche de ce grand jour que nous souhaitons partager avec vous.';
+      $loveSubtitle = isset($wedText) ? $wedText('love_subtitle', 'Notre histoire d’amour et le mariage') : 'Notre histoire d’amour et le mariage';
         
         
         ?>
@@ -14,11 +21,13 @@
                <div class="row justify-content-center">
                   <div class="col">
                      <div class=" text-center mb-5 pb-5">
-                        <h1 class="display-4 mb-0">Love Story</h1>
-                        <p class="w-md-40 mb-0 mx-auto text-dark-gray opacity-8 ">
-                          <?php echo $datalove['text_lovestory']; ?> 
-
-</p>
+                                    <h1 class="display-4 mb-0"><?php echo isset($wedText, $wedE) ? $wedE($wedText('love_title', 'Love Story')) : 'Love Story'; ?></h1>
+                        <?php if ($loveSubtitle !== '') { ?>
+                        <p class="w-md-40 mb-3 mx-auto text-dark-gray opacity-8 "><?php echo isset($wedE) ? $wedE($loveSubtitle) : htmlspecialchars($loveSubtitle, ENT_QUOTES, 'UTF-8'); ?></p>
+                        <?php } ?>
+                        <?php if ($loveStoryText !== '') { ?>
+                        <p class="w-md-55 mb-0 mx-auto text-dark-gray opacity-8 "><?php echo nl2br(isset($wedE) ? $wedE($loveStoryText) : htmlspecialchars($loveStoryText, ENT_QUOTES, 'UTF-8')); ?></p>
+                        <?php } ?>
  
                      </div>
                   </div>
@@ -37,7 +46,7 @@
                                        l201.4838-200.1096c69.6179-69.1431,71.0768-183.7278,2.0303-253.4415C485.013-12.8027,372.7591-13.2244,303.2954,55.7655z" />
                                  </mask>
                               </defs>
-                              <image mask="url(#mask-small-1)" width="100%" xlink:href="../couple/images/<?php echo $datalove['imgcoeur1']; ?>" />
+                              <image mask="url(#mask-small-1)" width="100%" xlink:href="../couple/images/<?php echo htmlspecialchars($loveFirstImage, ENT_QUOTES, 'UTF-8'); ?>" />
                            </svg>
                         </div>
                      </div>
@@ -82,8 +91,24 @@ if ($reqtls->rowCount() > 0) {
                         <?php 
                     }
                 } else {
-                    // Ne rien afficher si aucun résultat
-                    echo '<tr><td colspan="1" style="text-align: left; padding: 5px 0;">Aucun étape trouvé</td></tr>';
+                  $defaultLoveSteps = [
+                     ['event_etap' => 'Première rencontre', 'date_etap' => $dataevent['date_event'] ?? date('Y-m-d')],
+                     ['event_etap' => 'Notre histoire commence', 'date_etap' => $dataevent['date_event'] ?? date('Y-m-d')],
+                     ['event_etap' => 'Demande en mariage', 'date_etap' => $dataevent['date_event'] ?? date('Y-m-d')],
+                  ];
+                  foreach ($defaultLoveSteps as $row_ls) {
+                ?>
+                        <li>
+                           <div class="story-icon bg-icon-primary">
+                              <svg version="1.1" class="icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 107 93" xml:space="preserve"><path fill="#E25D5D" d="M53.6825,9.4436L53.6825,9.4436C41.6532-2.4793,22.2392-2.5,10.1866,9.4439c-12.1565,12.0471-12.07,31.7375-0.0219,43.8819l35.08,35.3601c4.5697,4.6061,12.0081,4.6357,16.6142,0.0661l35.1704-34.8918c12.1523-12.056,12.4179-32.0464,0.3787-44.2154C85.3917-2.5013,65.8078-2.5857,53.6825,9.4436z" /></svg>
+                           </div>
+                           <div>
+                              <h5 class="mb-0"><?php echo htmlspecialchars($row_ls['event_etap'], ENT_QUOTES, 'UTF-8'); ?></h5>
+                              <span class="small text-primary"><?php echo date('F Y', strtotime((string) $row_ls['date_etap'])); ?></span>
+                           </div>
+                        </li>
+                <?php
+                  }
                 }
                 ?>
 
@@ -105,15 +130,15 @@ if ($reqtls->rowCount() > 0) {
                                        l201.4838-200.1096c69.6179-69.1431,71.0768-183.7278,2.0303-253.4415C485.013-12.8027,372.7591-13.2244,303.2954,55.7655z" />
                                  </mask>
                               </defs>
-                              <image mask="url(#mask-small-2)" width="100%" xlink:href="../couple/images/<?php echo $datalove['imgcoeur2']; ?>" />
+                              <image mask="url(#mask-small-2)" width="100%" xlink:href="../couple/images/<?php echo htmlspecialchars($loveSecondImage, ENT_QUOTES, 'UTF-8'); ?>" />
                            </svg>
                         </div>
                      </div>
                   </div>
                   <div class="col-lg-12 text-center">
                      <div class="">
-                        <h5 class="mb-0"> Fin heureuse, nous nous marions</h5>
-                        <span class="small text-dark-gray opacity-8">Comptez les jours...</span>
+                        <h5 class="mb-0"><?php echo isset($wedText, $wedE) ? $wedE($wedText('love_end_title', 'Fin heureuse, nous nous marions')) : 'Fin heureuse, nous nous marions'; ?></h5>
+                        <span class="small text-dark-gray opacity-8"><?php echo isset($wedText, $wedE) ? $wedE($wedText('love_end_subtitle', 'Comptez les jours...')) : 'Comptez les jours...'; ?></span>
                      </div>
                   </div>
                </div>

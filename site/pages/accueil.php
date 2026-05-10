@@ -8,6 +8,23 @@ if ($dataevent['photostory'] === NULL) {
    $photocoeur = $dataevent['photo'];
 }
 
+$weddingSiteSettings = WeddingWebsiteSettingsService::get($pdo, (int) $codevent, is_array($dataevent ?? null) ? $dataevent : []);
+$wedSectionEnabled = static function (string $section) use ($weddingSiteSettings): bool {
+   return WeddingWebsiteSettingsService::sectionEnabled($weddingSiteSettings, $section);
+};
+$wedText = static function (string $field, string $fallback = '') use ($weddingSiteSettings): string {
+   return WeddingWebsiteSettingsService::text($weddingSiteSettings, $field, $fallback);
+};
+$wedImage = static function (string $field, string $fallback = '') use ($weddingSiteSettings): string {
+   return WeddingWebsiteSettingsService::image($weddingSiteSettings, $field, $fallback);
+};
+$wedE = static function (string $value): string {
+   return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+};
+
+$photo = $wedImage('hero_bg', $photo);
+$photocoeur = $wedImage('save_heart', $photocoeur);
+
 ?>  
 
 
@@ -43,14 +60,14 @@ if ($dataevent['photostory'] === NULL) {
                      </button>
                      <div class="nav-menu collapse navbar-collapse navbar-collapse justify-content-end mr-5 ">
                         <ul class=" navbar-nav  header-navbar-nav">
-                           <li><a class=" nav-link scroll" href="#resto">Date</a></li>
-                           <li><a class=" nav-link scroll" href="#story">Love Story</a></li>
-                           <li><a class=" nav-link scroll" href="#wedding">Mariage</a></li>
-                           <li><a class=" nav-link scroll" href="#gallery">Gallerie</a></li>
-                           <li><a class=" nav-link scroll" href="#gift">Liste de cadeaux</a></li>
-                           <li><a class=" nav-link scroll" href="#friends">Amis</a></li>
-                           <li><a class=" nav-link scroll" href="#rsvp">Rsvp</a></li>
-                           <li><a class=" nav-link scroll" href="#location">Adresse</a></li>
+                           <?php if ($wedSectionEnabled('save_date')) { ?><li><a class=" nav-link scroll" href="#resto">Date</a></li><?php } ?>
+                           <?php if ($wedSectionEnabled('love_story')) { ?><li><a class=" nav-link scroll" href="#story">Love Story</a></li><?php } ?>
+                           <?php if ($wedSectionEnabled('wedding_events')) { ?><li><a class=" nav-link scroll" href="#wedding">Mariage</a></li><?php } ?>
+                           <?php if ($wedSectionEnabled('gallery')) { ?><li><a class=" nav-link scroll" href="#gallery">Gallerie</a></li><?php } ?>
+                           <?php if ($wedSectionEnabled('gift')) { ?><li><a class=" nav-link scroll" href="#gift">Liste de cadeaux</a></li><?php } ?>
+                           <?php if ($wedSectionEnabled('friends')) { ?><li><a class=" nav-link scroll" href="#friends">Invités</a></li><?php } ?>
+                           <?php if ($wedSectionEnabled('rsvp')) { ?><li><a class=" nav-link scroll" href="#rsvp">Rsvp</a></li><?php } ?>
+                           <?php if ($wedSectionEnabled('location')) { ?><li><a class=" nav-link scroll" href="#location">Adresse</a></li><?php } ?>
                         </ul>
                      </div>
                   </nav>
@@ -94,6 +111,7 @@ if ($dataevent['photostory'] === NULL) {
 </style>
 
 
+         <?php if ($wedSectionEnabled('hero')) { ?>
          <section class="gradient-overlay gradient-overlay-dark ">
             <img class="bg-image" src="../couple/images/<?php echo $photo; ?>" alt="">
             <div class="container">
@@ -169,17 +187,19 @@ if (isset($_GET['idinv'])) {
 
 
 
-                     <h1 class="display-2  text-white mb-4"><?php echo $fetard; ?></h1>
+                     <h1 class="display-2  text-white mb-4"><?php echo $wedE($wedText('hero_title', (string) $fetard)); ?></h1>
  
 
-					<p class="font-weight-300 text-light  lead mb-5 pcompteeur">Se marient dans</p>
+					<p class="font-weight-300 text-light  lead mb-5 pcompteeur"><?php echo $wedE($wedText('hero_subtitle', 'Se marient dans')); ?></p>
                     
  
 					  <?php include('comptearebour.php')?>
 
 
  
-					  <a href="#rsvp" class="btn btn-primary btn-wide-sm btn-sm  scroll">RSVP</a>
+                  <?php if ($wedSectionEnabled('rsvp')) { ?>
+					  <a href="#rsvp" class="btn btn-primary btn-wide-sm btn-sm  scroll"><?php echo $wedE($wedText('hero_button', 'RSVP')); ?></a>
+                  <?php } ?>
                   </div>
                </div>
                <!--End row-->
@@ -199,6 +219,7 @@ if (isset($_GET['idinv'])) {
 </svg>
             </div>
          </section>
+         <?php } ?>
          <!--End hero section-->
 
 
@@ -239,12 +260,13 @@ $formatted_date = ucfirst($formatted_date);
 ?>
 
          <!--Date section-->
+         <?php if ($wedSectionEnabled('save_date')) { ?>
          <section id="resto" class=" ">
             <div class="container spacer-double-lg">
                <div class="row justify-content-lg-between align-items-center">
                   <div class="col-md-6 mb-5 mb-md-0">
                      <div class="pr-md-4">
-                        <h1 class="font-secondary display-4">Save the date</h1>
+                        <h1 class="font-secondary display-4"><?php echo $wedE($wedText('save_title', 'Save the date')); ?></h1>
                         <p class="lead font-weight-300 text-dark-gray opacity-8"><?php echo $formatted_date; ?><br> <?php echo $lieu; ?></p>
                         
 <?php 
@@ -255,7 +277,15 @@ $stmtss->execute(['cod_event' => $codevent]);
 // Récupération du résultat
 $savetexte = $stmtss->fetch(PDO::FETCH_ASSOC);
 
-if ($savetexte && !empty($savetexte['text_sdd'])): ?>
+$customSaveDateText = $wedText('save_text', '');
+
+if ($customSaveDateText !== ''): ?>
+    
+   <p class="mb-4 pr-5">
+      <?= nl2br(htmlspecialchars($customSaveDateText, ENT_QUOTES, 'UTF-8')) ?>
+   </p>
+
+<?php elseif ($savetexte && !empty($savetexte['text_sdd'])): ?>
     
     <p class="mb-4 pr-5">
         <?= nl2br(htmlspecialchars($savetexte['text_sdd'], ENT_QUOTES, 'UTF-8')) ?>
@@ -327,6 +357,7 @@ if ($savetexte && !empty($savetexte['text_sdd'])): ?>
 </svg>
             </div>
          </section>
+         <?php } ?>
 
 
 
@@ -336,29 +367,13 @@ if ($savetexte && !empty($savetexte['text_sdd'])): ?>
 
 
 
-		<?php // include('histoire.php')?>
-		<?php // include('benediction.php')?>
-		<?php // include('cadeaux.php')?>
+      <?php if ($wedSectionEnabled('wedding_events')) { include('benediction.php'); } ?>
  
 
-<?php 
+<?php if ($wedSectionEnabled('love_story')) { include('lovestory.php'); } ?>
+<?php if ($wedSectionEnabled('gallery')) { include('sectiongalerie.php'); } ?>
 
-$stmtlove = $pdo->prepare("SELECT * FROM lovestory WHERE cod_event = ?");
-$stmtlove->execute([$codevent]);
-$datalove = $stmtlove->fetch(PDO::FETCH_ASSOC);
-
-   if ($datalove) {
-
-?>
-
-    <?php include('lovestory.php'); ?>
-    <?php include('sectiongalerie.php'); ?>
-
-<?php 
-
-   }
-
-?>
+<?php if ($wedSectionEnabled('gift') || $wedSectionEnabled('friends')) { include('cadeaux.php'); } ?>
 
 
 
@@ -386,6 +401,7 @@ $datalove = $stmtlove->fetch(PDO::FETCH_ASSOC);
 
 		?>
  
+         <?php if ($wedSectionEnabled('rsvp')) { ?>
          
          <section id="rsvp" class="bg-secondary spacer-one-top-lg o-hidden ">
             <!--Container-->
@@ -394,8 +410,8 @@ $datalove = $stmtlove->fetch(PDO::FETCH_ASSOC);
                <div class="row justify-content-center">
                   <div class="col">
                      <div class=" mb-5 pb-5 text-center">
-                        <h1 class="display-4 ">RSVP</h1>
-                        <p class="w-md-40 mb-0 mx-auto text-dark-gray opacity-8">Allez-vous y assister ?</p>
+                        <h1 class="display-4 "><?php echo $wedE($wedText('rsvp_title', 'RSVP')); ?></h1>
+                        <p class="w-md-40 mb-0 mx-auto text-dark-gray opacity-8"><?php echo $wedE($wedText('rsvp_subtitle', 'Allez-vous y assister ?')); ?></p>
 
 
 
@@ -750,6 +766,7 @@ if(isset($_POST['submitrsvp'])){
                </div>
             </div>
          </section>
+         <?php } ?>
      
          
 
@@ -791,7 +808,7 @@ if(isset($_POST['submitrsvp'])){
 
 
 
- <?php 	 if ($codevent === '375') { ?>
+<?php /* Ancien bloc statique spécifique à l'événement 375 désactivé : toutes les sections sont maintenant dynamiques via la configuration. */ if (false) { ?>
 
 
  <section id="story" class=" bg-secondary spacer-one-top-lg">
@@ -1518,11 +1535,57 @@ Alors, partagez avec nous vos plus beaux souhaits pour ce nouveau chapitre.</blo
 
 
 
-
-
-
-
-
+<?php if ($wedSectionEnabled('location')) {
+   $locationAccommodations = json_decode($wedText('location_accommodations', '[]'), true);
+   if (!is_array($locationAccommodations)) {
+      $locationAccommodations = [];
+   }
+   $renderAccommodationMap = static function (string $mapValue) use ($wedE): string {
+      $mapValue = trim($mapValue);
+      if ($mapValue === '') {
+         return '';
+      }
+      if (preg_match('/src=["\']([^"\']+)["\']/i', $mapValue, $matches)) {
+         return '<iframe src="' . $wedE($matches[1]) . '" width="100%" height="220" style="border:0;border-radius:18px;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>';
+      }
+      return '<a href="' . $wedE($mapValue) . '" target="_blank" rel="noopener" class="hover-arrow">Voir sur Maps <span class="fa fa-arrow-right"></span></a>';
+   };
+?>
+         <section id="location" class="spacer-one-top-lg">
+            <div class="container spacer-one-bottom-lg">
+               <div class="row justify-content-center">
+                  <div class="col">
+                     <div class="mb-5 pb-5 text-center">
+                        <h1 class="display-4"><?php echo $wedE($wedText('location_title', 'Where To Stay')); ?></h1>
+                        <p class="w-md-40 mb-0 mx-auto text-dark-gray opacity-8"><?php echo $wedE($wedText('location_subtitle', 'Adresse, hébergement et informations pratiques')); ?></p>
+                     </div>
+                  </div>
+               </div>
+               <div class="row text-center">
+                  <?php if (!empty($locationAccommodations)) { ?>
+                     <?php foreach ($locationAccommodations as $accommodation) {
+                        $accommodationName = (string) ($accommodation['name'] ?? 'Hébergement recommandé');
+                        $accommodationAddress = (string) ($accommodation['address'] ?? '');
+                        $accommodationMap = $renderAccommodationMap((string) ($accommodation['map'] ?? ''));
+                     ?>
+                     <div class="col-md-4 mb-4 d-flex">
+                        <div class="w-100 bg-white" style="border-radius:24px;padding:24px;box-shadow:0 18px 40px rgba(15,23,42,.08);">
+                           <div class="badge-overlap" style="position:static;margin-bottom:12px;"><span class="badge">Hébergement recommandé</span></div>
+                           <h5 class="mt-3 mb-3"><?php echo $wedE($accommodationName); ?></h5>
+                           <?php if ($accommodationAddress !== '') { ?><p><?php echo nl2br($wedE($accommodationAddress)); ?></p><?php } ?>
+                           <?php if ($accommodationMap !== '') { ?><div class="mt-3"><?php echo $accommodationMap; ?></div><?php } ?>
+                        </div>
+                     </div>
+                     <?php } ?>
+                  <?php } else { ?>
+                     <div class="col-12">
+                        <p class="text-dark-gray opacity-8 mb-0">Les hébergements recommandés seront affichés ici.</p>
+                     </div>
+                  <?php } ?>
+               </div>
+            </div>
+         </section>
+<?php } ?>
 
 
 
@@ -1543,17 +1606,15 @@ Alors, partagez avec nous vos plus beaux souhaits pour ce nouveau chapitre.</blo
 
 
          <!--End hero section-->
-        
+
          <section class="footer-copyright spacer-double-sm bg-white text-center">
-
             <p class="text-uppercase small text-muted d-block mb-0">&copy; <?php echo date('Y')?> Hubert Solutions All right reserved</p>
-            <p class="text-muted small d-block mb-0">Plateforme, branche de </span> <a  href="https://www.invitationspeciale.com">Invitation Spéciale</a><br> 
+            <p class="text-muted small d-block mb-0">Plateforme, branche de </span> <a href="https://www.invitationspeciale.com">Invitation Spéciale</a><br>
 			      Sous : <a href="https://hubertlutunga.com">Hubert Lutunga</a> <br>
-               <a href="https://wa.me/243810678785" target="_blinck">Nous contacter</a>
+               <a href="https://wa.me/243810678785" target="_blank" rel="noopener">Nous contacter</a>
             </p>
-               
-
          </section>
+        
          <!--To the top-->
          <a class="scroll-to-top scroll" href="#wrapper">
             <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 273.1091 238.2098" enable-background="new 0 0 273.1091 238.2098" xml:space="preserve">

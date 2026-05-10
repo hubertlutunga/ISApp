@@ -85,6 +85,25 @@ final class LoveStoryService
         $stmt->execute();
     }
 
+    public static function updateStep(PDO $pdo, int $stepId, int $eventId, int $agentId, string $eventStep, string $dateMonth): void
+    {
+        if ($stepId <= 0 || $eventId <= 0) {
+            return;
+        }
+
+        $eventStep = trim($eventStep) ?: 'Non renseigne';
+        $dateValue = trim($dateMonth) ?: date('Y-m');
+        $dateValue .= '-01';
+
+        $stmt = $pdo->prepare('UPDATE lovestory_etap SET event_etap = :event_etap, date_etap = :date_etap, cod_agent = :cod_agent WHERE cod_ls = :cod_ls AND cod_event = :cod_event');
+        $stmt->bindValue(':event_etap', $eventStep);
+        $stmt->bindValue(':date_etap', $dateValue);
+        $stmt->bindValue(':cod_agent', $agentId, PDO::PARAM_INT);
+        $stmt->bindValue(':cod_ls', $stepId, PDO::PARAM_INT);
+        $stmt->bindValue(':cod_event', $eventId, PDO::PARAM_INT);
+        $stmt->execute();
+    }
+
     public static function deleteStep(PDO $pdo, int $stepId, int $eventId): int
     {
         $stmt = $pdo->prepare('DELETE FROM lovestory_etap WHERE cod_ls = ? AND cod_event = ?');
