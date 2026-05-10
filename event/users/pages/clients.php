@@ -1030,6 +1030,15 @@ $salut = 'Bonsoir';
                       foreach ($whatsAppHistoryRows as $historyRow) {
                         $historyRecipientNumber = str_replace('whatsapp:', '', (string) ($historyRow['recipient_number'] ?? ''));
                         $historyMediaUrl = trim((string) ($historyRow['media_url'] ?? ''));
+                        $historySentAtRaw = trim((string) ($historyRow['sent_at'] ?? ''));
+                        $historySentAtLabel = $historySentAtRaw;
+                        if ($historySentAtRaw !== '') {
+                          try {
+                            $historySentAtLabel = (new DateTimeImmutable($historySentAtRaw))->format('d/m/Y a H:i');
+                          } catch (Exception $exception) {
+                            $historySentAtLabel = $historySentAtRaw;
+                          }
+                        }
                         $historyFallbackUrl = '';
                         if ((int) ($historyRow['invite_id'] ?? 0) > 0 && (string) ($historyRow['event_code'] ?? '') !== '') {
                           $historyFallbackUrl = '../pages/invitation_elect.php?cod=' . urlencode((string) $historyRow['invite_id']) . '&event=' . urlencode((string) $historyRow['event_code']);
@@ -1042,7 +1051,7 @@ $salut = 'Bonsoir';
                       <td>
                         <span class="clients-admin-history-date"><?php echo htmlspecialchars((string) ($historyRow['sent_at'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></span>
                       </td>
-                      <td>
+                        <th>Date et heure d'envoi</th>
                         <div class="clients-admin-history-user">
                           <strong><?php echo htmlspecialchars((string) ($historyRow['client_name'] ?? 'Utilisateur inconnu'), ENT_QUOTES, 'UTF-8'); ?></strong>
                           <span>Code evenement : <?php echo htmlspecialchars((string) ($historyRow['event_code'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></span>
@@ -1050,7 +1059,7 @@ $salut = 'Bonsoir';
                       </td>
                       <td>
                         <div class="clients-admin-history-invite">
-                          <strong><?php echo htmlspecialchars((string) ($historyRow['invite_name'] ?? $historyRow['recipient_name'] ?? 'Invite'), ENT_QUOTES, 'UTF-8'); ?></strong>
+                          <span class="clients-admin-history-date"><?php echo htmlspecialchars($historySentAtLabel, ENT_QUOTES, 'UTF-8'); ?></span>
                           <span><?php echo htmlspecialchars($historyRecipientNumber !== '' ? $historyRecipientNumber : 'Numero indisponible', ENT_QUOTES, 'UTF-8'); ?></span>
                         </div>
                       </td>
