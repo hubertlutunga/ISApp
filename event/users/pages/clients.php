@@ -1017,7 +1017,7 @@ $salut = 'Bonsoir';
                 <table class="table clients-admin-history-table align-middle mb-0">
                   <thead>
                     <tr>
-                      <th>Date</th>
+                      <th>Date et heure d'envoi</th>
                       <th>Nom d'utilisateur</th>
                       <th>Invite et telephone</th>
                       <th>Evenement</th>
@@ -1049,9 +1049,9 @@ $salut = 'Bonsoir';
                     ?>
                     <tr>
                       <td>
-                        <span class="clients-admin-history-date"><?php echo htmlspecialchars((string) ($historyRow['sent_at'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></span>
+                        <span class="clients-admin-history-date"><?php echo htmlspecialchars($historySentAtLabel, ENT_QUOTES, 'UTF-8'); ?></span>
                       </td>
-                        <th>Date et heure d'envoi</th>
+                      <td>
                         <div class="clients-admin-history-user">
                           <strong><?php echo htmlspecialchars((string) ($historyRow['client_name'] ?? 'Utilisateur inconnu'), ENT_QUOTES, 'UTF-8'); ?></strong>
                           <span>Code evenement : <?php echo htmlspecialchars((string) ($historyRow['event_code'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></span>
@@ -1059,7 +1059,7 @@ $salut = 'Bonsoir';
                       </td>
                       <td>
                         <div class="clients-admin-history-invite">
-                          <span class="clients-admin-history-date"><?php echo htmlspecialchars($historySentAtLabel, ENT_QUOTES, 'UTF-8'); ?></span>
+                          <strong><?php echo htmlspecialchars((string) ($historyRow['invite_name'] ?? $historyRow['recipient_name'] ?? 'Invite'), ENT_QUOTES, 'UTF-8'); ?></strong>
                           <span><?php echo htmlspecialchars($historyRecipientNumber !== '' ? $historyRecipientNumber : 'Numero indisponible', ENT_QUOTES, 'UTF-8'); ?></span>
                         </div>
                       </td>
