@@ -36,9 +36,8 @@ if ($dejaRepondu) {
 
 // Message automatique
 $message = "Merci pour votre retour.\n\n";
-$message .= "Ce numéro est utilisé uniquement pour l’envoi automatique des invitations digitales. ";
-$message .= "Les réponses ne sont pas traitées sur ce canal.\n\n";
-$message .= "Cordialement,\nInvitation Spéciale";
+$message .= "Ce numéro est utilisé uniquement pour l’envoi automatique des invitations digitales. Les réponses ne sont pas traitées sur ce canal.\n\n";
+$message .= "Cordialement,\nInvitation Spéciale\nwww.invitationspeciale.com";
 
 // Enregistrer ce numéro comme déjà répondu
 $history[$from] = [

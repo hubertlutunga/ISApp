@@ -81,6 +81,24 @@
   }
 
   $whatsAppHistoryRows = [];
+  $whatsAppHistoryUsers = [];
+  $whatsAppHistorySearch = trim((string) ($_GET['history_q'] ?? ''));
+  $whatsAppHistoryUserId = max(0, (int) ($_GET['history_user_id'] ?? 0));
+  $whatsAppHistoryPage = max(1, (int) ($_GET['history_page'] ?? 1));
+  $whatsAppHistoryPerPage = 25;
+  $whatsAppHistoryTotalRows = 0;
+  $whatsAppHistoryTotalPages = 1;
+  $whatsAppHistoryBaseParams = [
+    'page' => 'clients',
+    'view' => 'whatsapp-sends',
+  ];
+  if ($whatsAppHistorySearch !== '') {
+    $whatsAppHistoryBaseParams['history_q'] = $whatsAppHistorySearch;
+  }
+  if ($whatsAppHistoryUserId > 0) {
+    $whatsAppHistoryBaseParams['history_user_id'] = $whatsAppHistoryUserId;
+  }
+
   if ($clientsView === 'whatsapp-sends') {
     require_once __DIR__ . '/whatsapp_template_sender.php';
 
@@ -89,7 +107,58 @@
         isapp_whatsapp_sender_ensure_log_table($pdo);
       }
 
-      $historyStmt = $pdo->query(
+      $historyFromSql = ' FROM whatsapp_message_logs logs
+         LEFT JOIN events events ON events.cod_event = logs.event_code
+         LEFT JOIN is_users users ON users.cod_user = COALESCE(NULLIF(events.cod_user, 0), NULLIF(events.cod_user2, 0))
+         LEFT JOIN invite invites ON invites.id_inv = logs.invite_id';
+
+      $historyUsersStmt = $pdo->query(
+        'SELECT DISTINCT
+            users.cod_user AS client_user_id,
+            COALESCE(users.noms, "Utilisateur inconnu") AS client_name'
+        . $historyFromSql . '
+         WHERE users.cod_user IS NOT NULL
+         ORDER BY client_name ASC'
+      );
+      $whatsAppHistoryUsers = $historyUsersStmt ? ($historyUsersStmt->fetchAll(PDO::FETCH_ASSOC) ?: []) : [];
+      if ($historyUsersStmt) {
+        $historyUsersStmt->closeCursor();
+      }
+
+      $historyWhereClauses = [];
+      $historyBindings = [];
+      if ($whatsAppHistoryUserId > 0) {
+        $historyWhereClauses[] = 'COALESCE(NULLIF(events.cod_user, 0), NULLIF(events.cod_user2, 0)) = :history_user_id';
+        $historyBindings['history_user_id'] = $whatsAppHistoryUserId;
+      }
+      if ($whatsAppHistorySearch !== '') {
+        $historyWhereClauses[] = '(
+          LOWER(COALESCE(users.noms, "")) LIKE :history_search
+          OR LOWER(COALESCE(invites.nom, "")) LIKE :history_search
+          OR LOWER(COALESCE(logs.recipient_name, "")) LIKE :history_search
+          OR LOWER(COALESCE(logs.recipient_number, "")) LIKE :history_search
+          OR LOWER(COALESCE(logs.event_code, "")) LIKE :history_search
+        )';
+        $historyBindings['history_search'] = '%' . $formatSearchValue($whatsAppHistorySearch) . '%';
+      }
+
+      $historyWhereSql = $historyWhereClauses !== [] ? ' WHERE ' . implode(' AND ', $historyWhereClauses) : '';
+
+      $historyCountStmt = $pdo->prepare('SELECT COUNT(*)' . $historyFromSql . $historyWhereSql);
+      foreach ($historyBindings as $historyBindingName => $historyBindingValue) {
+        $historyCountStmt->bindValue(':' . $historyBindingName, $historyBindingValue, $historyBindingName === 'history_user_id' ? PDO::PARAM_INT : PDO::PARAM_STR);
+      }
+      $historyCountStmt->execute();
+      $whatsAppHistoryTotalRows = (int) $historyCountStmt->fetchColumn();
+      $historyCountStmt->closeCursor();
+
+      $whatsAppHistoryTotalPages = max(1, (int) ceil($whatsAppHistoryTotalRows / $whatsAppHistoryPerPage));
+      if ($whatsAppHistoryPage > $whatsAppHistoryTotalPages) {
+        $whatsAppHistoryPage = $whatsAppHistoryTotalPages;
+      }
+      $historyOffset = ($whatsAppHistoryPage - 1) * $whatsAppHistoryPerPage;
+
+      $historyStmt = $pdo->prepare(
         'SELECT
             logs.id,
             logs.event_code,
@@ -101,19 +170,21 @@
             logs.sent_at,
             logs.error_message,
             COALESCE(users.noms, "Utilisateur inconnu") AS client_name,
-            COALESCE(invites.nom, logs.recipient_name) AS invite_name
-         FROM whatsapp_message_logs logs
-         LEFT JOIN events events ON events.cod_event = logs.event_code
-         LEFT JOIN is_users users ON users.cod_user = COALESCE(NULLIF(events.cod_user, 0), NULLIF(events.cod_user2, 0))
-         LEFT JOIN invite invites ON invites.id_inv = logs.invite_id
+            COALESCE(invites.nom, logs.recipient_name) AS invite_name'
+        . $historyFromSql
+        . $historyWhereSql . '
          ORDER BY logs.sent_at DESC, logs.id DESC
-         LIMIT 500'
+         LIMIT :history_limit OFFSET :history_offset'
       );
-
-      $whatsAppHistoryRows = $historyStmt ? ($historyStmt->fetchAll(PDO::FETCH_ASSOC) ?: []) : [];
-      if ($historyStmt) {
-        $historyStmt->closeCursor();
+      foreach ($historyBindings as $historyBindingName => $historyBindingValue) {
+        $historyStmt->bindValue(':' . $historyBindingName, $historyBindingValue, $historyBindingName === 'history_user_id' ? PDO::PARAM_INT : PDO::PARAM_STR);
       }
+      $historyStmt->bindValue(':history_limit', $whatsAppHistoryPerPage, PDO::PARAM_INT);
+      $historyStmt->bindValue(':history_offset', $historyOffset, PDO::PARAM_INT);
+      $historyStmt->execute();
+
+      $whatsAppHistoryRows = $historyStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+      $historyStmt->closeCursor();
     } catch (\Throwable $exception) {
       $clientFlash = [
         'type' => 'danger',
@@ -563,6 +634,34 @@
       font-size: 14px;
     }
 
+    .clients-admin-history-toolbar {
+      display: grid;
+      grid-template-columns: minmax(240px, 1.6fr) minmax(220px, 0.8fr) auto auto;
+      gap: 12px;
+      align-items: center;
+      padding: 18px 24px 0;
+    }
+
+    .clients-admin-history-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 14px 24px 0;
+    }
+
+    .clients-admin-history-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 9px 14px;
+      border-radius: 999px;
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .02em;
+    }
+
     .clients-admin-history-table thead th {
       background: #f8fafc;
       color: #475569;
@@ -645,8 +744,64 @@
       background: #dbeafe;
     }
 
+    .clients-admin-pagination {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+      padding: 18px 24px 24px;
+      border-top: 1px solid #eef2f7;
+    }
+
+    .clients-admin-pagination-links {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .clients-admin-pagination-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 40px;
+      height: 40px;
+      padding: 0 14px;
+      border-radius: 12px;
+      border: 1px solid #dbe4f0;
+      background: #fff;
+      color: #334155;
+      font-size: 13px;
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .clients-admin-pagination-link:hover,
+    .clients-admin-pagination-link:focus-visible {
+      border-color: #93c5fd;
+      color: #1d4ed8;
+      background: #eff6ff;
+    }
+
+    .clients-admin-pagination-link.is-active {
+      border-color: #2563eb;
+      background: #2563eb;
+      color: #fff;
+    }
+
+    .clients-admin-pagination-summary {
+      color: #64748b;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
     @media (max-width: 991px) {
       .clients-admin-toolbar {
+        grid-template-columns: 1fr;
+      }
+
+      .clients-admin-history-toolbar {
         grid-template-columns: 1fr;
       }
 
@@ -1012,6 +1167,30 @@ $salut = 'Bonsoir';
                 </div>
                 <a href="index.php?page=clients" class="btn btn-outline btn-secondary">Retour aux clients</a>
             </div>
+            <form action="" method="get" class="clients-admin-history-toolbar">
+              <input type="hidden" name="page" value="clients">
+              <input type="hidden" name="view" value="whatsapp-sends">
+              <label class="clients-admin-search" for="historySearchInput">
+                <i class="fas fa-search"></i>
+                <input type="text" id="historySearchInput" name="history_q" value="<?php echo htmlspecialchars($whatsAppHistorySearch, ENT_QUOTES, 'UTF-8'); ?>" placeholder="Rechercher par utilisateur, invite, numero ou code evenement">
+              </label>
+              <select name="history_user_id" id="historyUserFilter" class="form-control clients-admin-filters">
+                <option value="0">Tous les utilisateurs</option>
+                <?php foreach ($whatsAppHistoryUsers as $whatsAppHistoryUser) { ?>
+                <option value="<?php echo (int) ($whatsAppHistoryUser['client_user_id'] ?? 0); ?>" <?php echo (int) ($whatsAppHistoryUser['client_user_id'] ?? 0) === $whatsAppHistoryUserId ? 'selected' : ''; ?>><?php echo htmlspecialchars((string) ($whatsAppHistoryUser['client_name'] ?? 'Utilisateur inconnu'), ENT_QUOTES, 'UTF-8'); ?></option>
+                <?php } ?>
+              </select>
+              <button type="submit" class="btn btn-primary">Filtrer</button>
+              <?php if ($whatsAppHistorySearch !== '' || $whatsAppHistoryUserId > 0) { ?>
+              <a href="index.php?page=clients&view=whatsapp-sends" class="btn btn-outline btn-secondary">Reinitialiser</a>
+              <?php } else { ?>
+              <span></span>
+              <?php } ?>
+            </form>
+            <div class="clients-admin-history-meta">
+              <span class="clients-admin-history-count"><?php echo (int) $whatsAppHistoryTotalRows; ?> envoi(s)</span>
+              <span class="clients-admin-history-count">Page <?php echo (int) $whatsAppHistoryPage; ?> / <?php echo (int) $whatsAppHistoryTotalPages; ?></span>
+            </div>
             <div class="card-body pt-20">
               <div class="table-responsive">
                 <table class="table clients-admin-history-table align-middle mb-0">
@@ -1090,6 +1269,27 @@ $salut = 'Bonsoir';
                 </table>
               </div>
             </div>
+            <?php if ($whatsAppHistoryTotalRows > 0) {
+              $whatsAppHistoryRangeStart = (($whatsAppHistoryPage - 1) * $whatsAppHistoryPerPage) + 1;
+              $whatsAppHistoryRangeEnd = min($whatsAppHistoryTotalRows, $whatsAppHistoryPage * $whatsAppHistoryPerPage);
+              $whatsAppHistoryPageStart = max(1, $whatsAppHistoryPage - 2);
+              $whatsAppHistoryPageEnd = min($whatsAppHistoryTotalPages, $whatsAppHistoryPage + 2);
+            ?>
+            <div class="clients-admin-pagination">
+              <div class="clients-admin-pagination-summary">Affichage de <?php echo $whatsAppHistoryRangeStart; ?> a <?php echo $whatsAppHistoryRangeEnd; ?> sur <?php echo (int) $whatsAppHistoryTotalRows; ?> envoi(s).</div>
+              <div class="clients-admin-pagination-links">
+                <?php if ($whatsAppHistoryPage > 1) { ?>
+                <a href="index.php?<?php echo htmlspecialchars(http_build_query($whatsAppHistoryBaseParams + ['history_page' => $whatsAppHistoryPage - 1]), ENT_QUOTES, 'UTF-8'); ?>" class="clients-admin-pagination-link">Precedent</a>
+                <?php } ?>
+                <?php for ($historyPageNumber = $whatsAppHistoryPageStart; $historyPageNumber <= $whatsAppHistoryPageEnd; $historyPageNumber++) { ?>
+                <a href="index.php?<?php echo htmlspecialchars(http_build_query($whatsAppHistoryBaseParams + ['history_page' => $historyPageNumber]), ENT_QUOTES, 'UTF-8'); ?>" class="clients-admin-pagination-link <?php echo $historyPageNumber === $whatsAppHistoryPage ? 'is-active' : ''; ?>"><?php echo $historyPageNumber; ?></a>
+                <?php } ?>
+                <?php if ($whatsAppHistoryPage < $whatsAppHistoryTotalPages) { ?>
+                <a href="index.php?<?php echo htmlspecialchars(http_build_query($whatsAppHistoryBaseParams + ['history_page' => $whatsAppHistoryPage + 1]), ENT_QUOTES, 'UTF-8'); ?>" class="clients-admin-pagination-link">Suivant</a>
+                <?php } ?>
+              </div>
+            </div>
+            <?php } ?>
         </div>
         <?php } else { ?>
         <div class="card rounded-4 clients-admin-card">
