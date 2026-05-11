@@ -80,9 +80,7 @@ $weddingSiteFieldLabels = [
   'save_text' => 'Texte “Save the date”',
   'wedding_title' => 'Titre',
   'wedding_subtitle' => 'Sous-titre',
-  'ceremony_title' => 'Titre cérémonie',
-  'ceremony_time' => 'Heure cérémonie',
-  'ceremony_place' => 'Lieu cérémonie',
+  'wedding_map_iframe' => 'Iframe Google Maps',
   'party_title' => 'Titre fête',
   'party_time' => 'Heure fête',
   'party_place' => 'Lieu fête',
@@ -108,7 +106,7 @@ $weddingSiteSectionPanels = [
   'hero' => ['title' => 'Accueil / Compteur', 'fields' => ['hero_title', 'hero_subtitle', 'hero_button'], 'images' => ['hero_bg']],
   'save_date' => ['title' => 'Save the date', 'fields' => ['save_title', 'save_text'], 'images' => ['save_heart']],
   'love_story' => ['title' => 'Love Story', 'fields' => [], 'images' => []],
-  'wedding_events' => ['title' => 'Wedding Events', 'fields' => ['wedding_title', 'wedding_subtitle', 'ceremony_title', 'ceremony_time', 'ceremony_place', 'party_title', 'party_time', 'party_place'], 'images' => ['wedding_bg']],
+  'wedding_events' => ['title' => 'Wedding Events', 'fields' => ['wedding_title', 'wedding_subtitle', 'wedding_map_iframe', 'party_title', 'party_time', 'party_place'], 'images' => ['wedding_bg']],
   'gift' => ['title' => 'Cadeaux', 'fields' => ['gift_title', 'gift_text', 'gift_items'], 'images' => []],
   'friends' => ['title' => 'Nos invités', 'fields' => ['friends_title', 'friends_subtitle', 'guest_empty_text'], 'images' => []],
   'rsvp' => ['title' => 'RSVP', 'fields' => ['rsvp_title', 'rsvp_subtitle'], 'images' => []],
@@ -254,16 +252,23 @@ html,body{ height:auto !important; min-height:100% !important; overflow-y:auto !
                       <?php } ?>
                     </div>
                     <div class="mb-wedconf-section-body">
-                      <?php if ($sectionKey === 'wedding_events') { $ceremonyEnabled = in_array(strtolower(trim((string) ($weddingSiteSettings['content']['ceremony_enabled'] ?? '1'))), ['1', 'true', 'show', 'on', 'yes'], true); $partyEnabled = in_array(strtolower(trim((string) ($weddingSiteSettings['content']['party_enabled'] ?? '1'))), ['1', 'true', 'show', 'on', 'yes'], true); ?>
+                      <?php if ($sectionKey === 'wedding_events') { $weddingPhotoEnabled = in_array(strtolower(trim((string) ($weddingSiteSettings['content']['wedding_photo_enabled'] ?? '1'))), ['1', 'true', 'show', 'on', 'yes'], true); $weddingMapEnabled = in_array(strtolower(trim((string) ($weddingSiteSettings['content']['wedding_map_enabled'] ?? '1'))), ['1', 'true', 'show', 'on', 'yes'], true); $partyEnabled = in_array(strtolower(trim((string) ($weddingSiteSettings['content']['party_enabled'] ?? '1'))), ['1', 'true', 'show', 'on', 'yes'], true); ?>
                       <div style="margin-bottom:14px;">
                         <h5>Éléments à afficher</h5>
-                        <p style="margin-top:-6px;color:#64748b;font-weight:700;">Choisissez si la section publique doit afficher la bénédiction, la soirée, ou les deux.</p>
+                        <p style="margin-top:-6px;color:#64748b;font-weight:700;">Choisissez si la section publique doit afficher la photo, la carte du lieu, la soirée, ou la combinaison de votre choix.</p>
                         <div class="mb-wedconf-grid">
                           <div class="mb-wedconf-toggle">
-                            <span class="mb-wedconf-toggle-title">Bénédiction nuptiale</span>
+                            <span class="mb-wedconf-toggle-title">Photo Wedding Events</span>
                             <div class="mb-wedconf-radio-group">
-                              <label class="mb-wedconf-radio"><input type="radio" name="ceremony_enabled" value="1" <?php echo $ceremonyEnabled ? 'checked' : ''; ?>><span>Afficher</span></label>
-                              <label class="mb-wedconf-radio"><input type="radio" name="ceremony_enabled" value="0" <?php echo !$ceremonyEnabled ? 'checked' : ''; ?>><span>Masquer</span></label>
+                              <label class="mb-wedconf-radio"><input type="radio" name="wedding_photo_enabled" value="1" <?php echo $weddingPhotoEnabled ? 'checked' : ''; ?>><span>Afficher</span></label>
+                              <label class="mb-wedconf-radio"><input type="radio" name="wedding_photo_enabled" value="0" <?php echo !$weddingPhotoEnabled ? 'checked' : ''; ?>><span>Masquer</span></label>
+                            </div>
+                          </div>
+                          <div class="mb-wedconf-toggle">
+                            <span class="mb-wedconf-toggle-title">Maps du lieu</span>
+                            <div class="mb-wedconf-radio-group">
+                              <label class="mb-wedconf-radio"><input type="radio" name="wedding_map_enabled" value="1" <?php echo $weddingMapEnabled ? 'checked' : ''; ?>><span>Afficher</span></label>
+                              <label class="mb-wedconf-radio"><input type="radio" name="wedding_map_enabled" value="0" <?php echo !$weddingMapEnabled ? 'checked' : ''; ?>><span>Masquer</span></label>
                             </div>
                           </div>
                           <div class="mb-wedconf-toggle">

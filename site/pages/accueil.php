@@ -30,9 +30,10 @@ $wedE = static function (string $value): string {
 
 $photo = $wedImage('hero_bg', $photo);
 $photocoeur = $wedImage('save_heart', $photocoeur);
-$showWeddingCeremony = $wedFlag('ceremony_enabled', true);
+$showWeddingPhoto = $wedFlag('wedding_photo_enabled', true);
+$showWeddingMap = $wedFlag('wedding_map_enabled', true);
 $showWeddingParty = $wedFlag('party_enabled', true);
-$showWeddingEventsSection = $wedSectionEnabled('wedding_events') && ($showWeddingCeremony || $showWeddingParty);
+$showWeddingEventsSection = $wedSectionEnabled('wedding_events') && ($showWeddingPhoto || $showWeddingMap || $showWeddingParty);
 
 ?>  
 
@@ -72,10 +73,10 @@ $showWeddingEventsSection = $wedSectionEnabled('wedding_events') && ($showWeddin
                            <?php if ($wedSectionEnabled('save_date')) { ?><li><a class=" nav-link scroll" href="#resto">Date</a></li><?php } ?>
                            <?php if ($wedSectionEnabled('love_story')) { ?><li><a class=" nav-link scroll" href="#story">Love Story</a></li><?php } ?>
                            <?php if ($showWeddingEventsSection) { ?><li><a class=" nav-link scroll" href="#wedding">Mariage</a></li><?php } ?>
-                           <?php if ($wedSectionEnabled('gallery')) { ?><li><a class=" nav-link scroll" href="#gallery">Gallerie</a></li><?php } ?>
                            <?php if ($wedSectionEnabled('gift')) { ?><li><a class=" nav-link scroll" href="#gift">Liste de cadeaux</a></li><?php } ?>
                            <?php if ($wedSectionEnabled('friends')) { ?><li><a class=" nav-link scroll" href="#friends">Invités</a></li><?php } ?>
                            <?php if ($wedSectionEnabled('rsvp')) { ?><li><a class=" nav-link scroll" href="#rsvp">Rsvp</a></li><?php } ?>
+                           <?php if ($wedSectionEnabled('gallery')) { ?><li><a class=" nav-link scroll" href="#gallery">Gallerie</a></li><?php } ?>
                            <?php if ($wedSectionEnabled('location')) { ?><li><a class=" nav-link scroll" href="#location">Adresse</a></li><?php } ?>
                         </ul>
                      </div>
@@ -380,8 +381,6 @@ if ($customSaveDateText !== ''): ?>
  
 
 <?php if ($wedSectionEnabled('love_story')) { include('lovestory.php'); } ?>
-<?php if ($wedSectionEnabled('gallery')) { include('sectiongalerie.php'); } ?>
-
 <?php if ($wedSectionEnabled('gift') || $wedSectionEnabled('friends')) { include('cadeaux.php'); } ?>
 
 
@@ -776,6 +775,8 @@ if(isset($_POST['submitrsvp'])){
             </div>
          </section>
          <?php } ?>
+
+         <?php if ($wedSectionEnabled('gallery')) { include('sectiongalerie.php'); } ?>
      
          
 
