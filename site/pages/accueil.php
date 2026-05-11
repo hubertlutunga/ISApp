@@ -134,6 +134,11 @@ $showWeddingEventsSection = $wedSectionEnabled('wedding_events') && ($showWeddin
                <span></span>
                <span></span>
                <span></span>
+               <span></span>
+               <span></span>
+               <span></span>
+               <span></span>
+               <span></span>
             </div>
             <div class="container">
                <!--row-->
@@ -1677,6 +1682,8 @@ Alors, partagez avec nous vos plus beaux souhaits pour ce nouveau chapitre.</blo
       <script src="js/script.js"></script>
       <script>
       (function () {
+         document.documentElement.classList.add('isapp-love-animations');
+
          var items = document.querySelectorAll('.wrapper > section:not(.footer-copyright), .wrapper .card, .wrapper .story li, .wrapper .popup-image');
          if (!items.length) {
             return;

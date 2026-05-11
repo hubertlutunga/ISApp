@@ -31,6 +31,19 @@
     animation: loveGlow 9s ease-in-out infinite alternate;
 }
 
+.wedding-hero:after {
+    content: "";
+    position: absolute;
+    inset: 22px;
+    z-index: 2;
+    pointer-events: none;
+    border: 1px solid rgba(255, 255, 255, .28);
+    border-radius: 36px;
+    box-shadow: inset 0 0 0 1px rgba(247, 217, 165, .12), 0 0 44px rgba(247, 182, 189, .16);
+    opacity: .68;
+    animation: loveFramePulse 3.8s ease-in-out infinite alternate;
+}
+
 .wedding-hero .container,
 .wedding-hero .curved-decoration {
     position: relative;
@@ -58,7 +71,7 @@
     font-weight: 400;
     letter-spacing: .01em;
     text-shadow: 0 12px 42px rgba(0, 0, 0, .45), 0 0 26px rgba(247, 182, 189, .25);
-    animation: loveTitleIn 1.35s cubic-bezier(.2, .9, .22, 1) both .25s;
+    animation: loveTitleIn 1.35s cubic-bezier(.2, .9, .22, 1) both .25s, loveTitleGlow 2.8s ease-in-out infinite alternate 1.6s;
 }
 
 .love-subtitle {
@@ -117,7 +130,8 @@
     bottom: -8%;
     color: rgba(255, 220, 225, .7);
     filter: drop-shadow(0 8px 14px rgba(0, 0, 0, .2));
-    animation: floatHeart 13s linear infinite;
+    opacity: 0;
+    animation: floatHeart 11s linear infinite;
 }
 
 .love-particles span:before {
@@ -126,11 +140,24 @@
     font-size: clamp(1.4rem, 2.4vw, 2.7rem);
 }
 
-.love-particles span:nth-child(1) { left: 9%; animation-delay: 0s; animation-duration: 14s; }
-.love-particles span:nth-child(2) { left: 27%; animation-delay: 3s; animation-duration: 16s; transform: scale(.78); }
-.love-particles span:nth-child(3) { left: 51%; animation-delay: 1.6s; animation-duration: 15s; transform: scale(1.08); }
-.love-particles span:nth-child(4) { left: 72%; animation-delay: 4.2s; animation-duration: 17s; transform: scale(.86); }
-.love-particles span:nth-child(5) { left: 88%; animation-delay: 2.4s; animation-duration: 13s; transform: scale(1.18); }
+.love-particles span:nth-child(1) { left: 6%; animation-delay: -8s; animation-duration: 12s; }
+.love-particles span:nth-child(2) { left: 16%; animation-delay: -3s; animation-duration: 13s; transform: scale(.82); }
+.love-particles span:nth-child(3) { left: 29%; animation-delay: -10s; animation-duration: 11s; transform: scale(1.2); }
+.love-particles span:nth-child(4) { left: 42%; animation-delay: -5s; animation-duration: 14s; transform: scale(.92); }
+.love-particles span:nth-child(5) { left: 55%; animation-delay: -9s; animation-duration: 12s; transform: scale(1.36); }
+.love-particles span:nth-child(6) { left: 68%; animation-delay: -2s; animation-duration: 13s; transform: scale(.8); }
+.love-particles span:nth-child(7) { left: 76%; animation-delay: -7s; animation-duration: 10s; transform: scale(1.12); }
+.love-particles span:nth-child(8) { left: 84%; animation-delay: -4s; animation-duration: 15s; transform: scale(.9); }
+.love-particles span:nth-child(9) { left: 91%; animation-delay: -11s; animation-duration: 12s; transform: scale(1.28); }
+.love-particles span:nth-child(10) { left: 48%; animation-delay: -6s; animation-duration: 16s; transform: scale(.74); }
+
+.love-particles span:nth-child(3n):before {
+    content: "❦";
+}
+
+.love-particles span:nth-child(4n):before {
+    content: "✦";
+}
 
 .wrapper .display-4,
 .wrapper h1.display-4 {
@@ -159,6 +186,16 @@
 .wrapper #location .bg-white:hover {
     transform: translateY(-9px);
     box-shadow: 0 28px 58px rgba(45, 31, 47, .16) !important;
+}
+
+.isapp-love-animations .wrapper .card,
+.isapp-love-animations .wrapper #location .bg-white {
+    animation: softCardFloat 5.5s ease-in-out infinite alternate;
+}
+
+.isapp-love-animations .wrapper .card:nth-child(2n),
+.isapp-love-animations .wrapper #location .col-md-4:nth-child(2n) .bg-white {
+    animation-delay: -2.3s;
 }
 
 .wrapper .popup-image {
@@ -201,6 +238,16 @@
     to { opacity: 1; filter: saturate(1.18); }
 }
 
+@keyframes loveFramePulse {
+    from { opacity: .38; transform: scale(.985); }
+    to { opacity: .86; transform: scale(1.01); }
+}
+
+@keyframes loveTitleGlow {
+    from { text-shadow: 0 12px 42px rgba(0, 0, 0, .45), 0 0 20px rgba(247, 182, 189, .22); }
+    to { text-shadow: 0 16px 48px rgba(0, 0, 0, .5), 0 0 42px rgba(247, 217, 165, .56); }
+}
+
 @keyframes loveTitleIn {
     from { opacity: 0; transform: translateY(28px) scale(.94); filter: blur(8px); }
     to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
@@ -218,8 +265,14 @@
 
 @keyframes floatHeart {
     0% { opacity: 0; transform: translate3d(0, 0, 0) rotate(0deg); }
-    12% { opacity: .85; }
-    100% { opacity: 0; transform: translate3d(26px, -112vh, 0) rotate(34deg); }
+    10% { opacity: .96; }
+    52% { opacity: .78; transform: translate3d(-24px, -58vh, 0) rotate(-18deg); }
+    100% { opacity: 0; transform: translate3d(34px, -112vh, 0) rotate(38deg); }
+}
+
+@keyframes softCardFloat {
+    from { transform: translateY(0); }
+    to { transform: translateY(-7px); }
 }
 
 @media only screen and (max-width: 769px) {
