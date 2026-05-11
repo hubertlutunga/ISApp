@@ -504,8 +504,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   .btnpic{display:inline-flex;align-items:center;gap:8px;padding:13px 18px;border-radius:14px;background:#ecfeff;color:#0f766e;font-weight:700;border:1px dashed rgba(15,118,110,.35);cursor:pointer}
   .selected-option{padding:13px 0;color:#334155;font-weight:600}
   .champmod{border:1px solid #d7deea !important;border-radius:14px;overflow:hidden;background:#fff}
+  #ModInvitation .input-group{height:70px}
   .field-help{margin-top:-6px;color:#64748b;font-size:13px;line-height:1.5}
-  .model-picker-summary{display:flex;flex-direction:column;gap:4px;padding:11px 0}
+  .model-picker-summary{display:flex;flex-direction:column;gap:4px;padding:11px 0;margin-top:-20px}
   .model-picker-label{color:#0f172a;font-weight:700}
   .model-picker-meta{color:#64748b;font-size:13px}
   .selected-model-preview{
@@ -742,15 +743,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     line-height:1.6;
   }
   .dropdown-content{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;margin-top:12px}
-  .dropdown-content > div{cursor:pointer;border:1px solid rgba(145,91,45,.10);border-radius:28px;padding:0;text-align:left;overflow:hidden;background:rgba(255,255,255,.92);box-shadow:0 22px 44px rgba(109,68,39,.10);transition:transform .22s ease, box-shadow .22s ease,border-color .22s ease}
-  .dropdown-content > div:hover{transform:none;border-color:rgba(145,91,45,.10);box-shadow:0 22px 44px rgba(109,68,39,.10)}
-  .dropdown-content > div.is-selected{border-color:#7a3a27;background:linear-gradient(180deg,#fffaf4 0%,#f8efe4 100%);box-shadow:0 24px 48px rgba(122,58,39,.14)}
+  .dropdown-content > div{cursor:pointer;border:1px solid rgba(148,163,184,.22);border-radius:28px;padding:0;text-align:left;overflow:hidden;background:rgba(255,255,255,.92);box-shadow:0 22px 44px rgba(15,23,42,.08);transition:transform .22s ease, box-shadow .22s ease,border-color .22s ease}
+  .dropdown-content > div:hover{transform:none;border-color:rgba(15,118,110,.22);box-shadow:0 20px 40px rgba(15,23,42,.08);background:#fff}
+  .dropdown-content > div.is-selected{border-color:#0f766e;background:linear-gradient(180deg,#f0fdfa 0%,#ecfeff 100%);box-shadow:0 24px 48px rgba(15,118,110,.14)}
+  .model-selection-inline-finish{display:none;width:100%;margin-top:-8px}
+  .model-selection-inline-finish.is-visible{display:block}
+  .model-selection-inline-finish .btn{width:100% !important;min-height:50px;font-weight:800;border-radius:16px}
   .model-option-card{
     display:flex;
     flex-direction:row;
     align-items:stretch;
     text-align:left;
   }
+  .dropdown-content > div:hover .model-option-card{background:#fff}
   .model-option-image-trigger{
     position:relative;
     display:block;
@@ -760,7 +765,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     padding:0;
     border-radius:0;
     overflow:hidden;
-    background:linear-gradient(180deg,#f0dfcf 0%,#f7efe7 100%);
+    background:linear-gradient(180deg,#f8fafc 0%,#eef6f5 100%);
     cursor:zoom-in;
   }
   .model-option-image-trigger::after{
@@ -770,7 +775,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     bottom:10px;
     padding:6px 10px;
     border-radius:999px;
-    background:rgba(48,29,23,.78);
+    background:rgba(15,118,110,.82);
     color:#fffaf2;
     font-size:10px;
     font-weight:700;
@@ -785,7 +790,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     min-width:0;
     padding:20px 22px 18px;
     text-align:left;
+    background:#fff;
   }
+  .dropdown-content > div:hover .model-option-copy{background:#fff;color:#475569}
+  .dropdown-content > div.is-selected .model-option-copy{background:#f8fffe}
   .model-option-head{
     display:flex;
     align-items:flex-start;
@@ -795,7 +803,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   .model-option-title{
     flex:1 1 auto;
     min-width:0;
-    color:#231815;
+    color:#0f172a;
     font-size:20px;
     font-weight:800;
     line-height:1.3;
@@ -805,8 +813,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     align-self:flex-start;
     padding:8px 12px;
     border-radius:999px;
-    background:#fff6ea;
-    color:#8b633e;
+    background:#ecfeff;
+    color:#0f766e;
     font-size:11px;
     font-weight:800;
     letter-spacing:.06em;
@@ -818,19 +826,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     display:flex;
     flex-direction:column;
     align-items:flex-start;
-    color:#7a3a27;
+    color:#0f766e;
     font-size:18px;
     font-weight:800;
     white-space:nowrap;
     text-align:left;
   }
   .model-option-meta{
-    color:#6d5a50;
+    color:#475569;
     font-size:14px;
     line-height:1.75;
   }
   .model-option-hint{
-    color:#7a3a27;
+    color:#0f766e;
     font-size:12px;
     font-weight:700;
     letter-spacing:.05em;
@@ -1328,7 +1336,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               <span class="input-group-text bg-transparent"><i class="fas fa-ticket-alt"></i></span>
               <input type="text" name="promo_code" id="promoCode" class="form-control ps-15 bg-transparent" placeholder="Ex. ISWELCOME" value="<?php echo htmlspecialchars((string) ($_POST['promo_code'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
             </div>
-            <p class="promo-note">Codes actifs: <?php echo htmlspecialchars($promoCodeHints, ENT_QUOTES, 'UTF-8'); ?></p>
           </div>
 
           <div class="form-group">
@@ -1484,7 +1491,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <span class="input-group-text bg-transparent"><i class="fas fa-ticket-alt"></i></span>
                 <input type="text" name="promo_code" id="promoCodeOther" class="form-control ps-15 bg-transparent" placeholder="Ex. ISWELCOME" value="<?php echo htmlspecialchars((string) ($_POST['promo_code'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
               </div>
-              <p class="promo-note">Codes actifs: <?php echo htmlspecialchars($promoCodeHints, ENT_QUOTES, 'UTF-8'); ?></p>
             </div>
 
             <div class="form-group">
@@ -1556,6 +1562,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
       </div>
       <?php } ?>
+      <div id="modelSelectionInlineFinish" class="model-selection-inline-finish" aria-hidden="true">
+        <button type="button" class="btn btn-primary" data-finish-model-selection="1">Terminer</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1638,6 +1647,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   const modal = document.getElementById('myModal');
   const closeModal = document.getElementById('closeModal');
   const finishModelSelection = document.getElementById('finishModelSelection');
+  const modelSelectionInlineFinish = document.getElementById('modelSelectionInlineFinish');
   const dropdownContent = document.getElementById('weddingTypeDropdown');
   const selectedOption = document.querySelector('.selected-option');
   const selectedModelsList = document.getElementById('selectedModelsList');
@@ -2030,6 +2040,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       selectedOption.innerHTML = '<div class="model-picker-summary"><span class="model-picker-label">Choisir un ou plusieurs modèles…</span><span class="model-picker-meta">Ouvrez la galerie pour composer votre sélection d\'invitations.</span></div>';
       selectedModelsList.innerHTML = '';
       dropdownContent.querySelectorAll('div[data-value]').forEach((item) => item.classList.remove('is-selected'));
+      if (modelSelectionInlineFinish && dropdownContent) {
+        dropdownContent.appendChild(modelSelectionInlineFinish);
+        modelSelectionInlineFinish.classList.remove('is-visible');
+        modelSelectionInlineFinish.setAttribute('aria-hidden', 'true');
+      }
       resetSelectedModelPreview();
       renderCheckoutSummary();
       return;
@@ -2041,6 +2056,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     dropdownContent.querySelectorAll('div[data-value]').forEach((item) => {
       item.classList.toggle('is-selected', selectedInvitationModels.has(item.getAttribute('data-value') || ''));
     });
+
+    if (modelSelectionInlineFinish && dropdownContent) {
+      const lastSelectedModel = selectedModels[selectedModels.length - 1];
+      const lastSelectedCell = lastSelectedModel
+        ? [...dropdownContent.querySelectorAll('div[data-value]')].find((item) => (item.getAttribute('data-value') || '') === String(lastSelectedModel.id))
+        : null;
+      if (lastSelectedCell) {
+        lastSelectedCell.insertAdjacentElement('afterend', modelSelectionInlineFinish);
+      } else {
+        dropdownContent.appendChild(modelSelectionInlineFinish);
+      }
+      modelSelectionInlineFinish.classList.add('is-visible');
+      modelSelectionInlineFinish.setAttribute('aria-hidden', 'false');
+    }
 
     selectedModelsList.innerHTML = '';
     selectedModels.forEach((model) => {
@@ -2312,6 +2341,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   closeModal?.addEventListener('click', () => { modal.style.display = 'none'; });
   finishModelSelection?.addEventListener('click', () => { modal.style.display = 'none'; });
+  modelSelectionInlineFinish?.addEventListener('click', (event) => {
+    event.stopPropagation();
+    modal.style.display = 'none';
+  });
   window.addEventListener('click', (event) => {
     if (event.target === modal) {
       modal.style.display = 'none';
