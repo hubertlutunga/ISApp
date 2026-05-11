@@ -1,4 +1,8 @@
 
+         <?php
+         $showWeddingCeremony = isset($showWeddingCeremony) ? (bool) $showWeddingCeremony : true;
+         $showWeddingParty = isset($showWeddingParty) ? (bool) $showWeddingParty : true;
+         ?>
          <section id="wedding" class="bg-secondary spacer-one-top-lg">
             <!--Container-->
             <div class="container spacer-one-bottom-lg">
@@ -19,6 +23,7 @@
                         <img class="bg-image" src="../couple/images/<?php echo isset($wedImage, $wedE) ? $wedE($wedImage('wedding_bg', (string) ($dataevent['photostory'] ?? 'defaulwed_1.png'))) : htmlspecialchars((string) ($dataevent['photostory'] ?? 'defaulwed_1.png'), ENT_QUOTES, 'UTF-8'); ?>" alt="">
                      </div>
                   </div>
+                  <?php if ($showWeddingCeremony) { ?>
                   <div class="col-md-6 col-lg-4 d-flex mb-4 mb-lg-0">
                      <div class="card card-body justify-content-between">
                         <div class="icon-round mb-5 mb-md-5  bg-icon-primary">
@@ -159,6 +164,8 @@
                         </p>
                      </div>
                   </div>
+                  <?php } ?>
+                  <?php if ($showWeddingParty) { ?>
                   <div class="col-md-6 col-lg-4 d-flex ">
                      <div class="card card-body justify-content-between bg-primary text-light">
                         <div class="icon-round mb-3 mb-md-5  bg-icon-white">
@@ -238,6 +245,7 @@
                         </p>
                      </div>
                   </div>
+                  <?php } ?>
                </div>
                <!--End row-->
                <!--Row-->

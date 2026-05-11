@@ -18,12 +18,21 @@ $wedText = static function (string $field, string $fallback = '') use ($weddingS
 $wedImage = static function (string $field, string $fallback = '') use ($weddingSiteSettings): string {
    return WeddingWebsiteSettingsService::image($weddingSiteSettings, $field, $fallback);
 };
+$wedFlag = static function (string $field, bool $fallback = true) use ($weddingSiteSettings): bool {
+   $defaultValue = $fallback ? '1' : '0';
+   $value = strtolower(trim((string) ($weddingSiteSettings['content'][$field] ?? $defaultValue)));
+
+   return in_array($value, ['1', 'true', 'show', 'on', 'yes'], true);
+};
 $wedE = static function (string $value): string {
    return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 };
 
 $photo = $wedImage('hero_bg', $photo);
 $photocoeur = $wedImage('save_heart', $photocoeur);
+$showWeddingCeremony = $wedFlag('ceremony_enabled', true);
+$showWeddingParty = $wedFlag('party_enabled', true);
+$showWeddingEventsSection = $wedSectionEnabled('wedding_events') && ($showWeddingCeremony || $showWeddingParty);
 
 ?>  
 
@@ -62,7 +71,7 @@ $photocoeur = $wedImage('save_heart', $photocoeur);
                         <ul class=" navbar-nav  header-navbar-nav">
                            <?php if ($wedSectionEnabled('save_date')) { ?><li><a class=" nav-link scroll" href="#resto">Date</a></li><?php } ?>
                            <?php if ($wedSectionEnabled('love_story')) { ?><li><a class=" nav-link scroll" href="#story">Love Story</a></li><?php } ?>
-                           <?php if ($wedSectionEnabled('wedding_events')) { ?><li><a class=" nav-link scroll" href="#wedding">Mariage</a></li><?php } ?>
+                           <?php if ($showWeddingEventsSection) { ?><li><a class=" nav-link scroll" href="#wedding">Mariage</a></li><?php } ?>
                            <?php if ($wedSectionEnabled('gallery')) { ?><li><a class=" nav-link scroll" href="#gallery">Gallerie</a></li><?php } ?>
                            <?php if ($wedSectionEnabled('gift')) { ?><li><a class=" nav-link scroll" href="#gift">Liste de cadeaux</a></li><?php } ?>
                            <?php if ($wedSectionEnabled('friends')) { ?><li><a class=" nav-link scroll" href="#friends">Invités</a></li><?php } ?>
@@ -367,7 +376,7 @@ if ($customSaveDateText !== ''): ?>
 
 
 
-      <?php if ($wedSectionEnabled('wedding_events')) { include('benediction.php'); } ?>
+      <?php if ($showWeddingEventsSection) { include('benediction.php'); } ?>
  
 
 <?php if ($wedSectionEnabled('love_story')) { include('lovestory.php'); } ?>

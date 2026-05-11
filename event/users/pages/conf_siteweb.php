@@ -254,6 +254,29 @@ html,body{ height:auto !important; min-height:100% !important; overflow-y:auto !
                       <?php } ?>
                     </div>
                     <div class="mb-wedconf-section-body">
+                      <?php if ($sectionKey === 'wedding_events') { $ceremonyEnabled = in_array(strtolower(trim((string) ($weddingSiteSettings['content']['ceremony_enabled'] ?? '1'))), ['1', 'true', 'show', 'on', 'yes'], true); $partyEnabled = in_array(strtolower(trim((string) ($weddingSiteSettings['content']['party_enabled'] ?? '1'))), ['1', 'true', 'show', 'on', 'yes'], true); ?>
+                      <div style="margin-bottom:14px;">
+                        <h5>Éléments à afficher</h5>
+                        <p style="margin-top:-6px;color:#64748b;font-weight:700;">Choisissez si la section publique doit afficher la bénédiction, la soirée, ou les deux.</p>
+                        <div class="mb-wedconf-grid">
+                          <div class="mb-wedconf-toggle">
+                            <span class="mb-wedconf-toggle-title">Bénédiction nuptiale</span>
+                            <div class="mb-wedconf-radio-group">
+                              <label class="mb-wedconf-radio"><input type="radio" name="ceremony_enabled" value="1" <?php echo $ceremonyEnabled ? 'checked' : ''; ?>><span>Afficher</span></label>
+                              <label class="mb-wedconf-radio"><input type="radio" name="ceremony_enabled" value="0" <?php echo !$ceremonyEnabled ? 'checked' : ''; ?>><span>Masquer</span></label>
+                            </div>
+                          </div>
+                          <div class="mb-wedconf-toggle">
+                            <span class="mb-wedconf-toggle-title">Wedding Party</span>
+                            <div class="mb-wedconf-radio-group">
+                              <label class="mb-wedconf-radio"><input type="radio" name="party_enabled" value="1" <?php echo $partyEnabled ? 'checked' : ''; ?>><span>Afficher</span></label>
+                              <label class="mb-wedconf-radio"><input type="radio" name="party_enabled" value="0" <?php echo !$partyEnabled ? 'checked' : ''; ?>><span>Masquer</span></label>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <?php } ?>
+
                       <?php if (!empty($sectionPanel['fields'])) { ?>
                       <div class="mb-wedconf-grid">
                         <?php foreach ($sectionPanel['fields'] as $fieldName) { $fieldValue = (string) ($weddingSiteSettings['content'][$fieldName] ?? ''); $isLongField = str_contains($fieldName, 'text') || str_contains($fieldName, 'place') || str_contains($fieldName, 'items'); ?>

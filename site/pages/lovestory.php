@@ -57,20 +57,14 @@
 
                <div class="row">
                   <div class="col d-flex flex-column align-items-center">
+                     <?php
+                     $reqtls = $pdo->prepare("SELECT * FROM lovestory_etap WHERE cod_event = :codevent ORDER BY cod_ls ASC");
+                     $reqtls->execute(['codevent' => $codevent]);
+                     $loveStorySteps = $reqtls->fetchAll(PDO::FETCH_ASSOC) ?: [];
+                     if (!empty($loveStorySteps)) {
+                     ?>
                      <ol class="story mb-0">
-
-
-                     <?php 
-                      
-$reqtls = "SELECT * FROM lovestory_etap WHERE cod_event = :codevent ORDER BY cod_ls ASC";
-$reqtls = $pdo->prepare($reqtls);
-$reqtls->execute(['codevent' => $codevent]);
-
-// Vérifie si des résultats sont disponibles
-if ($reqtls->rowCount() > 0) {
-    while ($row_ls = $reqtls->fetch(PDO::FETCH_ASSOC)) {
-        
-                    ?>
+                     <?php foreach ($loveStorySteps as $row_ls) { ?>
                         <li>
                            <div class="story-icon bg-icon-primary">
                               <svg version="1.1" class="icon-svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 107 93" enable-background="new 0 0 107 93" xml:space="preserve">
@@ -84,38 +78,9 @@ if ($reqtls->rowCount() > 0) {
                               <span class="small text-primary"><?php echo date('F Y', strtotime($row_ls['date_etap'])); ?></span>
                            </div>
                         </li>
-                         
-                         
-                        
-                         
-                        <?php 
-                    }
-                } else {
-                  $defaultLoveSteps = [
-                     ['event_etap' => 'Première rencontre', 'date_etap' => $dataevent['date_event'] ?? date('Y-m-d')],
-                     ['event_etap' => 'Notre histoire commence', 'date_etap' => $dataevent['date_event'] ?? date('Y-m-d')],
-                     ['event_etap' => 'Demande en mariage', 'date_etap' => $dataevent['date_event'] ?? date('Y-m-d')],
-                  ];
-                  foreach ($defaultLoveSteps as $row_ls) {
-                ?>
-                        <li>
-                           <div class="story-icon bg-icon-primary">
-                              <svg version="1.1" class="icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 107 93" xml:space="preserve"><path fill="#E25D5D" d="M53.6825,9.4436L53.6825,9.4436C41.6532-2.4793,22.2392-2.5,10.1866,9.4439c-12.1565,12.0471-12.07,31.7375-0.0219,43.8819l35.08,35.3601c4.5697,4.6061,12.0081,4.6357,16.6142,0.0661l35.1704-34.8918c12.1523-12.056,12.4179-32.0464,0.3787-44.2154C85.3917-2.5013,65.8078-2.5857,53.6825,9.4436z" /></svg>
-                           </div>
-                           <div>
-                              <h5 class="mb-0"><?php echo htmlspecialchars($row_ls['event_etap'], ENT_QUOTES, 'UTF-8'); ?></h5>
-                              <span class="small text-primary"><?php echo date('F Y', strtotime((string) $row_ls['date_etap'])); ?></span>
-                           </div>
-                        </li>
-                <?php
-                  }
-                }
-                ?>
-
-
-
-
+                     <?php } ?>
                      </ol>
+                     <?php } ?>
                   </div>
                </div>
                <div class="row  justify-content-center">
