@@ -126,8 +126,15 @@ $showWeddingEventsSection = $wedSectionEnabled('wedding_events') && ($showWeddin
 
 
          <?php if ($wedSectionEnabled('hero')) { ?>
-         <section class="gradient-overlay gradient-overlay-dark ">
+         <section class="gradient-overlay gradient-overlay-dark wedding-hero love-ambient">
             <img class="bg-image" src="../couple/images/<?php echo $photo; ?>" alt="">
+            <div class="love-particles" aria-hidden="true">
+               <span></span>
+               <span></span>
+               <span></span>
+               <span></span>
+               <span></span>
+            </div>
             <div class="container">
                <!--row-->
                <div class="row min-vh-80 align-items-center z-index-2 position-relative text-center">
@@ -201,10 +208,11 @@ if (isset($_GET['idinv'])) {
 
 
 
-                     <h1 class="display-2  text-white mb-4"><?php echo $wedE($wedText('hero_title', (string) $fetard)); ?></h1>
+                     <p class="love-kicker mb-3">With Love</p>
+                     <h1 class="display-2 text-white mb-4 love-title"><?php echo $wedE($wedText('hero_title', (string) $fetard)); ?></h1>
  
 
-					<p class="font-weight-300 text-light  lead mb-5 pcompteeur"><?php echo $wedE($wedText('hero_subtitle', 'Se marient dans')); ?></p>
+					<p class="font-weight-300 text-light lead mb-5 pcompteeur love-subtitle"><?php echo $wedE($wedText('hero_subtitle', 'Se marient dans')); ?></p>
                     
  
 					  <?php include('comptearebour.php')?>
@@ -212,7 +220,7 @@ if (isset($_GET['idinv'])) {
 
  
                   <?php if ($wedSectionEnabled('rsvp')) { ?>
-					  <a href="#rsvp" class="btn btn-primary btn-wide-sm btn-sm  scroll"><?php echo $wedE($wedText('hero_button', 'RSVP')); ?></a>
+                 <a href="#rsvp" class="btn btn-primary btn-wide-sm btn-sm scroll love-cta"><?php echo $wedE($wedText('hero_button', 'RSVP')); ?></a>
                   <?php } ?>
                   </div>
                </div>
@@ -1667,6 +1675,36 @@ Alors, partagez avec nous vos plus beaux souhaits pour ce nouveau chapitre.</blo
       <script src="js/placeholders.min.js"></script>
       <script src="js/instafeed.min.js"></script>
       <script src="js/script.js"></script>
+      <script>
+      (function () {
+         var items = document.querySelectorAll('.wrapper > section:not(.footer-copyright), .wrapper .card, .wrapper .story li, .wrapper .popup-image');
+         if (!items.length) {
+            return;
+         }
+
+         if (!('IntersectionObserver' in window)) {
+            Array.prototype.forEach.call(items, function (item) {
+               item.classList.add('isapp-reveal', 'is-visible');
+            });
+            return;
+         }
+
+         var observer = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+               if (entry.isIntersecting) {
+                  entry.target.classList.add('is-visible');
+                  observer.unobserve(entry.target);
+               }
+            });
+         }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
+
+         Array.prototype.forEach.call(items, function (item, index) {
+            item.classList.add('isapp-reveal');
+            item.style.setProperty('--reveal-delay', Math.min(index % 6, 5) * 80 + 'ms');
+            observer.observe(item);
+         });
+      }());
+      </script>
       <!-- Google analytics -->
       <!-- End google analytics -->
 

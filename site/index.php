@@ -156,6 +156,7 @@ if ($content === null) {
       <link href="css/fonts.css" rel="stylesheet" type="text/css" media="all" />
       <link href="https://fonts.googleapis.com/css?family=Playfair+Display" rel="stylesheet">
       <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,300,400,600,700" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Great+Vibes&display=swap" rel="stylesheet">
       <link href="css/private.css" rel="stylesheet" type="text/css" media="all" />
 	
 	<!-- Google Web Fonts -->
