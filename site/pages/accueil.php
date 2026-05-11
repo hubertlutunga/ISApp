@@ -66,7 +66,11 @@ $showWeddingEventsSection = $wedSectionEnabled('wedding_events') && ($showWeddin
 					 
 					</a>
                      <button class="navbar-toggler btn-navbar-toggler" type="button" data-toggle="collapse" data-target=".nav-menu" aria-expanded="true" aria-label="Toggle navigation">
-                     <span class="fa fa-bars"></span>
+                     <span class="menu-toggle-icon" aria-hidden="true">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                     </span>
                      </button>
                      <div class="nav-menu collapse navbar-collapse navbar-collapse justify-content-end mr-5 ">
                         <ul class=" navbar-nav  header-navbar-nav">

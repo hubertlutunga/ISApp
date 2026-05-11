@@ -996,15 +996,10 @@ $salut = 'Bonsoir';
     }));
 
     usort($filteredClientQuotaRows, static function (array $left, array $right): int {
-      $leftOverview = (array) ($left['quota_overview'] ?? []);
-      $rightOverview = (array) ($right['quota_overview'] ?? []);
+      $leftName = trim((string) ($left['noms'] ?? ''));
+      $rightName = trim((string) ($right['noms'] ?? ''));
 
-      $remainingDiff = (int) ($leftOverview['remaining_quota'] ?? 0) <=> (int) ($rightOverview['remaining_quota'] ?? 0);
-      if ($remainingDiff !== 0) {
-        return $remainingDiff;
-      }
-
-      return (int) ($rightOverview['sent_count'] ?? 0) <=> (int) ($leftOverview['sent_count'] ?? 0);
+      return strcasecmp($leftName, $rightName);
     });
 
     $visibleClientCount = count($filteredClientQuotaRows);
