@@ -384,10 +384,10 @@ if (!function_exists('isapp_whatsapp_sender_normalize_recipient')) {
         if (stripos($phone, 'whatsapp:') === 0) {
             $phone = substr($phone, 9);
         }
-        $phone = preg_replace('/\s+/', '', $phone);
+        $phone = preg_replace('/[\s\-().]/', '', $phone);
 
-        if (!preg_match('/^\+243\d{9}$/', $phone)) {
-            throw new RuntimeException('Le numero WhatsApp doit commencer par +243 et contenir 9 chiffres apres l indicatif.');
+        if (!preg_match('/^\+[1-9]\d{7,14}$/', $phone)) {
+            throw new RuntimeException('Le numero WhatsApp doit etre saisi au format international complet, par exemple +242061234567 ou +243810678785.');
         }
 
         return 'whatsapp:' . $phone;

@@ -381,7 +381,7 @@ $nomcat = $row_menu['categorie_nom'] ?? '';
 				   <span class="close" onclick="closeModal()" style="cursor: pointer; float: right; font-size: 24px;">&times;</span><br>
 				   <h4 id="modalTitle">Envoyer l'invitation</h4> <br><br>
 				   <input type="text" required pattern="^\+\d{1,3}\d{9,}$" 
-				   title="Veuillez entrer un numéro au format international (ex: +243810678785)" id="whatsappNumber" name="phoneinv" class="input-group-text bg-transparent" style="border-radius:7px 7px 0px 0px;height:45px;width:100%;" placeholder="Numéro WhatsApp" />
+				   title="Veuillez entrer un numero au format international complet (ex: +242061234567)" id="whatsappNumber" name="phoneinv" class="input-group-text bg-transparent" style="border-radius:7px 7px 0px 0px;height:45px;width:100%;" placeholder="Ex: +242061234567" />
 				   <input type="hidden" id="inviteName" name="inviteName" />
 				   <input type="hidden" id="inviteId" name="inviteId" />
 				   <input type="hidden" id="pdfLink" name="pdf_link" />

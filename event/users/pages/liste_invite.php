@@ -812,7 +812,7 @@ async function confirmSuppInv(e, idInv, codEvent, nom) {
 				   <h4 id="modalTitle">Envoyer l'invitation</h4> <br><br>
 				   <label for="whatsappNumber" id="whatsappNumberLabel" style="display:block;margin-bottom:8px;color:#0f172a;font-size:13px;font-weight:700;"><?php echo htmlspecialchars($audienceWhatsAppLabel, ENT_QUOTES, 'UTF-8'); ?></label>
 				   <input type="text" required pattern="^\+243\d{9}$" inputmode="tel" autocapitalize="off" autocorrect="off" spellcheck="false"
-				   title="Veuillez entrer un numero WhatsApp valide au format +243XXXXXXXXX." id="whatsappNumber" name="phoneinv" class="input-group-text bg-transparent" style="border-radius:7px 7px 0px 0px;height:45px;width:100%;" placeholder="+243XXXXXXXXX" />
+				   title="Veuillez entrer un numero WhatsApp au format international complet (ex: +242061234567)." id="whatsappNumber" name="phoneinv" class="input-group-text bg-transparent" style="border-radius:7px 7px 0px 0px;height:45px;width:100%;" placeholder="Ex: +242061234567" />
 				   <button class="btn btn-light isapp-contact-picker" type="button" id="importContactButton" onclick="importPhoneContact()" style="width:100%;margin-top:10px;border:1px solid #cbd5e1;color:#0f172a;display:none;">Importer depuis mes contacts</button>
 				   <p id="contactPickerHelp" style="display:none;margin:8px 0 0;color:#64748b;font-size:12px;">L'import du repertoire est disponible sur certains navigateurs mobiles compatibles.</p>
 				   <input type="hidden" id="inviteName" name="inviteName" />
