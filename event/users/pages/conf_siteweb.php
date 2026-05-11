@@ -283,7 +283,85 @@ function confirmSuppEvent(event, codPhoto, codGetevent) {
 (function(){ const list = document.getElementById('existingLoveStepList'); const deletedFields = document.getElementById('deletedLoveStepFields'); if (!list || !deletedFields) return; list.addEventListener('click', function(event){ const button = event.target.closest('[data-delete-existing-love-step]'); if (!button) return; const stepId = button.getAttribute('data-delete-existing-love-step'); if (!stepId) return; const input = document.createElement('input'); input.type = 'hidden'; input.name = 'delete_love_step_ids[]'; input.value = stepId; deletedFields.appendChild(input); const row = button.closest('[data-existing-love-step]'); if (row) row.remove(); if (!list.querySelector('[data-existing-love-step]')) list.insertAdjacentHTML('beforeend', '<div class="alert alert-light mb-0" style="border-radius:16px;">Toutes les étapes enregistrées seront supprimées après enregistrement.</div>'); }); })();
 (function(){ const addBtn = document.getElementById('addLoveStoryStep'); const dateInput = document.getElementById('love_step_date'); const titleInput = document.getElementById('love_step_title'); const hiddenFields = document.getElementById('loveStepHiddenFields'); const pendingList = document.getElementById('loveStepPendingList'); if (!addBtn || !dateInput || !titleInput || !hiddenFields || !pendingList) return; const steps = []; function escapeText(value){ return String(value || '').replace(/[&<>"]/g, function(char){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[char]; }); } function renderSteps(){ hiddenFields.innerHTML = steps.map(function(step){ return '<input type="hidden" name="love_step_dates[]" value="' + escapeText(step.date) + '"><input type="hidden" name="love_step_titles[]" value="' + escapeText(step.title) + '">'; }).join(''); pendingList.innerHTML = steps.length ? steps.map(function(step, index){ return '<div class="mb-wedconf-list-card"><strong>' + escapeText(step.title) + '</strong><span>' + escapeText(step.date) + '</span><div class="mb-wedconf-list-actions"><button type="button" class="btn btn-warning btn-sm" data-remove-love-step="' + index + '">Retirer</button></div></div>'; }).join('') : '<div class="alert alert-light mb-0" style="border-radius:16px;">Aucune nouvelle étape ajoutée pour cette sauvegarde.</div>'; } addBtn.addEventListener('click', function(){ const date = dateInput.value.trim(); const title = titleInput.value.trim(); if (!date || !title) { Swal.fire({icon:'warning', title:'Étape incomplète', text:'Renseignez le mois/année et le texte de l’étape.'}); return; } steps.push({date:date, title:title}); dateInput.value = ''; titleInput.value = ''; renderSteps(); }); pendingList.addEventListener('click', function(event){ const button = event.target.closest('[data-remove-love-step]'); if (!button) return; steps.splice(parseInt(button.getAttribute('data-remove-love-step'), 10), 1); renderSteps(); }); renderSteps(); })();
 (function(){ function refreshGuestMessageButtons(checkbox){ const card = checkbox.closest('.mb-wedconf-toggle'); if (!card) return; card.querySelectorAll('[data-guest-action]').forEach(function(button){ const action = button.getAttribute('data-guest-action'); button.classList.toggle('is-active', (action === 'show' && checkbox.checked) || (action === 'hide' && !checkbox.checked)); }); } document.querySelectorAll('.guest-message-checkbox').forEach(function(checkbox){ refreshGuestMessageButtons(checkbox); checkbox.addEventListener('change', function(){ refreshGuestMessageButtons(checkbox); }); }); document.querySelectorAll('[data-guest-action][data-target]').forEach(function(button){ button.addEventListener('click', function(){ const checkbox = document.getElementById(button.getAttribute('data-target')); if (!checkbox) return; checkbox.checked = button.getAttribute('data-guest-action') === 'show'; refreshGuestMessageButtons(checkbox); }); }); })();
-(function(){ const list = document.getElementById('wedAccommodationList'); const storage = document.getElementById('wed_location_accommodations'); const modal = document.getElementById('accommodationModal'); const openBtn = document.getElementById('openAccommodationModal'); const closeBtn = document.getElementById('closeAccommodationModal'); const saveBtn = document.getElementById('saveAccommodation'); const indexInput = document.getElementById('accommodationIndex'); const nameInput = document.getElementById('accommodationName'); const addressInput = document.getElementById('accommodationAddress'); const mapInput = document.getElementById('accommodationMap'); const title = document.getElementById('accommodationModalTitle'); if (!list || !storage || !modal || !openBtn || !closeBtn || !saveBtn) return; let accommodations = []; try { const parsed = JSON.parse(storage.value || '[]'); accommodations = Array.isArray(parsed) ? parsed : []; } catch (error) { accommodations = []; } function sync(){ storage.value = JSON.stringify(accommodations); } function escapeText(value){ return String(value || '').replace(/[&<>"]/g, function(char){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[char]; }); } function openModal(index){ const item = Number.isInteger(index) ? accommodations[index] : {name:'', address:'', map:''}; indexInput.value = Number.isInteger(index) ? String(index) : ''; nameInput.value = item.name || ''; addressInput.value = item.address || ''; mapInput.value = item.map || ''; title.textContent = Number.isInteger(index) ? 'Modifier l’hébergement' : 'Ajouter un hébergement'; modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); } function closeModal(){ modal.classList.remove('is-open'); modal.setAttribute('aria-hidden','true'); } function render(){ sync(); if (!accommodations.length) { list.innerHTML = '<div class="alert alert-light mb-0" style="border-radius:16px;">Aucun hébergement ajouté.</div>'; return; } list.innerHTML = accommodations.map(function(item, index){ return '<div class="mb-wedconf-list-card"><strong>' + escapeText(item.name || 'Hébergement') + '</strong><span>' + escapeText(item.address || 'Adresse non renseignée') + '</span>' + (item.map ? '<span>Maps renseigné</span>' : '<span>Maps non renseigné</span>') + '<div class="mb-wedconf-list-actions"><button type="button" class="btn btn-primary btn-sm" data-edit="' + index + '">Modifier</button><button type="button" class="btn btn-warning btn-sm" data-delete="' + index + '">Supprimer</button></div></div>'; }).join(''); } openBtn.addEventListener('click', function(){ openModal(null); }); closeBtn.addEventListener('click', closeModal); modal.addEventListener('click', function(event){ if (event.target === modal) closeModal(); }); saveBtn.addEventListener('click', function(){ const item = {name:nameInput.value.trim(), address:addressInput.value.trim(), map:mapInput.value.trim()}; if (!item.name && !item.address && !item.map) { Swal.fire({title:'Hébergement vide', text:'Renseignez au moins un nom, une adresse ou une carte.', icon:'warning'}); return; } const index = indexInput.value !== '' ? parseInt(indexInput.value, 10) : -1; if (index >= 0 && accommodations[index]) accommodations[index] = item; else accommodations.push(item); render(); closeModal(); }); list.addEventListener('click', function(event){ const editBtn = event.target.closest('[data-edit]'); const deleteBtn = event.target.closest('[data-delete]'); if (editBtn) openModal(parseInt(editBtn.getAttribute('data-edit'), 10)); if (deleteBtn) { accommodations.splice(parseInt(deleteBtn.getAttribute('data-delete'), 10), 1); render(); } }); render(); })();
+(function(){
+  const list = document.getElementById('wedAccommodationList');
+  const storage = document.getElementById('wed_location_accommodations');
+  const modal = document.getElementById('accommodationModal');
+  const openBtn = document.getElementById('openAccommodationModal');
+  const closeBtn = document.getElementById('closeAccommodationModal');
+  const saveBtn = document.getElementById('saveAccommodation');
+  const indexInput = document.getElementById('accommodationIndex');
+  const nameInput = document.getElementById('accommodationName');
+  const addressInput = document.getElementById('accommodationAddress');
+  const mapInput = document.getElementById('accommodationMap');
+  const title = document.getElementById('accommodationModalTitle');
+  if (!list || !storage || !modal || !openBtn || !closeBtn || !saveBtn) return;
+  let accommodations = [];
+  function encodeMap(value){
+    return btoa(unescape(encodeURIComponent(String(value || ''))));
+  }
+  function decodeMap(value){
+    if (!value) return '';
+    try { return decodeURIComponent(escape(atob(String(value)))); } catch (error) { return ''; }
+  }
+  function normalizeItem(item){
+    return {
+      name: String(item && item.name ? item.name : ''),
+      address: String(item && item.address ? item.address : ''),
+      map: String(item && item.map ? item.map : decodeMap(item && item.map_b64 ? item.map_b64 : '')),
+    };
+  }
+  try {
+    const parsed = JSON.parse(storage.value || '[]');
+    accommodations = Array.isArray(parsed) ? parsed.map(normalizeItem) : [];
+  } catch (error) {
+    accommodations = [];
+  }
+  function sync(){
+    storage.value = JSON.stringify(accommodations.map(function(item){ return {name:item.name || '', address:item.address || '', map_b64:encodeMap(item.map || '')}; }));
+  }
+  function escapeText(value){ return String(value || '').replace(/[&<>"]/g, function(char){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[char]; }); }
+  function openModal(index){
+    const item = Number.isInteger(index) ? accommodations[index] : {name:'', address:'', map:''};
+    indexInput.value = Number.isInteger(index) ? String(index) : '';
+    nameInput.value = item.name || '';
+    addressInput.value = item.address || '';
+    mapInput.value = item.map || '';
+    title.textContent = Number.isInteger(index) ? 'Modifier l’hébergement' : 'Ajouter un hébergement';
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden','false');
+  }
+  function closeModal(){ modal.classList.remove('is-open'); modal.setAttribute('aria-hidden','true'); }
+  function render(){
+    sync();
+    if (!accommodations.length) {
+      list.innerHTML = '<div class="alert alert-light mb-0" style="border-radius:16px;">Aucun hébergement ajouté.</div>';
+      return;
+    }
+    list.innerHTML = accommodations.map(function(item, index){ return '<div class="mb-wedconf-list-card"><strong>' + escapeText(item.name || 'Hébergement') + '</strong><span>' + escapeText(item.address || 'Adresse non renseignée') + '</span>' + (item.map ? '<span>Maps renseigné</span>' : '<span>Maps non renseigné</span>') + '<div class="mb-wedconf-list-actions"><button type="button" class="btn btn-primary btn-sm" data-edit="' + index + '">Modifier</button><button type="button" class="btn btn-warning btn-sm" data-delete="' + index + '">Supprimer</button></div></div>'; }).join('');
+  }
+  openBtn.addEventListener('click', function(){ openModal(null); });
+  closeBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', function(event){ if (event.target === modal) closeModal(); });
+  saveBtn.addEventListener('click', function(){
+    const item = {name:nameInput.value.trim(), address:addressInput.value.trim(), map:mapInput.value.trim()};
+    if (!item.name && !item.address && !item.map) {
+      Swal.fire({title:'Hébergement vide', text:'Renseignez au moins un nom, une adresse ou une carte.', icon:'warning'});
+      return;
+    }
+    const index = indexInput.value !== '' ? parseInt(indexInput.value, 10) : -1;
+    if (index >= 0 && accommodations[index]) accommodations[index] = item; else accommodations.push(item);
+    render();
+    closeModal();
+  });
+  list.addEventListener('click', function(event){
+    const editBtn = event.target.closest('[data-edit]');
+    const deleteBtn = event.target.closest('[data-delete]');
+    if (editBtn) openModal(parseInt(editBtn.getAttribute('data-edit'), 10));
+    if (deleteBtn) { accommodations.splice(parseInt(deleteBtn.getAttribute('data-delete'), 10), 1); render(); }
+  });
+  render();
+})();
 document.addEventListener('DOMContentLoaded', function(){ const input = document.getElementById('fileInput'); const preview = document.getElementById('previewContainer'); if (input && preview) { input.addEventListener('change', function(){ preview.innerHTML = ''; const maxFiles = parseInt(input.getAttribute('data-max-files') || '5', 10); const files = Array.from(input.files || []); if (files.length > maxFiles) { Swal.fire({icon:'warning', title:'Limite atteinte', text:'La galerie ne peut pas dépasser 5 photos.'}); input.value = ''; return; } files.forEach(function(file){ if (!file.type.startsWith('image/')) return; const reader = new FileReader(); reader.onload = function(e){ const img = document.createElement('img'); img.src = e.target.result; img.style.width = '70px'; img.style.height = '70px'; img.style.objectFit = 'cover'; img.style.borderRadius = '10px'; img.style.marginRight = '8px'; img.style.marginTop = '8px'; preview.appendChild(img); }; reader.readAsDataURL(file); }); }); } });
 </script>
 

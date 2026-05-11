@@ -1540,6 +1540,20 @@ Alors, partagez avec nous vos plus beaux souhaits pour ce nouveau chapitre.</blo
    if (!is_array($locationAccommodations)) {
       $locationAccommodations = [];
    }
+   $decodeAccommodationMap = static function (array $accommodation): string {
+      $mapValue = (string) ($accommodation['map'] ?? '');
+      if ($mapValue !== '') {
+         return $mapValue;
+      }
+
+      $encodedMapValue = (string) ($accommodation['map_b64'] ?? '');
+      if ($encodedMapValue === '') {
+         return '';
+      }
+
+      $decodedMapValue = base64_decode($encodedMapValue, true);
+      return is_string($decodedMapValue) ? $decodedMapValue : '';
+   };
    $renderAccommodationMap = static function (string $mapValue) use ($wedE): string {
       $mapValue = trim($mapValue);
       if ($mapValue === '') {
@@ -1566,7 +1580,7 @@ Alors, partagez avec nous vos plus beaux souhaits pour ce nouveau chapitre.</blo
                      <?php foreach ($locationAccommodations as $accommodation) {
                         $accommodationName = (string) ($accommodation['name'] ?? 'Hébergement recommandé');
                         $accommodationAddress = (string) ($accommodation['address'] ?? '');
-                        $accommodationMap = $renderAccommodationMap((string) ($accommodation['map'] ?? ''));
+                        $accommodationMap = $renderAccommodationMap($decodeAccommodationMap(is_array($accommodation) ? $accommodation : []));
                      ?>
                      <div class="col-md-4 mb-4 d-flex">
                         <div class="w-100 bg-white" style="border-radius:24px;padding:24px;box-shadow:0 18px 40px rgba(15,23,42,.08);">
