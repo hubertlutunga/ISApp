@@ -11,6 +11,7 @@ $conferenceSiteSettings = [
 ];
 
 $isWeddingWebsiteEvent = (string) ($type_event ?? '') === '1';
+$isAjaxRequest = strtolower((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')) === 'xmlhttprequest';
 $weddingSiteSettings = $isWeddingWebsiteEvent
     ? WeddingWebsiteSettingsService::get($pdo, (int) $cod_event, is_array($dataevent ?? null) ? $dataevent : [])
     : WeddingWebsiteSettingsService::defaults(is_array($dataevent ?? null) ? $dataevent : []);
@@ -36,6 +37,44 @@ $saveWeddingSitePartial = static function (array $content = [], array $images = 
     WeddingWebsiteSettingsService::save($pdo, (int) $cod_event, $weddingSiteSettings);
 };
 
+$uploadWeddingGalleryPhotos = static function (array $galleryFiles) use ($pdo, $cod_event): int {
+    if (!isset($galleryFiles['tmp_name']) || !is_array($galleryFiles['tmp_name'])) {
+        return 0;
+    }
+
+    $countStmt = $pdo->prepare('SELECT COUNT(*) FROM galeriephotos WHERE cod_event = ?');
+    $countStmt->execute([(int) $cod_event]);
+    $currentGalleryCount = (int) $countStmt->fetchColumn();
+    $remainingGallerySlots = max(0, 5 - $currentGalleryCount);
+    $insertGalleryPhoto = $pdo->prepare('INSERT INTO galeriephotos (cod_event, nom_photo) VALUES (?, ?)');
+    $importedCount = 0;
+
+    foreach ($galleryFiles['tmp_name'] as $key => $tmpName) {
+        if ($remainingGallerySlots <= 0) {
+            break;
+        }
+        if (!is_uploaded_file((string) $tmpName) || (($galleryFiles['error'][$key] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK)) {
+            continue;
+        }
+
+        $singleGalleryFile = [
+            'name' => $galleryFiles['name'][$key] ?? 'galerie.jpg',
+            'type' => $galleryFiles['type'][$key] ?? '',
+            'tmp_name' => $tmpName,
+            'error' => $galleryFiles['error'][$key] ?? UPLOAD_ERR_NO_FILE,
+            'size' => $galleryFiles['size'][$key] ?? 0,
+        ];
+        $galleryPhotoName = EventMediaService::storeUploadedImage($singleGalleryFile, 'galeriephoto', 'galerie_');
+        if ($galleryPhotoName !== null) {
+            $insertGalleryPhoto->execute([(int) $cod_event, $galleryPhotoName]);
+            $remainingGallerySlots--;
+            $importedCount++;
+        }
+    }
+
+    return $importedCount;
+};
+
 try {
     $conferenceSiteStmt = $pdo->prepare('SELECT iframe, agency, phone, email FROM websiteconference WHERE cod_event = ? LIMIT 1');
     $conferenceSiteStmt->execute([(int) $cod_event]);
@@ -43,6 +82,35 @@ try {
     $conferenceSiteStmt->closeCursor();
 } catch (Throwable $exception) {
     $conferenceSiteSettings = $conferenceSiteSettings;
+}
+
+if ($isWeddingWebsiteEvent && $isAjaxRequest && isset($_POST['submit_wedding_gallery_upload'])) {
+    try {
+        $importedCount = $uploadWeddingGalleryPhotos($_FILES['gallery_photos'] ?? []);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode([
+            'success' => true,
+            'importedCount' => $importedCount,
+            'redirect' => 'index.php?page=conf_siteweb&codevent=' . (int) $cod_event . '&okwedding=1',
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        exit;
+    } catch (RuntimeException $exception) {
+        http_response_code(400);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode([
+            'success' => false,
+            'message' => $exception->getMessage(),
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        exit;
+    } catch (Throwable $exception) {
+        http_response_code(500);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode([
+            'success' => false,
+            'message' => 'Une erreur est survenue pendant l’importation des photos de la galerie.',
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        exit;
+    }
 }
 
 if ($isWeddingWebsiteEvent && isset($_POST['submit_wedding_site_settings'])) {
@@ -111,36 +179,7 @@ if ($isWeddingWebsiteEvent && isset($_POST['submit_wedding_site_settings'])) {
             }
         }
 
-        $galleryFiles = $_FILES['gallery_photos'] ?? null;
-        if (is_array($galleryFiles) && isset($galleryFiles['tmp_name']) && is_array($galleryFiles['tmp_name'])) {
-            $countStmt = $pdo->prepare('SELECT COUNT(*) FROM galeriephotos WHERE cod_event = ?');
-            $countStmt->execute([(int) $cod_event]);
-            $currentGalleryCount = (int) $countStmt->fetchColumn();
-            $remainingGallerySlots = max(0, 5 - $currentGalleryCount);
-            $insertGalleryPhoto = $pdo->prepare('INSERT INTO galeriephotos (cod_event, nom_photo) VALUES (?, ?)');
-
-            foreach ($galleryFiles['tmp_name'] as $key => $tmpName) {
-                if ($remainingGallerySlots <= 0) {
-                    break;
-                }
-                if (!is_uploaded_file((string) $tmpName) || (($galleryFiles['error'][$key] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK)) {
-                    continue;
-                }
-
-                $singleGalleryFile = [
-                    'name' => $galleryFiles['name'][$key] ?? 'galerie.jpg',
-                    'type' => $galleryFiles['type'][$key] ?? '',
-                    'tmp_name' => $tmpName,
-                    'error' => $galleryFiles['error'][$key] ?? UPLOAD_ERR_NO_FILE,
-                    'size' => $galleryFiles['size'][$key] ?? 0,
-                ];
-                $galleryPhotoName = EventMediaService::storeUploadedImage($singleGalleryFile, 'galeriephoto', 'galerie_');
-                if ($galleryPhotoName !== null) {
-                    $insertGalleryPhoto->execute([(int) $cod_event, $galleryPhotoName]);
-                    $remainingGallerySlots--;
-                }
-            }
-        }
+        $uploadWeddingGalleryPhotos($_FILES['gallery_photos'] ?? []);
 
         WeddingWebsiteSettingsService::save($pdo, (int) $cod_event, $weddingSiteSettings);
 
