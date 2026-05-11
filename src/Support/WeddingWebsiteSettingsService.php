@@ -159,8 +159,6 @@ final class WeddingWebsiteSettingsService
 
             if (array_key_exists($section, $postedSections)) {
                 $settings['sections'][$section] = in_array((string) $postedSections[$section], ['show', 'on', '1', 'true'], true);
-            } elseif ($postedSections !== []) {
-                $settings['sections'][$section] = in_array($section, $postedSections, true);
             }
         }
 
