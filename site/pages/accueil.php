@@ -76,8 +76,8 @@ $showWeddingEventsSection = $wedSectionEnabled('wedding_events') && ($showWeddin
                            <?php if ($wedSectionEnabled('gift')) { ?><li><a class=" nav-link scroll" href="#gift">Liste de cadeaux</a></li><?php } ?>
                            <?php if ($wedSectionEnabled('friends')) { ?><li><a class=" nav-link scroll" href="#friends">Invités</a></li><?php } ?>
                            <?php if ($wedSectionEnabled('rsvp')) { ?><li><a class=" nav-link scroll" href="#rsvp">Rsvp</a></li><?php } ?>
-                           <?php if ($wedSectionEnabled('gallery')) { ?><li><a class=" nav-link scroll" href="#gallery">Gallerie</a></li><?php } ?>
                            <?php if ($wedSectionEnabled('location')) { ?><li><a class=" nav-link scroll" href="#location">Adresse</a></li><?php } ?>
+                           <?php if ($wedSectionEnabled('gallery')) { ?><li><a class=" nav-link scroll" href="#gallery">Gallerie</a></li><?php } ?>
                         </ul>
                      </div>
                   </nav>
@@ -775,8 +775,6 @@ if(isset($_POST['submitrsvp'])){
             </div>
          </section>
          <?php } ?>
-
-         <?php if ($wedSectionEnabled('gallery')) { include('sectiongalerie.php'); } ?>
      
          
 
@@ -1610,6 +1608,8 @@ Alors, partagez avec nous vos plus beaux souhaits pour ce nouveau chapitre.</blo
             </div>
          </section>
 <?php } ?>
+
+<?php if ($wedSectionEnabled('gallery')) { include('sectiongalerie.php'); } ?>
 
 
 
