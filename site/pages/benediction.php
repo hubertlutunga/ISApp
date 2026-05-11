@@ -4,6 +4,13 @@
          $showWeddingMap = isset($showWeddingMap) ? (bool) $showWeddingMap : true;
          $showWeddingParty = isset($showWeddingParty) ? (bool) $showWeddingParty : true;
          $weddingMapValue = isset($wedText) ? trim($wedText('wedding_map_iframe', '')) : '';
+         $weddingMapEncodedValue = isset($wedText) ? trim($wedText('wedding_map_iframe_b64', '')) : '';
+         if ($weddingMapValue === '' && $weddingMapEncodedValue !== '') {
+            $decodedWeddingMapValue = base64_decode($weddingMapEncodedValue, true);
+            if (is_string($decodedWeddingMapValue)) {
+               $weddingMapValue = $decodedWeddingMapValue;
+            }
+         }
          $renderWeddingMap = static function (string $mapValue) use ($wedE): string {
             if ($mapValue === '') {
                return '';

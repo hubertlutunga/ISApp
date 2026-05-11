@@ -80,7 +80,6 @@ $weddingSiteFieldLabels = [
   'save_text' => 'Texte “Save the date”',
   'wedding_title' => 'Titre',
   'wedding_subtitle' => 'Sous-titre',
-  'wedding_map_iframe' => 'Iframe Google Maps',
   'party_title' => 'Titre fête',
   'party_time' => 'Heure fête',
   'party_place' => 'Lieu fête',
@@ -106,7 +105,7 @@ $weddingSiteSectionPanels = [
   'hero' => ['title' => 'Accueil / Compteur', 'fields' => ['hero_title', 'hero_subtitle', 'hero_button'], 'images' => ['hero_bg']],
   'save_date' => ['title' => 'Save the date', 'fields' => ['save_title', 'save_text'], 'images' => ['save_heart']],
   'love_story' => ['title' => 'Love Story', 'fields' => [], 'images' => []],
-  'wedding_events' => ['title' => 'Wedding Events', 'fields' => ['wedding_title', 'wedding_subtitle', 'wedding_map_iframe', 'party_title', 'party_time', 'party_place'], 'images' => ['wedding_bg']],
+  'wedding_events' => ['title' => 'Wedding Events', 'fields' => ['wedding_title', 'wedding_subtitle', 'party_title', 'party_time', 'party_place'], 'images' => ['wedding_bg']],
   'gift' => ['title' => 'Cadeaux', 'fields' => ['gift_title', 'gift_text', 'gift_items'], 'images' => []],
   'friends' => ['title' => 'Nos invités', 'fields' => ['friends_title', 'friends_subtitle', 'guest_empty_text'], 'images' => []],
   'rsvp' => ['title' => 'RSVP', 'fields' => ['rsvp_title', 'rsvp_subtitle'], 'images' => []],
@@ -147,6 +146,14 @@ try {
   $galleryPhotos = [];
 }
 $galleryRemainingSlots = max(0, 5 - count($galleryPhotos));
+$weddingMapIframeValue = trim((string) ($weddingSiteSettings['content']['wedding_map_iframe'] ?? ''));
+$weddingMapIframeEncoded = trim((string) ($weddingSiteSettings['content']['wedding_map_iframe_b64'] ?? ''));
+if ($weddingMapIframeValue === '' && $weddingMapIframeEncoded !== '') {
+  $decodedWeddingMapIframe = base64_decode($weddingMapIframeEncoded, true);
+  if (is_string($decodedWeddingMapIframe)) {
+    $weddingMapIframeValue = $decodedWeddingMapIframe;
+  }
+}
 ?>
 
 <style>
@@ -280,6 +287,12 @@ html,body{ height:auto !important; min-height:100% !important; overflow-y:auto !
                           </div>
                         </div>
                       </div>
+                      <div class="mb-wedconf-field" style="margin-bottom:14px;">
+                        <label for="wed_wedding_map_iframe_visible">Iframe Google Maps</label>
+                        <textarea id="wed_wedding_map_iframe_visible" class="form-control" rows="5" placeholder="Collez ici le code iframe Google Maps ou un lien Maps"><?php echo htmlspecialchars($weddingMapIframeValue, ENT_QUOTES, 'UTF-8'); ?></textarea>
+                        <input type="hidden" id="wed_wedding_map_iframe_b64" name="wedding_map_iframe_b64" value="<?php echo htmlspecialchars($weddingMapIframeEncoded, ENT_QUOTES, 'UTF-8'); ?>">
+                        <small style="display:block;margin-top:8px;color:#64748b;font-weight:700;">Le code est enregistré sous forme encodée pour éviter les blocages serveur.</small>
+                      </div>
                       <?php } ?>
 
                       <?php if (!empty($sectionPanel['fields'])) { ?>
@@ -352,6 +365,7 @@ function confirmSuppEvent(event, codPhoto, codGetevent) {
 }
 (function(){ document.querySelectorAll('.box').forEach(function(box){ const header = box.querySelector('.box-header'); if (!header) return; header.addEventListener('click', function(e){ if (!e.target.closest('button,a,input,label,textarea,select')) box.classList.toggle('open'); }); }); })();
 (function(){ document.querySelectorAll('[data-wedding-section-card]').forEach(function(card){ function refresh(){ const checked = card.querySelector('input[type="radio"][name^="wedding_sections"]:checked'); card.classList.toggle('is-section-hidden', !!checked && checked.value === 'hide'); } card.querySelectorAll('input[type="radio"][name^="wedding_sections"]').forEach(function(radio){ radio.addEventListener('change', refresh); }); refresh(); }); })();
+(function(){ const form = document.getElementById('weddingSiteForm'); const visibleInput = document.getElementById('wed_wedding_map_iframe_visible'); const encodedInput = document.getElementById('wed_wedding_map_iframe_b64'); if (!form || !visibleInput || !encodedInput) return; function encodeMap(value){ return btoa(unescape(encodeURIComponent(String(value || '')))); } function sync(){ const value = visibleInput.value.trim(); encodedInput.value = value ? encodeMap(value) : ''; } visibleInput.addEventListener('input', sync); form.addEventListener('submit', sync); sync(); })();
 (function(){ const openBtn = document.getElementById('openGalleryModal'); const closeBtn = document.getElementById('closeGalleryModal'); const modal = document.getElementById('galleryModal'); if (!openBtn || !closeBtn || !modal) return; openBtn.addEventListener('click', function(){ modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); }); closeBtn.addEventListener('click', function(){ modal.classList.remove('is-open'); modal.setAttribute('aria-hidden','true'); }); modal.addEventListener('click', function(event){ if (event.target === modal) closeBtn.click(); }); })();
 (function(){ const openBtn = document.getElementById('openLoveStoryModal'); const closeBtn = document.getElementById('closeLoveStoryModal'); const modal = document.getElementById('loveStoryModal'); if (!openBtn || !closeBtn || !modal) return; openBtn.addEventListener('click', function(){ modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); }); closeBtn.addEventListener('click', function(){ modal.classList.remove('is-open'); modal.setAttribute('aria-hidden','true'); }); modal.addEventListener('click', function(event){ if (event.target === modal) closeBtn.click(); }); })();
 (function(){ const list = document.getElementById('existingLoveStepList'); const deletedFields = document.getElementById('deletedLoveStepFields'); if (!list || !deletedFields) return; list.addEventListener('click', function(event){ const button = event.target.closest('[data-delete-existing-love-step]'); if (!button) return; const stepId = button.getAttribute('data-delete-existing-love-step'); if (!stepId) return; const input = document.createElement('input'); input.type = 'hidden'; input.name = 'delete_love_step_ids[]'; input.value = stepId; deletedFields.appendChild(input); const row = button.closest('[data-existing-love-step]'); if (row) row.remove(); if (!list.querySelector('[data-existing-love-step]')) list.insertAdjacentHTML('beforeend', '<div class="alert alert-light mb-0" style="border-radius:16px;">Toutes les étapes enregistrées seront supprimées après enregistrement.</div>'); }); })();

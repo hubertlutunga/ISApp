@@ -44,6 +44,7 @@ final class WeddingWebsiteSettingsService
                 'wedding_photo_enabled' => '1',
                 'wedding_map_enabled' => '1',
                 'wedding_map_iframe' => '',
+                'wedding_map_iframe_b64' => '',
                 'party_enabled' => '1',
                 'party_title' => 'Wedding Party',
                 'party_time' => '',
