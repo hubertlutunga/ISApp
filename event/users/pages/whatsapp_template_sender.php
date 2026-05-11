@@ -387,7 +387,7 @@ if (!function_exists('isapp_whatsapp_sender_normalize_recipient')) {
         $phone = preg_replace('/[\s\-().]/', '', $phone);
 
         if (!preg_match('/^\+[1-9]\d{7,14}$/', $phone)) {
-            throw new RuntimeException('Le numero WhatsApp doit etre saisi au format international complet, par exemple +242061234567 ou +243810678785.');
+            throw new RuntimeException('Le numero WhatsApp doit etre saisi au format international complet, par exemple +243XXXXXXXXX.');
         }
 
         return 'whatsapp:' . $phone;
