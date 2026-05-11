@@ -811,7 +811,7 @@ async function confirmSuppInv(e, idInv, codEvent, nom) {
 				   <span class="close" onclick="closeModal()" style="cursor: pointer; float: right; font-size: 24px;">&times;</span><br>
 				   <h4 id="modalTitle">Envoyer l'invitation</h4> <br><br>
 				   <label for="whatsappNumber" id="whatsappNumberLabel" style="display:block;margin-bottom:8px;color:#0f172a;font-size:13px;font-weight:700;"><?php echo htmlspecialchars($audienceWhatsAppLabel, ENT_QUOTES, 'UTF-8'); ?></label>
-				   <input type="text" required pattern="^\+243\d{9}$" inputmode="tel" autocapitalize="off" autocorrect="off" spellcheck="false"
+				   <input type="text" required pattern="^\+[1-9]\d{7,14}$" inputmode="tel" autocapitalize="off" autocorrect="off" spellcheck="false"
 				   title="Veuillez entrer un numero WhatsApp au format international complet (ex: +242061234567)." id="whatsappNumber" name="phoneinv" class="input-group-text bg-transparent" style="border-radius:7px 7px 0px 0px;height:45px;width:100%;" placeholder="Ex: +242061234567" />
 				   <button class="btn btn-light isapp-contact-picker" type="button" id="importContactButton" onclick="importPhoneContact()" style="width:100%;margin-top:10px;border:1px solid #cbd5e1;color:#0f172a;display:none;">Importer depuis mes contacts</button>
 				   <p id="contactPickerHelp" style="display:none;margin:8px 0 0;color:#64748b;font-size:12px;">L'import du repertoire est disponible sur certains navigateurs mobiles compatibles.</p>
@@ -904,25 +904,23 @@ async function confirmSuppInv(e, idInv, codEvent, nom) {
 		   			return '';
 		   		}
 
-		   		let digits = String(value).replace(/\D+/g, '');
+			   	const rawValue = String(value).trim();
+			   	const hasLeadingPlus = rawValue.startsWith('+');
+			   	let digits = rawValue.replace(/\D+/g, '');
+
+			   	if (hasLeadingPlus && digits !== '') {
+			   		return '+' + digits;
+			   	}
 
 		   		if (digits.startsWith('00')) {
-		   			digits = digits.slice(2);
+			   		return '+' + digits.slice(2);
 		   		}
 
-		   		if (digits.startsWith('243') && digits.length === 12) {
-		   			return '+' + digits;
-		   		}
+			   	if (digits.startsWith('243') && digits.length >= 11 && digits.length <= 15) {
+			   		return '+' + digits;
+			   	}
 
-		   		if (digits.startsWith('0') && digits.length === 10) {
-		   			return '+243' + digits.slice(1);
-		   		}
-
-		   		if (digits.length === 9) {
-		   			return '+243' + digits;
-		   		}
-
-		   		return value.trim();
+			   	return rawValue;
 		   	}
 
 		   	async function importPhoneContact() {
