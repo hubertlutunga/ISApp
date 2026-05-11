@@ -49,6 +49,11 @@ $uploadWeddingGalleryPhotos = static function (array $galleryFiles) use ($pdo, $
     $insertGalleryPhoto = $pdo->prepare('INSERT INTO galeriephotos (cod_event, nom_photo) VALUES (?, ?)');
     $importedCount = 0;
 
+    $galleryTargetDir = __DIR__ . '/../galeriephoto';
+    if (!is_dir($galleryTargetDir) && !mkdir($galleryTargetDir, 0775, true) && !is_dir($galleryTargetDir)) {
+        throw new RuntimeException('Le dossier de destination de la galerie est introuvable.');
+    }
+
     foreach ($galleryFiles['tmp_name'] as $key => $tmpName) {
         if ($remainingGallerySlots <= 0) {
             break;
@@ -64,12 +69,16 @@ $uploadWeddingGalleryPhotos = static function (array $galleryFiles) use ($pdo, $
             'error' => $galleryFiles['error'][$key] ?? UPLOAD_ERR_NO_FILE,
             'size' => $galleryFiles['size'][$key] ?? 0,
         ];
-        $galleryPhotoName = EventMediaService::storeUploadedImage($singleGalleryFile, 'galeriephoto', 'galerie_');
+        $galleryPhotoName = EventMediaService::storeUploadedImage($singleGalleryFile, $galleryTargetDir, 'galerie_');
         if ($galleryPhotoName !== null) {
             $insertGalleryPhoto->execute([(int) $cod_event, $galleryPhotoName]);
             $remainingGallerySlots--;
             $importedCount++;
         }
+    }
+
+    if ($importedCount === 0 && count(array_filter($galleryFiles['name'] ?? [])) > 0) {
+        throw new RuntimeException('Aucune photo n’a pu être enregistrée dans la galerie.');
     }
 
     return $importedCount;
