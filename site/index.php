@@ -173,7 +173,46 @@ if ($content === null) {
  
 
       <?php
-        include($content);
+        $isWeddingAccueilPage = $requestedPage === 'accueil' && (string) ($type_event ?? '') === '1';
+
+        if ($isWeddingAccueilPage) {
+            ob_start();
+
+            try {
+                include($content);
+                echo ob_get_clean();
+            } catch (Throwable $exception) {
+                if (ob_get_level() > 0) {
+                    ob_end_clean();
+                }
+
+                $fallbackTitle = htmlspecialchars((string) ($fetard ?: 'Les mariés'), ENT_QUOTES, 'UTF-8');
+                $fallbackType = htmlspecialchars((string) ($typeevent ?: 'Mariage'), ENT_QUOTES, 'UTF-8');
+                $fallbackDate = $date_event ? date('d/m/Y H:i', strtotime((string) $date_event)) : '';
+                $fallbackPlace = htmlspecialchars((string) ($lieu ?: 'Lieu à confirmer'), ENT_QUOTES, 'UTF-8');
+                ?>
+                <div class="wrapper">
+                    <section class="gradient-overlay gradient-overlay-dark">
+                        <div class="container" style="padding:120px 15px 90px; text-align:center; color:#fff;">
+                            <p style="font-size:18px; letter-spacing:0.35em; text-transform:uppercase; margin-bottom:20px;">With Love</p>
+                            <h1 style="font-size:48px; margin-bottom:18px;"><?php echo $fallbackTitle; ?></h1>
+                            <p style="font-size:22px; margin-bottom:12px;"><?php echo $fallbackType; ?></p>
+                            <?php if ($fallbackDate !== '') { ?><p style="font-size:18px; margin-bottom:10px;"><?php echo htmlspecialchars($fallbackDate, ENT_QUOTES, 'UTF-8'); ?></p><?php } ?>
+                            <p style="font-size:18px; margin-bottom:0;"><?php echo $fallbackPlace; ?></p>
+                        </div>
+                    </section>
+                    <section class="bg-white">
+                        <div class="container" style="padding:48px 15px 72px; text-align:center; color:#334155;">
+                            <h2 style="margin-bottom:16px; color:#0f172a;">Le site du mariage est accessible</h2>
+                            <p style="margin:0 auto; max-width:720px; line-height:1.8;">Une version simplifiee a ete chargee automatiquement pour garantir l'acces a cette invitation pendant que la personnalisation complete du site est securisee.</p>
+                        </div>
+                    </section>
+                </div>
+                <?php
+            }
+        } else {
+            include($content);
+        }
       ?>
          
 
