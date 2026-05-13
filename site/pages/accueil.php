@@ -21,6 +21,10 @@ if ($isappDiagFile !== null) {
 $isappDiagStage = static function (string $stage) use ($isappDiagMode, $isappDiagFile): void {
    if ($isappDiagMode) {
       @file_put_contents($isappDiagFile, $stage . PHP_EOL, FILE_APPEND);
+      echo '<!--ISAPP:' . htmlspecialchars($stage, ENT_QUOTES, 'UTF-8') . '-->';
+      if (function_exists('flush')) {
+         flush();
+      }
    }
 };
 

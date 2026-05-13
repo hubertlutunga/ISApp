@@ -174,8 +174,9 @@ if ($content === null) {
 
       <?php
         $isWeddingAccueilPage = $requestedPage === 'accueil' && (string) ($type_event ?? '') === '1';
+                $isDiagRequest = isset($_GET['diag']) && (string) $_GET['diag'] === '1';
 
-        if ($isWeddingAccueilPage) {
+                if ($isWeddingAccueilPage && !$isDiagRequest) {
             ob_start();
 
             try {
