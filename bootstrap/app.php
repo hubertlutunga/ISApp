@@ -20,6 +20,7 @@ if (!defined('ISAPP_BOOTSTRAPPED')) {
     require_once __DIR__ . '/../src/Support/EventThumbnailService.php';
     require_once __DIR__ . '/../src/Support/EventTableService.php';
     require_once __DIR__ . '/../src/Support/LoveStoryService.php';
+    require_once __DIR__ . '/../src/Support/PublicSiteTraceService.php';
     require_once __DIR__ . '/../src/Support/WeddingWebsiteSettingsService.php';
     require_once __DIR__ . '/../src/Support/InviteStatsService.php';
     require_once __DIR__ . '/../src/Support/InviteStatusService.php';

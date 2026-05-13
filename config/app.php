@@ -32,6 +32,11 @@ $appConfig = [
         'username' => getenv('ISAPP_SMTP_USERNAME') ?: 'eventpass@invitationspeciale.com',
         'password' => getenv('ISAPP_SMTP_PASSWORD') ?: 'Huberusbb_01',
     ],
+    'public_trace' => [
+        'enabled' => getenv('ISAPP_PUBLIC_TRACE_ENABLED') === '1',
+        'key' => getenv('ISAPP_PUBLIC_TRACE_KEY') ?: '',
+        'directory' => getenv('ISAPP_PUBLIC_TRACE_DIR') ?: dirname(__DIR__) . '/storage/traces/public-site',
+    ],
 ];
 
 $localConfigPath = __DIR__ . '/app.local.php';

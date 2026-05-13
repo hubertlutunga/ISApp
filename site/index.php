@@ -16,12 +16,29 @@ if ($codevent == "90") {
     $codevent = $_GET['cod'];
  }
 
+PublicSiteTraceService::boot([
+    'entrypoint' => 'site/index.php',
+    'page' => $requestedPage,
+    'cod' => (string) $codevent,
+    'idinv' => (string) ($_GET['idinv'] ?? ''),
+    'method' => (string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'),
+], $isAppConfig['public_trace'] ?? []);
+PublicSiteTraceService::record('site_request_booted', [
+    'normalized_cod' => (string) $codevent,
+]);
+
 
 $stmt2 = $pdo->prepare("SELECT * from events WHERE cod_event = :cod_event");
 $stmt2->execute([
     'cod_event' => $codevent
 ]); 
 $dataevent = $stmt2->fetch(); 
+
+PublicSiteTraceService::record('site_event_loaded', [
+    'event_found' => (bool) $dataevent,
+    'type_event' => (string) ($dataevent['type_event'] ?? ''),
+    'date_event' => (string) ($dataevent['date_event'] ?? ''),
+]);
 
  
  
@@ -30,8 +47,14 @@ $genericAccessPages = ['access', 'access_cible', 'pointacces', 'search_invites']
 
 if ($dataevent && !in_array($requestedPage, $genericAccessPages, true)) {
     if ($dataevent['type_event'] == "3") {
+        PublicSiteTraceService::finish('site_redirect_conference', [
+            'target' => 'conference',
+        ]);
         header("Location: conference/index.php?page=accueil&cod=".$codevent); 
     } elseif ($dataevent['type_event'] == "2") {
+        PublicSiteTraceService::finish('site_redirect_anniversaire', [
+            'target' => 'anniversaire',
+        ]);
         header("Location: anniversaire/index.php?page=accueil&cod=".$codevent); 
     }
 }
@@ -123,7 +146,15 @@ $mail = new PHPMailer(true);
 
 $content = PageRouter::resolve($_GET['page'] ?? null, __DIR__ . '/pages');
 
+PublicSiteTraceService::record('site_content_resolved', [
+    'content_found' => $content !== null,
+    'content' => $content !== null ? basename($content) : '',
+]);
+
 if ($content === null) {
+    PublicSiteTraceService::finish('site_page_redirect_default', [
+        'requested_page' => (string) ($_GET['page'] ?? ''),
+    ]);
     PageRouter::redirect('index.php?page=accueil');
 }
 
@@ -184,13 +215,25 @@ if ($content === null) {
 
       <?php
         $isWeddingAccueilPage = $requestedPage === 'accueil' && (string) ($type_event ?? '') === '1';
-                if ($isWeddingAccueilPage) {
+        PublicSiteTraceService::record('site_before_render', [
+            'wedding_accueil' => $isWeddingAccueilPage,
+            'content' => basename((string) $content),
+        ]);
+
+        if ($isWeddingAccueilPage) {
             ob_start();
 
             try {
+                PublicSiteTraceService::record('site_wedding_accueil_include_start', [
+                    'content' => basename((string) $content),
+                ]);
                 include($content);
                 echo ob_get_clean();
+                PublicSiteTraceService::record('site_wedding_accueil_include_done');
             } catch (Throwable $exception) {
+                PublicSiteTraceService::exception('site_wedding_accueil_exception', $exception, [
+                    'content' => basename((string) $content),
+                ]);
                 if (ob_get_level() > 0) {
                     ob_end_clean();
                 }
@@ -218,10 +261,21 @@ if ($content === null) {
                     </section>
                 </div>
                 <?php
+                PublicSiteTraceService::record('site_wedding_accueil_fallback_rendered');
             }
         } else {
+            PublicSiteTraceService::record('site_generic_include_start', [
+                'content' => basename((string) $content),
+            ]);
             include($content);
+            PublicSiteTraceService::record('site_generic_include_done', [
+                'content' => basename((string) $content),
+            ]);
         }
+
+        PublicSiteTraceService::finish('site_request_completed', [
+            'wedding_accueil' => $isWeddingAccueilPage,
+        ]);
       ?>
          
 

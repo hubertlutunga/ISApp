@@ -20,9 +20,19 @@ if ($photocoeur === '') {
    $photocoeur = $photo;
 }
 
+PublicSiteTraceService::record('wedding_accueil_boot', [
+   'event_id' => (int) $codevent,
+   'has_idinv' => isset($_GET['idinv']),
+   'hero_photo' => $photo,
+   'heart_photo' => $photocoeur,
+]);
+
 try {
    $weddingSiteSettings = WeddingWebsiteSettingsService::get($pdo, (int) $codevent, $dataevent);
 } catch (Throwable $exception) {
+   PublicSiteTraceService::exception('wedding_accueil_settings_fallback', $exception, [
+      'event_id' => (int) $codevent,
+   ]);
    $weddingSiteSettings = WeddingWebsiteSettingsService::defaults($dataevent);
 }
 
@@ -63,6 +73,17 @@ if ($photo === '') {
 if ($photocoeur === '') {
    $photocoeur = $photo;
 }
+
+PublicSiteTraceService::record('wedding_accueil_settings_loaded', [
+   'event_id' => (int) $codevent,
+   'hero_enabled' => $wedSectionEnabled('hero'),
+   'save_date_enabled' => $wedSectionEnabled('save_date'),
+   'wedding_events_enabled' => $showWeddingEventsSection,
+   'love_story_enabled' => $wedSectionEnabled('love_story'),
+   'rsvp_enabled' => $wedSectionEnabled('rsvp'),
+   'location_enabled' => $wedSectionEnabled('location'),
+   'gallery_enabled' => $wedSectionEnabled('gallery'),
+]);
 
 ?>  
 
@@ -155,6 +176,7 @@ if ($photocoeur === '') {
 
 
          <?php if ($wedSectionEnabled('hero')) { ?>
+         <?php PublicSiteTraceService::record('wedding_accueil_before_hero'); ?>
          <section class="gradient-overlay gradient-overlay-dark wedding-hero love-ambient">
             <img class="bg-image" src="../couple/images/<?php echo $photo; ?>" alt="">
             <div class="love-particles" aria-hidden="true">
@@ -249,6 +271,7 @@ if (isset($_GET['idinv'])) {
 					<p class="font-weight-300 text-light lead mb-5 pcompteeur love-subtitle"><?php echo $wedE($wedText('hero_subtitle', 'Se marient dans')); ?></p>
                     
  
+                 <?php PublicSiteTraceService::record('wedding_accueil_before_countdown'); ?>
                  <?php include('comptearebour.php')?>
 
 
@@ -317,6 +340,7 @@ $formatted_date = ucfirst($formatted_date);
 
          <!--Date section-->
          <?php if ($wedSectionEnabled('save_date')) { ?>
+         <?php PublicSiteTraceService::record('wedding_accueil_before_save_date'); ?>
          <section id="resto" class=" ">
             <div class="container spacer-double-lg">
                <div class="row justify-content-lg-between align-items-center">
@@ -421,9 +445,12 @@ if ($customSaveDateText !== ''): ?>
 
 
 
+   <?php PublicSiteTraceService::record('wedding_accueil_before_benediction', ['enabled' => $showWeddingEventsSection]); ?>
    <?php if ($showWeddingEventsSection) { include('benediction.php'); } ?>
  
+<?php PublicSiteTraceService::record('wedding_accueil_before_lovestory', ['enabled' => $wedSectionEnabled('love_story')]); ?>
 <?php if ($wedSectionEnabled('love_story')) { include('lovestory.php'); } ?>
+<?php PublicSiteTraceService::record('wedding_accueil_before_cadeaux', ['enabled' => $wedSectionEnabled('gift') || $wedSectionEnabled('friends')]); ?>
 <?php if ($wedSectionEnabled('gift') || $wedSectionEnabled('friends')) { include('cadeaux.php'); } ?>
 
 
@@ -449,6 +476,7 @@ if ($customSaveDateText !== ''): ?>
 
 		?>
  
+           <?php PublicSiteTraceService::record('wedding_accueil_before_rsvp'); ?>
            <?php if ($wedSectionEnabled('rsvp')) { ?>
          
          <section id="rsvp" class="bg-secondary spacer-one-top-lg o-hidden ">
@@ -1613,6 +1641,7 @@ Alors, partagez avec nous vos plus beaux souhaits pour ce nouveau chapitre.</blo
       return '<a href="' . $wedE($mapValue) . '" target="_blank" rel="noopener" class="hover-arrow">Voir sur Maps <span class="fa fa-arrow-right"></span></a>';
    };
 ?>
+<?php PublicSiteTraceService::record('wedding_accueil_before_location', ['enabled' => $wedSectionEnabled('location')]); ?>
          <section id="location" class="spacer-one-top-lg">
             <div class="container spacer-one-bottom-lg">
                <div class="row justify-content-center">
@@ -1649,6 +1678,7 @@ Alors, partagez avec nous vos plus beaux souhaits pour ce nouveau chapitre.</blo
          </section>
 <?php } ?>
 
+<?php PublicSiteTraceService::record('wedding_accueil_before_gallery', ['enabled' => $wedSectionEnabled('gallery')]); ?>
 <?php if ($wedSectionEnabled('gallery')) { include('sectiongalerie.php'); } ?>
 
 
@@ -1744,10 +1774,13 @@ Alors, partagez avec nous vos plus beaux souhaits pour ce nouveau chapitre.</blo
 
 <?php if (isset($_GET['idinv'])): ?>
   <div id="feneteconf-root" class="feneteconf-root">
+      <?php PublicSiteTraceService::record('wedding_accueil_before_confirmation_modal'); ?>
     <?php include('confscript_wedding.php'); ?>
     <?php include('modalreponse.php'); ?>
   </div>
 <?php endif; ?>
+
+<?php PublicSiteTraceService::record('wedding_accueil_template_complete'); ?>
 
 
 

@@ -102,6 +102,9 @@ final class WeddingWebsiteSettingsService
     {
         $defaults = self::defaults($event);
         if ($eventId <= 0) {
+            self::trace('wedding_settings_defaults_without_event', [
+                'event_id' => $eventId,
+            ]);
             return $defaults;
         }
 
@@ -113,7 +116,22 @@ final class WeddingWebsiteSettingsService
             $stmt->closeCursor();
             $stored = $json !== '' ? json_decode($json, true) : [];
             if (!is_array($stored)) {
+                self::trace('wedding_settings_invalid_json', [
+                    'event_id' => $eventId,
+                    'json_error' => json_last_error_msg(),
+                    'json_excerpt' => substr($json, 0, 200),
+                ]);
                 $stored = [];
+            }
+
+            foreach (['sections', 'content', 'images'] as $key) {
+                if (isset($stored[$key]) && !is_array($stored[$key])) {
+                    self::trace('wedding_settings_invalid_shape', [
+                        'event_id' => $eventId,
+                        'key' => $key,
+                        'type' => get_debug_type($stored[$key]),
+                    ]);
+                }
             }
 
             if (!array_key_exists('visibility_initialized', $stored) && isset($stored['sections']) && is_array($stored['sections'])) {
@@ -128,6 +146,13 @@ final class WeddingWebsiteSettingsService
                 $defaults
             );
         } catch (Throwable $exception) {
+            self::trace('wedding_settings_exception', [
+                'event_id' => $eventId,
+                'exception' => get_class($exception),
+                'message' => $exception->getMessage(),
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+            ]);
             return $defaults;
         }
     }
@@ -262,5 +287,12 @@ final class WeddingWebsiteSettingsService
         }
 
         return $settings;
+    }
+
+    private static function trace(string $stage, array $context = []): void
+    {
+        if (class_exists('PublicSiteTraceService')) {
+            PublicSiteTraceService::record($stage, $context);
+        }
     }
 }
