@@ -123,7 +123,10 @@ final class WeddingWebsiteSettingsService
                 $stored['visibility_initialized'] = true;
             }
 
-            return self::enforceAlwaysVisibleSections(self::mergeRecursive($defaults, $stored));
+            return self::normalizeStructure(
+                self::enforceAlwaysVisibleSections(self::mergeRecursive($defaults, $stored)),
+                $defaults
+            );
         } catch (Throwable $exception) {
             return $defaults;
         }
@@ -149,7 +152,8 @@ final class WeddingWebsiteSettingsService
 
     public static function fromPost(array $post, array $current): array
     {
-        $settings = self::mergeRecursive(self::defaults(), $current);
+        $defaults = self::defaults();
+        $settings = self::normalizeStructure(self::mergeRecursive($defaults, $current), $defaults);
         $knownSections = array_keys($settings['sections']);
         $postedSections = isset($post['wedding_sections']) && is_array($post['wedding_sections']) ? $post['wedding_sections'] : [];
 
@@ -233,6 +237,22 @@ final class WeddingWebsiteSettingsService
         }
 
         return $defaults;
+    }
+
+    private static function normalizeStructure(array $settings, array $defaults): array
+    {
+        foreach (['sections', 'content', 'images'] as $key) {
+            if (!isset($settings[$key]) || !is_array($settings[$key])) {
+                $settings[$key] = $defaults[$key];
+                continue;
+            }
+
+            $settings[$key] = self::mergeRecursive($defaults[$key], $settings[$key]);
+        }
+
+        $settings['visibility_initialized'] = (bool) ($settings['visibility_initialized'] ?? $defaults['visibility_initialized']);
+
+        return $settings;
     }
 
     private static function enforceAlwaysVisibleSections(array $settings): array
