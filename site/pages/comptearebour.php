@@ -73,7 +73,7 @@
 
 
 <script>
-    const eventDate = new Date("<?php echo $dataevent['date_event']; ?>").getTime();
+    const eventDate = new Date("<?php echo htmlspecialchars((string) ($dataevent['date_event'] ?? ($date_event ?? '')), ENT_QUOTES, 'UTF-8'); ?>").getTime();
 
     const countdown = setInterval(function() {
         const now = new Date().getTime();

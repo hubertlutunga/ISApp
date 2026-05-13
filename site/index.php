@@ -38,10 +38,13 @@ if ($dataevent && !in_array($requestedPage, $genericAccessPages, true)) {
  
 
 
-if (!$dataevent['icone']) {
+
+$eventIcon = trim((string) ($dataevent['icone'] ?? ''));
+
+if ($eventIcon === '') {
 	$favicon = '../../images/Logo_invitationSpeciale_2.png';
 }else {
-	$favicon = '../../couple/images/'.$dataevent['icone'];
+    $favicon = '../../couple/images/'.$eventIcon;
 }
 
 
@@ -51,6 +54,9 @@ if (!$dataevent) {
 	$date_event = '';
 	$type_event = '';
 	$lieu = '';
+    $typeevent = 'Evenement';
+    $fetard = 'Inconnu';
+    $displayvue = 'display:none;';
 	$display = 'none';
 } else {  
 	
@@ -95,6 +101,10 @@ if ($type_event == "1") {
     $typeevent = $data_evenement;
     $fetard = $dataevent['nomfetard'] ?? 'Inconnu';
 	$displayvue = 'display:none;';
+} else {
+    $typeevent = $data_evenement ?: 'Evenement';
+    $fetard = $fetard ?: 'Inconnu';
+    $displayvue = 'display:none;';
 }
 
  $fetard = ucwords(strtolower($fetard));
@@ -174,9 +184,7 @@ if ($content === null) {
 
       <?php
         $isWeddingAccueilPage = $requestedPage === 'accueil' && (string) ($type_event ?? '') === '1';
-                $isDiagRequest = isset($_GET['diag']) && (string) $_GET['diag'] === '1';
-
-                if ($isWeddingAccueilPage && !$isDiagRequest) {
+                if ($isWeddingAccueilPage) {
             ob_start();
 
             try {

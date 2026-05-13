@@ -129,9 +129,11 @@
                         </div>
 
 
+                        <?php $partyDateValue = (string) ($dataevent['date_event'] ?? ($date_event ?? '')); ?>
+                        <?php $partyTimeValue = $partyDateValue !== '' ? date('H:i', strtotime($partyDateValue)) : ''; ?>
                         <h5 class="mb-0 text-white"><?php echo isset($wedText, $wedE) ? $wedE($wedText('party_title', 'Soirée dansante')) : 'Soirée dansante'; ?></h5>
-                        <h6 class="mb-5 text-white"><?php echo isset($wedText, $wedE) ? $wedE($wedText('party_time', date('H:i', strtotime($dataevent['date_event'])))) : date('H:i', strtotime($dataevent['date_event'])); ?></h6>
-                        <p class="text-align-center"><?php echo isset($wedText, $wedE) ? nl2br($wedE($wedText('party_place', trim((string) $lieu . ' ' . (string) ($dataevent['adresse'] ?? ''))))) : $lieu . ' ' . $dataevent['adresse'];?>
+                        <h6 class="mb-5 text-white"><?php echo isset($wedText, $wedE) ? $wedE($wedText('party_time', $partyTimeValue)) : $partyTimeValue; ?></h6>
+                        <p class="text-align-center"><?php echo isset($wedText, $wedE) ? nl2br($wedE($wedText('party_place', trim((string) $lieu . ' ' . (string) ($dataevent['adresse'] ?? ''))))) : $lieu . ' ' . ($dataevent['adresse'] ?? '');?>
                         </p>
                      </div>
                   </div>
