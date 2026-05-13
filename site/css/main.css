@@ -140,9 +140,11 @@ Created by : mutationthemes
     z-index: 2;
     top: 5px;
     width: 100%;
+    line-height: 0;
 }
 .curved-decoration svg {
     height: 7vw;
+    display: block;
 }
 .curved-decoration svg {
     position: relative;
