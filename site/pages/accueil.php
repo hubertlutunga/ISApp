@@ -10,9 +10,17 @@ $dataevent += [
 ];
 
 $isappDiagMode = isset($_GET['diag']) && (string) $_GET['diag'] === '1';
-$isappDiagStage = static function (string $stage) use ($isappDiagMode): void {
+$isappDiagFile = $isappDiagMode
+   ? __DIR__ . '/../TEMP/isapp_diag_' . preg_replace('/[^0-9A-Za-z_-]/', '', (string) $codevent) . '.log'
+   : null;
+
+if ($isappDiagFile !== null) {
+   @file_put_contents($isappDiagFile, '');
+}
+
+$isappDiagStage = static function (string $stage) use ($isappDiagMode, $isappDiagFile): void {
    if ($isappDiagMode) {
-      header('X-ISAPP-Debug-Stage: ' . $stage, true);
+      @file_put_contents($isappDiagFile, $stage . PHP_EOL, FILE_APPEND);
    }
 };
 
