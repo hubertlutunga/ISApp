@@ -1,14 +1,35 @@
 <?php 
 
-if ($dataevent['photostory'] === NULL) {
+$dataevent = is_array($dataevent ?? null) ? $dataevent : [];
+$dataevent += [
+   'photostory' => '',
+   'photo' => '',
+   'initiale_mar' => '',
+   'prenom_epoux' => '',
+   'prenom_epouse' => '',
+];
+
+$photo = trim((string) $dataevent['photostory']);
+$photocoeur = trim((string) $dataevent['photo']);
+
+if ($photo === '') {
    $photo = 'defaulwed_1.png';
-   $photocoeur = 'defaulwed_1.png';
-}else{
-   $photo = $dataevent['photostory'];
-   $photocoeur = $dataevent['photo'];
 }
 
-$weddingSiteSettings = WeddingWebsiteSettingsService::get($pdo, (int) $codevent, is_array($dataevent ?? null) ? $dataevent : []);
+if ($photocoeur === '') {
+   $photocoeur = $photo;
+}
+
+try {
+   $weddingSiteSettings = WeddingWebsiteSettingsService::get($pdo, (int) $codevent, $dataevent);
+} catch (Throwable $exception) {
+   $weddingSiteSettings = WeddingWebsiteSettingsService::defaults($dataevent);
+}
+
+if (!is_array($weddingSiteSettings)) {
+   $weddingSiteSettings = WeddingWebsiteSettingsService::defaults($dataevent);
+}
+
 $wedSectionEnabled = static function (string $section) use ($weddingSiteSettings): bool {
    return WeddingWebsiteSettingsService::sectionEnabled($weddingSiteSettings, $section);
 };
@@ -28,12 +49,20 @@ $wedE = static function (string $value): string {
    return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 };
 
-$photo = $wedImage('hero_bg', $photo);
-$photocoeur = $wedImage('save_heart', $photocoeur);
+$photo = trim($wedImage('hero_bg', $photo));
+$photocoeur = trim($wedImage('save_heart', $photocoeur));
 $showWeddingPhoto = $wedFlag('wedding_photo_enabled', true);
 $showWeddingMap = $wedFlag('wedding_map_enabled', true);
 $showWeddingParty = $wedFlag('party_enabled', true);
 $showWeddingEventsSection = $wedSectionEnabled('wedding_events') && ($showWeddingPhoto || $showWeddingMap || $showWeddingParty);
+
+if ($photo === '') {
+   $photo = 'defaulwed_1.png';
+}
+
+if ($photocoeur === '') {
+   $photocoeur = $photo;
+}
 
 ?>  
 
