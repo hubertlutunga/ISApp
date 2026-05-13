@@ -9,6 +9,13 @@ $dataevent += [
    'prenom_epouse' => '',
 ];
 
+$isappDiagMode = isset($_GET['diag']) && (string) $_GET['diag'] === '1';
+$isappDiagStage = static function (string $stage) use ($isappDiagMode): void {
+   if ($isappDiagMode) {
+      header('X-ISAPP-Debug-Stage: ' . $stage, true);
+   }
+};
+
 $photo = trim((string) $dataevent['photostory']);
 $photocoeur = trim((string) $dataevent['photo']);
 
@@ -19,6 +26,8 @@ if ($photo === '') {
 if ($photocoeur === '') {
    $photocoeur = $photo;
 }
+
+$isappDiagStage('init');
 
 try {
    $weddingSiteSettings = WeddingWebsiteSettingsService::get($pdo, (int) $codevent, $dataevent);
@@ -154,6 +163,7 @@ if ($photocoeur === '') {
 </style>
 
 
+         <?php $isappDiagStage('before_hero'); ?>
          <?php if ($wedSectionEnabled('hero')) { ?>
          <section class="gradient-overlay gradient-overlay-dark wedding-hero love-ambient">
             <img class="bg-image" src="../couple/images/<?php echo $photo; ?>" alt="">
@@ -249,7 +259,8 @@ if (isset($_GET['idinv'])) {
 					<p class="font-weight-300 text-light lead mb-5 pcompteeur love-subtitle"><?php echo $wedE($wedText('hero_subtitle', 'Se marient dans')); ?></p>
                     
  
-					  <?php include('comptearebour.php')?>
+                 <?php $isappDiagStage('before_countdown'); ?>
+                 <?php include('comptearebour.php')?>
 
 
  
@@ -276,6 +287,7 @@ if (isset($_GET['idinv'])) {
             </div>
          </section>
          <?php } ?>
+         <?php $isappDiagStage('after_hero'); ?>
          <!--End hero section-->
 
 
@@ -392,17 +404,23 @@ if ($customSaveDateText !== ''): ?>
                            </defs>
                         
                            <image mask="url(#mask)" style="width:950px;" xlink:href="../couple/images/<?php echo $photocoeur;?>" />
-                           <g>
-                              <path fill="none" stroke="#E35D5D" stroke-width="7" stroke-linecap="round" stroke-miterlimit="10" d="M747.8805,524.349
-                                 c108.1955-68.637,139.1927-213.677,70.5558-321.8725S606.4696,62.2462,498.2741,130.8832l0,0" />
-                           </g>
-                        </svg>
-                     </div>
-                  </div>
-               </div>
+
+
+
+
+
+
+
+                              <?php $isappDiagStage('before_benediction'); ?>
+                              <?php if ($showWeddingEventsSection) { include('benediction.php'); } ?>
+                              <?php $isappDiagStage('after_benediction'); ?>
             </div>
-            <div class="curved-decoration">
-<svg  width="100%" height="100%" class="bg-secondary-svg" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+                           <?php $isappDiagStage('before_lovestory'); ?>
+                           <?php if ($wedSectionEnabled('love_story')) { include('lovestory.php'); } ?>
+                           <?php $isappDiagStage('after_lovestory'); ?>
+                           <?php $isappDiagStage('before_cadeaux'); ?>
+                           <?php if ($wedSectionEnabled('gift') || $wedSectionEnabled('friends')) { include('cadeaux.php'); } ?>
+                           <?php $isappDiagStage('after_cadeaux'); ?>
     viewBox="0 0 2560 168.6227" enable-background="new 0 0 2560 168.6227" xml:space="preserve">
 <g>
 </g>
@@ -455,7 +473,8 @@ if ($customSaveDateText !== ''): ?>
 
 		?>
  
-         <?php if ($wedSectionEnabled('rsvp')) { ?>
+           <?php $isappDiagStage('before_rsvp'); ?>
+           <?php if ($wedSectionEnabled('rsvp')) { ?>
          
          <section id="rsvp" class="bg-secondary spacer-one-top-lg o-hidden ">
             <!--Container-->
