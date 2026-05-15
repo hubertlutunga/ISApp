@@ -172,26 +172,26 @@ if (!function_exists('isapp_whatsapp_sender_event_label')) {
             $weddingType = isapp_whatsapp_sender_normalize_wedding_type((string) ($event['type_mar'] ?? ''));
 
             if ($weddingType === 'coutumier') {
-                return 'a la soiree du mariage coutumier';
+                return 'à la soirée du mariage coutumier';
             }
 
             if ($weddingType === 'civil') {
-                return 'a la ceremonie du mariage civil';
+                return 'à la cérémonie du mariage civil';
             }
 
             if ($weddingType === 'religieux') {
-                return 'a la soiree du mariage religieux';
+                return 'à la soirée du mariage religieux';
             }
 
-            return 'a la benediction nuptiale';
+            return 'à la bénédiction nuptiale';
         }
 
         if ($eventType === '2') {
-            return 'a l\'anniversaire';
+            return 'à l’anniversaire';
         }
 
         if ($eventType === '3') {
-            return 'a la conference';
+            return 'à la conférence';
         }
 
         $eventName = trim((string) ($event['nom_event'] ?? $event['titre_event'] ?? ''));

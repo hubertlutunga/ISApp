@@ -642,13 +642,13 @@
  
  
  
-											   <div class="list-icons d-inline-flex">
+						<div class="list-icons d-inline-flex">
                           <div class="list-icons-item dropdown">
                                           
   
-											   <a href="#" class="waves-effect waves-light btn btn-outline btn-rounded btn-warning mb-0 btn-sm list-icons-item dropdown-toggle mb-invite-actions" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-h" style="font-size:20px;"></i></a>
+							<a href="#" class="waves-effect waves-light btn btn-outline btn-rounded btn-warning mb-0 btn-sm list-icons-item dropdown-toggle mb-invite-actions" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-h" style="font-size:20px;"></i></a>
                            
-                                                     <div class="dropdown-menu dropdown-menu-end">
+                                <div class="dropdown-menu dropdown-menu-end">
   
  
                        
@@ -820,14 +820,14 @@ async function confirmSuppInv(e, idInv, codEvent, nom) {
 				   <input type="hidden" id="pdfLink" name="pdf_link" />
 				   <button class="btn btn-primary" type="submit" name="submitwhat" style="width:100%">Envoyer l'invitation</button>
 			   </div>
-				   <p style="margin:12px 0 0;color:#475569;font-size:13px;">En validant cette action, l'invitation PDF sera envoyee sur WhatsApp au numero indique pour cet invite.</p>
+				   <p style="margin:12px 0 0;color:#475569;font-size:13px;">En validant cette action, l'invitation PDF sera envoyée sur WhatsApp au numéro indiqué pour cet invité.</p>
 				   <div style="margin-top:12px;padding:12px;border-radius:10px;background:#f8fafc;border:1px solid #e2e8f0;color:#334155;font-size:13px;line-height:1.6;">
 					   <strong style="display:block;margin-bottom:6px;color:#0f172a;">Exemple de message automatique</strong>
-					   Bonjour <span id="previewInviteName">votre invite</span>,<br>
+					   Bonjour <span id="previewInviteName">votre invité</span>,<br>
 					   <br>
 					   Nous avons le plaisir de vous transmettre votre invitation <?php echo htmlspecialchars($sharePreviewContext['event_label'], ENT_QUOTES, 'UTF-8'); ?> de <?php echo htmlspecialchars($sharePreviewContext['signature'], ENT_QUOTES, 'UTF-8'); ?>.<br>
 					   <br>
-					   Nous vous remercions de bien vouloir confirmer votre presence ou votre absence via les boutons disponibles sur votre invitation.<br>
+					   Nous vous remercions de bien vouloir confirmer votre présence ou votre absence via les boutons disponibles sur votre invitation.<br>
 					   <br>
 					   Cordialement,<br>
 					   Invitation Speciale.
