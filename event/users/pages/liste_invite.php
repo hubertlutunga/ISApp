@@ -369,17 +369,27 @@
 			padding-bottom:96px;
 		}
 
+		.table,
 		.mb-invite-table{
+			display:block;
 			table-layout:fixed;
 			width:100%;
 		}
 
+		.mb-invite-table tbody{
+			display:block;
+			width:100%;
+		}
+
 		.mb-invite-row{
-			display:table-row;
+			display:flex;
+			align-items:flex-start;
+			width:100%;
 		}
 
 		.mb-invite-row td{
-			display:table-cell;
+			display:block;
+			box-sizing:border-box;
 			width:auto !important;
 			padding:12px 0 !important;
 			vertical-align:top;
