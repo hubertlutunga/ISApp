@@ -68,13 +68,13 @@ try {
 
     $html .= '
       <tr>
-        <td align="left" class="access-invite-cell" style="border-bottom:1px solid #aaa;padding:7px 0;">
+        <td align="left" class="access-table-cell access-invite-cell">
           <a href="'. $url .'" style="color: '. $colorCss .'" class="access-invite-link">
             <span class="access-invite-name">'. $nom .'</span>
             <span class="access-type-pill">'. htmlspecialchars($tiHtml, ENT_QUOTES, 'UTF-8') .'</span>
           </a>
         </td>
-        <td align="right" style="border-bottom:1px solid #aaa;padding:7px 0;">
+        <td align="right" class="access-table-cell access-table-value-cell">
           <a href="'. $url .'" style="color: '. $colorCss .'" class="access-table-name">'. $tabHtml .'</a>
         </td>
       </tr>

@@ -302,6 +302,16 @@ $accessPageUrl = 'index.php?page=access&cod=' . urlencode((string) $codevent);
         width: 70%;
       }
 
+      .access-table-cell {
+        padding: 14px 0;
+        border-bottom: 1px solid #eef2f7;
+        vertical-align: middle;
+      }
+
+      .access-table-value-cell {
+        text-align: right;
+      }
+
       .access-table td:first-child a {
         color: inherit;
         font-size: 15px;
@@ -390,8 +400,11 @@ $accessPageUrl = 'index.php?page=access&cod=' . urlencode((string) $codevent);
         }
 
         .access-table tbody td:last-child {
-          flex: 0 0 34%;
+          flex: 0 0 auto;
           width: auto;
+          min-width: 88px;
+          max-width: 42%;
+          padding-left: 10px;
           text-align: right !important;
         }
 
@@ -469,13 +482,13 @@ $accessPageUrl = 'index.php?page=access&cod=' . urlencode((string) $codevent);
                     $sing = $row_inv['sing'] === 'C' ? 'Couple' : ($row_inv['sing'] ? 'Singleton' : 'Non defini');
                 ?>
                 <tr>
-                  <td align="left" class="access-invite-cell" style="border-bottom:1px solid #aaa;padding: 7px 0px;">
+                  <td align="left" class="access-table-cell access-invite-cell">
                     <a href="index.php?page=access_cible&codinv=<?php echo (int) $row_inv['id_inv']; ?>&cod=<?php echo htmlspecialchars($codevent, ENT_QUOTES, 'UTF-8'); ?>" style="color: <?php echo htmlspecialchars($color, ENT_QUOTES, 'UTF-8'); ?>" class="access-invite-link">
                       <span class="access-invite-name"><?php echo htmlspecialchars($row_inv['nom'], ENT_QUOTES, 'UTF-8'); ?></span>
                       <span class="access-type-pill"><?php echo htmlspecialchars($sing, ENT_QUOTES, 'UTF-8'); ?></span>
                     </a>
                   </td>
-                  <td align="right" style="border-bottom:1px solid #aaa;padding: 7px 0px;">
+                  <td align="right" class="access-table-cell access-table-value-cell">
                     <a href="index.php?page=access_cible&codinv=<?php echo (int) $row_inv['id_inv']; ?>&cod=<?php echo htmlspecialchars($codevent, ENT_QUOTES, 'UTF-8'); ?>" style="color: <?php echo htmlspecialchars($color, ENT_QUOTES, 'UTF-8'); ?>" class="access-table-name">
                       <?php echo htmlspecialchars($nomtable, ENT_QUOTES, 'UTF-8'); ?>
                     </a>
