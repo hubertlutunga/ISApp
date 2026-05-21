@@ -482,13 +482,13 @@ $accessPageUrl = 'index.php?page=access&cod=' . urlencode((string) $codevent);
                     $sing = $row_inv['sing'] === 'C' ? 'Couple' : ($row_inv['sing'] ? 'Singleton' : 'Non defini');
                 ?>
                 <tr>
-                  <td align="left" class="access-table-cell access-invite-cell">
+                  <td align="left" width="70%" class="access-table-cell access-invite-cell">
                     <a href="index.php?page=access_cible&codinv=<?php echo (int) $row_inv['id_inv']; ?>&cod=<?php echo htmlspecialchars($codevent, ENT_QUOTES, 'UTF-8'); ?>" style="color: <?php echo htmlspecialchars($color, ENT_QUOTES, 'UTF-8'); ?>" class="access-invite-link">
                       <span class="access-invite-name"><?php echo htmlspecialchars($row_inv['nom'], ENT_QUOTES, 'UTF-8'); ?></span>
                       <span class="access-type-pill"><?php echo htmlspecialchars($sing, ENT_QUOTES, 'UTF-8'); ?></span>
                     </a>
                   </td>
-                  <td align="right" class="access-table-cell access-table-value-cell">
+                  <td align="right" width="30%" class="access-table-cell access-table-value-cell">
                     <a href="index.php?page=access_cible&codinv=<?php echo (int) $row_inv['id_inv']; ?>&cod=<?php echo htmlspecialchars($codevent, ENT_QUOTES, 'UTF-8'); ?>" style="color: <?php echo htmlspecialchars($color, ENT_QUOTES, 'UTF-8'); ?>" class="access-table-name">
                       <?php echo htmlspecialchars($nomtable, ENT_QUOTES, 'UTF-8'); ?>
                     </a>
