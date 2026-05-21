@@ -261,6 +261,7 @@ $accessPageUrl = 'index.php?page=access&cod=' . urlencode((string) $codevent);
       .access-table {
         width: 100%;
         border-collapse: collapse;
+        table-layout: fixed;
         margin-bottom: 18px;
       }
 
@@ -297,30 +298,38 @@ $accessPageUrl = 'index.php?page=access&cod=' . urlencode((string) $codevent);
         font-weight: 800;
       }
 
+      .access-invite-cell {
+        width: 70%;
+      }
+
       .access-table td:first-child a {
         color: inherit;
         font-size: 15px;
       }
 
+      .access-invite-link {
+        display: block;
+      }
+
+      .access-invite-name {
+        display: block;
+      }
+
       .access-type-pill {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 34px;
-        padding: 0 12px;
-        border-radius: 999px;
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        color: #475569;
-        font-size: 12px;
-        font-weight: 900;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
+        display: block;
+        margin-top: 3px;
+        color: #64748b;
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: normal;
+        text-transform: none;
       }
 
       .access-table-name {
+        display: inline-block;
         font-weight: 700;
         color: #334155;
+        text-align: right;
       }
 
       @media only screen and (max-width: 980px) {
@@ -331,13 +340,13 @@ $accessPageUrl = 'index.php?page=access&cod=' . urlencode((string) $codevent);
 
       @media only screen and (max-width: 769px) {
         .access-shell {
-          padding: 0 14px 88px;
+          padding: 0 12px 88px;
         }
 
         .access-list-head,
         .access-table-holder {
-          padding-left: 16px;
-          padding-right: 16px;
+          padding-left: 14px;
+          padding-right: 14px;
         }
 
         .access-list-head {
@@ -349,50 +358,59 @@ $accessPageUrl = 'index.php?page=access&cod=' . urlencode((string) $codevent);
           width: 100%;
         }
 
-        .access-table,
-        .access-table thead,
-        .access-table tbody,
-        .access-table th,
-        .access-table td,
-        .access-table tr {
-          display: block;
+        .access-table {
+          table-layout: auto;
         }
 
-        .access-table thead {
-          display: none;
+        .access-table thead th {
+          padding-bottom: 7px;
+          font-size: 10px;
         }
 
         .access-table tbody tr {
-          padding: 14px 0;
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 10px;
+          padding: 8px 0;
           border-bottom: 1px solid #eef2f7;
         }
 
         .access-table tbody td {
-          border: 0;
-          padding: 4px 0;
-          text-align: left !important;
-        }
-
-        .access-table tbody td::before {
           display: block;
-          margin-bottom: 4px;
-          font-size: 11px;
-          font-weight: 900;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          color: #94a3b8;
+          padding: 0;
+          border-bottom: 0;
+          vertical-align: top;
         }
 
-        .access-table tbody td:nth-child(1)::before {
-          content: 'Invite';
+        .access-invite-cell {
+          flex: 1 1 auto;
+          width: auto;
+          min-width: 0;
         }
 
-        .access-table tbody td:nth-child(2)::before {
-          content: 'Type';
+        .access-table tbody td:last-child {
+          flex: 0 0 34%;
+          width: auto;
+          text-align: right !important;
         }
 
-        .access-table tbody td:nth-child(3)::before {
-          content: 'Table';
+        .access-table td:first-child a {
+          font-size: 13px;
+          line-height: 1.2;
+        }
+
+        .access-type-pill {
+          margin-top: 1px;
+          font-size: 9px;
+          line-height: 1.2;
+        }
+
+        .access-table-name {
+          display: block;
+          font-size: 12px;
+          line-height: 1.25;
+          word-break: break-word;
         }
 
       }
@@ -426,8 +444,7 @@ $accessPageUrl = 'index.php?page=access&cod=' . urlencode((string) $codevent);
             <table class="access-table">
               <thead>
                 <tr>
-                  <th style="width: 55%;">Noms</th>
-                  <th style="width: 15%;">Type</th>
+                  <th style="width: 70%;">Invites</th>
                   <th align="right" style="width: 30%;text-align: right;">Table</th>
                 </tr>
               </thead>
@@ -452,13 +469,9 @@ $accessPageUrl = 'index.php?page=access&cod=' . urlencode((string) $codevent);
                     $sing = $row_inv['sing'] === 'C' ? 'Couple' : ($row_inv['sing'] ? 'Singleton' : 'Non defini');
                 ?>
                 <tr>
-                  <td align="left" style="border-bottom:1px solid #aaa;padding: 7px 0px;">
-                    <a href="index.php?page=access_cible&codinv=<?php echo (int) $row_inv['id_inv']; ?>&cod=<?php echo htmlspecialchars($codevent, ENT_QUOTES, 'UTF-8'); ?>" style="color: <?php echo htmlspecialchars($color, ENT_QUOTES, 'UTF-8'); ?>">
-                      <?php echo htmlspecialchars($row_inv['nom'], ENT_QUOTES, 'UTF-8'); ?>
-                    </a>
-                  </td>
-                  <td align="left" style="border-bottom:1px solid #aaa;padding: 7px 0px;">
-                    <a href="index.php?page=access_cible&codinv=<?php echo (int) $row_inv['id_inv']; ?>&cod=<?php echo htmlspecialchars($codevent, ENT_QUOTES, 'UTF-8'); ?>" style="color: <?php echo htmlspecialchars($color, ENT_QUOTES, 'UTF-8'); ?>">
+                  <td align="left" class="access-invite-cell" style="border-bottom:1px solid #aaa;padding: 7px 0px;">
+                    <a href="index.php?page=access_cible&codinv=<?php echo (int) $row_inv['id_inv']; ?>&cod=<?php echo htmlspecialchars($codevent, ENT_QUOTES, 'UTF-8'); ?>" style="color: <?php echo htmlspecialchars($color, ENT_QUOTES, 'UTF-8'); ?>" class="access-invite-link">
+                      <span class="access-invite-name"><?php echo htmlspecialchars($row_inv['nom'], ENT_QUOTES, 'UTF-8'); ?></span>
                       <span class="access-type-pill"><?php echo htmlspecialchars($sing, ENT_QUOTES, 'UTF-8'); ?></span>
                     </a>
                   </td>
