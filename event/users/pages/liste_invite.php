@@ -383,20 +383,23 @@
 
 		.mb-invite-row{
 			display:flex;
-			align-items:flex-start;
+			align-items:stretch;
 			width:100%;
+			min-width:100%;
 		}
 
 		.mb-invite-row td{
 			display:block;
 			box-sizing:border-box;
 			width:auto !important;
+			flex:0 0 auto;
 			padding:12px 0 !important;
 			vertical-align:top;
 		}
 
 		.mb-invite-row td.pt-0.px-0.b-0{
 			width:60% !important;
+			flex:0 0 60%;
 			min-width:0;
 			padding-right:12px !important;
 		}
@@ -404,6 +407,7 @@
 		.mb-invite-row td.text-end.b-0.pt-0.px-0{
 			position:static;
 			width:40% !important;
+			flex:0 0 40%;
 			min-width:40%;
 			padding:12px 0 12px 12px !important;
 			text-align:right !important;
