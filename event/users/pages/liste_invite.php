@@ -12,6 +12,7 @@
 		: "WhatsApp de l'invite";
 	$quotaClientUserId = WhatsAppQuotaService::resolveClientUserId((array) $dataevent, (int) ($datasession['cod_user'] ?? 0));
 	$eventQuota = WhatsAppQuotaService::getEventQuota($pdo, (string) $codevent, $quotaClientUserId);
+	$transferEventOptions = EventWorkspaceService::getUserEventOptions($pdo, (string) $codevent, (string) ($datasession['cod_user'] ?? ''));
 	?>
 
 <style>
@@ -319,6 +320,116 @@
 		margin-bottom:6px;
 	}
 
+	.mb-transfer-event-list{
+		display:flex;
+		flex-direction:column;
+		gap:10px;
+		margin-top:14px;
+		text-align:left;
+	}
+
+	.mb-transfer-event-option{
+		display:flex;
+		align-items:flex-start;
+		gap:10px;
+		padding:12px 14px;
+		border:1px solid #dbeafe;
+		border-radius:16px;
+		background:#f8fbff;
+		cursor:pointer;
+		user-select:none;
+		transition:border-color .18s ease, background-color .18s ease, box-shadow .18s ease;
+	}
+
+	.mb-transfer-event-option.is-selected{
+		border-color:#2563eb;
+		background:#eff6ff;
+		box-shadow:0 10px 24px rgba(37,99,235,.14);
+	}
+
+	.mb-transfer-event-option input{
+		position:absolute;
+		opacity:0;
+		pointer-events:none;
+	}
+
+	.mb-transfer-event-check{
+		display:inline-flex;
+		align-items:center;
+		justify-content:center;
+		width:20px;
+		height:20px;
+		min-width:20px;
+		margin-top:1px;
+		border:2px solid #93c5fd;
+		border-radius:6px;
+		background:#fff;
+		color:#fff;
+		font-size:12px;
+		font-weight:900;
+	}
+
+	.mb-transfer-event-option.is-selected .mb-transfer-event-check{
+		border-color:#2563eb;
+		background:#2563eb;
+	}
+
+	.mb-transfer-event-option.is-selected .mb-transfer-event-check::before{
+		content:'✓';
+	}
+
+	.mb-transfer-event-option span:not(.mb-transfer-event-check){
+		font-weight:700;
+		color:#0f172a;
+	}
+
+	.mb-transfer-event-empty{
+		margin-top:12px;
+		padding:14px;
+		border-radius:14px;
+		background:#fff7ed;
+		color:#9a3412;
+		font-size:13px;
+	}
+
+	.mb-transfer-modal{
+		position:fixed;
+		inset:0;
+		display:none;
+		align-items:center;
+		justify-content:center;
+		padding:24px 16px;
+		background:rgba(15,23,42,.58);
+		z-index:9200;
+	}
+
+	.mb-transfer-modal.is-open{
+		display:flex;
+	}
+
+	.mb-transfer-dialog{
+		width:100%;
+		max-width:540px;
+		max-height:calc(100vh - 48px);
+		overflow-y:auto;
+	}
+
+	.mb-transfer-panel{
+		background:#fff;
+		border-radius:18px;
+		box-shadow:0 30px 80px rgba(15,23,42,.28);
+		overflow:hidden;
+	}
+
+	.mb-transfer-close{
+		border:0;
+		background:transparent;
+		color:#64748b;
+		font-size:28px;
+		line-height:1;
+		cursor:pointer;
+	}
+
 	.modal{z-index: 8999 !important;}
 
 	@media only screen and (max-width: 769px) {
@@ -478,6 +589,39 @@
 						Classé par nom des Tables
 					</a>
 				</div> 
+				</div>
+			</div>
+			</div>
+
+			<!-- ================= MODALE TRANSFERT INVITE ================= -->
+			<div class="mb-transfer-modal" id="modalTransferInvite" aria-labelledby="modalTransferInviteLabel" aria-hidden="true">
+			<div class="mb-transfer-dialog">
+				<div class="mb-transfer-panel">
+				<div class="modal-header">
+					<h5 class="modal-title" id="modalTransferInviteLabel">Transférer l'invité</h5>
+					<button type="button" class="mb-transfer-close" aria-label="Fermer" onclick="closeTransferInviteModal()">&times;</button>
+				</div>
+				<div class="modal-body">
+					<p class="mb-2">Sélectionnez les événements dans lesquels ajouter <strong id="transferInviteName">cet invité</strong>.</p>
+					<input type="hidden" id="transferInviteId" value="">
+					<?php if (!empty($transferEventOptions)) { ?>
+					<div class="mb-transfer-event-list">
+						<?php foreach ($transferEventOptions as $transferEventOption) { ?>
+						<div class="mb-transfer-event-option" role="button" tabindex="0" aria-pressed="false" data-transfer-option>
+							<input type="checkbox" class="transfer-event-checkbox" value="<?php echo htmlspecialchars((string) $transferEventOption['cod_event'], ENT_QUOTES, 'UTF-8'); ?>" tabindex="-1" aria-hidden="true">
+							<span class="mb-transfer-event-check" aria-hidden="true"></span>
+							<span><?php echo htmlspecialchars((string) $transferEventOption['label'], ENT_QUOTES, 'UTF-8'); ?></span>
+						</div>
+						<?php } ?>
+					</div>
+					<?php } else { ?>
+					<div class="mb-transfer-event-empty">Aucun autre événement disponible pour ce compte.</div>
+					<?php } ?>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-light" onclick="closeTransferInviteModal()">Annuler</button>
+					<button type="button" class="btn btn-primary" id="transferInviteSubmit" data-transfer-submit onclick="return submitTransferInvite(event)" <?php echo empty($transferEventOptions) ? 'disabled' : ''; ?>>Transférer</button>
+				</div>
 				</div>
 			</div>
 			</div>
@@ -682,6 +826,8 @@
 
 
 											   <a class="dropdown-item" href="index.php?page=modinv&idinv=<?php echo $row_inv['id_inv'];?>"><i class="fa fa-edit"></i> <?php echo htmlspecialchars($audienceLabels['edit'], ENT_QUOTES, 'UTF-8'); ?></a>
+
+											   <a class="dropdown-item js-transfer-invite" href="#" data-invite-id="<?php echo (int) $row_inv['id_inv']; ?>" data-invite-name="<?php echo htmlspecialchars(ucfirst((string) $row_inv['nom']), ENT_QUOTES, 'UTF-8'); ?>" onclick="return openTransferInviteModal(event, this.getAttribute('data-invite-id'), this.getAttribute('data-invite-name'));"><i class="fa fa-exchange-alt"></i> Transférer l'invité</a>
    
  <a class="dropdown-item"
    href="#"
@@ -779,6 +925,207 @@ async function confirmSuppInv(e, idInv, codEvent, nom) {
       });
     }
   });
+}
+</script>
+
+<script>
+function showTransferInviteModalElement(modalElement) {
+	modalElement.style.display = 'flex';
+	modalElement.classList.add('is-open');
+	modalElement.removeAttribute('aria-hidden');
+	modalElement.setAttribute('aria-modal', 'true');
+	document.body.style.overflow = 'hidden';
+}
+
+function closeTransferInviteModal() {
+	const modalElement = document.getElementById('modalTransferInvite');
+
+	if (!modalElement) {
+		return;
+	}
+
+	modalElement.style.display = 'none';
+	modalElement.classList.remove('is-open');
+	modalElement.setAttribute('aria-hidden', 'true');
+	modalElement.removeAttribute('aria-modal');
+	document.body.style.overflow = '';
+}
+
+function setTransferEventOptionState(optionElement, isSelected) {
+	if (!optionElement) {
+		return;
+	}
+
+	const checkbox = optionElement.querySelector('.transfer-event-checkbox');
+	if (!checkbox) {
+		return;
+	}
+
+	checkbox.checked = Boolean(isSelected);
+	optionElement.classList.toggle('is-selected', checkbox.checked);
+	optionElement.setAttribute('aria-pressed', checkbox.checked ? 'true' : 'false');
+}
+
+function toggleTransferEventOption(optionElement) {
+	const checkbox = optionElement ? optionElement.querySelector('.transfer-event-checkbox') : null;
+	if (!checkbox) {
+		return;
+	}
+
+	setTransferEventOptionState(optionElement, !checkbox.checked);
+}
+
+function openTransferInviteModal(event, inviteId, inviteName) {
+	if (event) {
+		event.preventDefault();
+	}
+
+	const modalElement = document.getElementById('modalTransferInvite');
+	const inviteIdInput = document.getElementById('transferInviteId');
+	const inviteNameLabel = document.getElementById('transferInviteName');
+	const checkboxes = document.querySelectorAll('.transfer-event-checkbox');
+
+	if (!modalElement || !inviteIdInput || !inviteNameLabel) {
+		Swal.fire({ title: 'Transfert impossible', text: 'La fenêtre de transfert est indisponible.', icon: 'error', confirmButtonText: 'OK' });
+		return;
+	}
+
+	if (checkboxes.length === 0) {
+		Swal.fire({ title: 'Aucun événement', text: 'Ce compte ne possède pas encore un autre événement disponible.', icon: 'info', confirmButtonText: 'OK' });
+		return;
+	}
+
+	inviteIdInput.value = inviteId;
+	inviteNameLabel.textContent = inviteName || 'cet invité';
+	document.querySelectorAll('[data-transfer-option]').forEach(function (optionElement) {
+		setTransferEventOptionState(optionElement, false);
+	});
+
+	showTransferInviteModalElement(modalElement);
+
+	return false;
+}
+
+document.addEventListener('click', function (event) {
+	const transferTrigger = event.target.closest ? event.target.closest('.js-transfer-invite') : null;
+
+	if (!transferTrigger) {
+		return;
+	}
+
+	event.preventDefault();
+	event.stopPropagation();
+	openTransferInviteModal(null, transferTrigger.getAttribute('data-invite-id'), transferTrigger.getAttribute('data-invite-name'));
+}, true);
+
+document.addEventListener('click', function (event) {
+	const optionElement = event.target.closest ? event.target.closest('[data-transfer-option]') : null;
+
+	if (!optionElement || !optionElement.closest('#modalTransferInvite')) {
+		return;
+	}
+
+	event.preventDefault();
+	event.stopPropagation();
+	toggleTransferEventOption(optionElement);
+}, true);
+
+document.addEventListener('click', function (event) {
+	const submitButton = event.target.closest ? event.target.closest('[data-transfer-submit]') : null;
+
+	if (!submitButton) {
+		return;
+	}
+
+	event.preventDefault();
+	event.stopPropagation();
+	submitTransferInvite(event);
+}, true);
+
+document.addEventListener('click', function (event) {
+	const modalElement = document.getElementById('modalTransferInvite');
+	if (modalElement && event.target === modalElement) {
+		closeTransferInviteModal();
+	}
+});
+
+document.addEventListener('keydown', function (event) {
+	const optionElement = event.target && event.target.closest ? event.target.closest('[data-transfer-option]') : null;
+	if (optionElement && optionElement.closest('#modalTransferInvite') && (event.key === 'Enter' || event.key === ' ')) {
+		event.preventDefault();
+		toggleTransferEventOption(optionElement);
+		return;
+	}
+
+	if (event.key === 'Escape') {
+		closeTransferInviteModal();
+	}
+});
+
+async function submitTransferInvite(event) {
+	if (event) {
+		event.preventDefault();
+	}
+
+	const inviteId = document.getElementById('transferInviteId').value;
+	const selectedEvents = Array.from(document.querySelectorAll('.transfer-event-checkbox:checked')).map(function (checkbox) {
+		return checkbox.value;
+	});
+
+	if (!inviteId || selectedEvents.length === 0) {
+		Swal.fire({ title: 'Sélection requise', text: 'Choisissez au moins un événement.', icon: 'warning', confirmButtonText: 'OK' });
+		return;
+	}
+
+	const submitButton = document.getElementById('transferInviteSubmit');
+	if (submitButton) {
+		submitButton.disabled = true;
+	}
+
+	Swal.fire({
+		title: 'Transfert en cours...',
+		allowOutsideClick: false,
+		didOpen: () => Swal.showLoading()
+	});
+
+	try {
+		const res = await fetch('pages/ajax_transferer_invite.php', {
+			method: 'POST',
+			credentials: 'same-origin',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				idinv: inviteId,
+				cod: <?php echo json_encode((string) $codevent); ?>,
+				events: selectedEvents
+			})
+		});
+
+		if (!res.ok) {
+			throw new Error('Erreur serveur (' + res.status + ')');
+		}
+
+		const data = await res.json();
+		if (!data.success) {
+			throw new Error(data.message || 'Transfert impossible.');
+		}
+
+		closeTransferInviteModal();
+
+		const inserted = parseInt(data.inserted || 0, 10);
+		const skipped = parseInt(data.skipped || 0, 10);
+		let message = inserted + ' événement(s) mis à jour.';
+		if (skipped > 0) {
+			message += ' ' + skipped + ' événement(s) ignoré(s), car l’invité existe déjà.';
+		}
+
+		Swal.fire({ title: 'Transfert terminé', text: message, icon: 'success', confirmButtonText: 'OK' });
+	} catch (err) {
+		Swal.fire({ title: 'Échec du transfert', text: err.message, icon: 'error', confirmButtonText: 'OK' });
+	} finally {
+		if (submitButton) {
+			submitButton.disabled = false;
+		}
+	}
 }
 </script>
 

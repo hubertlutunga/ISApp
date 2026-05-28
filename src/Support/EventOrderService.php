@@ -753,6 +753,112 @@ final class EventOrderService
         ]);
     }
 
+    public static function replaceInvitationModelForEvent(PDO $pdo, int $eventId, int $modelId, int $quantity = 1): array
+    {
+        self::ensureCatalogInfrastructure($pdo);
+
+        if ($eventId <= 0) {
+            throw new RuntimeException('Evenement invalide.');
+        }
+
+        if ($modelId <= 0) {
+            throw new RuntimeException('Selectionnez un modele d\'invitation.');
+        }
+
+        $modelStmt = $pdo->prepare('SELECT cod_mod, nom, image, unit_price FROM modele_is WHERE cod_mod = ? AND type_mod = ? AND is_active = 1 LIMIT 1');
+        $modelStmt->execute([$modelId, 'invitation']);
+        $model = $modelStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+        if ($model === []) {
+            throw new RuntimeException('Modele d\'invitation introuvable ou inactif.');
+        }
+
+        $quantity = max(1, $quantity);
+        $unitPrice = round((float) ($model['unit_price'] ?? 0), 2);
+        $checkout = self::loadCheckoutByEvent($pdo, $eventId);
+        $promoCode = (string) ($checkout['promo_code'] ?? '');
+        $printedInvitationAccessoryIds = self::printedInvitationAccessoryIds($pdo);
+        $startedTransaction = !$pdo->inTransaction();
+
+        if ($startedTransaction) {
+            $pdo->beginTransaction();
+        }
+
+        try {
+            $eventStmt = $pdo->prepare('UPDATE events SET modele_inv = ? WHERE cod_event = ?');
+            $eventStmt->execute([$modelId, $eventId]);
+
+            $deleteStmt = $pdo->prepare('DELETE FROM event_invitation_models WHERE cod_event = ?');
+            $deleteStmt->execute([$eventId]);
+
+            $insertStmt = $pdo->prepare(
+                'INSERT INTO event_invitation_models (cod_event, cod_mod, quantite, unit_price, date_enreg) VALUES (?, ?, ?, ?, NOW())'
+            );
+            $insertStmt->execute([$eventId, $modelId, $quantity, $unitPrice]);
+
+            if ($printedInvitationAccessoryIds !== []) {
+                $placeholders = implode(',', array_fill(0, count($printedInvitationAccessoryIds), '?'));
+                $accessoryStmt = $pdo->prepare(
+                    'UPDATE accessoires_event SET modele_acc = ?, quantite = ? WHERE cod_event = ? AND cod_acc IN (' . $placeholders . ')'
+                );
+                $accessoryStmt->execute(array_merge([$modelId, $quantity, $eventId], $printedInvitationAccessoryIds));
+            }
+
+            self::replaceDetailsFactForEvent($pdo, $eventId);
+            $summary = self::updateCheckoutPromoCode($pdo, $eventId, $promoCode);
+
+            if ($startedTransaction) {
+                $pdo->commit();
+            }
+        } catch (Throwable $exception) {
+            if ($startedTransaction && $pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+
+            throw $exception;
+        }
+
+        return [
+            'model' => $model,
+            'summary' => $summary,
+        ];
+    }
+
+    private static function printedInvitationAccessoryIds(PDO $pdo): array
+    {
+        $catalog = self::accessoryCatalog($pdo);
+        $ids = [];
+
+        foreach ($catalog as $accessoryId => $accessory) {
+            $label = self::normalizeLabel((string) ($accessory['label'] ?? ''));
+            if (str_contains($label, 'invitation') && str_contains($label, 'imprim')) {
+                $ids[] = (int) $accessoryId;
+            }
+        }
+
+        if ($ids === [] && isset($catalog['1'])) {
+            $ids[] = 1;
+        }
+
+        return array_values(array_unique(array_filter($ids, static fn(int $id): bool => $id > 0)));
+    }
+
+    private static function normalizeLabel(string $label): string
+    {
+        $label = function_exists('mb_strtolower') ? mb_strtolower($label, 'UTF-8') : strtolower($label);
+
+        return strtr($label, [
+            'à' => 'a', 'á' => 'a', 'â' => 'a', 'ä' => 'a', 'ã' => 'a', 'å' => 'a',
+            'ç' => 'c',
+            'è' => 'e', 'é' => 'e', 'ê' => 'e', 'ë' => 'e',
+            'ì' => 'i', 'í' => 'i', 'î' => 'i', 'ï' => 'i',
+            'ñ' => 'n',
+            'ò' => 'o', 'ó' => 'o', 'ô' => 'o', 'ö' => 'o', 'õ' => 'o',
+            'ù' => 'u', 'ú' => 'u', 'û' => 'u', 'ü' => 'u',
+            'ÿ' => 'y',
+        ]);
+    }
+
     private static function resolvePromo(array $promoCatalog, string $promoCode, float $subtotal): array
     {
         $normalizedCode = strtoupper(trim($promoCode));

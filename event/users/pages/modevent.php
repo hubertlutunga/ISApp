@@ -78,6 +78,39 @@ if (isset($_POST['submittext'])) {
     }
 }
 
+if (isset($_POST['submitInvitationModel'])) {
+    try {
+        $selectedInvitationModel = (int) ($_POST['selected_invitation_model'] ?? 0);
+        $selectedInvitationQuantity = max(1, (int) ($_POST['selected_invitation_quantity'] ?? 1));
+        EventOrderService::replaceInvitationModelForEvent($pdo, $cod_getevent, $selectedInvitationModel, $selectedInvitationQuantity);
+
+        $postSuccessScript = '<script>
+            document.addEventListener("DOMContentLoaded", function () {
+                Swal.fire({
+                    title: "Modele modifie",
+                    text: "Le modele d invitation et son prix ont ete mis a jour avec succes.",
+                    icon: "success",
+                    confirmButtonText: "Actualiser"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = "index.php?page=modevent&cod=' . $cod_getevent . '";
+                    }
+                });
+            });
+        </script>';
+
+        $editContext = EventUpdateService::buildEditContext($pdo, $cod_getevent);
+        $datagetevent = $editContext['event'];
+        $type_event = $editContext['type_event'];
+        $data_evenementget = $editContext['event_label'];
+        $invitationModels = EventOrderService::loadInvitationModelsByEvent($pdo, $cod_getevent);
+        $checkoutData = EventOrderService::loadCheckoutByEvent($pdo, $cod_getevent);
+        $paymentTypeLabel = EventOrderService::paymentLabel($checkoutData['type_paiement'] ?? null);
+    } catch (Throwable $exception) {
+        $pageError = $exception->getMessage();
+    }
+}
+
 if (isset($_POST['submiacces'])) {
     try {
         $postedAccessories = array_map('intval', (array) ($_POST['accessoires'] ?? []));
@@ -150,6 +183,24 @@ $formatAmount = static function ($amount, string $currency = '$'): string {
     return number_format((float) $amount, 2, '.', ' ') . ' ' . $currency;
 };
 
+if ($invitationModels === [] && !empty($datagetevent['modele_inv'])) {
+    $legacyInvitationModelStmt = $pdo->prepare('SELECT cod_mod, nom, image, unit_price FROM modele_is WHERE cod_mod = ? LIMIT 1');
+    $legacyInvitationModelStmt->execute([(int) $datagetevent['modele_inv']]);
+    $legacyInvitationModel = $legacyInvitationModelStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+    if ($legacyInvitationModel !== []) {
+        $legacyUnitPrice = round((float) ($legacyInvitationModel['unit_price'] ?? 0), 2);
+        $invitationModels[] = [
+            'cod_mod' => (int) ($legacyInvitationModel['cod_mod'] ?? 0),
+            'quantite' => 1,
+            'unit_price' => $legacyUnitPrice,
+            'line_total' => $legacyUnitPrice,
+            'nom' => (string) ($legacyInvitationModel['nom'] ?? 'Modele'),
+            'image' => (string) ($legacyInvitationModel['image'] ?? ''),
+        ];
+    }
+}
+
 $photosStmt = $pdo->prepare('SELECT * FROM photos_event WHERE cod_event = ? ORDER BY cod_photo DESC');
 $photosStmt->execute([$cod_getevent]);
 $photoRows = $photosStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
@@ -201,8 +252,13 @@ foreach ($accessoryEventsStmt->fetchAll(PDO::FETCH_ASSOC) as $dataae) {
 }
 
 $currentInvitationModelId = '';
+$currentInvitationQuantity = 1;
 if ($invitationModels !== []) {
     $currentInvitationModelId = (string) ($invitationModels[0]['cod_mod'] ?? '');
+    $currentInvitationQuantity = max(1, array_sum(array_map(
+        static fn(array $model): int => max(1, (int) ($model['quantite'] ?? 1)),
+        $invitationModels
+    )));
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['submittext']) && !isset($_POST['submiacces']) && isset($_FILES['photos'])) {
@@ -408,12 +464,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['submittext']) && !is
                         </section>
 
                         <section class="me-card me-summary-card">
-                            <div class="me-card-head">
+                            <div class="me-card-head me-card-head-inline">
                                 <div>
                                     <span class="me-card-kicker">Modeles</span>
                                     <h2>Invitations selectionnees</h2>
                                     <p>Retrouvez rapidement les modeles actuellement attaches a cette commande.</p>
                                 </div>
+                                <?php if ($invitationCatalogRows !== []) { ?>
+                                <button type="button" class="me-secondary-button" data-open-invitation-model-modal>
+                                    <i class="fas fa-sync-alt"></i>
+                                    <span>Modifier le modele</span>
+                                </button>
+                                <?php } ?>
                             </div>
 
                             <div class="me-model-list">
@@ -692,6 +754,63 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['submittext']) && !is
         </div>
     </div>
 
+    <div id="invitationModelModal" class="me-modal" hidden>
+        <div class="me-modal-backdrop" data-close-invitation-model-modal></div>
+        <div class="me-modal-dialog">
+            <button type="button" class="me-modal-close" data-close-invitation-model-modal aria-label="Fermer">&times;</button>
+
+            <div class="me-modal-header">
+                <span class="me-card-kicker">Modification</span>
+                <h2>Modifier le modele d'invitation</h2>
+                <p>Choisissez un nouveau modele. Le prix enregistre dans la commande sera remplace par le prix actuel du catalogue.</p>
+            </div>
+
+            <form action="" method="post" class="me-modal-form">
+                <input type="hidden" name="selected_invitation_model" id="editInvitationModel" value="<?php echo htmlspecialchars($currentInvitationModelId, ENT_QUOTES, 'UTF-8'); ?>">
+
+                <label class="me-field me-field-full">
+                    <span class="me-field-label">Quantite a conserver</span>
+                    <div class="me-input-wrap">
+                        <i class="fas fa-hashtag"></i>
+                        <input type="number" min="1" step="1" name="selected_invitation_quantity" value="<?php echo (int) $currentInvitationQuantity; ?>" class="me-input">
+                    </div>
+                </label>
+
+                <div class="me-model-choice-grid" id="editInvitationModelChoiceGrid">
+                    <?php foreach ($invitationCatalogRows as $data_mod) {
+                        $modelId = (int) ($data_mod['cod_mod'] ?? 0);
+                        $modelImage = trim((string) ($data_mod['image'] ?? ''));
+                        $isSelected = (string) $modelId === $currentInvitationModelId;
+                    ?>
+                    <button type="button" class="me-model-choice-card<?php echo $isSelected ? ' is-selected' : ''; ?>" data-edit-model-value="<?php echo $modelId; ?>">
+                        <div class="me-model-choice-image-wrap">
+                            <?php if ($modelImage !== '') { ?>
+                            <img src="../images/modeleis/<?php echo htmlspecialchars($modelImage, ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars((string) ($data_mod['nom'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" class="me-model-choice-image">
+                            <?php } else { ?>
+                            <div class="me-model-choice-image me-model-choice-fallback">Modele</div>
+                            <?php } ?>
+                        </div>
+                        <div class="me-model-choice-copy">
+                            <div class="me-model-choice-head">
+                                <span class="me-model-choice-title"><?php echo htmlspecialchars((string) ($data_mod['nom'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></span>
+                                <span class="me-model-choice-price"><?php echo htmlspecialchars($formatAmount($data_mod['unit_price'] ?? null), ENT_QUOTES, 'UTF-8'); ?></span>
+                            </div>
+                            <span class="me-model-choice-ref">Modele #<?php echo $modelId; ?></span>
+                        </div>
+                    </button>
+                    <?php } ?>
+                </div>
+
+                <div class="me-form-actions">
+                    <button class="me-primary-button" type="submit" name="submitInvitationModel">
+                        <i class="fas fa-save"></i>
+                        <span>Enregistrer ce modele</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <style>
     html, body{height:auto !important;overflow-y:auto !important}
     body.layout-top-nav.fixed{overflow-y:auto !important}
@@ -938,6 +1057,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['submittext']) && !is
         const commandModal = document.getElementById('commandModal');
         const commandModalTriggers = document.querySelectorAll('[data-open-command-modal]');
         const commandModalClosers = document.querySelectorAll('[data-close-command-modal]');
+        const invitationModelModal = document.getElementById('invitationModelModal');
+        const invitationModelModalTriggers = document.querySelectorAll('[data-open-invitation-model-modal]');
+        const invitationModelModalClosers = document.querySelectorAll('[data-close-invitation-model-modal]');
 
         function openCommandModal() {
             if (!commandModal) {
@@ -955,6 +1077,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['submittext']) && !is
             body.classList.remove('me-modal-open');
         }
 
+        function openInvitationModelModal() {
+            if (!invitationModelModal) {
+                return;
+            }
+            invitationModelModal.hidden = false;
+            body.classList.add('me-modal-open');
+        }
+
+        function closeInvitationModelModal() {
+            if (!invitationModelModal) {
+                return;
+            }
+            invitationModelModal.hidden = true;
+            body.classList.remove('me-modal-open');
+        }
+
         commandModalTriggers.forEach((trigger) => {
             trigger.addEventListener('click', openCommandModal);
         });
@@ -963,9 +1101,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['submittext']) && !is
             trigger.addEventListener('click', closeCommandModal);
         });
 
+        invitationModelModalTriggers.forEach((trigger) => {
+            trigger.addEventListener('click', openInvitationModelModal);
+        });
+
+        invitationModelModalClosers.forEach((trigger) => {
+            trigger.addEventListener('click', closeInvitationModelModal);
+        });
+
         document.addEventListener('keydown', function (event) {
             if (event.key === 'Escape') {
                 closeCommandModal();
+                closeInvitationModelModal();
             }
         });
 
@@ -1009,6 +1156,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['submittext']) && !is
                 }
 
                 invitationModelCards.forEach((otherCard) => {
+                    otherCard.classList.toggle('is-selected', otherCard === card);
+                });
+            });
+        });
+
+        const editInvitationModelInput = document.getElementById('editInvitationModel');
+        const editInvitationModelCards = document.querySelectorAll('[data-edit-model-value]');
+        editInvitationModelCards.forEach((card) => {
+            card.addEventListener('click', function () {
+                const selectedValue = card.getAttribute('data-edit-model-value') || '';
+                if (editInvitationModelInput) {
+                    editInvitationModelInput.value = selectedValue;
+                }
+
+                editInvitationModelCards.forEach((otherCard) => {
                     otherCard.classList.toggle('is-selected', otherCard === card);
                 });
             });
