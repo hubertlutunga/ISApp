@@ -1,6 +1,30 @@
 <?php
 // ====== ENTÊTE PAGE ======
 
+$isAjaxRequest = strtolower((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')) === 'xmlhttprequest';
+$currentSessionUser = UserAccountService::currentSessionUser($pdo);
+
+if (!$currentSessionUser || (int) ($currentSessionUser['cod_user'] ?? 0) <= 0) {
+  if ($isAjaxRequest) {
+    http_response_code(401);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode([
+      'success' => false,
+      'session_expired' => true,
+      'message' => 'Votre session a expire. Veuillez vous reconnecter avant de creer une commande.',
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    return;
+  }
+
+  if (!headers_sent()) {
+    header('Location: index.php?page=logout');
+  }
+
+  echo '<script>window.location.href="index.php?page=logout";</script>';
+  echo '<noscript>Votre session a expire. <a href="index.php?page=logout">Reconnectez-vous</a>.</noscript>';
+  exit;
+}
+
 $accessoryCatalog = EventOrderService::accessoryCatalog($pdo);
 $promoCatalog = EventOrderService::promoCatalog($pdo);
 $paymentOptions = EventOrderService::paymentOptions();
@@ -139,16 +163,8 @@ $checkoutPreview = EventOrderService::summarizeSelection(
 );
 
 $promoCodeHints = implode(', ', array_keys($promoCatalog));
-$currentSessionUser = null;
-
-if (!empty($_SESSION['user_phone'])) {
-  $sessionUserStmt = $pdo->prepare("SELECT cod_user FROM is_users WHERE phone = ? LIMIT 1");
-  $sessionUserStmt->execute([$_SESSION['user_phone']]);
-  $currentSessionUser = $sessionUserStmt->fetch(PDO::FETCH_ASSOC) ?: null;
-}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  $isAjaxRequest = strtolower((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')) === 'xmlhttprequest';
   $type_event = $_POST['event'] ?? null;
   $typeEventName = '';
   if ($type_event !== null && $type_event !== '') {
@@ -2567,6 +2583,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           if (result.isConfirmed) {
             window.location.href = 'index.php?page=mb_accueil';
           }
+        });
+        return;
+      }
+
+      if (xhr.status === 401 || payload?.session_expired) {
+        Swal.fire({
+          title: 'Session expiree',
+          text: payload?.message || 'Veuillez vous reconnecter avant de creer une commande.',
+          icon: 'warning',
+          confirmButtonText: 'Se reconnecter'
+        }).then(() => {
+          window.location.href = 'index.php?page=logout';
         });
         return;
       }
