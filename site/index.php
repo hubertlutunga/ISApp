@@ -198,7 +198,7 @@ if ($content === null) {
       <link href="https://fonts.googleapis.com/css?family=Playfair+Display" rel="stylesheet">
       <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,300,400,600,700" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Great+Vibes&display=swap" rel="stylesheet">
-    <link href="css/private.css?v=20260511-love-2" rel="stylesheet" type="text/css" media="all" />
+    <link href="css/private.css?v=20260603-hero-mobile-clip" rel="stylesheet" type="text/css" media="all" />
 	
 	<!-- Google Web Fonts -->
 	<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap" rel="stylesheet">

@@ -172,6 +172,42 @@ PublicSiteTraceService::record('wedding_accueil_settings_loaded', [
 .curved-decoration,
 .svg-decoration-container,
 .gradient-overlay::before { pointer-events:none; }
+
+/* Correctif critique mobile : la photo hero ne doit jamais passer au-dessus du menu. */
+.header{
+   z-index: 1050 !important;
+}
+.wedding-hero{
+   position: relative !important;
+   overflow: hidden !important;
+   contain: paint;
+   z-index: 1;
+}
+.wedding-hero > img.bg-image{
+   position: absolute !important;
+   inset: 0 !important;
+   width: 100% !important;
+   height: 100% !important;
+   max-width: none !important;
+   object-fit: cover !important;
+   pointer-events: none !important;
+   z-index: 0 !important;
+}
+@media only screen and (max-width: 991px){
+   .header{
+      position: sticky;
+      top: 0;
+      background-color: #fff;
+   }
+   .wedding-hero{
+      clip-path: inset(0);
+      transform: translateZ(0);
+   }
+   .wedding-hero > img.bg-image{
+      transform: none !important;
+      animation: none !important;
+   }
+}
 </style>
 
 

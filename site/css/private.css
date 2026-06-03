@@ -13,8 +13,13 @@
     overflow: hidden;
 }
 
+.header {
+    z-index: 1040;
+}
+
 .wedding-hero {
     position: relative;
+    overflow: hidden;
     isolation: isolate;
 }
 
@@ -51,7 +56,12 @@
 }
 
 .wedding-hero .bg-image {
+    inset: 0;
+    max-width: none;
+    pointer-events: none;
+    transform-origin: center;
     transform: scale(1.04);
+    will-change: transform;
     animation: heroBreath 18s ease-in-out infinite alternate;
 }
 
@@ -297,6 +307,21 @@
 
     .love-subtitle {
         letter-spacing: 3px !important;
+    }
+
+    .wedding-hero {
+        overflow: hidden;
+        clip-path: inset(0);
+    }
+
+    .wedding-hero .bg-image {
+        transform: none;
+        animation: none;
+    }
+
+    .wedding-hero:after {
+        inset: 12px;
+        border-radius: 24px;
     }
 
     .wrapper #rsvp form {
