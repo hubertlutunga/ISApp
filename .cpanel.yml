@@ -6,6 +6,7 @@ deployment:
     - /usr/bin/rsync -a bootstrap/ $DEPLOYPATH/bootstrap/
     - /usr/bin/rsync -a config/ $DEPLOYPATH/config/
     - /usr/bin/rsync -a couple/ $DEPLOYPATH/couple/
+    - /usr/bin/rsync -a creatorsbomoko/ $DEPLOYPATH/creatorsbomoko/
     - /usr/bin/rsync -a event/ $DEPLOYPATH/event/
     - /usr/bin/rsync -a fonts/ $DEPLOYPATH/fonts/
     - /usr/bin/rsync -a images/ $DEPLOYPATH/images/
