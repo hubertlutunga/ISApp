@@ -19,7 +19,7 @@ $identifier = trim((string) ($_GET['id'] ?? ''));
 $flash = '';
 $error = '';
 $participant = null;
-$accessCode = cbp_access_code();
+$accessCode = '026';
 $token = (string) $_SESSION['cbomoko_presence_token'];
 
 try {
