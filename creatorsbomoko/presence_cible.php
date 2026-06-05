@@ -68,20 +68,19 @@ $confirmUrl = 'presence_cible.php?id=' . rawurlencode($identifier) . '&action=co
     <link rel="icon" type="image/png" href="images/favicom.png">
     <style>
         :root{--wood:#8b4a1f;--wood-dark:#35180b;--blue:#0a3a73;--cyan:#00a6a6;--paper:#fffaf1;--ink:#142033;--muted:#64748b;--line:#ead8bd;--ok:#047857;--danger:#b42318;--shadow:0 24px 70px rgba(53,24,11,.14)}
-        *{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:linear-gradient(145deg,#fffaf1,#eef7f8 55%,#fff);color:var(--ink)}a{color:inherit}.hero{padding:22px clamp(18px,4vw,52px);background:linear-gradient(135deg,var(--wood-dark),var(--wood) 55%,var(--blue));color:#fff}.hero-inner{width:min(980px,100%);margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:18px}.brand{display:flex;align-items:center;gap:14px;text-decoration:none}.brand img{width:72px;height:72px;object-fit:contain}.brand-title{font-weight:950;font-size:clamp(22px,3vw,36px);letter-spacing:-.05em}.brand-sub{color:#fff4df;font-weight:850;letter-spacing:.08em;text-transform:uppercase;font-size:12px}.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:999px;padding:13px 20px;font-weight:950;text-decoration:none;cursor:pointer}.btn-soft{background:rgba(255,244,223,.14);border:1px solid rgba(255,244,223,.28);color:#fff}.btn-primary{background:linear-gradient(135deg,#ef4444,var(--wood),var(--blue));color:#fff;box-shadow:0 16px 36px rgba(139,74,31,.28)}.btn-disabled{background:#e2e8f0;color:#64748b;cursor:not-allowed}.shell{width:min(980px,100%);margin:0 auto;padding:28px clamp(18px,4vw,52px) 58px}.card{background:rgba(255,250,241,.94);border:1px solid rgba(139,74,31,.14);border-radius:30px;box-shadow:var(--shadow);padding:clamp(22px,4vw,36px)}.profile-head{display:grid;grid-template-columns:1fr auto;gap:18px;align-items:start;border-bottom:1px solid var(--line);padding-bottom:22px;margin-bottom:22px}.profile-head h1{margin:0;font-size:clamp(34px,5vw,60px);letter-spacing:-.07em;line-height:.96}.muted{color:var(--muted);font-weight:750}.badge{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:9px 14px;font-weight:950;font-size:12px;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}.badge-ok{background:#dcfce7;color:#047857}.badge-wait{background:#fff7ed;color:#c2410c}.info-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:24px}.info{padding:16px;border-radius:20px;background:#fff;border:1px solid var(--line)}.info span{display:block;color:var(--muted);font-weight:850;font-size:12px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px}.info strong{font-size:17px}.answers{display:grid;gap:12px;margin:22px 0}.answer{padding:16px;border-radius:20px;background:#f8fafc;border:1px solid #dbe4ee}.answer span{display:block;color:var(--muted);font-weight:850;font-size:12px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px}.actions{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-top:24px}.alert{padding:14px 16px;border-radius:18px;margin-bottom:18px;font-weight:850}.alert-error{background:#fff1f0;color:var(--danger);border:1px solid #ffccc7}.alert-ok{background:#ecfdf5;color:var(--ok);border:1px solid #a7f3d0}.footer{margin-top:24px;text-align:center;color:var(--muted);font-weight:800}@media(max-width:720px){.hero-inner,.profile-head{display:grid}.info-grid{grid-template-columns:1fr}.actions .btn{width:100%}}
+        *{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:linear-gradient(145deg,#fffaf1,#eef7f8 55%,#fff);color:var(--ink)}a{color:inherit}.hero{padding:22px clamp(18px,4vw,52px);background:linear-gradient(135deg,var(--wood-dark),var(--wood) 55%,var(--blue));color:#fff}.hero-inner{width:min(980px,100%);margin:0 auto;display:flex;align-items:center;justify-content:center;gap:18px}.brand{display:flex;align-items:center;justify-content:center;gap:14px;text-align:left}.brand img{width:72px;height:72px;object-fit:contain}.brand-title{font-weight:950;font-size:clamp(22px,3vw,36px);letter-spacing:-.05em}.brand-sub{color:#fff4df;font-weight:850;letter-spacing:.08em;text-transform:uppercase;font-size:12px}.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:999px;padding:13px 20px;font-weight:950;text-decoration:none;cursor:pointer}.btn-primary{background:linear-gradient(135deg,#ef4444,var(--wood),var(--blue));color:#fff;box-shadow:0 16px 36px rgba(139,74,31,.28)}.btn-disabled{background:#e2e8f0;color:#64748b;cursor:not-allowed}.shell{width:min(980px,100%);margin:0 auto;padding:28px clamp(18px,4vw,52px) 58px}.card{background:rgba(255,250,241,.94);border:1px solid rgba(139,74,31,.14);border-radius:30px;box-shadow:var(--shadow);padding:clamp(22px,4vw,36px)}.profile-head{display:grid;grid-template-columns:1fr auto;gap:18px;align-items:start;border-bottom:1px solid var(--line);padding-bottom:22px;margin-bottom:22px}.profile-head h1{margin:0;font-size:clamp(34px,5vw,60px);letter-spacing:-.07em;line-height:.96}.muted{color:var(--muted);font-weight:750}.badge{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:9px 14px;font-weight:950;font-size:12px;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}.badge-ok{background:#dcfce7;color:#047857}.badge-wait{background:#fff7ed;color:#c2410c}.info-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:24px}.info{padding:16px;border-radius:20px;background:#fff;border:1px solid var(--line)}.info span{display:block;color:var(--muted);font-weight:850;font-size:12px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px}.info strong{font-size:17px}.answers{display:grid;gap:12px;margin:22px 0}.answer{padding:16px;border-radius:20px;background:#f8fafc;border:1px solid #dbe4ee}.answer span{display:block;color:var(--muted);font-weight:850;font-size:12px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px}.actions{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;margin-top:24px}.alert{padding:14px 16px;border-radius:18px;margin-bottom:18px;font-weight:850}.alert-error{background:#fff1f0;color:var(--danger);border:1px solid #ffccc7}.alert-ok{background:#ecfdf5;color:var(--ok);border:1px solid #a7f3d0}.footer{margin-top:28px;padding:18px 10px;text-align:center;color:var(--muted);font-weight:900;display:grid;justify-items:center;gap:12px}.footer__logos{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap}.footer__logos img{width:86px;height:64px;object-fit:contain}.footer__logos img.is-footer-logo{width:150px}@media(max-width:720px){.hero-inner,.profile-head{display:grid}.info-grid{grid-template-columns:1fr}.actions .btn{width:100%}.footer__logos img.is-footer-logo{width:130px}}
     </style>
 </head>
 <body>
 <header class="hero">
     <div class="hero-inner">
-        <a class="brand" href="liste_presence.php" aria-label="Liste de présence">
+        <div class="brand" aria-label="Contrôle d’accès Creators Bomoko">
             <img src="images/Logo_cbomoko_White.png" alt="Creators Bomoko">
             <span>
                 <span class="brand-title">Contrôle d’accès</span><br>
                 <span class="brand-sub"><?php echo cbp_h(CBOMOKO_EVENT_NAME); ?></span>
             </span>
-        </a>
-        <a class="btn btn-soft" href="liste_presence.php">← Liste</a>
+        </div>
     </div>
 </header>
 
@@ -122,7 +121,6 @@ $confirmUrl = 'presence_cible.php?id=' . rawurlencode($identifier) . '&action=co
             </div>
 
             <div class="actions">
-                <a class="btn btn-soft" style="background:#f3dfc2;color:#35180b;border-color:#ead8bd" href="liste_presence.php">Retour à la liste</a>
                 <?php if ($isPresent): ?>
                     <button class="btn btn-disabled" type="button" disabled>Accès déjà confirmé</button>
                 <?php else: ?>
@@ -132,7 +130,13 @@ $confirmUrl = 'presence_cible.php?id=' . rawurlencode($identifier) . '&action=co
         </section>
     <?php endif; ?>
 
-    <div class="footer">Creators Bomoko powered by U.S Embassy Kinshasa · Designed by Hubert Solutions</div>
+    <footer class="footer">
+        <div class="footer__logos" aria-label="Logos Creators Bomoko et Invitation Spéciale">
+            <img src="images/Logo_cbomoko.png" alt="Creators Bomoko">
+            <img class="is-footer-logo" src="../images/Logo_invitationSpeciale_SF.png" alt="Invitation Spéciale">
+        </div>
+        <div>©2026 Creators Bomoko powered by U.S Embassy Kinshasa · Designed by Hubert Solutions</div>
+    </footer>
 </main>
 
 <script src="/sweet/sweetalert2.all.min.js"></script>

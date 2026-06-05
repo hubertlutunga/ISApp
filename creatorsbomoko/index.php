@@ -891,10 +891,10 @@ if (isset($_SESSION['creatorsbomoko_flash']) && is_array($_SESSION['creatorsbomo
         .partners-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
         .partner-logo-card{min-height:112px;display:grid;place-items:center;padding:16px;border-radius:22px;background:#fff;border:1px solid rgba(15,23,42,.08);box-shadow:0 14px 34px rgba(67,36,15,.08)}
         .partner-logo-card img{max-width:100%;max-height:78px;object-fit:contain;filter:saturate(1.04)}
-        .public-footer{width:min(1180px,100%);margin:0 auto;padding:24px clamp(18px,4vw,34px);border-radius:28px;background:linear-gradient(135deg,rgba(53,24,11,.95),rgba(10,58,115,.92));color:#fff4df;display:flex;align-items:center;justify-content:space-between;gap:20px;box-shadow:0 22px 58px rgba(53,24,11,.2);font-weight:900}
+        .public-footer{width:min(1180px,100%);margin:0 auto;padding:24px clamp(18px,4vw,34px);color:var(--muted);display:grid;justify-items:center;text-align:center;gap:12px;font-weight:900}
         .public-footer__text{line-height:1.55}
-        .public-footer__logos{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-        .public-footer__logos img{width:90px;height:66px;object-fit:contain;background:rgba(255,255,255,.92);border-radius:16px;padding:8px}
+        .public-footer__logos{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap}
+        .public-footer__logos img{width:90px;height:66px;object-fit:contain;background:transparent;border-radius:0;padding:0}
         .public-footer__logos img.is-footer-logo{width:150px}
         @media (max-width: 980px){
             .hero-grid,.form-wrap{grid-template-columns:1fr}
@@ -912,7 +912,7 @@ if (isset($_SESSION['creatorsbomoko_flash']) && is_array($_SESSION['creatorsbomo
             .grid-2,.options{grid-template-columns:1fr}
             .event-card{padding:22px}
             .submit-row .btn{width:100%}
-            .public-footer{display:grid;text-align:left}
+            .public-footer{text-align:center}
             .public-footer__logos img.is-footer-logo{width:130px}
         }
     </style>
@@ -1177,14 +1177,11 @@ if (isset($_SESSION['creatorsbomoko_flash']) && is_array($_SESSION['creatorsbomo
         </section>
 
         <footer class="public-footer">
-            <div class="public-footer__text">
-                Creators Bomoko powered by U.S Embassy Kinshasa<br>
-                Designed by Hubert Solutions
-            </div>
             <div class="public-footer__logos" aria-label="Logos Creators Bomoko et Invitation Spéciale">
                 <img src="images/Logo_cbomoko.png" alt="Creators Bomoko">
                 <img class="is-footer-logo" src="../images/Logo_invitationSpeciale_SF.png" alt="Invitation Spéciale">
             </div>
+            <div class="public-footer__text">©2026 Creators Bomoko powered by U.S Embassy Kinshasa · Designed by Hubert Solutions</div>
         </footer>
     </main>
 </div>

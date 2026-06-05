@@ -229,7 +229,6 @@ function cb_admin_send_invitation_email(array $candidate, string $eventName, str
         $safeEventDates = cb_admin_h($eventDates);
         $safeEventLocation = cb_admin_h($eventLocation);
         $safeReference = cb_admin_h((string) ($candidate['submission_id'] ?? ''));
-        $safeAccessUrl = cb_admin_h($accessUrl);
         $safeDomain = cb_admin_h((string) ($candidate['domaine'] ?? ''));
 
         $mail->Subject = 'Invitation officielle - ' . $eventName;
@@ -269,7 +268,7 @@ function cb_admin_send_invitation_email(array $candidate, string $eventName, str
                         <div style="text-align:center;background:#ffffff;border:1px dashed #8b4a1f;border-radius:24px;padding:24px;margin:24px 0;">
                             <div style="font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#0a3a73;font-weight:900;margin-bottom:14px;">QR Code d’accès</div>
                             <img src="cid:cbomoko_access_qr" alt="QR Code accès Creators Bomoko" width="220" height="220" style="display:block;margin:0 auto 14px;border:10px solid #fff;border-radius:18px;box-shadow:0 12px 30px rgba(53,24,11,.12);">
-                            <a href="' . $safeAccessUrl . '" style="color:#0a3a73;font-weight:800;word-break:break-all;text-decoration:none;">' . $safeAccessUrl . '</a>
+                            <div style="color:#8b4a1f;font-weight:900;font-size:15px;line-height:1.55;">Merci de respecter strictement l’heure indiquée afin de faciliter l’accueil et le bon déroulement du programme.</div>
                         </div>
                         <div style="background:#eef7f8;border-left:5px solid #00a6a6;border-radius:16px;padding:16px 18px;margin:22px 0;color:#164e63;line-height:1.65;">
                             <strong>Instructions :</strong><br>
@@ -280,7 +279,7 @@ function cb_admin_send_invitation_email(array $candidate, string $eventName, str
                     <div style="text-align:center;color:#64748b;font-size:12px;line-height:1.6;margin-top:16px;">Creators Bomoko powered by U.S Embassy Kinshasa · Designed by Hubert Solutions</div>
                 </div>
             </div>';
-        $mail->AltBody = "Bonjour " . (string) ($candidate['nom_complet'] ?? 'Participant') . ",\n\nVotre candidature à {$eventName} a été confirmée.\n\nDate : {$eventDates}\nLieu : {$eventLocation}\nRéférence : " . (string) ($candidate['submission_id'] ?? '') . "\n\nLien QR Code / accès : {$accessUrl}\n\nPrésentez ce QR Code à l'équipe d'accueil.\n\nL'équipe Creators Bomoko";
+        $mail->AltBody = "Bonjour " . (string) ($candidate['nom_complet'] ?? 'Participant') . ",\n\nVotre candidature à {$eventName} a été confirmée.\n\nDate : {$eventDates}\nLieu : {$eventLocation}\nRéférence : " . (string) ($candidate['submission_id'] ?? '') . "\n\nPrésentez le QR Code joint à l'équipe d'accueil. Merci de respecter strictement l'heure indiquée afin de faciliter l'accueil et le bon déroulement du programme.\n\nL'équipe Creators Bomoko";
         $mail->send();
 
         return ['success' => true, 'message' => 'Invitation envoyée.'];
@@ -437,35 +436,43 @@ if (cb_admin_is_logged_in() && $setupError === '') {
         .admin-site-header{position:sticky;top:0;z-index:10;background:linear-gradient(135deg,#35180b,#8b4a1f 52%,#0a3a73);box-shadow:0 18px 44px rgba(53,24,11,.18)}
         .admin-site-header__inner{width:min(1240px,100%);margin:0 auto;padding:14px clamp(16px,4vw,46px);display:grid;grid-template-columns:220px 1fr 260px;align-items:center;gap:18px}.header-logo-left img{width:92px;max-height:78px;object-fit:contain;display:block}.header-title{text-align:center;color:#fff}.header-title h1{font-size:clamp(26px,3.2vw,46px);color:#fff;text-shadow:0 10px 28px rgba(0,0,0,.22)}.header-title div{margin-top:5px;color:#fff4df;font-weight:900;letter-spacing:.08em;text-transform:uppercase;font-size:12px}.header-actions{display:flex;align-items:center;justify-content:flex-end;gap:12px}.header-is-logo{width:172px;max-height:58px;object-fit:contain}.header-icon{width:42px;height:42px;border-radius:15px;display:grid;place-items:center;border:1px solid rgba(255,244,223,.28);background:rgba(255,244,223,.12);color:#fff;text-decoration:none;font-size:20px;font-weight:900}.header-icon:hover{background:rgba(255,244,223,.2)}
         .partners-section{margin:24px 0 18px;padding:0;border-radius:28px}.partners-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}.partner-logo-card{min-height:110px;display:grid;place-items:center;padding:16px;border-radius:20px;background:#fff;border:1px solid var(--line);box-shadow:0 14px 34px rgba(67,36,15,.08)}.partner-logo-card img{max-width:100%;max-height:78px;object-fit:contain;filter:saturate(1.04)}
-        .admin-footer{margin-top:18px;padding:24px;border-radius:28px;background:linear-gradient(135deg,rgba(53,24,11,.95),rgba(10,58,115,.92));color:#fff4df;display:flex;align-items:center;justify-content:space-between;gap:20px;box-shadow:0 22px 58px rgba(53,24,11,.2)}.admin-footer__text{font-weight:900;line-height:1.55}.admin-footer__logos{display:flex;align-items:center;gap:14px;flex-wrap:wrap}.admin-footer__logos img{width:90px;height:66px;object-fit:contain;background:rgba(255,255,255,.92);border-radius:16px;padding:8px}.admin-footer__logos img.is-footer-logo{width:150px}
-        @media(max-width:1000px){.admin-site-header__inner{grid-template-columns:110px 1fr auto}.header-is-logo{width:136px}.stats{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:900px){.filters{grid-template-columns:1fr;display:grid}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:700px){.admin-site-header__inner{grid-template-columns:1fr;justify-items:center}.header-actions{justify-content:center}.admin-footer{display:grid}.admin-footer__logos img.is-footer-logo{width:130px}}@media(max-width:560px){.stats{grid-template-columns:1fr}}
+        .login .login-card{width:min(520px,100%);padding:0;overflow:hidden}.login-visual{padding:30px 28px;text-align:center;color:#fff;background:linear-gradient(135deg,#35180b,#8b4a1f 52%,#0a3a73)}.login-visual img{width:108px;height:108px;object-fit:contain;background:rgba(255,255,255,.96);border-radius:28px;padding:12px;box-shadow:0 18px 42px rgba(0,0,0,.18)}.login-visual h1{margin:16px 0 8px;color:#fff}.login-visual p{margin:0;color:#fff4df;font-weight:850}.login-body{padding:28px}.login-helper{margin:18px 0 0;text-align:center;color:var(--muted);font-weight:750;font-size:13px}.admin-footer{margin:28px auto 0;padding:18px 10px;color:var(--muted);display:grid;justify-items:center;gap:12px;text-align:center;background:transparent;box-shadow:none;border-radius:0}.admin-footer__text{font-weight:900;line-height:1.55}.admin-footer__logos{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap}.admin-footer__logos img{width:86px;height:64px;object-fit:contain;background:transparent;border-radius:0;padding:0}.admin-footer__logos img.is-footer-logo{width:150px}
+        @media(max-width:1000px){.admin-site-header__inner{grid-template-columns:110px 1fr auto}.header-is-logo{width:136px}.stats{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:900px){.filters{grid-template-columns:1fr;display:grid}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:700px){.admin-site-header__inner{grid-template-columns:1fr;justify-items:center}.header-actions{justify-content:center}.admin-footer__logos img.is-footer-logo{width:130px}}@media(max-width:560px){.stats{grid-template-columns:1fr}}
     </style>
 </head>
 <body>
 <?php if (!cb_admin_is_logged_in()): ?>
     <main class="login">
-        <form class="card" method="post" action="index.php">
-            <div class="brand" style="margin-bottom:20px">
+        <form class="card login-card" method="post" action="index.php">
+            <div class="login-visual">
                 <img src="../images/Logo_cbomoko.png" alt="Creators Bomoko">
-                <div>
-                    <h1>Connexion</h1>
-                    <div class="muted">Backoffice Creators Bomoko</div>
+                <h1>Connexion</h1>
+                <p>Backoffice sécurisé · Creators Bomoko 2026</p>
+            </div>
+            <div class="login-body">
+                <?php if ($setupError !== ''): ?><div class="alert alert-error"><?php echo cb_admin_h($setupError); ?></div><?php endif; ?>
+                <?php if ($loginError !== ''): ?><div class="alert alert-error"><?php echo cb_admin_h($loginError); ?></div><?php endif; ?>
+                <input type="hidden" name="form_action" value="login">
+                <input type="hidden" name="csrf_token" value="<?php echo cb_admin_h($csrfToken); ?>">
+                <div class="field">
+                    <label for="email">Adresse e-mail</label>
+                    <input type="email" id="email" name="email" autocomplete="username" placeholder="admin@exemple.com" required>
                 </div>
+                <div class="field">
+                    <label for="password">Mot de passe</label>
+                    <input type="password" id="password" name="password" autocomplete="current-password" placeholder="••••••••" required>
+                </div>
+                <button class="btn btn-primary" type="submit" style="width:100%">Se connecter</button>
+                <div class="login-helper">Accès réservé à l’équipe d’administration.</div>
             </div>
-            <?php if ($setupError !== ''): ?><div class="alert alert-error"><?php echo cb_admin_h($setupError); ?></div><?php endif; ?>
-            <?php if ($loginError !== ''): ?><div class="alert alert-error"><?php echo cb_admin_h($loginError); ?></div><?php endif; ?>
-            <input type="hidden" name="form_action" value="login">
-            <input type="hidden" name="csrf_token" value="<?php echo cb_admin_h($csrfToken); ?>">
-            <div class="field">
-                <label for="email">Adresse e-mail</label>
-                <input type="email" id="email" name="email" autocomplete="username" required>
-            </div>
-            <div class="field">
-                <label for="password">Mot de passe</label>
-                <input type="password" id="password" name="password" autocomplete="current-password" required>
-            </div>
-            <button class="btn btn-primary" type="submit" style="width:100%">Se connecter</button>
         </form>
+        <footer class="admin-footer">
+            <div class="admin-footer__logos" aria-label="Logos Creators Bomoko et Invitation Spéciale">
+                <img src="../images/Logo_cbomoko.png" alt="Creators Bomoko">
+                <img class="is-footer-logo" src="../../images/Logo_invitationSpeciale_SF.png" alt="Invitation Spéciale">
+            </div>
+            <div class="admin-footer__text">©2026 Creators Bomoko powered by U.S Embassy Kinshasa · Designed by Hubert Solutions</div>
+        </footer>
     </main>
 <?php else: ?>
     <header class="admin-site-header">
@@ -594,14 +601,11 @@ if (cb_admin_is_logged_in() && $setupError === '') {
         </section>
 
         <footer class="admin-footer">
-            <div class="admin-footer__text">
-                Creators Bomoko powered by U.S Embassy Kinshasa<br>
-                Designed by Hubert Solutions
-            </div>
             <div class="admin-footer__logos" aria-label="Logos Creators Bomoko et Invitation Spéciale">
                 <img src="../images/Logo_cbomoko.png" alt="Creators Bomoko">
                 <img class="is-footer-logo" src="../../images/Logo_invitationSpeciale_SF.png" alt="Invitation Spéciale">
             </div>
+            <div class="admin-footer__text">©2026 Creators Bomoko powered by U.S Embassy Kinshasa · Designed by Hubert Solutions</div>
         </footer>
     </main>
 <?php endif; ?>
