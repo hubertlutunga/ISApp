@@ -356,7 +356,7 @@ $accessPageUrl = 'index.php?page=access&cod=' . urlencode((string) $codevent);
                                                         <div style="text-align:left;margin-top:10px;">
                                                             <label style="display:block;margin-bottom:6px;">Code de confirmation</label>
                                                             <input id="cleConfirm" type="text" class="swal2-input"
-                                                                placeholder="Entrez le code de l'événement"
+                                                                placeholder="Entrez le code"
                                                                 autocomplete="off"
                                                                 style="margin:0;width:100%;">
                                                         </div>
