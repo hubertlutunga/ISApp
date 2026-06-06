@@ -712,7 +712,7 @@ if (isset($_SESSION['creatorsbomoko_flash']) && is_array($_SESSION['creatorsbomo
             justify-content:space-between;
             gap:20px;
         }
-        .brand{display:flex;align-items:center;gap:14px;font-weight:900;letter-spacing:-.03em;color:#fff}
+        .brand{display:flex;align-items:center;gap:14px;font-weight:900;letter-spacing:-.03em;color:#fff;text-decoration:none}
         .brand-logo-frame{
             width:72px;height:72px;border-radius:22px;
             display:grid;place-items:center;
@@ -922,12 +922,12 @@ if (isset($_SESSION['creatorsbomoko_flash']) && is_array($_SESSION['creatorsbomo
 <div class="page-shell">
     <header class="hero">
         <nav class="nav" aria-label="Navigation principale">
-            <div class="brand">
+            <a class="brand" href="index.php" aria-label="Rafraîchir la page Creators Bomoko">
                 <span class="brand-logo-frame" aria-hidden="true">
                     <img class="brand-logo" src="images/Logo_cbomoko.png" alt="">
                 </span>
                 <span class="brand-text">Creators Bomoko</span>
-            </div>
+            </a>
             <a class="nav-pill" href="#formulaire">Soumettre ma candidature</a>
         </nav>
 
