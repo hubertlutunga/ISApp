@@ -533,6 +533,26 @@ $(function () {
 </script>
 
 
+<?php if (isset($_GET['idinv'])): ?>
+   <div id="feneteconf-root" class="feneteconf-root">
+      <?php include __DIR__ . '/modalreponse.php'; ?>
+      <?php include __DIR__ . '/confscript_vernissage.php'; ?>
+   </div>
+<?php endif; ?>
+
+<?php if (isset($_GET['ok'])): ?>
+   <script>
+      Swal.fire({title:"RSVP", text:"Votre confirmation est enregistrée.", icon:"success"});
+   </script>
+<?php endif; ?>
+
+<?php if (isset($_GET['err'])): ?>
+   <script>
+      Swal.fire({title:"RSVP", text:"La confirmation n'a pas pu être enregistrée. Veuillez réessayer.", icon:"error"});
+   </script>
+<?php endif; ?>
+
+
 
 
    </div>
