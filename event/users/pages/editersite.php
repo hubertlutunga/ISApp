@@ -220,7 +220,17 @@ window.history.replaceState({}, document.title, url);
 <?php }
 
 if (isset($_POST['submit_public_site_customization'])) {
-    $iframe = trim((string) ($_POST['public_iframe'] ?? ''));
+    $iframeEncoded = trim((string) ($_POST['public_iframe_b64'] ?? ''));
+    $iframe = '';
+    if ($iframeEncoded !== '') {
+        $decodedIframe = base64_decode($iframeEncoded, true);
+        if (is_string($decodedIframe)) {
+            $iframe = trim($decodedIframe);
+        }
+    }
+    if ($iframe === '') {
+        $iframe = trim((string) ($_POST['public_iframe'] ?? ''));
+    }
     $agency = trim((string) ($_POST['public_agency'] ?? ''));
     $phone = trim((string) ($_POST['public_phone'] ?? ''));
     $email = trim((string) ($_POST['public_email'] ?? ''));
