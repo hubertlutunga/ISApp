@@ -141,6 +141,10 @@ if (!function_exists('isapp_whatsapp_sender_signature')) {
     {
         $eventType = (string) ($event['type_event'] ?? '');
 
+        if ($eventType === '12') {
+            return 'Invitation Spéciale';
+        }
+
         if ($eventType === '1') {
             $firstName = trim((string) ($event['prenom_epoux'] ?? ''));
             $secondName = trim((string) ($event['prenom_epouse'] ?? ''));
@@ -167,6 +171,8 @@ if (!function_exists('isapp_whatsapp_sender_event_label')) {
     function isapp_whatsapp_sender_event_label(array $event): string
     {
         $eventType = (string) ($event['type_event'] ?? '');
+        $theme = isapp_whatsapp_sender_normalize_text((string) ($event['themeconf'] ?? ''));
+        $hostName = isapp_whatsapp_sender_normalize_text((string) ($event['nomfetard'] ?? ''));
 
         if ($eventType === '1') {
             $weddingType = isapp_whatsapp_sender_normalize_wedding_type((string) ($event['type_mar'] ?? ''));
@@ -187,11 +193,43 @@ if (!function_exists('isapp_whatsapp_sender_event_label')) {
         }
 
         if ($eventType === '2') {
-            return 'à l’anniversaire';
+            return $hostName !== '' ? 'à l’anniversaire de ' . $hostName : 'à l’anniversaire';
         }
 
         if ($eventType === '3') {
-            return 'à la conférence';
+            return $theme !== '' ? 'à la conférence « ' . $theme . ' »' : 'à la conférence';
+        }
+
+        if ($eventType === '5') {
+            return $theme !== '' ? 'au concert « ' . $theme . ' »' : 'au concert';
+        }
+
+        if ($eventType === '6') {
+            return $hostName !== '' ? 'au baptême de ' . $hostName : 'au baptême';
+        }
+
+        if ($eventType === '7') {
+            return $theme !== '' ? 'à la collation « ' . $theme . ' »' : 'à la collation';
+        }
+
+        if ($eventType === '8') {
+            return $theme !== '' ? 'à la soirée de gala « ' . $theme . ' »' : 'à la soirée de gala';
+        }
+
+        if ($eventType === '9') {
+            return $theme !== '' ? 'à la formation « ' . $theme . ' »' : 'à la formation';
+        }
+
+        if ($eventType === '10') {
+            return $theme !== '' ? 'à la soirée de charité « ' . $theme . ' »' : 'à la soirée de charité';
+        }
+
+        if ($eventType === '11') {
+            return $theme !== '' ? 'à l’inauguration de « ' . $theme . ' »' : 'à l’inauguration';
+        }
+
+        if ($eventType === '12') {
+            return $theme !== '' ? 'au vernissage du livre ' . $theme : 'au vernissage du livre';
         }
 
         $eventName = trim((string) ($event['nom_event'] ?? $event['titre_event'] ?? ''));
@@ -207,10 +245,16 @@ if (!function_exists('isapp_whatsapp_sender_preview_context')) {
     function isapp_whatsapp_sender_preview_context(PDO $pdo, $eventCode): array
     {
         $event = isapp_whatsapp_sender_fetch_event($pdo, $eventCode);
+        $eventLabel = isapp_whatsapp_sender_event_label($event);
+        $signature = isapp_whatsapp_sender_signature($event);
+        $eventType = (string) ($event['type_event'] ?? '');
 
         return [
-            'event_label' => isapp_whatsapp_sender_event_label($event),
-            'signature' => isapp_whatsapp_sender_signature($event),
+            'event_label' => $eventLabel,
+            'signature' => $signature,
+            'invitation_sentence' => $eventType === '12'
+                ? 'Nous avons le plaisir de vous transmettre votre invitation ' . $eventLabel . '.'
+                : 'Nous avons le plaisir de vous transmettre votre invitation ' . $eventLabel . ' de ' . $signature . '.',
         ];
     }
 }
@@ -232,6 +276,13 @@ if (!function_exists('isapp_whatsapp_sender_filename_base')) {
             $signature = trim($firstName . ' & ' . $secondName, ' &');
 
             return trim($signature . ' - INVITATION ' . $displayName);
+        }
+
+        if ((string) ($event['type_event'] ?? '') === '12') {
+            $bookTitle = trim((string) ($event['themeconf'] ?? ''));
+            if ($bookTitle !== '') {
+                return trim('VERNISSAGE DU LIVRE ' . $bookTitle . ' - INVITATION ' . $displayName);
+            }
         }
 
         $hostName = trim((string) ($event['nomfetard'] ?? '')) ?: trim((string) ($event['nom_event'] ?? $event['titre_event'] ?? 'EVENEMENT'));

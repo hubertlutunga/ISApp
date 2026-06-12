@@ -176,7 +176,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ? mb_strtolower($typeEventName, 'UTF-8')
     : strtolower($typeEventName);
   $isTrainingEvent = str_contains($normalizedTypeEventName, 'formation');
-  $nomsAnniv = $_POST['nomsfetard'] ?? null;
+  $isBookLaunchEvent = (string) $type_event === '12' || (str_contains($normalizedTypeEventName, 'vernissage') && str_contains($normalizedTypeEventName, 'livre'));
+  $bookTitle = trim((string) ($_POST['titrelivre'] ?? ''));
+  $bookAuthor = trim((string) ($_POST['auteurLivre'] ?? ''));
+  $nomsAnniv = $isBookLaunchEvent ? ($bookAuthor !== '' ? $bookAuthor : null) : ($_POST['nomsfetard'] ?? null);
   $prenomEpoux = $_POST['prenomEpoux'] ?? null;
   $prenomEpouse = $_POST['prenomEpouse'] ?? null;
   $primaryInvitationModel = $_POST['modele_inv'] ?? null;
@@ -200,17 +203,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'prenom_epouse' => $prenomEpouse,
         'nom_epouse' => $_POST['nomEpouse'] ?? null,
         'nomfetard' => $nomsAnniv,
-        'themeconf' => $isTrainingEvent ? ($_POST['formationSubject'] ?? null) : ($_POST['themeConf'] ?? null),
+        'themeconf' => $isTrainingEvent ? ($_POST['formationSubject'] ?? null) : ($isBookLaunchEvent ? ($bookTitle !== '' ? $bookTitle : null) : ($_POST['themeConf'] ?? null)),
         'autres_precisions' => $_POST['details'] ?? null,
         'initiale_mar' => $initialemar,
         'lang' => $_POST['invitation_lang'] ?? null,
         'ordrepri' => $_POST['nameOrder'] ?? null,
         'event_details' => [
-          'detail_type' => $isTrainingEvent ? 'formation' : null,
+          'detail_type' => $isTrainingEvent ? 'formation' : ($isBookLaunchEvent ? 'vernissage_livre' : null),
           'date_debut' => $_POST['formationStart'] ?? null,
           'date_fin' => $_POST['formationEnd'] ?? null,
-          'matiere' => $_POST['formationSubject'] ?? null,
-          'intervenant' => $_POST['formationInstructor'] ?? null,
+          'matiere' => $isTrainingEvent ? ($_POST['formationSubject'] ?? null) : ($isBookLaunchEvent ? ($bookTitle !== '' ? $bookTitle : null) : null),
+          'intervenant' => $isTrainingEvent ? ($_POST['formationInstructor'] ?? null) : ($isBookLaunchEvent ? ($bookAuthor !== '' ? $bookAuthor : null) : null),
         ],
         'accessoire_quantities' => $_POST['accessoire_quantities'] ?? [],
         'invitation_models' => $selectedInvitationModels,
@@ -1452,6 +1455,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </div>
     </div>
 
+    <div id="BookLaunchFieldsGroup" style="display:none;">
+      <div class="section-head" style="margin-top:18px;">
+        <div>
+          <h3>Détails du vernissage</h3>
+          <p>Renseignez les informations du livre pour personnaliser l’invitation.</p>
+        </div>
+      </div>
+
+      <div class="form-grid two-col">
+        <div class="form-group form-span-full" id="BookTitleGroup">
+          <label for="titrelivre" class="form-label">Titre du livre</label>
+          <div class="input-group mb-3">
+            <span class="input-group-text bg-transparent"><i class="fas fa-book"></i></span>
+            <input type="text" name="titrelivre" id="titrelivre" class="form-control ps-15 bg-transparent" placeholder="Ex. Les chemins de l'espérance" value="<?php echo htmlspecialchars((string) ($_POST['titrelivre'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
+          </div>
+        </div>
+
+        <div class="form-group form-span-full" id="BookAuthorGroup">
+          <label for="auteurLivre" class="form-label">Auteur du livre</label>
+          <div class="input-group mb-3">
+            <span class="input-group-text bg-transparent"><i class="fas fa-user-pen"></i></span>
+            <input type="text" name="auteurLivre" id="auteurLivre" class="form-control ps-15 bg-transparent" placeholder="Ex. Antoine Mulamba" value="<?php echo htmlspecialchars((string) ($_POST['auteurLivre'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Commun (date/lieu/adresse/…/photos/CGU) -->
     <div class="form-grid two-col">
       <div class="input-group date chmpdate form-span-full" id="OtherDateTimeGroup" style="margin-top:15px;">
@@ -1644,6 +1674,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   const nomsAnnivGroup = document.getElementById('NomsAnnivGroup');
   const themeConfGroup = document.getElementById('ThemeConfGroup');
   const formationFieldsGroup = document.getElementById('FormationFieldsGroup');
+  const bookLaunchFieldsGroup = document.getElementById('BookLaunchFieldsGroup');
   const otherDateTimeGroup = document.getElementById('OtherDateTimeGroup');
   const nomsfetard = document.getElementById('nomsfetard');
   const themeConf = document.getElementById('themeConf');
@@ -1651,6 +1682,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   const formationStart = document.getElementById('formationStart');
   const formationEnd = document.getElementById('formationEnd');
   const formationInstructor = document.getElementById('formationInstructor');
+  const titreLivre = document.getElementById('titrelivre');
+  const auteurLivre = document.getElementById('auteurLivre');
 
   const btnNext1 = document.getElementById('btnNext1');
   const btnNext2 = document.getElementById('btnNext2');
@@ -1782,6 +1815,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   function isTrainingEventSelection() {
     return normalizeEventTypeName(getSelectedEventTypeName()).includes('formation');
+  }
+
+  function isBookLaunchEventSelection() {
+    const normalizedName = normalizeEventTypeName(getSelectedEventTypeName());
+    return eventTypeSelect?.value === '12' || (normalizedName.includes('vernissage') && normalizedName.includes('livre'));
   }
 
   function showWizard(shouldShow) {
@@ -2282,6 +2320,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   eventTypeSelect.addEventListener('change', function onTypeChange() {
     const value = this.value;
     const isTrainingEvent = isTrainingEventSelection();
+    const isBookLaunchEvent = isBookLaunchEventSelection();
 
     if (!value) {
       toggle(accessoireGroup, false);
@@ -2289,6 +2328,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       showWizard(false);
       singleStepOthers.style.display = 'none';
       toggle(formationFieldsGroup, false);
+      toggle(bookLaunchFieldsGroup, false);
       toggle(otherDateTimeGroup, true);
       setSectionEnabled(step1, false);
       setSectionEnabled(step2, false);
@@ -2307,12 +2347,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       toggle(nomsAnnivGroup, false);
       toggle(themeConfGroup, false);
       toggle(formationFieldsGroup, false);
+      toggle(bookLaunchFieldsGroup, false);
       toggle(otherDateTimeGroup, true);
     } else {
       applyMode('single');
       toggle(nomsAnnivGroup, value === '2');
       toggle(themeConfGroup, value === '3' && !isTrainingEvent);
       toggle(formationFieldsGroup, isTrainingEvent);
+      toggle(bookLaunchFieldsGroup, isBookLaunchEvent);
       toggle(otherDateTimeGroup, !isTrainingEvent);
     }
 
@@ -2532,6 +2574,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       const lieu2 = document.getElementById('lieu2').value;
       const adresse2 = document.getElementById('adresse2').value;
       const isTrainingEvent = isTrainingEventSelection();
+      const isBookLaunchEvent = isBookLaunchEventSelection();
 
       if (typeEvent === '2' && !nomsfetard.value.trim()) { alert('Nom du/de la fêté(e) requis.'); return; }
       if (typeEvent === '3' && !isTrainingEvent && !themeConf.value.trim()) { alert('Thème de la conférence requis.'); return; }
@@ -2539,6 +2582,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       if (isTrainingEvent && !formationStart.value) { alert('Date de début requise.'); return; }
       if (isTrainingEvent && !formationEnd.value) { alert('Date de fin requise.'); return; }
       if (isTrainingEvent && new Date(formationEnd.value) < new Date(formationStart.value)) { alert('La date de fin doit être postérieure à la date de début.'); return; }
+      if (isBookLaunchEvent && !titreLivre.value.trim()) { alert('Titre du livre requis.'); return; }
       if (!isTrainingEvent && !date2) { alert('Date/heure requises.'); return; }
       if (!lieu2.trim()) { alert('Lieu requis.'); return; }
       if (!adresse2.trim()) { alert('Adresse requise.'); return; }
