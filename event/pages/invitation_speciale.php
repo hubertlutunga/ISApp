@@ -253,6 +253,10 @@ for ($i = 1; $i <= $pagecount; $i++) {
             $lienconf = 'https://invitationspeciale.com/site/conference/index.php?page=accueil&cod=' . $_GET['event'] . '&idinv=' . $datainvite['id_inv'] . '&presence=oui';
             $lienabsent = 'https://invitationspeciale.com/site/conference/index.php?page=accueil&cod=' . $_GET['event'] . '&idinv=' . $datainvite['id_inv'] . '&presence=non';
             $lienplustard = 'https://invitationspeciale.com/site/conference/index.php?page=accueil&cod=' . $_GET['event'] . '&idinv=' . $datainvite['id_inv'] . '&presence=plustard';
+        } elseif ($dataevent['type_event'] === "12") {
+            $lienconf = 'https://invitationspeciale.com/site/vernisage/index.php?page=accueil&cod=' . $_GET['event'] . '&idinv=' . $datainvite['id_inv'] . '&presence=oui';
+            $lienabsent = 'https://invitationspeciale.com/site/vernisage/index.php?page=accueil&cod=' . $_GET['event'] . '&idinv=' . $datainvite['id_inv'] . '&presence=non';
+            $lienplustard = 'https://invitationspeciale.com/site/vernisage/index.php?page=accueil&cod=' . $_GET['event'] . '&idinv=' . $datainvite['id_inv'] . '&presence=plustard';
         } else {
             $lienconf = 'https://invitationspeciale.com/site/other/index.php?page=accueil&cod=' . $_GET['event'] . '&idinv=' . $datainvite['id_inv'] . '&presence=oui';
             $lienabsent = 'https://invitationspeciale.com/site/other/index.php?page=accueil&cod=' . $_GET['event'] . '&idinv=' . $datainvite['id_inv'] . '&presence=non';
@@ -390,6 +394,9 @@ for ($i = 1; $i <= $pagecount; $i++) {
         } elseif ($dataevent['type_event'] === "4") {
             $lienconf = 'https://invitationspeciale.com/site/conference/index.php?page=accueil&cod=' . $_GET['event'] . '&idinv=' . $datainvite['id_inv'] . '&presence=oui';
             $lienabsent = 'https://invitationspeciale.com/site/conference/index.php?page=accueil&cod=' . $_GET['event'] . '&idinv=' . $datainvite['id_inv'] . '&presence=non'; 
+        } elseif ($dataevent['type_event'] === "12") {
+            $lienconf = 'https://invitationspeciale.com/site/vernisage/index.php?page=accueil&cod=' . $_GET['event'] . '&idinv=' . $datainvite['id_inv'] . '&presence=oui';
+            $lienabsent = 'https://invitationspeciale.com/site/vernisage/index.php?page=accueil&cod=' . $_GET['event'] . '&idinv=' . $datainvite['id_inv'] . '&presence=non'; 
         } else {
             $lienconf = 'https://invitationspeciale.com/site/other/index.php?page=accueil&cod=' . $_GET['event'] . '&idinv=' . $datainvite['id_inv'] . '&presence=oui';
             $lienabsent = 'https://invitationspeciale.com/site/other/index.php?page=accueil&cod=' . $_GET['event'] . '&idinv=' . $datainvite['id_inv'] . '&presence=non'; 
@@ -516,6 +523,8 @@ for ($i = 1; $i <= $pagecount; $i++) {
             $lienconf = 'https://invitationspeciale.com/site/conference/index.php?page=accueil&cod=' . $_GET['event'] . '&idinv=' . $datainvite['id_inv'] . '&presence=oui'; 
         } elseif ($dataevent['type_event'] === "4") {
             $lienconf = 'https://invitationspeciale.com/site/conference/index.php?page=accueil&cod=' . $_GET['event'] . '&idinv=' . $datainvite['id_inv'] . '&presence=oui'; 
+        } elseif ($dataevent['type_event'] === "12") {
+            $lienconf = 'https://invitationspeciale.com/site/vernisage/index.php?page=accueil&cod=' . $_GET['event'] . '&idinv=' . $datainvite['id_inv'] . '&presence=oui'; 
         }
 
         // Afficher le lien de confirmation à la 4e page
