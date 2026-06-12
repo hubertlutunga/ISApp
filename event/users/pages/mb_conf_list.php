@@ -171,9 +171,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_confirmation_mai
 				.mb-confirm-main-cell{ padding-right:18px !important; }
 				.mb-confirm-action-cell{ width:1%; white-space:nowrap; vertical-align:middle !important; }
 				.mb-confirm-name{ display:block; font-size:17px; font-weight:800; color:#0f172a; text-decoration:none; }
-				.mb-confirm-state{ display:inline-flex; align-items:center; margin-top:10px; padding:7px 11px; border-radius:999px; font-size:12px; font-weight:800; }
-				.mb-confirm-state.is-yes{ background:#ecfdf5; color:#15803d; border:1px solid #bbf7d0; }
-				.mb-confirm-state.is-no{ background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; }
+				.mb-confirm-state{ font-size:60%; font-weight:700; font-style:italic; }
+				.mb-confirm-state.is-yes{ color:green; }
+				.mb-confirm-state.is-no{ color:#b91c1c; }
 				.mb-confirm-meals{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
 				.mb-confirm-meal{ display:inline-flex; align-items:center; padding:7px 11px; border-radius:999px; background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; font-size:12px; font-weight:700; }
 				.mb-confirm-note{ margin:12px 0 0; max-width:540px; color:#475569; line-height:1.7; font-size:14px; }
@@ -269,8 +269,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_confirmation_mai
 														?>
 														<tr id="conf-<?php echo (int) ($row_conf['cod_conf'] ?? 0); ?>" class="mb-confirm-row confirmation-item" data-search="<?php echo htmlspecialchars(mb_strtolower($searchHaystack, 'UTF-8'), ENT_QUOTES, 'UTF-8'); ?>">
 															<td class="pt-0 px-0 b-0 mb-confirm-main-cell">
-																<a class="mb-confirm-name" href="#"><?php echo htmlspecialchars(ucfirst($row_conf['noms'])); ?></a>
-																<span class="mb-confirm-state <?php echo $presenceClass; ?>"><?php echo $presence; ?></span>
+																<a class="mb-confirm-name" href="#"><?php echo htmlspecialchars(ucfirst($row_conf['noms'])); ?>, <em class="mb-confirm-state <?php echo $presenceClass; ?>"><?php echo $presence; ?></em></a>
 																<?php if (!empty($row_conf['meal_names'])) { ?>
 																<div class="mb-confirm-meals">
 																<?php foreach ($row_conf['meal_names'] as $mealName) { ?>
