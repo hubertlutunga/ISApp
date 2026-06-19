@@ -28,6 +28,13 @@ Thumbs.db
 qrscan/phpqrcode/*.png-errors.txt
 qrscan/phpqrcode/cache/generated/
 
+# Runtime/generated files on production
+captures/
+storage/
+event/pages/plantable/plan_defaul_*.png
+site/vernissage/pages/pdf/error_log
+site/vernissage/pages/pdf/temp/
+
 # Local environment overrides
 .env
 .env.local
