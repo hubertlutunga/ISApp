@@ -256,8 +256,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   <div class="content-wrapper">
     <div class="container-full">
-      <div class="container h-p100">
-        <div class="row align-items-center justify-content-md-center h-p100">
+      <div class="container h-p100 event-builder-page">
+        <div class="row align-items-center justify-content-md-center h-p100 event-builder-row">
           <div class="col-12">
             <div class="row justify-content-center g-0">
               <div class="col-12 boxcontent event-builder-shell">
@@ -274,6 +274,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <!-- ================== CSS MINIMAL (wizard + modal + preview) ================== -->
 <style>
+  body.layout-top-nav.fixed .wrapper{
+    height:auto;
+    min-height:100%;
+    overflow-x:hidden;
+    overflow-y:visible;
+  }
+  body.layout-top-nav.fixed .content-wrapper{
+    min-height:calc(100vh - 135px);
+    overflow:visible;
+  }
+  body.layout-top-nav.fixed .container-full,
+  body.layout-top-nav.fixed .event-builder-page,
+  body.layout-top-nav.fixed .event-builder-row{
+    height:auto !important;
+    min-height:0 !important;
+  }
   .event-builder-card{
     border: 1px solid rgba(148, 163, 184, 0.18);
     border-radius: 28px;
@@ -932,6 +948,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     font-weight:800;
   }
   @media (max-width: 767px){
+    body.layout-top-nav.fixed,
+    body.layout-top-nav.fixed .wrapper,
+    body.layout-top-nav.fixed .content-wrapper{
+      -webkit-overflow-scrolling:touch;
+      overflow-y:visible;
+    }
+    body.layout-top-nav.fixed .content-wrapper{
+      padding-bottom:32px;
+    }
     .event-builder-header{padding:24px 22px 6px !important}
     .event-builder-form{padding:22px 20px 28px !important}
     .event-builder-title{font-size:24px}
@@ -959,7 +984,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   }
 
   /* Modal modèles */
-  .modal{display:none;position:fixed;z-index:9999;left:0;top:0;width:100%;height:100%;overflow:auto;background:rgba(0,0,0,.4)}
+  .modal{display:none;position:fixed;z-index:9999;left:0;top:0;width:100%;height:100%;overflow:auto;background:rgba(0,0,0,.4);-webkit-overflow-scrolling:touch}
+  @supports (height: 100dvh){
+    .modal{height:100dvh}
+  }
   .dropdown-content{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;margin-top:12px}
   .option-image{width:100%;height:100%;min-height:188px;object-fit:cover;border-radius:0;margin-top:0}
   .image-lightbox-dialog{padding:14px}
