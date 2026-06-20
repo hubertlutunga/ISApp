@@ -189,6 +189,8 @@ if ($home2Html === '') {
 }
 
 $home2ExtraCss = <<<CSS
+@font-face{font-family:'Birds of Paradise';src:local('Birds of Paradise'),local('BirdsOfParadise');font-display:swap}
+.hero-names,.footer-names{font-family:'Birds of Paradise','SignPainter','Cormorant Garamond',cursive!important;font-style:normal!important;font-weight:400!important;letter-spacing:.02em}
 .home2-rsvp-form{display:grid;gap:.9rem;max-width:620px;margin:1.2rem auto 0;text-align:left}
 .home2-rsvp-form input,.home2-rsvp-form textarea{width:100%;border:1px solid rgba(201,168,76,.45);border-radius:0;background:rgba(247,243,236,.92);color:#3C0B1A;font:600 15px/1.4 Cormorant Garamond,serif;padding:.9rem 1rem;outline:none}
 .home2-rsvp-form textarea{min-height:100px;resize:vertical}
