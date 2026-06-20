@@ -93,12 +93,65 @@ $weddingSiteFieldLabels = [
   'rsvp_subtitle' => 'Sous-titre RSVP',
   'location_title' => 'Titre adresse',
   'location_subtitle' => 'Sous-titre adresse',
+  'home2_couple_names' => 'Noms affichés',
+  'home2_honor_text' => 'Texte d’invitation familles',
+  'home2_hero_meta' => 'Ville / mois affichés',
+  'home2_button_text' => 'Texte du bouton',
+  'home2_gala_label' => 'Libellé de section',
+  'home2_gala_title' => 'Titre de la soirée',
+  'home2_gala_subtitle' => 'Sous-titre de la soirée',
+  'home2_gala_primary_label' => 'Libellé bloc 1',
+  'home2_gala_primary_value' => 'Titre bloc 1',
+  'home2_gala_primary_text' => 'Texte bloc 1',
+  'home2_gala_secondary_label' => 'Libellé bloc 2',
+  'home2_gala_secondary_value' => 'Titre bloc 2',
+  'home2_gala_secondary_text' => 'Texte bloc 2',
+  'home2_program_label' => 'Libellé programme',
+  'home2_program_title' => 'Titre programme',
+  'home2_program_subtitle' => 'Sous-titre programme',
+  'home2_program_event_eyebrow' => 'Date courte programme',
+  'home2_program_event_title' => 'Nom de l’événement',
+  'home2_program_event_badge' => 'Badge événement',
+  'home2_program_time_label' => 'Libellé heure',
+  'home2_program_time_value' => 'Heure affichée',
+  'home2_program_location_label' => 'Libellé lieu',
+  'home2_program_location_value' => 'Lieu affiché',
+  'home2_program_dress_label' => 'Libellé dress code',
+  'home2_program_dress_value' => 'Dress code',
+  'home2_program_description' => 'Description programme',
+  'home2_story_label' => 'Libellé histoire',
+  'home2_story_title' => 'Titre histoire',
+  'home2_story_text_1' => 'Texte histoire 1',
+  'home2_story_text_2' => 'Texte histoire 2',
+  'home2_story_coda' => 'Phrase finale histoire',
+  'home2_presence_label' => 'Libellé présences',
+  'home2_presence_title' => 'Titre présences',
+  'home2_presence_subtitle' => 'Sous-titre présences',
+  'home2_presence_card1_title' => 'Titre carte présence 1',
+  'home2_presence_card1_text' => 'Texte carte présence 1',
+  'home2_presence_card2_title' => 'Titre carte présence 2',
+  'home2_presence_card2_text' => 'Texte carte présence 2',
+  'home2_location_label' => 'Libellé logistique',
+  'home2_location_title' => 'Titre adresse',
+  'home2_location_subtitle' => 'Sous-titre adresse',
+  'home2_main_place_title' => 'Titre lieu principal',
+  'home2_main_place_text' => 'Adresse lieu principal',
+  'home2_main_place_note' => 'Note lieu principal',
+  'home2_accommodation_title' => 'Titre hébergements',
+  'home2_accommodation_text' => 'Liste hébergements',
+  'home2_accommodation_note' => 'Note hébergements',
+  'home2_map_placeholder' => 'Texte carte si aucune iframe',
+  'home2_rsvp_label' => 'Libellé RSVP',
+  'home2_rsvp_title' => 'Titre RSVP',
+  'home2_rsvp_subtitle' => 'Sous-titre RSVP',
+  'home2_footer_meta' => 'Texte footer',
 ];
 
 $weddingSiteImageFields = [
   'hero_bg' => 'Image Accueil / Compteur',
   'save_heart' => 'Image Save the date',
   'wedding_bg' => 'Image Wedding Events',
+  'home2_monogram' => 'Monogramme Style 2',
 ];
 
 $weddingSiteSectionPanels = [
@@ -113,9 +166,24 @@ $weddingSiteSectionPanels = [
   'gallery' => ['title' => 'Galeries', 'fields' => [], 'images' => []],
 ];
 
+$weddingSiteStyle2Panels = [
+  'style2_hero' => ['title' => 'Style 2 — Accueil', 'fields' => ['home2_couple_names', 'home2_honor_text', 'home2_hero_meta', 'home2_button_text'], 'images' => ['home2_monogram']],
+  'style2_gala' => ['title' => 'Style 2 — Soirée', 'fields' => ['home2_gala_label', 'home2_gala_title', 'home2_gala_subtitle', 'home2_gala_primary_label', 'home2_gala_primary_value', 'home2_gala_primary_text', 'home2_gala_secondary_label', 'home2_gala_secondary_value', 'home2_gala_secondary_text'], 'images' => []],
+  'style2_program' => ['title' => 'Style 2 — Programme', 'fields' => ['home2_program_label', 'home2_program_title', 'home2_program_subtitle', 'home2_program_event_eyebrow', 'home2_program_event_title', 'home2_program_event_badge', 'home2_program_time_label', 'home2_program_time_value', 'home2_program_location_label', 'home2_program_location_value', 'home2_program_dress_label', 'home2_program_dress_value', 'home2_program_description'], 'images' => []],
+  'style2_story' => ['title' => 'Style 2 — Histoire', 'fields' => ['home2_story_label', 'home2_story_title', 'home2_story_text_1', 'home2_story_text_2', 'home2_story_coda'], 'images' => []],
+  'style2_presence' => ['title' => 'Style 2 — Présences', 'fields' => ['home2_presence_label', 'home2_presence_title', 'home2_presence_subtitle', 'home2_presence_card1_title', 'home2_presence_card1_text', 'home2_presence_card2_title', 'home2_presence_card2_text'], 'images' => []],
+  'style2_location' => ['title' => 'Style 2 — Adresse & hébergement', 'fields' => ['home2_location_label', 'home2_location_title', 'home2_location_subtitle', 'home2_main_place_title', 'home2_main_place_text', 'home2_main_place_note', 'home2_accommodation_title', 'home2_accommodation_text', 'home2_accommodation_note', 'home2_map_placeholder'], 'images' => []],
+  'style2_rsvp' => ['title' => 'Style 2 — RSVP & footer', 'fields' => ['home2_rsvp_label', 'home2_rsvp_title', 'home2_rsvp_subtitle', 'home2_footer_meta'], 'images' => []],
+];
+
 $weddingSiteImageUrl = static function (string $imageName): string {
   $imageName = trim($imageName);
   return $imageName !== '' ? '../../couple/images/' . htmlspecialchars($imageName, ENT_QUOTES, 'UTF-8') : '';
+};
+
+$weddingSiteAudioUrl = static function (string $audioName): string {
+  $audioName = trim($audioName);
+  return $audioName !== '' ? '../../couple/audio/' . rawurlencode($audioName) : '';
 };
 
 $guestConfirmationChoices = [];
@@ -154,6 +222,12 @@ if ($weddingMapIframeValue === '' && $weddingMapIframeEncoded !== '') {
     $weddingMapIframeValue = $decodedWeddingMapIframe;
   }
 }
+$selectedHomeTemplate = (string) ($weddingSiteSettings['content']['home_template'] ?? 'home1');
+if (!in_array($selectedHomeTemplate, ['home1', 'home2'], true)) {
+  $selectedHomeTemplate = 'home1';
+}
+$weddingSiteMusicFile = WeddingWebsiteSettingsService::media($weddingSiteSettings, 'background_music', '');
+$weddingSiteMusicUrl = $weddingSiteAudioUrl($weddingSiteMusicFile);
 ?>
 
 <style>
@@ -176,6 +250,22 @@ html,body{ height:auto !important; min-height:100% !important; overflow-y:auto !
 .content textarea.form-control{ min-height:140px; }
 .content .btn.btn-primary,.content .btn.btn-warning,.content .btn.btn-success{ min-height:52px; border-radius:16px; font-weight:800; }
 .mb-wedconf-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+.mb-wedconf-template-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin:0 0 18px; }
+.mb-wedconf-template-card{ position:relative; display:block; border:1px solid #dbeafe; border-radius:22px; padding:16px 16px 16px 48px; background:#fff; box-shadow:0 12px 28px rgba(15,23,42,.06); cursor:pointer; transition:all .2s ease; }
+.mb-wedconf-template-card:hover{ transform:translateY(-1px); border-color:#93c5fd; box-shadow:0 16px 32px rgba(15,23,42,.09); }
+.mb-wedconf-template-card input{ position:absolute; left:18px; top:20px; width:18px; height:18px; }
+.mb-wedconf-template-card strong{ display:block; color:#0f172a; font-size:16px; font-weight:900; }
+.mb-wedconf-template-card span{ display:block; margin-top:6px; color:#64748b; font-size:13px; line-height:1.55; font-weight:700; }
+.mb-wedconf-template-card input:checked + strong{ color:#0f766e; }
+.mb-wedconf-template-card.is-active{ border-color:#14b8a6; background:linear-gradient(135deg,#f0fdfa 0%,#ffffff 100%); }
+.mb-wedconf-template-card .mb-wedconf-active-badge{ display:none; width:max-content; margin-top:8px; padding:5px 10px; border-radius:999px; background:#dcfce7; color:#15803d; font-size:11px; font-weight:900; text-transform:uppercase; letter-spacing:.04em; }
+.mb-wedconf-template-card.is-active .mb-wedconf-active-badge{ display:inline-flex; align-items:center; }
+.mb-wedconf-style-panel{ display:none; }
+.mb-wedconf-style-panel.is-visible{ display:block; }
+.mb-wedconf-music-card{ margin:0 0 18px; border:1px solid #bae6fd; border-radius:22px; padding:16px; background:linear-gradient(135deg,#f0f9ff 0%,#ffffff 100%); box-shadow:0 12px 28px rgba(15,23,42,.06); }
+.mb-wedconf-music-card strong{ display:block; color:#0f172a; font-size:16px; font-weight:900; margin-bottom:6px; }
+.mb-wedconf-music-card span{ display:block; color:#64748b; font-size:13px; line-height:1.55; font-weight:700; margin-bottom:12px; }
+.mb-wedconf-music-card audio{ display:block; width:100%; margin-bottom:12px; }
 .mb-wedconf-radio-group{ display:flex; flex-wrap:wrap; gap:8px; }
 .mb-wedconf-radio{ display:inline-flex; align-items:center; gap:6px; padding:7px 10px; border:1px solid #dbeafe; border-radius:999px; background:#fff; color:#334155; font-size:12px; font-weight:800; }
 .mb-wedconf-radio input{ width:16px; height:16px; }
@@ -215,7 +305,7 @@ html,body{ height:auto !important; min-height:100% !important; overflow-y:auto !
 .mb-wedconf-section-index{ display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; border-radius:50%; background:#0f172a; color:#fff; font-size:13px; font-weight:900; }
 .mb-wedconf-section-body{ padding:18px; }
 @keyframes fadeIn{ from{opacity:0} to{opacity:1} }
-@media only screen and (max-width:769px){ .mb-siteconf-hero{ padding:22px 20px; border-radius:24px; } .mb-siteconf-title{ font-size:28px; } .content .box-header,.content .box-body{ padding:18px; } .mb-wedconf-grid,.mb-wedconf-image-grid{ grid-template-columns:1fr; } .mb-wedconf-section-head{ align-items:flex-start; flex-direction:column; } }
+@media only screen and (max-width:769px){ .mb-siteconf-hero{ padding:22px 20px; border-radius:24px; } .mb-siteconf-title{ font-size:28px; } .content .box-header,.content .box-body{ padding:18px; } .mb-wedconf-grid,.mb-wedconf-template-grid,.mb-wedconf-image-grid{ grid-template-columns:1fr; } .mb-wedconf-section-head{ align-items:flex-start; flex-direction:column; } }
 </style>
 
 <div class="content-wrapper">
@@ -248,6 +338,30 @@ html,body{ height:auto !important; min-height:100% !important; overflow-y:auto !
               <div class="box-body">
                 <form action="" method="post" enctype="multipart/form-data" id="weddingSiteForm">
                   <p style="margin-bottom:18px;color:#64748b;font-weight:700;">Par défaut, toutes les sections sont affichées. Masquez seulement les sections que vous ne souhaitez pas publier.</p>
+                  <div class="mb-wedconf-template-grid" aria-label="Choix du style de la page d'accueil">
+                    <label class="mb-wedconf-template-card <?php echo $selectedHomeTemplate === 'home1' ? 'is-active' : ''; ?>">
+                      <input type="radio" name="home_template" value="home1" <?php echo $selectedHomeTemplate === 'home1' ? 'checked' : ''; ?>>
+                      <strong>Style 1 <span class="mb-wedconf-active-badge">Actif</span></strong>
+                      <span>Mise en page détaillée avec sections complètes pour raconter l’événement.</span>
+                    </label>
+                    <label class="mb-wedconf-template-card <?php echo $selectedHomeTemplate === 'home2' ? 'is-active' : ''; ?>">
+                      <input type="radio" name="home_template" value="home2" <?php echo $selectedHomeTemplate === 'home2' ? 'checked' : ''; ?>>
+                      <strong>Style 2 <span class="mb-wedconf-active-badge">Actif</span></strong>
+                      <span>Mise en page cérémoniale, élégante et centrée sur l’expérience de l’invité.</span>
+                    </label>
+                  </div>
+                  <div class="mb-wedconf-music-card">
+                    <strong>Musique du site (Style 1 et Style 2)</strong>
+                    <span>Importez un fichier MP3. Il sera lancé automatiquement quand un invité ouvre le site, avec un bouton discret pour activer ou arrêter le son si le navigateur le demande.</span>
+                    <?php if ($weddingSiteMusicUrl !== '') { ?>
+                    <audio controls preload="metadata" src="<?php echo htmlspecialchars($weddingSiteMusicUrl, ENT_QUOTES, 'UTF-8'); ?>"></audio>
+                    <small style="display:block;margin-bottom:10px;color:#0f766e;font-weight:900;">Musique actuelle : <?php echo htmlspecialchars($weddingSiteMusicFile, ENT_QUOTES, 'UTF-8'); ?></small>
+                    <?php } else { ?>
+                    <small style="display:block;margin-bottom:10px;color:#64748b;font-weight:900;">Aucune musique importée pour le moment.</small>
+                    <?php } ?>
+                    <input type="file" name="wedding_music" accept="audio/mpeg,.mp3" class="form-control">
+                  </div>
+                  <div class="mb-wedconf-style-panel <?php echo $selectedHomeTemplate === 'home1' ? 'is-visible' : ''; ?>" data-style-panel="home1">
                   <?php $sectionCounter = 1; foreach ($weddingSiteSectionPanels as $sectionKey => $sectionPanel) { $sectionEnabled = WeddingWebsiteSettingsService::sectionEnabled($weddingSiteSettings, $sectionKey); $sectionLocked = in_array($sectionKey, WeddingWebsiteSettingsService::ALWAYS_VISIBLE_SECTIONS, true); ?>
                   <div class="mb-wedconf-section-card <?php echo (!$sectionEnabled && !$sectionLocked) ? 'is-section-hidden' : ''; ?>" data-wedding-section-card>
                     <div class="mb-wedconf-section-head">
@@ -330,6 +444,35 @@ html,body{ height:auto !important; min-height:100% !important; overflow-y:auto !
                     </div>
                   </div>
                   <?php $sectionCounter++; } ?>
+                  </div>
+
+                  <div class="mb-wedconf-style-panel <?php echo $selectedHomeTemplate === 'home2' ? 'is-visible' : ''; ?>" data-style-panel="home2">
+                    <div class="alert alert-light" style="border-radius:16px;font-weight:700;">Ces champs pilotent directement le Style 2 : textes, programme, adresse, RSVP, carte et monogramme.</div>
+                    <?php $style2Counter = 1; foreach ($weddingSiteStyle2Panels as $style2Panel) { ?>
+                    <div class="mb-wedconf-section-card">
+                      <div class="mb-wedconf-section-head">
+                        <div class="mb-wedconf-section-title"><span class="mb-wedconf-section-index"><?php echo $style2Counter; ?></span><?php echo htmlspecialchars($style2Panel['title'], ENT_QUOTES, 'UTF-8'); ?></div>
+                      </div>
+                      <div class="mb-wedconf-section-body">
+                        <?php if (!empty($style2Panel['fields'])) { ?>
+                        <div class="mb-wedconf-grid">
+                          <?php foreach ($style2Panel['fields'] as $fieldName) { $fieldValue = (string) ($weddingSiteSettings['content'][$fieldName] ?? ''); $isLongField = str_contains($fieldName, 'text') || str_contains($fieldName, 'subtitle') || str_contains($fieldName, 'description') || str_contains($fieldName, 'note') || str_contains($fieldName, 'value'); ?>
+                          <div class="mb-wedconf-field"><label for="wed_<?php echo htmlspecialchars($fieldName, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($weddingSiteFieldLabels[$fieldName] ?? $fieldName, ENT_QUOTES, 'UTF-8'); ?></label><?php if ($isLongField) { ?><textarea id="wed_<?php echo htmlspecialchars($fieldName, ENT_QUOTES, 'UTF-8'); ?>" name="<?php echo htmlspecialchars($fieldName, ENT_QUOTES, 'UTF-8'); ?>" class="form-control" rows="4"><?php echo htmlspecialchars($fieldValue, ENT_QUOTES, 'UTF-8'); ?></textarea><?php } else { ?><input id="wed_<?php echo htmlspecialchars($fieldName, ENT_QUOTES, 'UTF-8'); ?>" type="text" name="<?php echo htmlspecialchars($fieldName, ENT_QUOTES, 'UTF-8'); ?>" class="form-control" value="<?php echo htmlspecialchars($fieldValue, ENT_QUOTES, 'UTF-8'); ?>"><?php } ?></div>
+                          <?php } ?>
+                        </div>
+                        <?php } ?>
+
+                        <?php if (!empty($style2Panel['images'])) { ?>
+                        <div class="mb-wedconf-image-grid" style="margin-top:12px;">
+                          <?php foreach ($style2Panel['images'] as $imageField) { $imageUrl = $weddingSiteImageUrl((string) ($weddingSiteSettings['images'][$imageField] ?? '')); ?>
+                          <div class="mb-wedconf-image-card"><strong><?php echo htmlspecialchars($weddingSiteImageFields[$imageField] ?? $imageField, ENT_QUOTES, 'UTF-8'); ?></strong><?php if ($imageUrl !== '') { ?><img src="<?php echo $imageUrl; ?>" alt="<?php echo htmlspecialchars($weddingSiteImageFields[$imageField] ?? $imageField, ENT_QUOTES, 'UTF-8'); ?>"><?php } else { ?><div class="mb-wedconf-empty-img">Image par défaut</div><?php } ?><input type="file" name="wedding_image_<?php echo htmlspecialchars($imageField, ENT_QUOTES, 'UTF-8'); ?>" accept="image/*" class="form-control"></div>
+                          <?php } ?>
+                        </div>
+                        <?php } ?>
+                      </div>
+                    </div>
+                    <?php $style2Counter++; } ?>
+                  </div>
 
                   <div class="mb-wedconf-modal" id="accommodationModal" aria-hidden="true"><div class="mb-wedconf-modal-card"><div class="mb-wedconf-modal-head"><h5 id="accommodationModalTitle">Ajouter un hébergement</h5><button type="button" class="btn btn-warning btn-sm" id="closeAccommodationModal">Fermer</button></div><input type="hidden" id="accommodationIndex" value=""><div class="mb-wedconf-field"><label for="accommodationName">Nom de l’hébergement</label><input type="text" id="accommodationName" class="form-control" placeholder="Ex: Hôtel du Fleuve"></div><div class="mb-wedconf-field"><label for="accommodationAddress">Adresse</label><textarea id="accommodationAddress" class="form-control" rows="3" placeholder="Adresse complète"></textarea></div><div class="mb-wedconf-field"><label for="accommodationMap">Maps / iframe Google Maps</label><textarea id="accommodationMap" class="form-control" rows="4" placeholder="Collez ici le code iframe Google Maps ou un lien Maps"></textarea></div><div class="text-center mt-15"><button type="button" class="btn btn-primary" id="saveAccommodation">Enregistrer l’hébergement</button></div></div></div>
 
@@ -364,6 +507,25 @@ function confirmSuppEvent(event, codPhoto, codGetevent) {
   });
 }
 (function(){ document.querySelectorAll('.box').forEach(function(box){ const header = box.querySelector('.box-header'); if (!header) return; header.addEventListener('click', function(e){ if (!e.target.closest('button,a,input,label,textarea,select')) box.classList.toggle('open'); }); }); })();
+(function(){
+  const radios = document.querySelectorAll('input[name="home_template"]');
+  const panels = document.querySelectorAll('[data-style-panel]');
+  const cards = document.querySelectorAll('.mb-wedconf-template-card');
+  if (!radios.length) return;
+  function refresh(){
+    const checked = document.querySelector('input[name="home_template"]:checked');
+    const value = checked ? checked.value : 'home1';
+    cards.forEach(function(card){
+      const input = card.querySelector('input[name="home_template"]');
+      card.classList.toggle('is-active', !!input && input.value === value);
+    });
+    panels.forEach(function(panel){
+      panel.classList.toggle('is-visible', panel.getAttribute('data-style-panel') === value);
+    });
+  }
+  radios.forEach(function(radio){ radio.addEventListener('change', refresh); });
+  refresh();
+})();
 (function(){ document.querySelectorAll('[data-wedding-section-card]').forEach(function(card){ function refresh(){ const checked = card.querySelector('input[type="radio"][name^="wedding_sections"]:checked'); card.classList.toggle('is-section-hidden', !!checked && checked.value === 'hide'); } card.querySelectorAll('input[type="radio"][name^="wedding_sections"]').forEach(function(radio){ radio.addEventListener('change', refresh); }); refresh(); }); })();
 (function(){ const form = document.getElementById('weddingSiteForm'); const visibleInput = document.getElementById('wed_wedding_map_iframe_visible'); const encodedInput = document.getElementById('wed_wedding_map_iframe_b64'); if (!form || !visibleInput || !encodedInput) return; function encodeMap(value){ return btoa(unescape(encodeURIComponent(String(value || '')))); } function sync(){ const value = visibleInput.value.trim(); encodedInput.value = value ? encodeMap(value) : ''; } visibleInput.addEventListener('input', sync); form.addEventListener('submit', sync); sync(); })();
 (function(){ const form = document.getElementById('publicSiteForm'); const visibleInput = document.getElementById('public_iframe'); const encodedInput = document.getElementById('public_iframe_b64'); if (!form || !visibleInput || !encodedInput) return; function encodeMap(value){ return btoa(unescape(encodeURIComponent(String(value || '')))); } function sync(){ const value = visibleInput.value.trim(); encodedInput.value = value ? encodeMap(value) : ''; } visibleInput.addEventListener('input', sync); form.addEventListener('submit', sync); sync(); })();

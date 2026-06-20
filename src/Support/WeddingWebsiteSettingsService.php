@@ -28,9 +28,62 @@ final class WeddingWebsiteSettingsService
                 'location' => true,
             ],
             'content' => [
+                'home_template' => 'home1',
                 'hero_title' => $couple,
                 'hero_subtitle' => 'Se marient dans',
                 'hero_button' => 'RSVP',
+                'home2_couple_names' => '',
+                'home2_honor_text' => "Les familles Kasenga et Kalala Wa Kalala\nont l'honneur de vous convier au mariage de leurs enfants",
+                'home2_hero_meta' => '',
+                'home2_button_text' => 'Confirmer ma présence',
+                'home2_gala_label' => 'La soirée',
+                'home2_gala_title' => 'Soirée de Gala',
+                'home2_gala_subtitle' => '',
+                'home2_gala_primary_label' => 'Le cadre',
+                'home2_gala_primary_value' => '',
+                'home2_gala_primary_text' => 'Après les cérémonies du jour, nous aurons le plaisir de vous accueillir pour une soirée de gala conçue comme une célébration intime et mémorable, dans un cadre raffiné au bord du fleuve Congo.',
+                'home2_gala_secondary_label' => 'L’esprit de la soirée',
+                'home2_gala_secondary_value' => 'Musique · Gastronomie · Festivité',
+                'home2_gala_secondary_text' => 'Entourés de nos familles et amis les plus chers, nous célébrerons cette union dans une atmosphère alliant émotion, élégance et joie partagée. Réservez cette date — nous comptons sur votre présence.',
+                'home2_program_label' => 'Votre invitation',
+                'home2_program_title' => 'Programme',
+                'home2_program_subtitle' => "Retrouvez ci-dessous le déroulé de l'événement auquel vous êtes convié.",
+                'home2_program_event_eyebrow' => '',
+                'home2_program_event_title' => 'Soirée de Gala',
+                'home2_program_event_badge' => 'Gala',
+                'home2_program_time_label' => "Heure d'accueil",
+                'home2_program_time_value' => '',
+                'home2_program_location_label' => 'Lieu',
+                'home2_program_location_value' => '',
+                'home2_program_dress_label' => 'Dress code',
+                'home2_program_dress_value' => "Tenue de soirée\nÉlégance requise",
+                'home2_program_description' => 'Réception officielle, dîner de gala, animations et grande célébration.',
+                'home2_story_label' => 'Notre histoire',
+                'home2_story_title' => 'Love Story',
+                'home2_story_text_1' => "Chaque étape de notre parcours nous a conduits, avec une certitude tranquille, vers cette célébration. Ce que nous fêtons n'est pas seulement notre union — c'est la joie de réunir autour de nous toutes les personnes qui ont compté dans cette histoire.",
+                'home2_story_text_2' => 'Nous vous invitons à partager avec nous une soirée empreinte d’élégance, de chaleur et de moments qui restent.',
+                'home2_story_coda' => 'Fin heureuse — nous nous marions.',
+                'home2_presence_label' => 'Présences & attentions',
+                'home2_presence_title' => 'Votre présence nous honore',
+                'home2_presence_subtitle' => 'Votre venue est le plus beau des cadeaux. Pour ceux qui souhaitent nous accompagner davantage dans cette nouvelle étape, une urne sera mise à disposition le soir du gala.',
+                'home2_presence_card1_title' => 'Participation à la réception',
+                'home2_presence_card1_text' => "Dîner, animations et grande célébration avec l'ensemble des convives de la soirée.",
+                'home2_presence_card2_title' => 'Invitation personnelle',
+                'home2_presence_card2_text' => 'Cette invitation est strictement personnelle et non transmissible. Merci de confirmer votre présence via le formulaire RSVP.',
+                'home2_location_label' => 'Logistique',
+                'home2_location_title' => 'Adresse & hébergement',
+                'home2_location_subtitle' => 'Informations pratiques pour préparer votre venue à Kinshasa, RDC.',
+                'home2_main_place_title' => 'Lieu principal',
+                'home2_main_place_text' => '',
+                'home2_main_place_note' => 'Dress code : tenue de soirée, élégance requise. Accès et instructions détaillés dans votre carte d’accompagnement.',
+                'home2_accommodation_title' => 'Hébergements recommandés',
+                'home2_accommodation_text' => "Fleuve Congo Hôtel\nThe First MK\nHôtel du Fleuve",
+                'home2_accommodation_note' => 'Pour toute question logistique, contactez l’équipe via le formulaire ci-dessous ou au numéro figurant sur votre invitation.',
+                'home2_map_placeholder' => 'Carte Google Maps — à intégrer depuis l’espace d’administration',
+                'home2_rsvp_label' => 'Confirmation',
+                'home2_rsvp_title' => 'RSVP',
+                'home2_rsvp_subtitle' => '',
+                'home2_footer_meta' => '',
                 'save_title' => 'Save the date',
                 'save_text' => '',
                 'love_title' => 'Love Story',
@@ -84,6 +137,10 @@ final class WeddingWebsiteSettingsService
                 'friend_2_photo' => (string) ($event['photostory'] ?? ''),
                 'location_1_photo' => (string) ($event['photo'] ?? ''),
                 'location_2_photo' => (string) ($event['photostory'] ?? ''),
+                'home2_monogram' => '',
+            ],
+            'media' => [
+                'background_music' => '',
             ],
         ];
     }
@@ -124,7 +181,7 @@ final class WeddingWebsiteSettingsService
                 $stored = [];
             }
 
-            foreach (['sections', 'content', 'images'] as $key) {
+            foreach (['sections', 'content', 'images', 'media'] as $key) {
                 if (isset($stored[$key]) && !is_array($stored[$key])) {
                     self::trace('wedding_settings_invalid_shape', [
                         'event_id' => $eventId,
@@ -208,6 +265,10 @@ final class WeddingWebsiteSettingsService
             }
         }
 
+        if (!in_array((string) ($settings['content']['home_template'] ?? 'home1'), ['home1', 'home2'], true)) {
+            $settings['content']['home_template'] = 'home1';
+        }
+
         return self::enforceAlwaysVisibleSections($settings);
     }
 
@@ -236,6 +297,12 @@ final class WeddingWebsiteSettingsService
         return $value !== '' ? $value : $fallback;
     }
 
+    public static function media(array $settings, string $field, string $fallback = ''): string
+    {
+        $value = trim((string) ($settings['media'][$field] ?? ''));
+        return $value !== '' ? $value : $fallback;
+    }
+
     public static function uploadImages(array $files, array $settings, string $targetDir): array
     {
         foreach (array_keys($settings['images']) as $imageField) {
@@ -249,6 +316,78 @@ final class WeddingWebsiteSettingsService
         }
 
         return $settings;
+    }
+
+    public static function uploadAudio(array $files, array $settings, string $targetDir): array
+    {
+        $inputNames = ['wedding_music', 'wedding_music_style1', 'wedding_music_style2'];
+        foreach ($inputNames as $inputName) {
+            if (isset($files[$inputName]) && ($files[$inputName]['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+                $uploaded = EventMediaService::storeUploadedAudio($files[$inputName], $targetDir, 'wedmusic_');
+                if ($uploaded !== null) {
+                    $settings['media']['background_music'] = $uploaded;
+                }
+            }
+        }
+
+        return $settings;
+    }
+
+    public static function backgroundMusicMarkup(array $settings, string $urlPrefix = '../couple/audio/'): string
+    {
+        $musicFile = self::media($settings, 'background_music', '');
+        if ($musicFile === '') {
+            return '';
+        }
+
+        $musicUrl = rtrim($urlPrefix, '/') . '/' . rawurlencode($musicFile);
+        $musicUrlHtml = htmlspecialchars($musicUrl, ENT_QUOTES, 'UTF-8');
+
+        return <<<HTML
+<div class="wedsite-music" aria-live="polite">
+    <audio id="wedsiteBackgroundMusic" src="{$musicUrlHtml}" autoplay loop preload="auto" playsinline></audio>
+    <button type="button" id="wedsiteMusicButton" class="wedsite-music-button" aria-label="Activer ou arrêter la musique">♫</button>
+</div>
+<style>
+.wedsite-music-button{position:fixed;right:18px;bottom:18px;z-index:2147483000;width:46px;height:46px;border:0;border-radius:50%;background:rgba(15,23,42,.88);color:#fff;box-shadow:0 12px 30px rgba(15,23,42,.25);font-size:20px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.wedsite-music-button.is-playing{background:#15803d}
+.wedsite-music-button.is-waiting{animation:wedsiteMusicPulse 1.2s ease-in-out infinite;background:#b45309}
+@keyframes wedsiteMusicPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+</style>
+<script>
+(function(){
+    var audio = document.getElementById('wedsiteBackgroundMusic');
+    var button = document.getElementById('wedsiteMusicButton');
+    if (!audio || !button) return;
+    audio.volume = 0.55;
+    function setState(){
+        button.classList.toggle('is-playing', !audio.paused);
+        button.classList.toggle('is-waiting', audio.paused);
+        button.setAttribute('aria-label', audio.paused ? 'Activer la musique' : 'Arrêter la musique');
+    }
+    function playMusic(){
+        var promise = audio.play();
+        if (promise && typeof promise.catch === 'function') {
+            promise.catch(function(){ setState(); });
+        }
+        setTimeout(setState, 120);
+    }
+    button.addEventListener('click', function(){
+        if (audio.paused) { playMusic(); } else { audio.pause(); setState(); }
+    });
+    ['click','touchstart','keydown'].forEach(function(eventName){
+        document.addEventListener(eventName, function once(){
+            if (audio.paused) playMusic();
+            document.removeEventListener(eventName, once, true);
+        }, true);
+    });
+    audio.addEventListener('play', setState);
+    audio.addEventListener('pause', setState);
+    playMusic();
+    setState();
+})();
+</script>
+HTML;
     }
 
     private static function mergeRecursive(array $defaults, array $stored): array
@@ -266,7 +405,7 @@ final class WeddingWebsiteSettingsService
 
     private static function normalizeStructure(array $settings, array $defaults): array
     {
-        foreach (['sections', 'content', 'images'] as $key) {
+        foreach (['sections', 'content', 'images', 'media'] as $key) {
             if (!isset($settings[$key]) || !is_array($settings[$key])) {
                 $settings[$key] = $defaults[$key];
                 continue;
@@ -276,6 +415,9 @@ final class WeddingWebsiteSettingsService
         }
 
         $settings['visibility_initialized'] = (bool) ($settings['visibility_initialized'] ?? $defaults['visibility_initialized']);
+        if (!in_array((string) ($settings['content']['home_template'] ?? 'home1'), ['home1', 'home2'], true)) {
+            $settings['content']['home_template'] = 'home1';
+        }
 
         return $settings;
     }

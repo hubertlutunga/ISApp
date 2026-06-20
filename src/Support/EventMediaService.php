@@ -58,6 +58,60 @@ final class EventMediaService
         return $fileName;
     }
 
+    public static function storeUploadedAudio(array $file, string $targetDir, ?string $prefix = null, ?int $maxBytes = null): ?string
+    {
+        if (!isset($file['error']) || $file['error'] === UPLOAD_ERR_NO_FILE) {
+            return null;
+        }
+
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            throw new RuntimeException('Probleme de telechargement du fichier audio');
+        }
+
+        $maxBytes = $maxBytes ?? (12 * 1024 * 1024);
+        if ((int) ($file['size'] ?? 0) > $maxBytes) {
+            throw new RuntimeException('Fichier audio trop volumineux');
+        }
+
+        $extension = strtolower((string) pathinfo((string) ($file['name'] ?? ''), PATHINFO_EXTENSION));
+        if ($extension !== 'mp3') {
+            throw new RuntimeException('Seuls les fichiers MP3 sont autorises');
+        }
+
+        $tmpName = (string) ($file['tmp_name'] ?? '');
+        if ($tmpName === '' || !is_uploaded_file($tmpName)) {
+            throw new RuntimeException('Fichier audio invalide');
+        }
+
+        if (!is_dir($targetDir) && !mkdir($targetDir, 0775, true) && !is_dir($targetDir)) {
+            throw new RuntimeException('Le dossier audio est introuvable');
+        }
+
+        $mimeType = '';
+        if (function_exists('finfo_open')) {
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            if ($finfo !== false) {
+                $mimeType = (string) finfo_file($finfo, $tmpName);
+                finfo_close($finfo);
+            }
+        }
+        if ($mimeType !== '' && !in_array($mimeType, ['audio/mpeg', 'audio/mp3', 'application/octet-stream'], true)) {
+            throw new RuntimeException('Type audio non autorise');
+        }
+
+        $prefix = $prefix ?? 'audio_';
+        $baseName = pathinfo((string) ($file['name'] ?? 'musique'), PATHINFO_FILENAME);
+        $safeBaseName = preg_replace('/[^a-zA-Z0-9-_]/', '_', $baseName) ?: 'musique';
+        $fileName = $prefix . uniqid('', true) . '_' . $safeBaseName . '.mp3';
+        $targetPath = rtrim($targetDir, '/') . '/' . $fileName;
+
+        if (!move_uploaded_file($tmpName, $targetPath)) {
+            throw new RuntimeException('Impossible d\'enregistrer le fichier audio');
+        }
+
+        return $fileName;
+    }
+
     public static function storeCompressedJpeg(array $file, string $targetDir, string $prefix = 'photo_is_', int $quality = 75): ?string
     {
         if (!isset($file['error']) || $file['error'] === UPLOAD_ERR_NO_FILE) {

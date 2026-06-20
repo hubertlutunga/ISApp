@@ -126,6 +126,7 @@ if ($isWeddingWebsiteEvent && isset($_POST['submit_wedding_site_settings'])) {
     try {
         $weddingSiteSettings = WeddingWebsiteSettingsService::fromPost($_POST, $weddingSiteSettings);
         $weddingSiteSettings = WeddingWebsiteSettingsService::uploadImages($_FILES, $weddingSiteSettings, '../../couple/images');
+        $weddingSiteSettings = WeddingWebsiteSettingsService::uploadAudio($_FILES, $weddingSiteSettings, '../../couple/audio');
 
         $saveDateText = trim((string) ($_POST['save_text'] ?? ''));
         EventMediaService::upsertWebsiteGeneralText($pdo, (int) $cod_event, 'text_sdd', $saveDateText);

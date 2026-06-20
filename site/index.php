@@ -158,6 +158,27 @@ if ($content === null) {
     PageRouter::redirect('index.php?page=accueil');
 }
 
+if ((string) ($type_event ?? '') === '1' && basename((string) $content) === 'accueil.php') {
+    $weddingSiteSettings = WeddingWebsiteSettingsService::defaults(is_array($dataevent ?? null) ? $dataevent : []);
+    try {
+        $weddingSiteSettings = WeddingWebsiteSettingsService::get($pdo, (int) $codevent, is_array($dataevent ?? null) ? $dataevent : []);
+    } catch (Throwable $exception) {
+        PublicSiteTraceService::exception('site_wedding_home_template_settings_exception', $exception, [
+            'event_id' => (int) $codevent,
+        ]);
+    }
+
+    $selectedHomeTemplate = (string) ($weddingSiteSettings['content']['home_template'] ?? 'home1');
+    if ($selectedHomeTemplate === 'home2') {
+        PublicSiteTraceService::record('site_wedding_home2_render', [
+            'event_id' => (int) $codevent,
+        ]);
+        include __DIR__ . '/pages/accueil_home2.php';
+        PublicSiteTraceService::finish('site_wedding_home2_done');
+        exit;
+    }
+}
+
 ?>
 
 <!DOCTYPE html>
