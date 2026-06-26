@@ -30,7 +30,7 @@ $appConfig = [
         'port' => (int) (getenv('ISAPP_SMTP_PORT') ?: 587),
         'encryption' => getenv('ISAPP_SMTP_ENCRYPTION') ?: 'tls',
         'username' => getenv('ISAPP_SMTP_USERNAME') ?: 'eventpass@invitationspeciale.com',
-        'password' => getenv('ISAPP_SMTP_PASSWORD') ?: 'Huberusbb_01',
+        'password' => getenv('ISAPP_SMTP_PASSWORD') ?: '',
     ],
     'public_trace' => [
         'enabled' => getenv('ISAPP_PUBLIC_TRACE_ENABLED') === '1',

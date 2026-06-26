@@ -65,7 +65,7 @@ En production, si le projet est deploie dans un dossier web public de type `publ
 Exemple minimal de fichier `.env` local:
 
 ```dotenv
-TWILIO_ACCOUNT_SID=AC5cbb94f85695ce16d97ce2ca2c3f7db0
+TWILIO_ACCOUNT_SID=ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 TWILIO_AUTH_TOKEN=REMPLACER_MANUELLEMENT
 ```
 

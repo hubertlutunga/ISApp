@@ -16,7 +16,7 @@ $eventName = 'Creators Bomoko 2026';
 $eventDates = '5–6 juin 2026';
 $eventLocation = 'Musée National de la RDC, Kinshasa';
 $adminEmail = getenv('CREATORSBOMOKO_ADMIN_EMAIL') ?: 'creatorsbomoko@invitationspeciale.com';
-$adminPassword = getenv('CREATORSBOMOKO_ADMIN_PASSWORD') ?: (getenv('CREATORSBOMOKO_SMTP_PASSWORD') ?: 'Huberusbb_01');
+$adminPassword = getenv('CREATORSBOMOKO_ADMIN_PASSWORD') ?: '';
 $statuses = [
     'nouvelle' => 'Nouvelle',
     'en_etude' => 'En étude',
@@ -121,6 +121,10 @@ SQL);
 
 function cb_admin_seed_first_user(PDO $pdo, string $email, string $password): void
 {
+    if (trim($email) === '' || trim($password) === '') {
+        return;
+    }
+
     $count = (int) $pdo->query('SELECT COUNT(*) FROM users_cbomoko')->fetchColumn();
     if ($count > 0) {
         return;
@@ -202,10 +206,14 @@ function cb_admin_send_invitation_email(array $candidate, string $eventName, str
     $candidateCode = trim((string) ($candidate['submission_id'] ?? '')) !== '' ? trim((string) $candidate['submission_id']) : (string) $candidateId;
     $accessUrl = 'https://invitationspeciale.com/creatorsbomoko/presence_cible.php?id=' . rawurlencode($candidateCode);
     $qrPath = cb_admin_qr_code_path($candidateId, $accessUrl);
-    $smtpPassword = getenv('CREATORSBOMOKO_SMTP_PASSWORD') ?: (getenv('CREATORSBOMOKO_ADMIN_PASSWORD') ?: 'Huberusbb_01');
+    $smtpPassword = getenv('CREATORSBOMOKO_SMTP_PASSWORD') ?: '';
     $smtpHost = getenv('CREATORSBOMOKO_SMTP_HOST') ?: 'invitationspeciale.com';
     $smtpUser = getenv('CREATORSBOMOKO_SMTP_USER') ?: 'creatorsbomoko@invitationspeciale.com';
     $smtpPort = (int) (getenv('CREATORSBOMOKO_SMTP_PORT') ?: 587);
+
+    if ($smtpPassword === '') {
+        return ['success' => false, 'message' => 'Configuration SMTP manquante.'];
+    }
 
     try {
         $mail = new \PHPMailer\PHPMailer\PHPMailer(true);

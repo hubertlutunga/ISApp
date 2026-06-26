@@ -1,35 +1,28 @@
-<?php 
+<?php
 
-/*
+require_once dirname(__DIR__, 2) . '/src/Support/EnvLoader.php';
+EnvLoader::loadProjectEnv(dirname(__DIR__, 2));
 
-try
-{
-  session_start();
-    $pdo = new PDO("mysql:host=127.0.0.1;dbname=force1845217;charset=utf8", 'root', '');
-  $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
 }
 
-catch(Exception $e)
+$eventDbHost = getenv('EVENT_DB_HOST') ?: (getenv('ISAPP_DB_HOST') ?: 'localhost');
+$eventDbName = getenv('EVENT_DB_NAME') ?: (getenv('ISAPP_DB_NAME') ?: '');
+$eventDbUser = getenv('EVENT_DB_USER') ?: (getenv('ISAPP_DB_USER') ?: '');
+$eventDbPassword = getenv('EVENT_DB_PASSWORD') ?: (getenv('ISAPP_DB_PASSWORD') ?: '');
 
-{
-        die('Erreur : '.$e->getMessage());
+if ($eventDbName === '' || $eventDbUser === '') {
+    die('Configuration base de donnees manquante.');
 }
 
-
-*/
-
-
-try
-{
-  session_start();
-    $pdo = new PDO("mysql:host=185.98.131.176;dbname=force1845217;charset=utf8", 'force1845217', 'aetmctm0e6');
-  $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+try {
+    $pdo = new PDO(
+        'mysql:host=' . $eventDbHost . ';dbname=' . $eventDbName . ';charset=utf8',
+        $eventDbUser,
+        $eventDbPassword,
+        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+    );
+} catch (Exception $e) {
+    die('Erreur : ' . $e->getMessage());
 }
-catch(Exception $e)
-{
-        die('Erreur : '.$e->getMessage());
-}
-
-
-
-?>

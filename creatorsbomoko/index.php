@@ -335,18 +335,26 @@ function save_application_to_database(PDO $pdo, array $data): void
 function send_candidate_acknowledgement(string $recipientEmail, string $recipientName, string $submissionId, string $eventName, string $eventDates, string $eventLocation): array
 {
     try {
+        $smtpHost = getenv('CREATORSBOMOKO_SMTP_HOST') ?: 'invitationspeciale.com';
+        $smtpUser = getenv('CREATORSBOMOKO_SMTP_USER') ?: 'creatorsbomoko@invitationspeciale.com';
+        $smtpPassword = getenv('CREATORSBOMOKO_SMTP_PASSWORD') ?: '';
+        $smtpPort = (int) (getenv('CREATORSBOMOKO_SMTP_PORT') ?: 587);
+        if ($smtpPassword === '') {
+            return ['success' => false, 'message' => 'Configuration SMTP manquante.'];
+        }
+
         $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
         $mail->CharSet = 'UTF-8';
         $mail->isSMTP();
-        $mail->Host = 'invitationspeciale.com';
-        $mail->Port = 587;
+        $mail->Host = $smtpHost;
+        $mail->Port = $smtpPort;
         $mail->SMTPAuth = true;
-        $mail->Username = 'creatorsbomoko@invitationspeciale.com';
-        $mail->Password = getenv('CREATORSBOMOKO_SMTP_PASSWORD') ?: 'Huberusbb_01';
+        $mail->Username = $smtpUser;
+        $mail->Password = $smtpPassword;
         $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
 
-        $mail->setFrom('creatorsbomoko@invitationspeciale.com', 'Creators Bomoko');
-        $mail->addReplyTo('creatorsbomoko@invitationspeciale.com', 'Creators Bomoko');
+        $mail->setFrom($smtpUser, 'Creators Bomoko');
+        $mail->addReplyTo($smtpUser, 'Creators Bomoko');
         $mail->addAddress($recipientEmail, $recipientName);
         $mail->isHTML(true);
 

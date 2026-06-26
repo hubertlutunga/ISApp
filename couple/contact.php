@@ -1,5 +1,8 @@
 <?php
 
+require_once dirname(__DIR__) . '/src/Support/EnvLoader.php';
+EnvLoader::loadProjectEnv(dirname(__DIR__));
+
 /*
 The variables below can be overridden by setting the contact 
 form input fields as emailTo, fromName, fromEmail or subject. This can be
@@ -17,7 +20,7 @@ $subject = 'Neela Contact Form';		// Insert a default contact form subject
 
 
 // Insert your Google reCaptcha V2 secret key
-$secretkey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+$secretkey = getenv('ISAPP_RECAPTCHA_SECRET') ?: '';
 
 
 
@@ -26,9 +29,13 @@ $secretkey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
 $recaptcha = false;
 $charset = "UTF-8";
 
-if (isset($_POST['recaptcha'])) {
+if (isset($_POST['recaptcha']) && $secretkey !== '') {
 	$captcha = sanitize_xss($_POST['recaptcha']);
-	$url = 'https://www.google.com/recaptcha/api/siteverify?secret=' . $secretkey . '&response=' . urlencode($captcha) . '&remoteip=' . $_SERVER["REMOTE_ADDR"];
+	$url = 'https://www.google.com/recaptcha/api/siteverify?' . http_build_query([
+		'secret' => $secretkey,
+		'response' => $captcha,
+		'remoteip' => $_SERVER["REMOTE_ADDR"] ?? '',
+	]);
 	$response = file_get_contents($url);
 	$responseArray = json_decode($response,true);
 	
