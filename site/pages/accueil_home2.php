@@ -106,6 +106,31 @@ $home2RsvpSubtitle = $home2Text('home2_rsvp_subtitle', 'Merci de confirmer votre
 $home2FooterMeta = $home2Text('home2_footer_meta', $eventDateNoDay . ' · ' . $eventCity);
 $home2BackgroundMusicMarkup = WeddingWebsiteSettingsService::backgroundMusicMarkup($settings, '../couple/audio/');
 
+$home2ValidColor = static function (string $field) use ($settings): string {
+    $value = trim((string) ($settings['content'][$field] ?? ''));
+    if ($value === '' || !preg_match('/^#(?:[0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/', $value)) {
+        return '';
+    }
+
+    return strtoupper($value);
+};
+$home2SectionBackgroundCss = '';
+foreach ([
+    'home2_hero_background_color' => '.hero',
+    'home2_gala_background_color' => '.s-gala',
+    'home2_program_background_color' => '.s-cer',
+    'home2_story_background_color' => '.s-love',
+    'home2_presence_background_color' => '.s-pres',
+    'home2_location_background_color' => '.s-adr',
+    'home2_rsvp_background_color' => '.s-rsvp',
+    'home2_footer_background_color' => '.footer',
+] as $colorField => $sectionSelector) {
+    $colorValue = $home2ValidColor($colorField);
+    if ($colorValue !== '') {
+        $home2SectionBackgroundCss .= $sectionSelector . '{background:' . $colorValue . '!important;background-image:none!important;}' . "\n";
+    }
+}
+
 $home2MapIframe = '';
 $home2MapIframeEncoded = trim((string) ($settings['content']['wedding_map_iframe_b64'] ?? ''));
 if ($home2MapIframeEncoded !== '') {
@@ -191,6 +216,7 @@ if ($home2Html === '') {
 $home2ExtraCss = <<<CSS
 @font-face{font-family:'Birds of Paradise';src:local('Birds of Paradise'),local('BirdsOfParadise');font-display:swap}
 .hero-names,.footer-names{font-family:'Birds of Paradise','SignPainter','Cormorant Garamond',cursive!important;font-style:normal!important;font-weight:400!important;letter-spacing:.02em}
+{$home2SectionBackgroundCss}
 .home2-rsvp-form{display:grid;gap:.9rem;max-width:620px;margin:1.2rem auto 0;text-align:left}
 .home2-rsvp-form input,.home2-rsvp-form textarea{width:100%;border:1px solid rgba(201,168,76,.45);border-radius:0;background:rgba(247,243,236,.92);color:#3C0B1A;font:600 15px/1.4 Cormorant Garamond,serif;padding:.9rem 1rem;outline:none}
 .home2-rsvp-form textarea{min-height:100px;resize:vertical}
