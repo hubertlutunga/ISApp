@@ -29,6 +29,10 @@ if (is_file($localConfigPath)) {
     }
 }
 
+if ($isCpanelProduction && trim((string) $databaseConfig['password']) === '') {
+    die('Configuration base de donnees incomplete : ISAPP_DB_PASSWORD est manquant dans les variables d\'environnement de production.');
+}
+
 $dsn = sprintf(
     'mysql:host=%s;dbname=%s;charset=%s',
     $databaseConfig['host'],

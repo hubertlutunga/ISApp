@@ -19,4 +19,5 @@ deployment:
     - /usr/bin/rsync -a src/ $DEPLOYPATH/src/
     - /usr/bin/rsync -a sweet/ $DEPLOYPATH/sweet/
     - /usr/bin/rsync -a twilio-php-main/ $DEPLOYPATH/twilio-php-main/
+    - /bin/cp -u .htaccess $DEPLOYPATH
     - /bin/cp -u index.php $DEPLOYPATH

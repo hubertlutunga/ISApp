@@ -85,6 +85,17 @@ home/
 
 Dans cette configuration, placez les variables Twilio dans `.isapp.env`, pas dans `public_html/.env`.
 
+Variables base de donnees obligatoires en production:
+
+```dotenv
+ISAPP_DB_HOST=localhost
+ISAPP_DB_NAME=invizfxg_is
+ISAPP_DB_USER=invizfxg_hubert
+ISAPP_DB_PASSWORD=REMPLACER_PAR_LE_MOT_DE_PASSE_CPANEL
+```
+
+Si `ISAPP_DB_PASSWORD` est absent, MySQL refuse la connexion avec `using password: NO`. Le fichier recommande est `/home/invizfxg/.isapp.env` sur cPanel. Apres creation ou modification de ce fichier, relancez le deploiement ou rechargez PHP depuis cPanel si necessaire.
+
 Variables requises pour l'envoi WhatsApp:
 
 - `TWILIO_ACCOUNT_SID`
