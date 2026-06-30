@@ -18,16 +18,22 @@ final class EnvLoader
             $homeRoot = rtrim(str_replace('\\', '/', $homeRoot), '/');
             $envPaths[] = $homeRoot . '/.isapp.env';
             $envPaths[] = $homeRoot . '/.isapp.env.local';
+            $envPaths[] = $homeRoot . '/isapp.env';
+            $envPaths[] = $homeRoot . '/isapp.env.local';
         }
 
         $parentRoot = dirname($normalizedRoot);
         if ($parentRoot !== '' && $parentRoot !== '.' && $parentRoot !== $normalizedRoot) {
             $envPaths[] = $parentRoot . '/.isapp.env';
             $envPaths[] = $parentRoot . '/.isapp.env.local';
+            $envPaths[] = $parentRoot . '/isapp.env';
+            $envPaths[] = $parentRoot . '/isapp.env.local';
         }
 
         $envPaths[] = $normalizedRoot . '/.isapp.env';
         $envPaths[] = $normalizedRoot . '/.isapp.env.local';
+        $envPaths[] = $normalizedRoot . '/isapp.env';
+        $envPaths[] = $normalizedRoot . '/isapp.env.local';
         $envPaths[] = $normalizedRoot . '/.env';
         $envPaths[] = $normalizedRoot . '/.env.local';
 

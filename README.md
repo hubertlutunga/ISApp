@@ -60,7 +60,7 @@ Les identifiants Twilio ne doivent jamais etre stockes en dur dans le code PHP. 
 
 En local, le projet charge automatiquement les fichiers prives `.env` et `.env.local` situes a la racine du depot s'ils existent. Les variables deja definies par le serveur gardent la priorite.
 
-En production, si le projet est deploie dans un dossier web public de type `public_html`, l'application charge aussi un fichier prive dedie place un niveau au-dessus du webroot: `../.isapp.env` puis `../.isapp.env.local`. Cela permet de garder les secrets hors du dossier publiquement servi.
+En production, si le projet est deploie dans un dossier web public de type `public_html`, l'application charge aussi un fichier prive dedie place un niveau au-dessus du webroot: `../.isapp.env`, `../.isapp.env.local`, `../isapp.env` puis `../isapp.env.local`. Cela permet de garder les secrets hors du dossier publiquement servi.
 
 Exemple minimal de fichier `.env` local:
 
@@ -75,7 +75,7 @@ Exemple de structure serveur recommandee:
 
 ```text
 home/
-	.isapp.env
+	.isapp.env ou isapp.env
 	public_html/
 		index.php
 		bootstrap/
@@ -83,7 +83,7 @@ home/
 		...
 ```
 
-Dans cette configuration, placez les variables Twilio dans `.isapp.env`, pas dans `public_html/.env`.
+Dans cette configuration, placez les variables Twilio dans `.isapp.env` ou `isapp.env`, pas dans `public_html/.env`.
 
 Variables base de donnees obligatoires en production:
 
@@ -94,7 +94,7 @@ ISAPP_DB_USER=invizfxg_hubert
 ISAPP_DB_PASSWORD=REMPLACER_PAR_LE_MOT_DE_PASSE_CPANEL
 ```
 
-Si `ISAPP_DB_PASSWORD` est absent, MySQL refuse la connexion avec `using password: NO`. Le fichier recommande est `/home/invizfxg/.isapp.env` sur cPanel. Apres creation ou modification de ce fichier, relancez le deploiement ou rechargez PHP depuis cPanel si necessaire.
+Si `ISAPP_DB_PASSWORD` est absent, MySQL refuse la connexion avec `using password: NO`. Le fichier recommande est `/home/invizfxg/.isapp.env` ou `/home/invizfxg/isapp.env` sur cPanel. Apres creation ou modification de ce fichier, relancez le deploiement ou rechargez PHP depuis cPanel si necessaire.
 
 Variables requises pour l'envoi WhatsApp:
 

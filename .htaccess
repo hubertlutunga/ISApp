@@ -1,4 +1,4 @@
-<FilesMatch "^(\.env(\..+)?|\.isapp\.env(\.local)?)$">
+<FilesMatch "^(\.env(\..+)?|\.isapp\.env(\.local)?|isapp\.env(\.local)?)$">
     <IfModule mod_authz_core.c>
         Require all denied
     </IfModule>
