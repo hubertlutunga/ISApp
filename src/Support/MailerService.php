@@ -24,6 +24,17 @@ final class MailerService
         return $message;
     }
 
+    private static function configWithMailOverride(array $config, string $mailKey): array
+    {
+        if (!isset($config[$mailKey]) || !is_array($config[$mailKey])) {
+            return $config;
+        }
+
+        $config['mail'] = array_merge((array) ($config['mail'] ?? []), $config[$mailKey]);
+
+        return $config;
+    }
+
     public static function prepare(object $mailer, array $config): bool
     {
         $mailConfig = (array) ($config['mail'] ?? []);
@@ -74,7 +85,7 @@ final class MailerService
     public static function sendPasswordReset(object $mailer, array $config, string $recipientEmail, string $recipientName, string $resetUrl): array
     {
         try {
-            $message = self::cloneMailer($mailer, $config);
+            $message = self::cloneMailer($mailer, self::configWithMailOverride($config, 'password_reset_mail'));
 
             if (method_exists($message, 'addAddress')) {
                 $message->addAddress($recipientEmail, $recipientName);

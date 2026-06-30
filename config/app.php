@@ -32,6 +32,17 @@ $appConfig = [
         'username' => getenv('ISAPP_SMTP_USERNAME') ?: 'eventpass@invitationspeciale.com',
         'password' => getenv('ISAPP_SMTP_PASSWORD') ?: '',
     ],
+    'password_reset_mail' => [
+        'from_address' => getenv('ISAPP_PASSWORD_RESET_MAIL_FROM') ?: 'support@invitationspeciale.com',
+        'from_name' => getenv('ISAPP_PASSWORD_RESET_MAIL_FROM_NAME') ?: 'Support Invitation Speciale',
+        'reply_to' => getenv('ISAPP_PASSWORD_RESET_MAIL_REPLY_TO') ?: 'support@invitationspeciale.com',
+        'transport' => getenv('ISAPP_PASSWORD_RESET_MAIL_TRANSPORT') ?: 'smtp',
+        'host' => getenv('ISAPP_PASSWORD_RESET_SMTP_HOST') ?: (getenv('ISAPP_SMTP_HOST') ?: 'invitationspeciale.com'),
+        'port' => (int) (getenv('ISAPP_PASSWORD_RESET_SMTP_PORT') ?: (getenv('ISAPP_SMTP_PORT') ?: 587)),
+        'encryption' => getenv('ISAPP_PASSWORD_RESET_SMTP_ENCRYPTION') ?: (getenv('ISAPP_SMTP_ENCRYPTION') ?: 'tls'),
+        'username' => getenv('ISAPP_PASSWORD_RESET_SMTP_USERNAME') ?: 'support@invitationspeciale.com',
+        'password' => getenv('ISAPP_PASSWORD_RESET_SMTP_PASSWORD') ?: '',
+    ],
     'public_trace' => [
         'enabled' => getenv('ISAPP_PUBLIC_TRACE_ENABLED') === '1',
         'key' => getenv('ISAPP_PUBLIC_TRACE_KEY') ?: '',

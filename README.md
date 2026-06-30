@@ -111,6 +111,20 @@ Le numero expéditeur WhatsApp et le Content SID utilises par l'envoi des invita
 - `whatsapp:+14787726313`
 - `HX19ec61e298a83f99ec815a184b9d9a0e`
 
+Variables recommandees pour l'email de reinitialisation du mot de passe via `support@invitationspeciale.com`:
+
+```dotenv
+ISAPP_PASSWORD_RESET_MAIL_FROM=support@invitationspeciale.com
+ISAPP_PASSWORD_RESET_MAIL_FROM_NAME=Support Invitation Speciale
+ISAPP_PASSWORD_RESET_MAIL_REPLY_TO=support@invitationspeciale.com
+ISAPP_PASSWORD_RESET_MAIL_TRANSPORT=smtp
+ISAPP_PASSWORD_RESET_SMTP_HOST=invitationspeciale.com
+ISAPP_PASSWORD_RESET_SMTP_PORT=587
+ISAPP_PASSWORD_RESET_SMTP_ENCRYPTION=tls
+ISAPP_PASSWORD_RESET_SMTP_USERNAME=support@invitationspeciale.com
+ISAPP_PASSWORD_RESET_SMTP_PASSWORD=REMPLACER_PAR_LE_MOT_DE_PASSE_SUPPORT
+```
+
 Pour les Content Templates WhatsApp, Twilio doit aussi recevoir un Messaging Service SID valide dans `TWILIO_MESSAGING_SERVICE_SID`.
 
 Les anciennes pages d'essai Twilio du projet ont ete desactivees pour eviter toute exposition publique ou reutilisation accidentelle.
