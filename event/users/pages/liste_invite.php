@@ -588,6 +588,9 @@
 					<a href="<?php echo htmlspecialchars($pdfListByTableLink ?? ('../pages/liste_invites_partb.php?event=' . urlencode((string) $codevent)), ENT_QUOTES, 'UTF-8'); ?>" target="_blank" class="btn btn-success m-2">
 						Classé par nom des Tables
 					</a>
+					<a href="../pages/invite_qrcodes_pdf.php?event=<?php echo urlencode((string) $codevent); ?>" target="_blank" class="btn btn-warning m-2">
+						Les QR codes des invités
+					</a>
 				</div> 
 				</div>
 			</div>
