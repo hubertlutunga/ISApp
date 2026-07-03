@@ -131,7 +131,7 @@ final class EventOrderService
         }
 
         $stmt = $pdo->prepare(
-            'SELECT eim.cod_mod, eim.quantite, eim.unit_price, mi.nom, mi.image, mi.unit_price AS current_unit_price
+            'SELECT eim.cod_eim, eim.cod_mod, eim.quantite, eim.unit_price, mi.nom, mi.image, mi.unit_price AS current_unit_price
              FROM event_invitation_models eim
              LEFT JOIN modele_is mi ON mi.cod_mod = eim.cod_mod
              WHERE eim.cod_event = ?
@@ -556,9 +556,7 @@ final class EventOrderService
                 continue;
             }
 
-            $quantity = ($catalogItem['quantity_mode'] ?? 'variable') === 'fixed'
-                ? 1
-                : max(1, (int) ($accessoryRow['quantite'] ?? 1));
+            $quantity = max(1, (int) ($accessoryRow['quantite'] ?? 1));
             $unitPrice = round((float) ($catalogItem['unit_price'] ?? 0), 2);
 
             $lines[] = [
@@ -673,6 +671,88 @@ final class EventOrderService
         }
 
         return self::buildInvoiceSummaryForEvent($pdo, $eventId);
+    }
+
+    public static function hasInvoiceForEvent(PDO $pdo, int $eventId): bool
+    {
+        if ($eventId <= 0) {
+            return false;
+        }
+
+        $stmt = $pdo->prepare('SELECT COUNT(*) FROM facture WHERE reference = ?');
+        $stmt->execute([$eventId]);
+
+        return (int) $stmt->fetchColumn() > 0;
+    }
+
+    public static function updateOrderQuantitiesBeforeInvoice(PDO $pdo, int $eventId, array $accessoryQuantities, array $invitationModelQuantities): array
+    {
+        self::ensureCatalogInfrastructure($pdo);
+
+        if ($eventId <= 0) {
+            throw new RuntimeException('Evenement invalide.');
+        }
+
+        if (self::hasInvoiceForEvent($pdo, $eventId)) {
+            throw new RuntimeException('Les quantites ne peuvent plus etre modifiees parce que la facture existe deja.');
+        }
+
+        $checkout = self::loadCheckoutByEvent($pdo, $eventId);
+        $promoCode = (string) ($checkout['promo_code'] ?? '');
+        $printedInvitationAccessoryIds = self::printedInvitationAccessoryIds($pdo);
+        $startedTransaction = !$pdo->inTransaction();
+
+        if ($startedTransaction) {
+            $pdo->beginTransaction();
+        }
+
+        try {
+            $invitationTotalQuantity = 0;
+            $modelRowsStmt = $pdo->prepare('SELECT cod_eim, cod_mod, quantite FROM event_invitation_models WHERE cod_event = ? ORDER BY cod_eim ASC');
+            $modelRowsStmt->execute([$eventId]);
+            $updateModelStmt = $pdo->prepare('UPDATE event_invitation_models SET quantite = ? WHERE cod_eim = ? AND cod_event = ?');
+
+            foreach ($modelRowsStmt->fetchAll(PDO::FETCH_ASSOC) as $modelRow) {
+                $modelRowId = (string) ($modelRow['cod_eim'] ?? '');
+                $modelId = (string) ($modelRow['cod_mod'] ?? '');
+                $quantity = (int) ($invitationModelQuantities[$modelRowId] ?? $invitationModelQuantities[$modelId] ?? $modelRow['quantite'] ?? 1);
+                $quantity = $quantity > 0 ? $quantity : 1;
+                $invitationTotalQuantity += $quantity;
+                $updateModelStmt->execute([$quantity, (int) $modelRowId, $eventId]);
+            }
+
+            $accessoryRowsStmt = $pdo->prepare('SELECT cod_accev, cod_acc, quantite FROM accessoires_event WHERE cod_event = ? ORDER BY cod_accev ASC');
+            $accessoryRowsStmt->execute([$eventId]);
+            $updateAccessoryStmt = $pdo->prepare('UPDATE accessoires_event SET quantite = ? WHERE cod_accev = ? AND cod_event = ?');
+
+            foreach ($accessoryRowsStmt->fetchAll(PDO::FETCH_ASSOC) as $accessoryRow) {
+                $rowId = (string) ($accessoryRow['cod_accev'] ?? '');
+                $accessoryId = (string) ($accessoryRow['cod_acc'] ?? '');
+                $quantity = (int) ($accessoryQuantities[$rowId] ?? $accessoryQuantities[$accessoryId] ?? $accessoryRow['quantite'] ?? 1);
+
+                if ($invitationTotalQuantity > 0 && in_array($accessoryId, $printedInvitationAccessoryIds, true)) {
+                    $quantity = $invitationTotalQuantity;
+                }
+
+                $quantity = $quantity > 0 ? $quantity : 1;
+                $updateAccessoryStmt->execute([$quantity, (int) $rowId, $eventId]);
+            }
+
+            self::replaceDetailsFactForEvent($pdo, $eventId);
+            $summary = self::updateCheckoutPromoCode($pdo, $eventId, $promoCode);
+
+            if ($startedTransaction) {
+                $pdo->commit();
+            }
+        } catch (Throwable $exception) {
+            if ($startedTransaction && $pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+
+            throw $exception;
+        }
+
+        return $summary;
     }
 
     public static function replaceDetailsFactForEvent(PDO $pdo, int $eventId): array

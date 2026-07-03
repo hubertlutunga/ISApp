@@ -111,6 +111,42 @@ if (isset($_POST['submitInvitationModel'])) {
     }
 }
 
+if (isset($_POST['submitOrderQuantities'])) {
+    try {
+        EventOrderService::updateOrderQuantitiesBeforeInvoice(
+            $pdo,
+            $cod_getevent,
+            (array) ($_POST['accessoire_quantities'] ?? []),
+            (array) ($_POST['invitation_model_quantities'] ?? [])
+        );
+
+        $postSuccessScript = '<script>
+            document.addEventListener("DOMContentLoaded", function () {
+                Swal.fire({
+                    title: "Quantites modifiees",
+                    text: "Toutes les quantites de la commande ont ete mises a jour avec succes.",
+                    icon: "success",
+                    confirmButtonText: "Actualiser"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = "index.php?page=modevent&cod=' . $cod_getevent . '";
+                    }
+                });
+            });
+        </script>';
+
+        $editContext = EventUpdateService::buildEditContext($pdo, $cod_getevent);
+        $datagetevent = $editContext['event'];
+        $type_event = $editContext['type_event'];
+        $data_evenementget = $editContext['event_label'];
+        $invitationModels = EventOrderService::loadInvitationModelsByEvent($pdo, $cod_getevent);
+        $checkoutData = EventOrderService::loadCheckoutByEvent($pdo, $cod_getevent);
+        $paymentTypeLabel = EventOrderService::paymentLabel($checkoutData['type_paiement'] ?? null);
+    } catch (Throwable $exception) {
+        $pageError = $exception->getMessage();
+    }
+}
+
 if (isset($_POST['submiacces'])) {
     try {
         $postedAccessories = array_map('intval', (array) ($_POST['accessoires'] ?? []));
@@ -183,6 +219,24 @@ $formatAmount = static function ($amount, string $currency = '$'): string {
     return number_format((float) $amount, 2, '.', ' ') . ' ' . $currency;
 };
 
+$normalizeOrderLabel = static function (string $label): string {
+    $label = function_exists('mb_strtolower') ? mb_strtolower(trim($label), 'UTF-8') : strtolower(trim($label));
+    if (function_exists('iconv')) {
+        $transliterated = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $label);
+        if ($transliterated !== false) {
+            $label = $transliterated;
+        }
+    }
+
+    return preg_replace('/[^a-z0-9]+/', ' ', $label) ?? $label;
+};
+$isPrintedInvitationOrder = static function (string $label) use ($normalizeOrderLabel): bool {
+    $normalized = $normalizeOrderLabel($label);
+    return str_contains($normalized, 'invitation') && str_contains($normalized, 'imprim');
+};
+
+$canEditOrderQuantities = !EventOrderService::hasInvoiceForEvent($pdo, $cod_getevent);
+
 if ($invitationModels === [] && !empty($datagetevent['modele_inv'])) {
     $legacyInvitationModelStmt = $pdo->prepare('SELECT cod_mod, nom, image, unit_price FROM modele_is WHERE cod_mod = ? LIMIT 1');
     $legacyInvitationModelStmt->execute([(int) $datagetevent['modele_inv']]);
@@ -242,9 +296,11 @@ foreach ($accessoryEventsStmt->fetchAll(PDO::FETCH_ASSOC) as $dataae) {
 
     $commandRows[] = [
         'id' => (int) ($dataae['cod_accev'] ?? 0),
+        'accessory_id' => (string) ($dataae['cod_acc'] ?? ''),
         'label' => $accessoire,
         'model_label' => $modeleLabel,
         'model_image' => $modeleImage,
+        'is_printed_invitation' => $isPrintedInvitationOrder($accessoire),
         'quantity' => max(1, (int) ($dataae['quantite'] ?? 1)),
         'unit_price' => $detailRow['pu'] ?? ($data_accessoire['unit_price'] ?? null),
         'line_total' => $detailRow['pt'] ?? null,
@@ -587,7 +643,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['submittext']) && !is
                         <div>
                             <span class="me-card-kicker">Commandes</span>
                             <h2>Accessoires et options associes</h2>
-                            <p>Supprimez une ligne existante ou ajoutez rapidement une nouvelle commande via une modale plus propre.</p>
+                            <p>Modifiez les quantites de toutes les lignes tant que la facture n'a pas encore ete creee.</p>
                         </div>
 
                         <button type="button" class="me-primary-button" data-open-command-modal>
@@ -608,6 +664,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['submittext']) && !is
                         });
                     });
                     </script>
+                    <?php } ?>
+
+                    <?php if (!$canEditOrderQuantities) { ?>
+                    <div class="me-alert me-alert-warning">La facture existe deja pour cet evenement. Les quantites de commande sont verrouillees.</div>
+                    <?php } else { ?>
+                    <div class="me-alert me-alert-info">La facture n'est pas encore creee : vous pouvez modifier toutes les quantites commandees, puis enregistrer.</div>
+                    <?php } ?>
+
+                    <?php if ($canEditOrderQuantities) { ?>
+                    <form action="" method="post" class="me-order-quantity-form">
+                    <?php } ?>
+
+                    <?php if ($canEditOrderQuantities && $invitationModels !== []) { ?>
+                    <div class="me-quantity-models">
+                        <div class="me-modal-block-head">
+                            <h3>Quantites des modeles d'invitation</h3>
+                            <p>Chaque modele peut avoir sa propre quantite. La ligne “Invitation imprimee” est recalculée automatiquement.</p>
+                        </div>
+                        <div class="me-quantity-grid">
+                        <?php foreach ($invitationModels as $model) {
+                            $modelRowId = (int) ($model['cod_eim'] ?? 0);
+                            $modelId = (int) ($model['cod_mod'] ?? 0);
+                            $modelInputKey = $modelRowId > 0 ? (string) $modelRowId : (string) $modelId;
+                        ?>
+                            <label class="me-quantity-field">
+                                <span><?php echo htmlspecialchars((string) ($model['nom'] ?? 'Modele'), ENT_QUOTES, 'UTF-8'); ?></span>
+                                <input type="number" min="1" step="1" name="invitation_model_quantities[<?php echo htmlspecialchars($modelInputKey, ENT_QUOTES, 'UTF-8'); ?>]" value="<?php echo max(1, (int) ($model['quantite'] ?? 1)); ?>">
+                            </label>
+                        <?php } ?>
+                        </div>
+                    </div>
                     <?php } ?>
 
                     <div class="me-command-grid">
@@ -643,6 +730,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['submittext']) && !is
                                         <span>Total ligne : <?php echo htmlspecialchars($formatAmount($commandRow['line_total']), ENT_QUOTES, 'UTF-8'); ?></span>
                                         <?php } ?>
                                     </div>
+
+                                    <?php if ($canEditOrderQuantities) { ?>
+                                    <?php if (!empty($commandRow['is_printed_invitation']) && $invitationModels !== []) { ?>
+                                    <small class="me-quantity-note">Quantite geree par les modeles d'invitation ci-dessus.</small>
+                                    <?php } else { ?>
+                                    <label class="me-quantity-field me-quantity-field-inline">
+                                        <span>Quantite</span>
+                                        <input type="number" min="1" step="1" name="accessoire_quantities[<?php echo (int) $commandRow['id']; ?>]" value="<?php echo max(1, (int) $commandRow['quantity']); ?>">
+                                    </label>
+                                    <?php } ?>
+                                    <?php } ?>
                                 </div>
                             </div>
 
@@ -652,6 +750,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['submittext']) && !is
                         </article>
                         <?php } ?>
                     </div>
+
+                    <?php if ($canEditOrderQuantities && ($commandRows !== [] || $invitationModels !== [])) { ?>
+                        <div class="me-form-actions me-order-quantity-actions">
+                            <button class="me-primary-button" type="submit" name="submitOrderQuantities">
+                                <i class="fas fa-save"></i>
+                                <span>Enregistrer les quantites</span>
+                            </button>
+                        </div>
+                    </form>
+                    <?php } elseif ($canEditOrderQuantities) { ?>
+                    </form>
+                    <?php } ?>
                 </section>
             </div>
         </div>
@@ -829,6 +939,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['submittext']) && !is
     .me-stat-card span{font-size:12px;color:rgba(255,250,244,.78);text-transform:uppercase;letter-spacing:.05em}
     .me-alert{margin:0 0 18px;padding:14px 16px;border-radius:18px;font-weight:700}
     .me-alert-error{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
+    .me-alert-warning{background:#fff7ed;color:#9a3412;border:1px solid #fed7aa}
+    .me-alert-info{background:#eff6ff;color:#1e3a8a;border:1px solid #bfdbfe}
     .me-layout{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(320px,.8fr);gap:20px;align-items:start}
     .me-sidebar-stack{display:grid;gap:20px}
     .me-card{background:linear-gradient(180deg,#ffffff 0%,#fffaf5 100%);border:1px solid rgba(145,91,45,.12);border-radius:30px;padding:26px;box-shadow:0 22px 48px rgba(48,29,23,.08);margin-top:20px}
@@ -896,6 +1008,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['submittext']) && !is
     .me-command-model{color:#7a3a27;font-weight:700}
     .me-command-meta{display:flex;flex-wrap:wrap;gap:10px 16px;color:#6d5a50;font-size:13px}
     .me-command-delete{width:44px;height:44px;border:0;border-radius:16px;background:#fef2f2;color:#b91c1c;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:0 0 auto}
+    .me-order-quantity-form{display:grid;gap:16px}
+    .me-quantity-models{padding:18px;border:1px dashed rgba(37,99,235,.24);border-radius:22px;background:#f8fbff}
+    .me-quantity-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
+    .me-quantity-field{display:grid;gap:7px;color:#334155;font-size:13px;font-weight:800}
+    .me-quantity-field input{width:100%;min-height:42px;border:1px solid #dbeafe;border-radius:14px;background:#fff;padding:8px 12px;color:#0f172a;font-weight:800;outline:none}
+    .me-quantity-field input:focus{border-color:#60a5fa;box-shadow:0 0 0 3px rgba(96,165,250,.16)}
+    .me-quantity-field-inline{max-width:180px;margin-top:8px}
+    .me-quantity-note{display:block;margin-top:8px;color:#64748b;font-weight:700}
+    .me-order-quantity-actions{margin-top:4px}
     .me-modal{position:fixed;inset:0;z-index:12000;display:flex;align-items:center;justify-content:center;padding:20px}
     .me-modal[hidden]{display:none}
     .me-modal-backdrop{position:absolute;inset:0;background:rgba(15,23,42,.62);backdrop-filter:blur(6px)}
@@ -940,6 +1061,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['submittext']) && !is
         .me-model-choice-title{font-size:16px}
         .me-command-item{flex-direction:column}
         .me-command-main{grid-template-columns:60px minmax(0,1fr)}
+        .me-quantity-grid{grid-template-columns:1fr}
+        .me-quantity-field-inline{max-width:none}
         .me-modal-dialog{padding:22px}
     }
     @media (max-width: 640px){
