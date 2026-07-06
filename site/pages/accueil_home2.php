@@ -131,6 +131,24 @@ foreach ([
     }
 }
 
+$home2SectionTextColorCss = '';
+foreach ([
+    'home2_hero_text_color' => '.hero',
+    'home2_gala_text_color' => '.s-gala',
+    'home2_program_text_color' => '.s-cer',
+    'home2_story_text_color' => '.s-love',
+    'home2_presence_text_color' => '.s-pres',
+    'home2_location_text_color' => '.s-adr',
+    'home2_rsvp_text_color' => '.s-rsvp',
+    'home2_footer_text_color' => '.footer',
+] as $colorField => $sectionSelector) {
+    $colorValue = $home2ValidColor($colorField);
+    if ($colorValue !== '') {
+        $home2SectionTextColorCss .= $sectionSelector . ',' . $sectionSelector . ' :where(h1,h2,h3,h4,h5,h6,p,span,a,em,strong,small,li,div,label,input,textarea,button){color:' . $colorValue . '!important;}' . "\n";
+        $home2SectionTextColorCss .= $sectionSelector . ' :where(input,textarea)::placeholder{color:' . $colorValue . '!important;opacity:.68;}' . "\n";
+    }
+}
+
 $home2MapIframe = '';
 $home2MapIframeEncoded = trim((string) ($settings['content']['wedding_map_iframe_b64'] ?? ''));
 if ($home2MapIframeEncoded !== '') {
@@ -143,8 +161,17 @@ if ($home2MapIframe === '') {
     $home2MapIframe = trim((string) ($settings['content']['wedding_map_iframe'] ?? ''));
 }
 
+$home2InviteId = isset($_GET['idinv']) ? (int) $_GET['idinv'] : 0;
+$home2Invite = $home2InviteId > 0 ? RsvpService::findInviteById($pdo, $home2InviteId) : null;
+$home2InviteName = $home2Invite ? RsvpService::buildInviteDisplayName($home2Invite) : '';
+$home2ConfirmationName = $home2InviteName !== '' ? RsvpService::normalizeConfirmationName($home2InviteName) : '';
+$home2ExistingConfirmation = $home2ConfirmationName !== ''
+    ? RsvpService::findConfirmation($pdo, (string) $codevent, $home2ConfirmationName)
+    : null;
+$home2RequestedPresence = strtolower(trim((string) ($_GET['presence'] ?? '')));
+
 $rsvpFeedback = '';
-if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['submitrsvp'])) {
+if ($home2InviteId <= 0 && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['submitrsvp'])) {
     $guestName = trim((string) ($_POST['nom'] ?? ''));
     $guestPhone = trim((string) ($_POST['phone'] ?? ''));
     $guestEmail = trim((string) ($_POST['email'] ?? ''));
@@ -188,13 +215,56 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['submitrsvp'])
     }
 }
 
-$rsvpNameValue = $home2E((string) ($_POST['nom'] ?? ''));
-$rsvpPhoneValue = $home2E((string) ($_POST['phone'] ?? ''));
-$rsvpEmailValue = $home2E((string) ($_POST['email'] ?? ''));
-$rsvpNoteValue = $home2E((string) ($_POST['note'] ?? ''));
-$rsvpPresenceOui = ((string) ($_POST['presence'] ?? '')) === 'oui' ? 'checked' : '';
-$rsvpPresenceNon = ((string) ($_POST['presence'] ?? '')) === 'non' ? 'checked' : '';
-$rsvpForm = $rsvpFeedback . <<<HTML
+$home2ModalMarkup = '';
+$home2ModalScript = '';
+$home2GuestHeroNotice = '';
+
+if ($home2InviteId > 0) {
+    $home2SafeInviteName = $home2InviteName !== '' ? $home2E($home2InviteName) : 'Invité';
+    $home2StatusText = 'Votre invitation personnelle a été reconnue. Merci d’utiliser la fenêtre de confirmation pour enregistrer votre réponse.';
+
+    if (is_array($home2ExistingConfirmation)) {
+        $home2ExistingPresence = (string) ($home2ExistingConfirmation['presence'] ?? '');
+        $home2StatusText = match ($home2ExistingPresence) {
+            'oui' => 'Votre présence avait déjà été confirmée pour ce mariage.',
+            'non' => 'Votre non participation avait déjà été enregistrée pour ce mariage.',
+            default => 'Votre réponse avait déjà été enregistrée pour ce mariage.',
+        };
+    } elseif ($home2RequestedPresence === '') {
+        $home2StatusText = 'Votre invitation personnelle est bien chargée. Utilisez les liens de confirmation reçus avec votre invitation pour répondre.';
+    }
+
+    $home2GuestHeroNotice = '<p class="hero-invite-name"><strong>' . $home2SafeInviteName . '</strong><br><span>' . $home2E($home2StatusText) . '</span></p>';
+    $rsvpForm = '<div class="home2-rsvp-guest-card"><p class="home2-rsvp-guest-kicker">Invitation personnelle</p><p class="home2-rsvp-guest-name">' . $home2SafeInviteName . '</p><p>' . $home2E($home2StatusText) . '</p></div>';
+
+    ob_start();
+    include __DIR__ . '/modalreponse.php';
+    $home2ModalMarkup = (string) ob_get_clean();
+
+    $home2JsonInviteName = json_encode(html_entity_decode($home2InviteName, ENT_QUOTES, 'UTF-8'), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
+    $home2JsonEventCode = json_encode((string) $codevent, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
+    $home2JsonInviteId = json_encode((string) $home2InviteId, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
+    $home2JsonRedirectNo = json_encode('index.php?page=reponsenon&cod=' . rawurlencode((string) $codevent) . '&idinv=' . rawurlencode((string) $home2InviteId), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
+
+    if (isset($_GET['ok'])) {
+        $home2ModalScript .= '<script src="../sweet/sweetalert2.all.min.js"></script><script>document.addEventListener("DOMContentLoaded",function(){Swal.fire({title:"RSVP",text:"Votre confirmation est enregistrée.",icon:"success"});});</script>';
+    } elseif (is_array($home2ExistingConfirmation) && in_array($home2RequestedPresence, ['oui', 'non'], true)) {
+        $home2ModalScript .= '<script src="../sweet/sweetalert2.all.min.js"></script><script>document.addEventListener("DOMContentLoaded",function(){Swal.fire({title:' . $home2JsonInviteName . ',text:"Votre réponse a déjà été enregistrée.",icon:"info",confirmButtonText:"OK"});});</script>';
+    } elseif ($home2InviteName !== '' && $home2RequestedPresence === 'oui') {
+        $home2ModalScript .= '<script>document.addEventListener("DOMContentLoaded",function(){openModal(' . $home2JsonInviteName . ',' . $home2JsonEventCode . ',' . $home2JsonInviteId . ',"form");});</script>';
+    } elseif ($home2InviteName !== '' && $home2RequestedPresence === 'non') {
+        $home2ModalScript .= '<script src="../sweet/sweetalert2.all.min.js"></script><script>document.addEventListener("DOMContentLoaded",function(){Swal.fire({title:' . $home2JsonInviteName . ',text:"Vous êtes sur le point de répondre NON à cette invitation. Confirmez-vous ?",icon:"warning",showCancelButton:true,confirmButtonText:"Oui, confirmer",cancelButtonText:"Annuler"}).then(function(result){if(result.isConfirmed){window.location.href=' . $home2JsonRedirectNo . ';}});});</script>';
+    } elseif ($home2InviteName !== '' && $home2RequestedPresence === 'plustard') {
+        $home2ModalScript .= '<script src="../sweet/sweetalert2.all.min.js"></script><script>document.addEventListener("DOMContentLoaded",function(){Swal.fire({title:' . $home2JsonInviteName . ',text:"Pour des raisons de logistique, nous vous prions de bien vouloir confirmer votre participation, ou pas, quelques jours avant la cérémonie.",icon:"warning",confirmButtonText:"OK"});});</script>';
+    }
+} else {
+    $rsvpNameValue = $home2E((string) ($_POST['nom'] ?? ''));
+    $rsvpPhoneValue = $home2E((string) ($_POST['phone'] ?? ''));
+    $rsvpEmailValue = $home2E((string) ($_POST['email'] ?? ''));
+    $rsvpNoteValue = $home2E((string) ($_POST['note'] ?? ''));
+    $rsvpPresenceOui = ((string) ($_POST['presence'] ?? '')) === 'oui' ? 'checked' : '';
+    $rsvpPresenceNon = ((string) ($_POST['presence'] ?? '')) === 'non' ? 'checked' : '';
+    $rsvpForm = $rsvpFeedback . <<<HTML
             <form method="post" class="home2-rsvp-form">
                 <input type="text" name="nom" placeholder="Votre prénom et nom" value="{$rsvpNameValue}" required>
                 <input type="tel" name="phone" placeholder="Votre téléphone" value="{$rsvpPhoneValue}" required>
@@ -207,9 +277,10 @@ $rsvpForm = $rsvpFeedback . <<<HTML
                 <button type="submit" name="submitrsvp">Confirmer ma réponse</button>
             </form>
 HTML;
+}
 
 if ($home2Html === '') {
-    echo '<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>' . $home2E($couple) . '</title></head><body>' . $home2BackgroundMusicMarkup . '<h1>' . $home2E($couple) . '</h1><p>' . $home2E($heroDate) . '</p><p>' . $home2E($eventPlace) . '</p>' . $rsvpForm . '</body></html>';
+    echo '<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>' . $home2E($couple) . '</title></head><body>' . $home2BackgroundMusicMarkup . '<h1>' . $home2E($couple) . '</h1>' . $home2GuestHeroNotice . '<p>' . $home2E($heroDate) . '</p><p>' . $home2E($eventPlace) . '</p>' . $rsvpForm . $home2ModalMarkup . $home2ModalScript . '</body></html>';
     return;
 }
 
@@ -228,6 +299,14 @@ $home2ExtraCss = <<<CSS
 .home2-rsvp-alert{max-width:620px;margin:1rem auto;padding:.9rem 1rem;border:1px solid;text-align:center;font:700 15px/1.5 Cormorant Garamond,serif}
 .home2-rsvp-alert-success{color:#14532d;background:#dcfce7;border-color:#86efac}
 .home2-rsvp-alert-error{color:#7f1d1d;background:#fee2e2;border-color:#fecaca}
+.hero-invite-name{margin:0 auto 1.35rem;max-width:720px;color:#F7F3EC;font:600 18px/1.45 Cormorant Garamond,serif;letter-spacing:.02em;text-align:center;text-shadow:0 2px 14px rgba(0,0,0,.28)}
+.hero-invite-name strong{display:block;color:#C9A84C;font:700 24px/1.2 Cormorant SC,serif;text-transform:uppercase;letter-spacing:.08em}
+.hero-invite-name span{opacity:.95}
+.home2-rsvp-guest-card{max-width:620px;margin:1.2rem auto 0;border:1px solid rgba(201,168,76,.5);background:rgba(247,243,236,.94);color:#3C0B1A;padding:1.4rem 1.2rem;text-align:center;box-shadow:0 18px 50px rgba(0,0,0,.18)}
+.home2-rsvp-guest-kicker{margin:0 0 .35rem;color:#7A1028;text-transform:uppercase;letter-spacing:.2em;font:700 11px/1 Cormorant SC,serif}
+.home2-rsvp-guest-name{margin:.15rem 0 .65rem;color:#3C0B1A;font:700 28px/1.15 Cormorant Garamond,serif}
+.modalinv{font-family:Cormorant Garamond,serif;color:#3C0B1A}.modalinv .modal-content{z-index:77001}.modalinv .form-control{box-sizing:border-box;width:100%;border:1px solid rgba(60,11,26,.18);padding:.85rem 1rem;margin:.3rem 0 .9rem}.modalinv .btn{border:0;background:#C9A84C;color:#3C0B1A;padding:.85rem 1rem;cursor:pointer}.modalinv .alert{padding:1rem;background:#fff7d6;border:1px solid #f5d36a;color:#3C0B1A}
+{$home2SectionTextColorCss}
 .home2-map-frame{padding:0;overflow:hidden;background:#F7F3EC}
 .home2-map-frame iframe{display:block;width:100%;min-height:360px;border:0}
 @media (max-width:640px){.home2-rsvp-choice{grid-template-columns:1fr}}
@@ -297,6 +376,15 @@ $home2Html = strtr($home2Html, [
     "new Date('2026-07-25T19:00:00+02:00')" => "new Date('" . $home2E($countdownTarget) . "')",
 ]);
 
+if ($home2GuestHeroNotice !== '') {
+    $home2Html = preg_replace(
+        '#(<p class="hero-honor">.*?</p>)#su',
+        '$1' . $home2GuestHeroNotice,
+        $home2Html,
+        1
+    ) ?? $home2Html;
+}
+
 $home2MainPlaceBlock = '<div class="adr-block"><h3>' . $home2E($home2Text('home2_main_place_title', 'Lieu principal')) . '</h3><p>' . $home2Block($home2MainPlaceText) . '</p><p class="adr-note">' . $home2E($home2Text('home2_main_place_note')) . '</p></div>';
 $home2AccommodationBlock = '<div class="adr-block"><h3>' . $home2E($home2Text('home2_accommodation_title', 'Hébergements recommandés')) . '</h3><p>' . $home2Block($home2Text('home2_accommodation_text')) . '</p><p class="adr-note">' . $home2E($home2Text('home2_accommodation_note')) . '</p></div>';
 $home2AddressBlockIndex = 0;
@@ -350,6 +438,15 @@ if ($home2BackgroundMusicMarkup !== '') {
         $home2Html = str_replace('</body>', $home2BackgroundMusicMarkup . "\n</body>", $home2Html);
     } else {
         $home2Html .= $home2BackgroundMusicMarkup;
+    }
+}
+
+$home2ModalOutput = $home2ModalMarkup . $home2ModalScript;
+if ($home2ModalOutput !== '') {
+    if (str_contains($home2Html, '</body>')) {
+        $home2Html = str_replace('</body>', $home2ModalOutput . "\n</body>", $home2Html);
+    } else {
+        $home2Html .= $home2ModalOutput;
     }
 }
 

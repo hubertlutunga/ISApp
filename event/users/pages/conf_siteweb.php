@@ -153,6 +153,14 @@ $weddingSiteFieldLabels = [
   'home2_location_background_color' => 'Background Adresse',
   'home2_rsvp_background_color' => 'Background RSVP',
   'home2_footer_background_color' => 'Background Footer',
+  'home2_hero_text_color' => 'Couleur texte Accueil',
+  'home2_gala_text_color' => 'Couleur texte Soirée',
+  'home2_program_text_color' => 'Couleur texte Programme',
+  'home2_story_text_color' => 'Couleur texte Histoire',
+  'home2_presence_text_color' => 'Couleur texte Présences',
+  'home2_location_text_color' => 'Couleur texte Adresse',
+  'home2_rsvp_text_color' => 'Couleur texte RSVP',
+  'home2_footer_text_color' => 'Couleur texte Footer',
 ];
 
 $weddingSiteImageFields = [
@@ -176,7 +184,7 @@ $weddingSiteSectionPanels = [
 
 $weddingSiteStyle2Panels = [
   'style2_hero' => ['title' => 'Style 2 — Accueil', 'fields' => ['home2_couple_names', 'home2_honor_text', 'home2_hero_meta', 'home2_button_text'], 'images' => ['home2_monogram']],
-  'style2_colors' => ['title' => 'Style 2 — Couleurs des sections', 'fields' => ['home2_hero_background_color', 'home2_gala_background_color', 'home2_program_background_color', 'home2_story_background_color', 'home2_presence_background_color', 'home2_location_background_color', 'home2_rsvp_background_color', 'home2_footer_background_color'], 'images' => []],
+  'style2_colors' => ['title' => 'Style 2 — Couleurs des sections', 'fields' => ['home2_hero_background_color', 'home2_hero_text_color', 'home2_gala_background_color', 'home2_gala_text_color', 'home2_program_background_color', 'home2_program_text_color', 'home2_story_background_color', 'home2_story_text_color', 'home2_presence_background_color', 'home2_presence_text_color', 'home2_location_background_color', 'home2_location_text_color', 'home2_rsvp_background_color', 'home2_rsvp_text_color', 'home2_footer_background_color', 'home2_footer_text_color'], 'images' => []],
   'style2_gala' => ['title' => 'Style 2 — Soirée', 'fields' => ['home2_gala_label', 'home2_gala_title', 'home2_gala_subtitle', 'home2_gala_primary_label', 'home2_gala_primary_value', 'home2_gala_primary_text', 'home2_gala_secondary_label', 'home2_gala_secondary_value', 'home2_gala_secondary_text'], 'images' => []],
   'style2_program' => ['title' => 'Style 2 — Programme', 'fields' => ['home2_program_label', 'home2_program_title', 'home2_program_subtitle', 'home2_program_event_eyebrow', 'home2_program_event_title', 'home2_program_event_badge', 'home2_program_time_label', 'home2_program_time_value', 'home2_program_location_label', 'home2_program_location_value', 'home2_program_dress_label', 'home2_program_dress_value', 'home2_program_description'], 'images' => []],
   'style2_story' => ['title' => 'Style 2 — Histoire', 'fields' => ['home2_story_label', 'home2_story_title', 'home2_story_text_1', 'home2_story_text_2', 'home2_story_coda'], 'images' => []],
@@ -457,7 +465,7 @@ html,body{ height:auto !important; min-height:100% !important; overflow-y:auto !
                   </div>
 
                   <div class="mb-wedconf-style-panel <?php echo $selectedHomeTemplate === 'home2' ? 'is-visible' : ''; ?>" data-style-panel="home2">
-                    <div class="alert alert-light" style="border-radius:16px;font-weight:700;">Ces champs pilotent directement le Style 2 : textes, programme, adresse, RSVP, carte, monogramme et couleurs de background des sections. Pour les couleurs, utilisez un code hexadécimal comme #876987.</div>
+                    <div class="alert alert-light" style="border-radius:16px;font-weight:700;">Ces champs pilotent directement le Style 2 : textes, programme, adresse, RSVP, carte, monogramme, backgrounds et couleurs de texte des sections. Pour les couleurs, utilisez un code hexadécimal comme #876987.</div>
                     <?php $style2Counter = 1; foreach ($weddingSiteStyle2Panels as $style2Panel) { ?>
                     <div class="mb-wedconf-section-card">
                       <div class="mb-wedconf-section-head">
@@ -466,7 +474,7 @@ html,body{ height:auto !important; min-height:100% !important; overflow-y:auto !
                       <div class="mb-wedconf-section-body">
                         <?php if (!empty($style2Panel['fields'])) { ?>
                         <div class="mb-wedconf-grid">
-                          <?php foreach ($style2Panel['fields'] as $fieldName) { $fieldValue = (string) ($weddingSiteSettings['content'][$fieldName] ?? ''); $isLongField = str_contains($fieldName, 'text') || str_contains($fieldName, 'subtitle') || str_contains($fieldName, 'description') || str_contains($fieldName, 'note') || str_contains($fieldName, 'value'); $isColorField = str_contains($fieldName, 'background_color'); ?>
+                          <?php foreach ($style2Panel['fields'] as $fieldName) { $fieldValue = (string) ($weddingSiteSettings['content'][$fieldName] ?? ''); $isColorField = str_contains($fieldName, 'background_color') || str_contains($fieldName, 'text_color'); $isLongField = !$isColorField && (str_contains($fieldName, 'text') || str_contains($fieldName, 'subtitle') || str_contains($fieldName, 'description') || str_contains($fieldName, 'note') || str_contains($fieldName, 'value')); ?>
                           <div class="mb-wedconf-field"><label for="wed_<?php echo htmlspecialchars($fieldName, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($weddingSiteFieldLabels[$fieldName] ?? $fieldName, ENT_QUOTES, 'UTF-8'); ?></label><?php if ($isLongField) { ?><textarea id="wed_<?php echo htmlspecialchars($fieldName, ENT_QUOTES, 'UTF-8'); ?>" name="<?php echo htmlspecialchars($fieldName, ENT_QUOTES, 'UTF-8'); ?>" class="form-control" rows="4"><?php echo htmlspecialchars($fieldValue, ENT_QUOTES, 'UTF-8'); ?></textarea><?php } elseif ($isColorField) { ?><input id="wed_<?php echo htmlspecialchars($fieldName, ENT_QUOTES, 'UTF-8'); ?>" type="text" name="<?php echo htmlspecialchars($fieldName, ENT_QUOTES, 'UTF-8'); ?>" class="form-control mb-wedconf-color-input" value="<?php echo htmlspecialchars($fieldValue, ENT_QUOTES, 'UTF-8'); ?>" placeholder="#876987" maxlength="7" pattern="^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$" title="Format attendu : #876987 ou #fff"><?php } else { ?><input id="wed_<?php echo htmlspecialchars($fieldName, ENT_QUOTES, 'UTF-8'); ?>" type="text" name="<?php echo htmlspecialchars($fieldName, ENT_QUOTES, 'UTF-8'); ?>" class="form-control" value="<?php echo htmlspecialchars($fieldValue, ENT_QUOTES, 'UTF-8'); ?>"><?php } ?></div>
                           <?php } ?>
                         </div>
