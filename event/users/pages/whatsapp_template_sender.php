@@ -136,6 +136,20 @@ if (!function_exists('isapp_whatsapp_sender_normalize_wedding_type')) {
     }
 }
 
+if (!function_exists('isapp_whatsapp_sender_wedding_couple_name')) {
+    function isapp_whatsapp_sender_wedding_couple_name(array $event): string
+    {
+        $groomName = trim((string) ($event['prenom_epoux'] ?? ''));
+        $brideName = trim((string) ($event['prenom_epouse'] ?? ''));
+        $nameOrder = mb_strtolower(trim((string) ($event['ordrepri'] ?? '')), 'UTF-8');
+
+        $firstName = $nameOrder === 'm' ? $groomName : $brideName;
+        $secondName = $nameOrder === 'm' ? $brideName : $groomName;
+
+        return trim($firstName . ' & ' . $secondName, ' &');
+    }
+}
+
 if (!function_exists('isapp_whatsapp_sender_signature')) {
     function isapp_whatsapp_sender_signature(array $event): string
     {
@@ -146,14 +160,7 @@ if (!function_exists('isapp_whatsapp_sender_signature')) {
         }
 
         if ($eventType === '1') {
-            $firstName = trim((string) ($event['prenom_epoux'] ?? ''));
-            $secondName = trim((string) ($event['prenom_epouse'] ?? ''));
-            if ((string) ($event['ordrepri'] ?? '') !== 'm') {
-                $firstName = trim((string) ($event['prenom_epouse'] ?? ''));
-                $secondName = trim((string) ($event['prenom_epoux'] ?? ''));
-            }
-
-            return trim($firstName . ' & ' . $secondName, ' &') ?: 'Les organisateurs';
+            return isapp_whatsapp_sender_wedding_couple_name($event) ?: 'Les organisateurs';
         }
 
         $hostName = trim((string) ($event['nomfetard'] ?? ''));
@@ -266,14 +273,7 @@ if (!function_exists('isapp_whatsapp_sender_filename_base')) {
 
         $eventType = (string) ($event['type_event'] ?? '');
         if ($eventType === '1') {
-            $firstName = trim((string) ($event['prenom_epoux'] ?? ''));
-            $secondName = trim((string) ($event['prenom_epouse'] ?? ''));
-            if ((string) ($event['ordrepri'] ?? '') !== 'm') {
-                $firstName = trim((string) ($event['prenom_epouse'] ?? ''));
-                $secondName = trim((string) ($event['prenom_epoux'] ?? ''));
-            }
-
-            $signature = trim($firstName . ' & ' . $secondName, ' &');
+            $signature = isapp_whatsapp_sender_wedding_couple_name($event);
 
             return trim($signature . ' - INVITATION ' . $displayName);
         }
