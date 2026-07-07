@@ -113,7 +113,7 @@ if (!function_exists('isapp_whatsapp_sender_normalize_wedding_type')) {
         $normalized = mb_strtolower(isapp_whatsapp_sender_normalize_text($weddingType), 'UTF-8');
 
         if ($normalized === '') {
-            return 'religieux';
+            return 'benediction';
         }
 
         if (strpos($normalized, 'coutum') !== false) {
@@ -124,12 +124,16 @@ if (!function_exists('isapp_whatsapp_sender_normalize_wedding_type')) {
             return 'civil';
         }
 
-        if (strpos($normalized, 'bened') !== false || strpos($normalized, 'bénéd') !== false) {
-            return 'benediction';
+        if (strpos($normalized, 'soir') !== false || strpos($normalized, 'dans') !== false) {
+            return 'soiree_dansante';
         }
 
-        if (strpos($normalized, 'relig') !== false || strpos($normalized, 'nupt') !== false) {
-            return 'religieux';
+        if (strpos($normalized, 'diner') !== false || strpos($normalized, 'dîner') !== false || strpos($normalized, 'din') !== false || strpos($normalized, 'dîn') !== false) {
+            return 'diner';
+        }
+
+        if (strpos($normalized, 'bened') !== false || strpos($normalized, 'bénéd') !== false || strpos($normalized, 'nupt') !== false || strpos($normalized, 'relig') !== false) {
+            return 'benediction';
         }
 
         return $normalized;
@@ -147,6 +151,32 @@ if (!function_exists('isapp_whatsapp_sender_wedding_couple_name')) {
         $secondName = $nameOrder === 'm' ? $brideName : $groomName;
 
         return trim($firstName . ' & ' . $secondName, ' &');
+    }
+}
+
+if (!function_exists('isapp_whatsapp_sender_wedding_couple_name_with_and')) {
+    function isapp_whatsapp_sender_wedding_couple_name_with_and(array $event): string
+    {
+        $groomName = trim((string) ($event['prenom_epoux'] ?? ''));
+        $brideName = trim((string) ($event['prenom_epouse'] ?? ''));
+        $nameOrder = mb_strtolower(trim((string) ($event['ordrepri'] ?? '')), 'UTF-8');
+
+        $firstName = $nameOrder === 'm' ? $groomName : $brideName;
+        $secondName = $nameOrder === 'm' ? $brideName : $groomName;
+
+        $names = array_values(array_filter([$firstName, $secondName], static fn(string $name): bool => $name !== ''));
+
+        return implode(' et ', $names);
+    }
+}
+
+if (!function_exists('isapp_whatsapp_sender_starts_with_vowel')) {
+    function isapp_whatsapp_sender_starts_with_vowel(string $value): bool
+    {
+        $firstCharacter = mb_substr(trim($value), 0, 1, 'UTF-8');
+        $firstCharacter = mb_strtolower($firstCharacter, 'UTF-8');
+
+        return in_array($firstCharacter, ['a', 'à', 'â', 'e', 'é', 'è', 'ê', 'ë', 'i', 'î', 'ï', 'o', 'ô', 'u', 'ù', 'û', 'ü', 'y'], true);
     }
 }
 
@@ -174,6 +204,20 @@ if (!function_exists('isapp_whatsapp_sender_signature')) {
     }
 }
 
+if (!function_exists('isapp_whatsapp_sender_template_signature')) {
+    function isapp_whatsapp_sender_template_signature(array $event, string $fallbackSignature): string
+    {
+        if ((string) ($event['type_event'] ?? '') === '1') {
+            $weddingType = isapp_whatsapp_sender_normalize_wedding_type((string) ($event['type_mar'] ?? ''));
+            if ($weddingType === 'soiree_dansante') {
+                return isapp_whatsapp_sender_wedding_couple_name_with_and($event) ?: $fallbackSignature;
+            }
+        }
+
+        return $fallbackSignature;
+    }
+}
+
 if (!function_exists('isapp_whatsapp_sender_event_label')) {
     function isapp_whatsapp_sender_event_label(array $event): string
     {
@@ -192,11 +236,15 @@ if (!function_exists('isapp_whatsapp_sender_event_label')) {
                 return 'à la cérémonie du mariage civil';
             }
 
-            if ($weddingType === 'religieux') {
-                return 'à la soirée du mariage religieux';
+            if ($weddingType === 'soiree_dansante') {
+                return 'à la soirée de gala à l\'occasion du mariage';
             }
 
-            return 'à la bénédiction nuptiale';
+            if ($weddingType === 'diner') {
+                return 'au dîner à l\'occasion du mariage';
+            }
+
+            return 'à la cérémonie de la bénédiction nuptiale';
         }
 
         if ($eventType === '2') {
@@ -248,6 +296,36 @@ if (!function_exists('isapp_whatsapp_sender_event_label')) {
     }
 }
 
+if (!function_exists('isapp_whatsapp_sender_invitation_sentence')) {
+    function isapp_whatsapp_sender_invitation_sentence(array $event): string
+    {
+        $eventLabel = isapp_whatsapp_sender_event_label($event);
+        $signature = isapp_whatsapp_sender_signature($event);
+        $eventType = (string) ($event['type_event'] ?? '');
+
+        if ($eventType === '12') {
+            return 'Nous avons le plaisir de vous transmettre votre invitation ' . $eventLabel . '.';
+        }
+
+        if ($eventType === '1') {
+            $weddingType = isapp_whatsapp_sender_normalize_wedding_type((string) ($event['type_mar'] ?? ''));
+
+            if ($weddingType === 'soiree_dansante') {
+                $coupleWithAnd = isapp_whatsapp_sender_wedding_couple_name_with_and($event) ?: $signature;
+                $prefix = isapp_whatsapp_sender_starts_with_vowel($coupleWithAnd) ? "d'" : 'de ';
+
+                return 'Nous avons le plaisir de vous transmettre votre invitation à la soirée de gala à l\'occasion du mariage ' . $prefix . $coupleWithAnd . '.';
+            }
+
+            if ($weddingType === 'diner') {
+                return 'Nous avons le plaisir de vous transmettre votre invitation au dîner à l\'occasion du mariage de ' . $signature . '.';
+            }
+        }
+
+        return 'Nous avons le plaisir de vous transmettre votre invitation ' . $eventLabel . ' de ' . $signature . '.';
+    }
+}
+
 if (!function_exists('isapp_whatsapp_sender_preview_context')) {
     function isapp_whatsapp_sender_preview_context(PDO $pdo, $eventCode): array
     {
@@ -259,9 +337,7 @@ if (!function_exists('isapp_whatsapp_sender_preview_context')) {
         return [
             'event_label' => $eventLabel,
             'signature' => $signature,
-            'invitation_sentence' => $eventType === '12'
-                ? 'Nous avons le plaisir de vous transmettre votre invitation ' . $eventLabel . '.'
-                : 'Nous avons le plaisir de vous transmettre votre invitation ' . $eventLabel . ' de ' . $signature . '.',
+            'invitation_sentence' => isapp_whatsapp_sender_invitation_sentence($event),
         ];
     }
 }
@@ -703,6 +779,7 @@ if (!function_exists('isapp_whatsapp_send_template_invitation')) {
         $recipientName = isapp_whatsapp_sender_display_name($invite, $fallbackInviteName);
         $eventLabel = isapp_whatsapp_sender_event_label($event);
         $signature = isapp_whatsapp_sender_signature($event);
+        $templateSignature = isapp_whatsapp_sender_template_signature($event, $signature);
         $filenameBase = isapp_whatsapp_sender_filename_base($event, $invite, $recipientName);
         $diskStem = isapp_whatsapp_sender_disk_stem($filenameBase);
         $encodedStem = isapp_whatsapp_sender_encoded_stem($filenameBase);
@@ -717,7 +794,7 @@ if (!function_exists('isapp_whatsapp_send_template_invitation')) {
         $contentVariables = [
             '1' => $recipientName,
             '2' => $eventLabel,
-            '3' => $signature,
+            '3' => $templateSignature,
             '4' => $encodedStem,
         ];
 
