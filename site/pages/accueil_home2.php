@@ -105,6 +105,22 @@ $home2MainPlaceText = $home2Text('home2_main_place_text', $eventPlace . ($eventA
 $home2RsvpSubtitle = $home2Text('home2_rsvp_subtitle', 'Merci de confirmer votre présence avant le <em>' . $home2E($rsvpLimitText) . '</em>. Cette invitation est personnelle et non transmissible.');
 $home2FooterMeta = $home2Text('home2_footer_meta', $eventDateNoDay . ' · ' . $eventCity);
 $home2BackgroundMusicMarkup = WeddingWebsiteSettingsService::backgroundMusicMarkup($settings, '../couple/audio/');
+$home2Choice = static function (string $field, array $allowed, string $fallback) use ($settings): string {
+    $value = trim((string) ($settings['content'][$field] ?? ''));
+    return in_array($value, $allowed, true) ? $value : $fallback;
+};
+$home2ImageUrl = static function (string $field, string $fallbackField = '') use ($settings): string {
+    $imageName = WeddingWebsiteSettingsService::image($settings, $field, '');
+    if ($imageName === '' && $fallbackField !== '') {
+        $imageName = WeddingWebsiteSettingsService::image($settings, $fallbackField, '');
+    }
+
+    return $imageName !== '' ? '../couple/images/' . rawurlencode($imageName) : '';
+};
+$home2HeaderLogoMode = $home2Choice('home2_header_logo_mode', ['text', 'image'], 'text');
+$home2HeroNamesMode = $home2Choice('home2_hero_names_mode', ['text', 'image'], 'text');
+$home2HeaderLogoUrl = $home2ImageUrl('home2_header_logo_image', 'home2_monogram');
+$home2HeroNamesImageUrl = $home2ImageUrl('home2_hero_names_image');
 
 $home2ValidColor = static function (string $field) use ($settings): string {
     $value = trim((string) ($settings['content'][$field] ?? ''));
@@ -287,8 +303,11 @@ if ($home2Html === '') {
 $home2ExtraCss = <<<CSS
 @font-face{font-family:'Birds of Paradise';src:local('Birds of Paradise'),local('BirdsOfParadise');font-display:swap}
 .nav-monogram{width:37.5px!important;height:37.5px!important;min-width:37.5px!important}
+.nav-logo-image{display:block;width:auto!important;height:42px!important;max-width:210px;object-fit:contain}
 .nav-wordmark,.hero-names,.footer-names{font-family:'Birds of Paradise','SignPainter','Cormorant Garamond',cursive!important;font-style:normal!important;font-weight:400!important;letter-spacing:.02em}
 .nav-wordmark{font-size:22px!important;letter-spacing:.03em!important;text-transform:none!important;line-height:1!important}
+.hero-names-image-wrap{display:flex!important;align-items:center;justify-content:center;margin-bottom:2.1rem}
+.hero-names-image{display:block;width:auto;max-width:min(76vw,540px);max-height:180px;object-fit:contain;filter:none!important}
 {$home2SectionBackgroundCss}
 .home2-rsvp-form{display:grid;gap:.9rem;max-width:620px;margin:1.2rem auto 0;text-align:left}
 .home2-rsvp-form input,.home2-rsvp-form textarea{width:100%;border:1px solid rgba(201,168,76,.45);border-radius:0;background:rgba(247,243,236,.92);color:#3C0B1A;font:600 15px/1.4 Cormorant Garamond,serif;padding:.9rem 1rem;outline:none}
@@ -416,6 +435,18 @@ $home2Monogram = WeddingWebsiteSettingsService::image($settings, 'home2_monogram
 if ($home2Monogram !== '') {
     $home2MonogramUrl = '../couple/images/' . rawurlencode($home2Monogram);
     $home2Html = preg_replace('#<img src="data:image/png;base64,[^"]+" alt="([^"]*)">#u', '<img src="' . $home2MonogramUrl . '" alt="$1">', $home2Html) ?? $home2Html;
+}
+
+if ($home2HeaderLogoMode === 'image' && $home2HeaderLogoUrl !== '') {
+    $home2HeaderLogoMarkup = '<div class="nav-logo"><img class="nav-logo-image" src="' . $home2E($home2HeaderLogoUrl) . '" alt="Logo ' . $home2E($home2Couple) . '"></div>';
+    $home2Html = preg_replace('#<div class="nav-logo">.*?</div>#su', $home2HeaderLogoMarkup, $home2Html, 1) ?? $home2Html;
+} else {
+    $home2Html = preg_replace('#\s*<img class="nav-monogram"[^>]*>\s*#u', '', $home2Html, 1) ?? $home2Html;
+}
+
+if ($home2HeroNamesMode === 'image' && $home2HeroNamesImageUrl !== '') {
+    $home2HeroNamesImageMarkup = '<div class="hero-names hero-names-image-wrap"><img class="hero-names-image" src="' . $home2E($home2HeroNamesImageUrl) . '" alt="' . $home2E($home2Couple) . '"></div>';
+    $home2Html = preg_replace('#<h1 class="hero-names">.*?</h1>#su', $home2HeroNamesImageMarkup, $home2Html, 1) ?? $home2Html;
 }
 
 if ($eventAddress !== '') {

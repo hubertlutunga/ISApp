@@ -94,6 +94,8 @@ $weddingSiteFieldLabels = [
   'location_title' => 'Titre adresse',
   'location_subtitle' => 'Sous-titre adresse',
   'home2_couple_names' => 'Noms affichés',
+  'home2_header_logo_mode' => 'Logo du header Style 2',
+  'home2_hero_names_mode' => 'Noms hero Style 2',
   'home2_honor_text' => 'Texte d’invitation familles',
   'home2_hero_meta' => 'Ville / mois affichés',
   'home2_button_text' => 'Texte du bouton',
@@ -167,7 +169,9 @@ $weddingSiteImageFields = [
   'hero_bg' => 'Image Accueil / Compteur',
   'save_heart' => 'Image Save the date',
   'wedding_bg' => 'Image Wedding Events',
-  'home2_monogram' => 'Monogramme Style 2',
+  'home2_monogram' => 'Monogramme décoratif Style 2',
+  'home2_header_logo_image' => 'Logo image header Style 2',
+  'home2_hero_names_image' => 'Logo image noms Style 2',
 ];
 
 $weddingSiteSectionPanels = [
@@ -183,7 +187,7 @@ $weddingSiteSectionPanels = [
 ];
 
 $weddingSiteStyle2Panels = [
-  'style2_hero' => ['title' => 'Style 2 — Accueil', 'fields' => ['home2_couple_names', 'home2_honor_text', 'home2_hero_meta', 'home2_button_text'], 'images' => ['home2_monogram']],
+  'style2_hero' => ['title' => 'Style 2 — Accueil', 'fields' => ['home2_couple_names', 'home2_header_logo_mode', 'home2_hero_names_mode', 'home2_honor_text', 'home2_hero_meta', 'home2_button_text'], 'images' => ['home2_header_logo_image', 'home2_hero_names_image', 'home2_monogram']],
   'style2_colors' => ['title' => 'Style 2 — Couleurs des sections', 'fields' => ['home2_hero_background_color', 'home2_hero_text_color', 'home2_gala_background_color', 'home2_gala_text_color', 'home2_program_background_color', 'home2_program_text_color', 'home2_story_background_color', 'home2_story_text_color', 'home2_presence_background_color', 'home2_presence_text_color', 'home2_location_background_color', 'home2_location_text_color', 'home2_rsvp_background_color', 'home2_rsvp_text_color', 'home2_footer_background_color', 'home2_footer_text_color'], 'images' => []],
   'style2_gala' => ['title' => 'Style 2 — Soirée', 'fields' => ['home2_gala_label', 'home2_gala_title', 'home2_gala_subtitle', 'home2_gala_primary_label', 'home2_gala_primary_value', 'home2_gala_primary_text', 'home2_gala_secondary_label', 'home2_gala_secondary_value', 'home2_gala_secondary_text'], 'images' => []],
   'style2_program' => ['title' => 'Style 2 — Programme', 'fields' => ['home2_program_label', 'home2_program_title', 'home2_program_subtitle', 'home2_program_event_eyebrow', 'home2_program_event_title', 'home2_program_event_badge', 'home2_program_time_label', 'home2_program_time_value', 'home2_program_location_label', 'home2_program_location_value', 'home2_program_dress_label', 'home2_program_dress_value', 'home2_program_description'], 'images' => []],
@@ -474,8 +478,8 @@ html,body{ height:auto !important; min-height:100% !important; overflow-y:auto !
                       <div class="mb-wedconf-section-body">
                         <?php if (!empty($style2Panel['fields'])) { ?>
                         <div class="mb-wedconf-grid">
-                          <?php foreach ($style2Panel['fields'] as $fieldName) { $fieldValue = (string) ($weddingSiteSettings['content'][$fieldName] ?? ''); $isColorField = str_contains($fieldName, 'background_color') || str_contains($fieldName, 'text_color'); $isLongField = !$isColorField && (str_contains($fieldName, 'text') || str_contains($fieldName, 'subtitle') || str_contains($fieldName, 'description') || str_contains($fieldName, 'note') || str_contains($fieldName, 'value')); ?>
-                          <div class="mb-wedconf-field"><label for="wed_<?php echo htmlspecialchars($fieldName, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($weddingSiteFieldLabels[$fieldName] ?? $fieldName, ENT_QUOTES, 'UTF-8'); ?></label><?php if ($isLongField) { ?><textarea id="wed_<?php echo htmlspecialchars($fieldName, ENT_QUOTES, 'UTF-8'); ?>" name="<?php echo htmlspecialchars($fieldName, ENT_QUOTES, 'UTF-8'); ?>" class="form-control" rows="4"><?php echo htmlspecialchars($fieldValue, ENT_QUOTES, 'UTF-8'); ?></textarea><?php } elseif ($isColorField) { ?><input id="wed_<?php echo htmlspecialchars($fieldName, ENT_QUOTES, 'UTF-8'); ?>" type="text" name="<?php echo htmlspecialchars($fieldName, ENT_QUOTES, 'UTF-8'); ?>" class="form-control mb-wedconf-color-input" value="<?php echo htmlspecialchars($fieldValue, ENT_QUOTES, 'UTF-8'); ?>" placeholder="#876987" maxlength="7" pattern="^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$" title="Format attendu : #876987 ou #fff"><?php } else { ?><input id="wed_<?php echo htmlspecialchars($fieldName, ENT_QUOTES, 'UTF-8'); ?>" type="text" name="<?php echo htmlspecialchars($fieldName, ENT_QUOTES, 'UTF-8'); ?>" class="form-control" value="<?php echo htmlspecialchars($fieldValue, ENT_QUOTES, 'UTF-8'); ?>"><?php } ?></div>
+                          <?php foreach ($style2Panel['fields'] as $fieldName) { $fieldValue = (string) ($weddingSiteSettings['content'][$fieldName] ?? ''); $isColorField = str_contains($fieldName, 'background_color') || str_contains($fieldName, 'text_color'); $isLogoModeField = in_array($fieldName, ['home2_header_logo_mode', 'home2_hero_names_mode'], true); $isLongField = !$isColorField && !$isLogoModeField && (str_contains($fieldName, 'text') || str_contains($fieldName, 'subtitle') || str_contains($fieldName, 'description') || str_contains($fieldName, 'note') || str_contains($fieldName, 'value')); ?>
+                          <div class="mb-wedconf-field"><label for="wed_<?php echo htmlspecialchars($fieldName, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($weddingSiteFieldLabels[$fieldName] ?? $fieldName, ENT_QUOTES, 'UTF-8'); ?></label><?php if ($isLogoModeField) { $modeValue = in_array($fieldValue, ['text', 'image'], true) ? $fieldValue : 'text'; ?><div class="mb-wedconf-radio-group"><label class="mb-wedconf-radio"><input type="radio" id="wed_<?php echo htmlspecialchars($fieldName, ENT_QUOTES, 'UTF-8'); ?>_text" name="<?php echo htmlspecialchars($fieldName, ENT_QUOTES, 'UTF-8'); ?>" value="text" <?php echo $modeValue === 'text' ? 'checked' : ''; ?>><span>Texte</span></label><label class="mb-wedconf-radio"><input type="radio" id="wed_<?php echo htmlspecialchars($fieldName, ENT_QUOTES, 'UTF-8'); ?>_image" name="<?php echo htmlspecialchars($fieldName, ENT_QUOTES, 'UTF-8'); ?>" value="image" <?php echo $modeValue === 'image' ? 'checked' : ''; ?>><span>Image importée</span></label></div><small style="display:block;margin-top:8px;color:#64748b;font-weight:700;">Choisissez un seul affichage : texte ou image.</small><?php } elseif ($isLongField) { ?><textarea id="wed_<?php echo htmlspecialchars($fieldName, ENT_QUOTES, 'UTF-8'); ?>" name="<?php echo htmlspecialchars($fieldName, ENT_QUOTES, 'UTF-8'); ?>" class="form-control" rows="4"><?php echo htmlspecialchars($fieldValue, ENT_QUOTES, 'UTF-8'); ?></textarea><?php } elseif ($isColorField) { ?><input id="wed_<?php echo htmlspecialchars($fieldName, ENT_QUOTES, 'UTF-8'); ?>" type="text" name="<?php echo htmlspecialchars($fieldName, ENT_QUOTES, 'UTF-8'); ?>" class="form-control mb-wedconf-color-input" value="<?php echo htmlspecialchars($fieldValue, ENT_QUOTES, 'UTF-8'); ?>" placeholder="#876987" maxlength="7" pattern="^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$" title="Format attendu : #876987 ou #fff"><?php } else { ?><input id="wed_<?php echo htmlspecialchars($fieldName, ENT_QUOTES, 'UTF-8'); ?>" type="text" name="<?php echo htmlspecialchars($fieldName, ENT_QUOTES, 'UTF-8'); ?>" class="form-control" value="<?php echo htmlspecialchars($fieldValue, ENT_QUOTES, 'UTF-8'); ?>"><?php } ?></div>
                           <?php } ?>
                         </div>
                         <?php } ?>

@@ -33,6 +33,8 @@ final class WeddingWebsiteSettingsService
                 'hero_subtitle' => 'Se marient dans',
                 'hero_button' => 'RSVP',
                 'home2_couple_names' => '',
+                'home2_header_logo_mode' => 'text',
+                'home2_hero_names_mode' => 'text',
                 'home2_honor_text' => "Les familles Kasenga et Kalala Wa Kalala\nont l'honneur de vous convier au mariage de leurs enfants",
                 'home2_hero_meta' => '',
                 'home2_button_text' => 'Confirmer ma présence',
@@ -154,6 +156,8 @@ final class WeddingWebsiteSettingsService
                 'location_1_photo' => (string) ($event['photo'] ?? ''),
                 'location_2_photo' => (string) ($event['photostory'] ?? ''),
                 'home2_monogram' => '',
+                'home2_header_logo_image' => '',
+                'home2_hero_names_image' => '',
             ],
             'media' => [
                 'background_music' => '',
@@ -283,6 +287,12 @@ final class WeddingWebsiteSettingsService
 
         if (!in_array((string) ($settings['content']['home_template'] ?? 'home1'), ['home1', 'home2'], true)) {
             $settings['content']['home_template'] = 'home1';
+        }
+
+        foreach (['home2_header_logo_mode', 'home2_hero_names_mode'] as $modeField) {
+            if (!in_array((string) ($settings['content'][$modeField] ?? 'text'), ['text', 'image'], true)) {
+                $settings['content'][$modeField] = 'text';
+            }
         }
 
         return self::enforceAlwaysVisibleSections($settings);
@@ -433,6 +443,12 @@ HTML;
         $settings['visibility_initialized'] = (bool) ($settings['visibility_initialized'] ?? $defaults['visibility_initialized']);
         if (!in_array((string) ($settings['content']['home_template'] ?? 'home1'), ['home1', 'home2'], true)) {
             $settings['content']['home_template'] = 'home1';
+        }
+
+        foreach (['home2_header_logo_mode', 'home2_hero_names_mode'] as $modeField) {
+            if (!in_array((string) ($settings['content'][$modeField] ?? 'text'), ['text', 'image'], true)) {
+                $settings['content'][$modeField] = 'text';
+            }
         }
 
         return $settings;
