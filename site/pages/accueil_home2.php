@@ -117,6 +117,31 @@ $home2ImageUrl = static function (string $field, string $fallbackField = '') use
 
     return $imageName !== '' ? '../couple/images/' . rawurlencode($imageName) : '';
 };
+$home2RemoveDivByClass = static function (string $html, string $className): string {
+    $pattern = '#<div\b[^>]*class\s*=\s*["\'][^"\']*\b' . preg_quote($className, '#') . '\b[^"\']*["\'][^>]*>#i';
+    if (!preg_match($pattern, $html, $match, PREG_OFFSET_CAPTURE)) {
+        return $html;
+    }
+
+    $start = (int) $match[0][1];
+    $tail = substr($html, $start);
+    if (!preg_match_all('#</?div\b[^>]*>#i', $tail, $tags, PREG_OFFSET_CAPTURE)) {
+        return $html;
+    }
+
+    $depth = 0;
+    foreach ($tags[0] as $tag) {
+        $tagText = (string) $tag[0];
+        $tagOffset = (int) $tag[1];
+        $depth += stripos($tagText, '</div') === 0 ? -1 : 1;
+        if ($depth === 0) {
+            $end = $start + $tagOffset + strlen($tagText);
+            return substr($html, 0, $start) . substr($html, $end);
+        }
+    }
+
+    return $html;
+};
 $home2HeaderLogoMode = $home2Choice('home2_header_logo_mode', ['text', 'image'], 'text');
 $home2HeroNamesMode = $home2Choice('home2_hero_names_mode', ['text', 'image'], 'text');
 $home2HeaderLogoUrl = $home2ImageUrl('home2_header_logo_image', 'home2_monogram');
@@ -396,6 +421,8 @@ $home2Html = strtr($home2Html, [
     '10 juillet 2026' => $home2E($rsvpLimitText),
     "new Date('2026-07-25T19:00:00+02:00')" => "new Date('" . $home2E($countdownTarget) . "')",
 ]);
+
+$home2Html = $home2RemoveDivByClass($home2Html, 'pres-grid');
 
 if ($home2GuestHeroNotice !== '') {
     $home2Html = preg_replace(
