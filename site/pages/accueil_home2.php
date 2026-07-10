@@ -327,6 +327,9 @@ if ($home2Html === '') {
 
 $home2ExtraCss = <<<CSS
 @font-face{font-family:'Birds of Paradise';src:local('Birds of Paradise'),local('BirdsOfParadise');font-display:swap}
+.hero{background-image:none!important}
+.hero::before{display:none!important;background:none!important;background-image:none!important;content:none!important}
+.hero-logo img{filter:none!important}
 .nav-monogram{width:37.5px!important;height:37.5px!important;min-width:37.5px!important}
 .nav-logo-image{display:block;width:auto!important;height:42px!important;max-width:210px;object-fit:contain}
 .nav-wordmark,.hero-names,.footer-names{font-family:'Birds of Paradise','SignPainter','Cormorant Garamond',cursive!important;font-style:normal!important;font-weight:400!important;letter-spacing:.02em}
