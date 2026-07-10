@@ -331,7 +331,10 @@ $home2ExtraCss = <<<CSS
 .hero::before{display:none!important;background:none!important;background-image:none!important;content:none!important}
 .hero-logo img{filter:none!important}
 .nav-monogram{width:37.5px!important;height:37.5px!important;min-width:37.5px!important}
+.nav-logo-text-mode .nav-monogram{display:none!important}
 .nav-logo-image{display:block;width:auto!important;height:42px!important;max-width:210px;object-fit:contain}
+.nav-menu-toggle{display:none;border:0;background:transparent;color:#3C0B1A;width:42px;height:42px;align-items:center;justify-content:center;flex-direction:column;gap:5px;padding:0;cursor:pointer;flex:0 0 42px}
+.nav-menu-toggle span{display:block;width:22px;height:2px;border-radius:999px;background:#3C0B1A;transition:transform .18s ease,opacity .18s ease}
 .nav-wordmark,.hero-names,.footer-names{font-family:'Birds of Paradise','SignPainter','Cormorant Garamond',cursive!important;font-style:normal!important;font-weight:400!important;letter-spacing:.02em}
 .nav-wordmark{font-size:22px!important;letter-spacing:.03em!important;text-transform:none!important;line-height:1!important}
 .hero-names-image-wrap{display:flex!important;align-items:center;justify-content:center;margin-bottom:2.1rem}
@@ -358,6 +361,8 @@ $home2ExtraCss = <<<CSS
 {$home2SectionTextColorCss}
 .home2-map-frame{padding:0;overflow:hidden;background:#F7F3EC}
 .home2-map-frame iframe{display:block;width:100%;min-height:360px;border:0}
+@media (max-width:700px){.nav{display:flex!important;align-items:center!important;min-height:58px!important;padding:0 1.05rem!important}.nav-logo{display:flex!important;visibility:visible!important;opacity:1!important;align-items:center!important;gap:8px!important;max-width:calc(100vw - 2.1rem)!important;min-width:0!important}.nav-logo-text-mode .nav-monogram{display:block!important}.nav-monogram{visibility:visible!important;opacity:1!important;flex:0 0 34px!important;width:34px!important;height:34px!important;min-width:34px!important;object-fit:contain!important}.nav-logo-image{display:block!important;visibility:visible!important;opacity:1!important;height:38px!important;max-width:170px!important;object-fit:contain!important}.nav-wordmark{display:inline-block!important;visibility:visible!important;opacity:1!important;max-width:calc(100vw - 92px)!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;font-size:18px!important;line-height:1!important}.hero-logo{display:flex!important;visibility:visible!important;opacity:1!important;align-items:center!important;justify-content:center!important;width:72px!important;height:72px!important;margin:0 auto 1.45rem!important;position:relative!important;z-index:2!important}.hero-logo img{display:block!important;visibility:visible!important;opacity:1!important;width:100%!important;height:100%!important;object-fit:contain!important;filter:none!important}}
+@media (max-width:700px){.nav-logo{max-width:calc(100vw - 96px)!important}.nav-menu-toggle{display:inline-flex!important;visibility:visible!important;opacity:1!important;position:relative!important;z-index:205!important}.nav-links{display:none!important;position:absolute!important;top:58px!important;left:1.05rem!important;right:1.05rem!important;z-index:204!important;flex-direction:column!important;gap:.75rem!important;padding:1rem!important;background:rgba(250,247,242,.98)!important;border:1px solid rgba(60,11,26,.12)!important;box-shadow:0 18px 42px rgba(26,20,16,.16)!important}.nav.is-menu-open .nav-links{display:flex!important}.nav-links a{display:block!important;padding:.35rem 0!important;color:#3C0B1A!important}.nav.is-menu-open .nav-menu-toggle span:nth-child(1){transform:translateY(7px) rotate(45deg)}.nav.is-menu-open .nav-menu-toggle span:nth-child(2){opacity:0}.nav.is-menu-open .nav-menu-toggle span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}}
 @media (max-width:640px){.home2-rsvp-choice{grid-template-columns:1fr}}
 CSS;
 $home2Html = str_replace('</style>', $home2ExtraCss . "\n</style>", $home2Html);
@@ -425,6 +430,9 @@ $home2Html = strtr($home2Html, [
     "new Date('2026-07-25T19:00:00+02:00')" => "new Date('" . $home2E($countdownTarget) . "')",
 ]);
 
+$home2MenuToggleMarkup = '<button class="nav-menu-toggle" type="button" aria-label="Ouvrir le menu" aria-expanded="false"><span></span><span></span><span></span></button>';
+$home2Html = preg_replace('#(<ul class="nav-links">)#u', $home2MenuToggleMarkup . '$1', $home2Html, 1) ?? $home2Html;
+
 $home2Html = $home2RemoveDivByClass($home2Html, 'pres-grid');
 
 if ($home2GuestHeroNotice !== '') {
@@ -471,7 +479,7 @@ if ($home2HeaderLogoMode === 'image' && $home2HeaderLogoUrl !== '') {
     $home2HeaderLogoMarkup = '<div class="nav-logo"><img class="nav-logo-image" src="' . $home2E($home2HeaderLogoUrl) . '" alt="Logo ' . $home2E($home2Couple) . '"></div>';
     $home2Html = preg_replace('#<div class="nav-logo">.*?</div>#su', $home2HeaderLogoMarkup, $home2Html, 1) ?? $home2Html;
 } else {
-    $home2Html = preg_replace('#\s*<img class="nav-monogram"[^>]*>\s*#u', '', $home2Html, 1) ?? $home2Html;
+    $home2Html = preg_replace('#<div class="nav-logo"#u', '<div class="nav-logo nav-logo-text-mode"', $home2Html, 1) ?? $home2Html;
 }
 
 if ($home2HeroNamesMode === 'image' && $home2HeroNamesImageUrl !== '') {
@@ -511,6 +519,13 @@ if ($home2ModalOutput !== '') {
     } else {
         $home2Html .= $home2ModalOutput;
     }
+}
+
+$home2MenuToggleScript = '<script>document.addEventListener("DOMContentLoaded",function(){var nav=document.querySelector(".nav");var button=document.querySelector(".nav-menu-toggle");if(!nav||!button)return;button.addEventListener("click",function(){var isOpen=nav.classList.toggle("is-menu-open");button.setAttribute("aria-expanded",isOpen?"true":"false");});nav.querySelectorAll(".nav-links a").forEach(function(link){link.addEventListener("click",function(){nav.classList.remove("is-menu-open");button.setAttribute("aria-expanded","false");});});});</script>';
+if (str_contains($home2Html, '</body>')) {
+    $home2Html = str_replace('</body>', $home2MenuToggleScript . "\n</body>", $home2Html);
+} else {
+    $home2Html .= $home2MenuToggleScript;
 }
 
 echo $home2Html;
