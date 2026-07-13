@@ -183,7 +183,7 @@ $total_nonreagi = $row_citi - $total_invconf;
    
 							   if ($stmt->rowCount() > 0) {
 								   while ($row_inv = $stmt->fetch(PDO::FETCH_ASSOC)) { 
-									   $linkpdf = $dataevent['invit_religieux'] ? "../pages/invitation_elect.php?cod=".$row_inv['id_inv']."&event=".$codevent : "#";
+									   $linkpdf = $dataevent['invit_religieux'] ? "../pages/invitation_speciale.php?cod=".$row_inv['id_inv']."&event=".$codevent : "#";
    
 									   $seatName = EventTableService::findNameById($pdo, isset($row_inv['siege']) ? (int) $row_inv['siege'] : null);
 									   $siege = $seatName ? ucfirst($seatName) : '<em>Non défini</em>';
@@ -227,7 +227,7 @@ $total_nonreagi = $row_citi - $total_invconf;
 					   <a class="dropdown-item" href="#" onclick="openModal('<?php echo htmlspecialchars(ucfirst($row_inv['nom'])); ?>', '<?php echo $row_inv['id_inv']; ?>')" style="color:#aaa;">
 					   <i class="fa fa-share"></i> <?php echo htmlspecialchars($audienceLabels['notify'], ENT_QUOTES, 'UTF-8'); ?></a> 
 
-											   <a class="dropdown-item" href="../pages/invitation_elect.php?cod=<?php echo $row_inv['id_inv'];?>&event=<?php echo $codevent; ?>"><i class="fa fa-download"></i> Partager l'invitation</a>
+											   <a class="dropdown-item" href="../pages/invitation_speciale.php?cod=<?php echo $row_inv['id_inv'];?>&event=<?php echo $codevent; ?>"><i class="fa fa-download"></i> Partager l'invitation</a>
 											   
 											   <a class="dropdown-item" href="index.php?page=modinv&idinv=<?php echo $row_inv['id_inv'];?>"><i class="fa fa-edit"></i> <?php echo htmlspecialchars($audienceLabels['edit'], ENT_QUOTES, 'UTF-8'); ?></a>
             
@@ -387,7 +387,7 @@ $total_nonreagi = $row_citi - $total_invconf;
 			   document.getElementById('modalTitle').innerText = "Envoyer l'invitation a " + inviteName;
 			   document.getElementById('previewInviteName').innerText = inviteName;
 			   document.getElementById('shareModal').style.display = 'flex';
-			   const linkpdf = "../pages/invitation_elect.php?cod=" + inviteId + "&event=<?php echo $codevent; ?>";
+			   const linkpdf = "../pages/invitation_speciale.php?cod=" + inviteId + "&event=<?php echo $codevent; ?>";
 			   document.getElementById('inviteName').value = inviteName;
 			   document.getElementById('inviteId').value = inviteId;
 			   document.getElementById('pdfLink').value = linkpdf;

@@ -39,18 +39,40 @@ if (!function_exists('isapp_whatsapp_sender_fetch_event')) {
 }
 
 if (!function_exists('isapp_whatsapp_sender_fetch_invite')) {
-    function isapp_whatsapp_sender_fetch_invite(PDO $pdo, $inviteId): array
+    function isapp_whatsapp_sender_fetch_invite(PDO $pdo, $inviteId, $eventCode = null): array
     {
         if ($inviteId === null || $inviteId === '') {
             return [];
         }
 
-        $stmt = $pdo->prepare('SELECT * FROM invite WHERE id_inv = :id_inv LIMIT 1');
-        $stmt->execute([':id_inv' => $inviteId]);
+        if ($eventCode !== null && $eventCode !== '') {
+            $stmt = $pdo->prepare('SELECT * FROM invite WHERE id_inv = :id_inv AND cod_mar = :cod_mar LIMIT 1');
+            $stmt->execute([
+                ':id_inv' => $inviteId,
+                ':cod_mar' => $eventCode,
+            ]);
+        } else {
+            $stmt = $pdo->prepare('SELECT * FROM invite WHERE id_inv = :id_inv LIMIT 1');
+            $stmt->execute([':id_inv' => $inviteId]);
+        }
         $invite = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
         $stmt->closeCursor();
 
         return $invite;
+    }
+}
+
+if (!function_exists('isapp_whatsapp_sender_invite_pdf_link')) {
+    function isapp_whatsapp_sender_invite_pdf_link($eventCode, $inviteId): string
+    {
+        $eventCode = trim((string) $eventCode);
+        $inviteId = trim((string) $inviteId);
+
+        if ($eventCode === '' || $inviteId === '') {
+            return '';
+        }
+
+        return 'pages/invitation_speciale.php?cod=' . rawurlencode($inviteId) . '&event=' . rawurlencode($eventCode);
     }
 }
 
@@ -342,28 +364,77 @@ if (!function_exists('isapp_whatsapp_sender_preview_context')) {
     }
 }
 
+if (!function_exists('isapp_whatsapp_sender_wedding_file_label')) {
+    function isapp_whatsapp_sender_wedding_file_label(array $event): string
+    {
+        $weddingType = isapp_whatsapp_sender_normalize_wedding_type((string) ($event['type_mar'] ?? ''));
+
+        if ($weddingType === 'coutumier') {
+            return 'MARIAGE COUTUMIER';
+        }
+
+        if ($weddingType === 'civil') {
+            return 'MARIAGE CIVIL';
+        }
+
+        if ($weddingType === 'soiree_dansante') {
+            return 'SOIREE DANSANTE';
+        }
+
+        if ($weddingType === 'diner') {
+            return 'DINER';
+        }
+
+        return 'BENEDICTION NUPTIALE';
+    }
+}
+
+if (!function_exists('isapp_whatsapp_sender_filename_event_suffix')) {
+    function isapp_whatsapp_sender_filename_event_suffix(array $event): string
+    {
+        $eventCode = trim((string) ($event['cod_event'] ?? ''));
+
+        return $eventCode !== '' ? 'EV' . $eventCode : '';
+    }
+}
+
 if (!function_exists('isapp_whatsapp_sender_filename_base')) {
     function isapp_whatsapp_sender_filename_base(array $event, array $invite, string $fallbackInviteName): string
     {
         $displayName = isapp_whatsapp_sender_full_invite_name($invite, $fallbackInviteName);
+        $eventSuffix = isapp_whatsapp_sender_filename_event_suffix($event);
 
         $eventType = (string) ($event['type_event'] ?? '');
         if ($eventType === '1') {
             $signature = isapp_whatsapp_sender_wedding_couple_name($event);
+            $weddingFileLabel = isapp_whatsapp_sender_wedding_file_label($event);
 
-            return trim($signature . ' - INVITATION ' . $displayName);
+            return implode(' - ', array_values(array_filter([
+                $signature,
+                $weddingFileLabel,
+                'INVITATION ' . $displayName,
+                $eventSuffix,
+            ], static fn(string $part): bool => trim($part) !== '')));
         }
 
         if ((string) ($event['type_event'] ?? '') === '12') {
             $bookTitle = trim((string) ($event['themeconf'] ?? ''));
             if ($bookTitle !== '') {
-                return trim('VERNISSAGE DU LIVRE ' . $bookTitle . ' - INVITATION ' . $displayName);
+                return implode(' - ', array_values(array_filter([
+                    'VERNISSAGE DU LIVRE ' . $bookTitle,
+                    'INVITATION ' . $displayName,
+                    $eventSuffix,
+                ], static fn(string $part): bool => trim($part) !== '')));
             }
         }
 
         $hostName = trim((string) ($event['nomfetard'] ?? '')) ?: trim((string) ($event['nom_event'] ?? $event['titre_event'] ?? 'EVENEMENT'));
 
-        return trim($hostName . ' - INVITATION ' . $displayName);
+        return implode(' - ', array_values(array_filter([
+            $hostName,
+            'INVITATION ' . $displayName,
+            $eventSuffix,
+        ], static fn(string $part): bool => trim($part) !== '')));
     }
 }
 
@@ -764,7 +835,6 @@ if (!function_exists('isapp_whatsapp_send_template_invitation')) {
         $inviteId = $options['invite_id'] ?? null;
         $phone = (string) ($options['phone'] ?? '');
         $fallbackInviteName = (string) ($options['invite_name'] ?? 'Invite');
-        $relativePdfLink = trim((string) ($options['pdf_link'] ?? ''));
         $successRedirect = (string) ($options['success_redirect'] ?? 'index.php?page=mb_accueil');
 
         $event = isapp_whatsapp_sender_fetch_event($pdo, $eventCode);
@@ -775,7 +845,12 @@ if (!function_exists('isapp_whatsapp_send_template_invitation')) {
         $clientUserId = WhatsAppQuotaService::resolveClientUserId($event, (int) ($options['client_user_id'] ?? 0));
         $quotaBeforeSend = WhatsAppQuotaService::assertQuotaAvailable($pdo, $eventCode, $clientUserId);
 
-        $invite = isapp_whatsapp_sender_fetch_invite($pdo, $inviteId);
+        $invite = isapp_whatsapp_sender_fetch_invite($pdo, $inviteId, $eventCode);
+        if ($invite === []) {
+            throw new RuntimeException('Invite introuvable pour cet evenement. Veuillez rouvrir la liste de cet evenement avant de relancer l’envoi WhatsApp.');
+        }
+
+        $relativePdfLink = isapp_whatsapp_sender_invite_pdf_link($eventCode, $inviteId);
         $recipientName = isapp_whatsapp_sender_display_name($invite, $fallbackInviteName);
         $eventLabel = isapp_whatsapp_sender_event_label($event);
         $signature = isapp_whatsapp_sender_signature($event);

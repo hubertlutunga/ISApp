@@ -314,7 +314,7 @@ if (isset($_POST['submitwhat'])) {
             document.getElementById('modalTitle').innerText = "Envoyer l'invitation a " + inviteName;
             document.getElementById('previewInviteName').innerText = inviteName;
             document.getElementById('shareModal').style.display = 'flex';
-            const linkpdf = "../pages/invitation_elect.php?cod=" + inviteId + "&event=<?php echo $codevent; ?>";
+            const linkpdf = "../pages/invitation_speciale.php?cod=" + inviteId + "&event=<?php echo $codevent; ?>";
           const downloadLink = document.getElementById('downloadLink');
           if (downloadLink) {
             downloadLink.setAttribute('href', linkpdf);

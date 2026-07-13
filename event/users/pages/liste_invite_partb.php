@@ -52,7 +52,7 @@
    
 							   if ($stmt->rowCount() > 0) {
 								   while ($row_inv = $stmt->fetch(PDO::FETCH_ASSOC)) { 
-									   $linkpdf = $dataevent['invit_religieux'] ? "../pages/invitation_elect.php?cod=".$row_inv['id_inv']."&event=".$codevent : "#";
+									   $linkpdf = $dataevent['invit_religieux'] ? "../pages/invitation_speciale.php?cod=".$row_inv['id_inv']."&event=".$codevent : "#";
    
 									   $seatName = EventTableService::findNameById($pdo, isset($row_inv['siege']) ? (int) $row_inv['siege'] : null);
 									   $siege = $seatName ? ucfirst($seatName) : '<em>Non défini</em>';
@@ -102,7 +102,7 @@
 					   <i class="fa fa-share"></i> <?php echo htmlspecialchars($audienceLabels['notify'], ENT_QUOTES, 'UTF-8'); ?></a> 
   
 <a class="dropdown-item" target="_blank"
-   href="../pages/invitation_elect.php?cod=<?= $row_inv['id_inv'];?>&event=<?= $codevent; ?>">
+	href="../pages/invitation_speciale.php?cod=<?= $row_inv['id_inv'];?>&event=<?= $codevent; ?>">
   <i class="fa fa-download"></i> Partager l'invitation
 </a>
  
@@ -321,7 +321,7 @@ async function confirmSuppInv(e, idInv, codEvent, nom) {
 			   document.getElementById('modalTitle').innerText = "Envoyer l'invitation a " + inviteName;
 			   document.getElementById('previewInviteName').innerText = inviteName;
 			   document.getElementById('shareModal').style.display = 'flex';
-			   const linkpdf = "../pages/invitation_elect.php?cod=" + inviteId + "&event=<?php echo $codevent; ?>";
+			   const linkpdf = "../pages/invitation_speciale.php?cod=" + inviteId + "&event=<?php echo $codevent; ?>";
 			   document.getElementById('inviteName').value = inviteName;
 			   document.getElementById('inviteId').value = inviteId;
 			   document.getElementById('pdfLink').value = linkpdf;

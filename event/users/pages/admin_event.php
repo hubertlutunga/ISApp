@@ -619,7 +619,7 @@
    
                                if ($stmt->rowCount() > 0) {
                                    while ($row_inv = $stmt->fetch(PDO::FETCH_ASSOC)) { 
-                                       $linkpdf = $dataevent['invit_religieux'] ? "../pages/invitation_elect.php?cod=".$row_inv['id_inv']."&event=".$codevent : "#";
+                                       $linkpdf = $dataevent['invit_religieux'] ? "../pages/invitation_speciale.php?cod=".$row_inv['id_inv']."&event=".$codevent : "#";
    
                                      $seatName = EventTableService::findNameById($pdo, isset($row_inv['siege']) ? (int) $row_inv['siege'] : null);
                                      $siege = $seatName ? ucfirst($seatName) : '<em>Non défini</em>';
@@ -775,7 +775,7 @@
                document.getElementById('modalTitle').innerText = "Envoyer l'invitation a " + inviteName;
                document.getElementById('previewInviteName').innerText = inviteName;
                document.getElementById('shareModal').style.display = 'flex';
-               const linkpdf = "../pages/invitation_elect.php?cod=" + inviteId + "&event=<?php echo $codevent; ?>";
+               const linkpdf = "../pages/invitation_speciale.php?cod=" + inviteId + "&event=<?php echo $codevent; ?>";
                document.getElementById('downloadLink').setAttribute('href', linkpdf);
                document.getElementById('downloadLink').setAttribute('target', "_blank");
                document.getElementById('inviteName').value = inviteName;

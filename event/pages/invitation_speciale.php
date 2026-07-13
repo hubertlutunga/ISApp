@@ -166,12 +166,15 @@ for ($i = 1; $i <= $pagecount; $i++) {
     $pdf->SetFont('Arial', '', $dataevent['taillenominv']); 
 
     // Déterminer la couleur du texte
-    $stmt = $pdo->prepare("SELECT * FROM invite WHERE id_inv = :id_inv");
-    $stmt->execute([':id_inv' => $_GET['cod']]);
+    $stmt = $pdo->prepare("SELECT * FROM invite WHERE id_inv = :id_inv AND cod_mar = :cod_mar LIMIT 1");
+    $stmt->execute([
+        ':id_inv' => $_GET['cod'],
+        ':cod_mar' => $_GET['event'],
+    ]);
     $datainvite = $stmt->fetch();
 
     if (!$datainvite) {
-        renderPdfErrorPage("Invite introuvable", "L'invite demande est introuvable ou n'est plus disponible.");
+        renderPdfErrorPage("Invite introuvable", "L'invite demande est introuvable pour cet evenement ou n'est plus disponible.");
     }
 
     if ($datainvite['sing'] === 'C') {

@@ -445,7 +445,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_confirmation_mai
 								document.getElementById('modalTitle').innerText = "Envoyer l'invitation a " + inviteName;
 								document.getElementById('previewInviteName').innerText = inviteName;
 								document.getElementById('shareModal').style.display = 'flex';
-								const linkpdf = "../pages/invitation_elect.php?cod=" + inviteId + "&event=<?php echo $codevent; ?>";
+								const linkpdf = "../pages/invitation_speciale.php?cod=" + inviteId + "&event=<?php echo $codevent; ?>";
 								document.getElementById('inviteName').value = inviteName;
 								document.getElementById('inviteId').value = inviteId;
 								document.getElementById('pdfLink').value = linkpdf;
