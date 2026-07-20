@@ -268,7 +268,7 @@ $accessPageUrl = 'index.php?page=access&cod=' . urlencode((string) $codevent);
       .access-table thead th {
         padding: 0 0 12px;
         border-bottom: 1px solid #e2e8f0;
-        font-size: 12px;
+        font-size: 16px;
         font-weight: 900;
         letter-spacing: 0.14em;
         text-transform: uppercase;
@@ -314,7 +314,7 @@ $accessPageUrl = 'index.php?page=access&cod=' . urlencode((string) $codevent);
 
       .access-table td:first-child a {
         color: inherit;
-        font-size: 15px;
+        font-size: 16px;
       }
 
       .access-invite-link {
@@ -369,25 +369,50 @@ $accessPageUrl = 'index.php?page=access&cod=' . urlencode((string) $codevent);
         }
 
         .access-table {
+          display: block;
+          width: 100%;
           table-layout: auto;
         }
 
+        .access-table thead,
+        .access-table tbody,
+        .access-table tr {
+          display: block;
+          width: 100%;
+        }
+
+        .access-table thead tr {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) minmax(92px, 38%);
+          gap: 10px;
+          align-items: end;
+        }
+
         .access-table thead th {
+          display: block;
+          width: auto !important;
           padding-bottom: 7px;
           font-size: 10px;
         }
 
+        .access-table thead th:last-child {
+          justify-self: stretch;
+          text-align: right !important;
+        }
+
         .access-table tbody tr {
-          display: flex;
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) minmax(92px, 38%);
           align-items: flex-start;
-          justify-content: space-between;
           gap: 10px;
           padding: 8px 0;
           border-bottom: 1px solid #eef2f7;
+          box-sizing: border-box;
         }
 
         .access-table tbody td {
           display: block;
+          width: auto !important;
           padding: 0;
           border-bottom: 0;
           vertical-align: top;
@@ -400,12 +425,11 @@ $accessPageUrl = 'index.php?page=access&cod=' . urlencode((string) $codevent);
         }
 
         .access-table tbody td:last-child {
-          flex: 0 0 auto;
-          width: auto;
-          min-width: 88px;
-          max-width: 42%;
-          padding-left: 10px;
+          min-width: 0;
+          max-width: none;
+          padding-left: 0;
           text-align: right !important;
+          justify-self: stretch;
         }
 
         .access-table td:first-child a {
@@ -424,6 +448,7 @@ $accessPageUrl = 'index.php?page=access&cod=' . urlencode((string) $codevent);
           font-size: 12px;
           line-height: 1.25;
           word-break: break-word;
+          width: 100%;
         }
 
       }
