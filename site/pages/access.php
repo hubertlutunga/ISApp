@@ -488,8 +488,11 @@ $accessPageUrl = 'index.php?page=access&cod=' . urlencode((string) $codevent);
               </thead>
               <tbody id="invitesBody">
                 <?php
-                  $reqinv = $pdo->prepare("SELECT * FROM invite WHERE cod_mar = :cod ORDER BY nom ASC");
-                  $reqinv->execute([':cod' => $codevent]);
+                  $reqinv = $pdo->prepare("SELECT i.*, t.nom_tab FROM invite i LEFT JOIN tableevent t ON t.cod_tab = i.siege AND t.cod_event = :cod_event_join WHERE i.cod_mar = :cod_mar ORDER BY i.nom ASC");
+                  $reqinv->execute([
+                    ':cod_event_join' => $codevent,
+                    ':cod_mar' => $codevent,
+                  ]);
                   while ($row_inv = $reqinv->fetch(PDO::FETCH_ASSOC)) {
                     if (empty($row_inv['acces'])) {
                       $color = '';
@@ -499,14 +502,11 @@ $accessPageUrl = 'index.php?page=access&cod=' . urlencode((string) $codevent);
                       $color = '';
                     }
 
-                    $reqtab = $pdo->prepare("SELECT nom_tab FROM tableevent WHERE cod_tab = :cod_tab AND cod_event = :cod_event");
-                    $reqtab->execute([':cod_tab' => $row_inv['siege'], ':cod_event' => $codevent]);
-                    $row_tab = $reqtab->fetch(PDO::FETCH_ASSOC);
-
-                    $nomtable = $row_tab ? $row_tab['nom_tab'] : 'Non definie';
+                    $nomtable = trim((string) ($row_inv['nom_tab'] ?? '')) !== '' ? (string) $row_inv['nom_tab'] : 'Non definie';
                     $sing = $row_inv['sing'] === 'C' ? 'Couple' : ($row_inv['sing'] ? 'Singleton' : 'Non defini');
+                    $searchText = trim((string) ($row_inv['nom'] ?? '') . ' ' . $sing . ' ' . $nomtable);
                 ?>
-                <tr>
+                  <tr class="access-invite-row" data-search="<?php echo htmlspecialchars($searchText, ENT_QUOTES, 'UTF-8'); ?>">
                   <td align="left" width="70%" class="access-table-cell access-invite-cell">
                     <a href="index.php?page=access_cible&codinv=<?php echo (int) $row_inv['id_inv']; ?>&cod=<?php echo htmlspecialchars($codevent, ENT_QUOTES, 'UTF-8'); ?>" style="color: <?php echo htmlspecialchars($color, ENT_QUOTES, 'UTF-8'); ?>" class="access-invite-link">
                       <span class="access-invite-name"><?php echo htmlspecialchars($row_inv['nom'], ENT_QUOTES, 'UTF-8'); ?></span>
@@ -520,6 +520,9 @@ $accessPageUrl = 'index.php?page=access&cod=' . urlencode((string) $codevent);
                   </td>
                 </tr>
                 <?php } ?>
+                <tr id="accessSearchEmpty" hidden>
+                  <td colspan="2" class="access-table-cell" style="text-align:center;color:#64748b;padding:18px 0;">Aucun invité trouvé.</td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -538,11 +541,26 @@ $accessPageUrl = 'index.php?page=access&cod=' . urlencode((string) $codevent);
       const $input  = document.getElementById('searchs');
       const $tbody  = document.getElementById('invitesBody');
       const $count  = document.getElementById('invitesCount');
+      const $form = $input ? $input.closest('form') : null;
 
-      const CODEVENT = <?php echo json_encode($codevent, JSON_UNESCAPED_UNICODE); ?>;
+      if (!$input || !$tbody) {
+        return;
+      }
+
+      const $emptyRow = document.getElementById('accessSearchEmpty');
+      const rows = Array.from($tbody.querySelectorAll('.access-invite-row'));
+      const normalize = (value) => String(value || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim();
+
+      rows.forEach((row) => {
+        row.dataset.searchIndex = normalize(row.getAttribute('data-search') || row.textContent || '');
+      });
 
       if ($count) {
-        $count.textContent = document.querySelectorAll('#invitesBody > tr').length;
+        $count.textContent = rows.length;
       }
 
       const debounce = (fn, wait = 250) => {
@@ -553,40 +571,55 @@ $accessPageUrl = 'index.php?page=access&cod=' . urlencode((string) $codevent);
         };
       };
 
-      let lastController = null;
-      let lastQuery = '';
+      let filterToken = 0;
 
-      async function fetchResults(q){
-        q = (q || '').trim();
-        if (q === lastQuery) return;
-        lastQuery = q;
+      function filterResults(q){
+        const needle = normalize(q);
+        const currentToken = ++filterToken;
+        const batchSize = 90;
+        let visibleCount = 0;
+        let index = 0;
 
-        if (lastController) lastController.abort();
-        lastController = new AbortController();
-
-        try {
-          const res = await fetch(
-            'pages/search_invites.php?q=' + encodeURIComponent(q) +
-            '&cod=' + encodeURIComponent(CODEVENT),
-            {
-              headers: { 'X-Requested-With': 'XMLHttpRequest' },
-              signal: lastController.signal
-            }
-          );
-
-          if (!res.ok) throw new Error('HTTP ' + res.status);
-          const data = await res.json();
-
-          $tbody.innerHTML = data.html || '';
-          if ($count) $count.textContent = data.count ?? 0;
-        } catch (e) {
-          if (e.name !== 'AbortError') console.error(e);
+        if ($emptyRow) {
+          $emptyRow.hidden = true;
         }
+
+        function processBatch() {
+          if (currentToken !== filterToken) return;
+
+          const end = Math.min(index + batchSize, rows.length);
+          for (; index < end; index++) {
+            const row = rows[index];
+            const isVisible = needle === '' || (row.dataset.searchIndex || '').includes(needle);
+            row.hidden = !isVisible;
+            if (isVisible) visibleCount++;
+          }
+
+          if (index < rows.length) {
+            window.requestAnimationFrame(processBatch);
+            return;
+          }
+
+          if ($emptyRow) {
+            $emptyRow.hidden = visibleCount !== 0;
+          }
+
+          if ($count) {
+            $count.textContent = visibleCount;
+          }
+        }
+
+        window.requestAnimationFrame(processBatch);
       }
 
-      if ($input) {
-        $input.addEventListener('input', debounce(() => fetchResults($input.value), 250));
+      if ($form) {
+        $form.addEventListener('submit', function(event) {
+          event.preventDefault();
+          filterResults($input.value);
+        });
       }
+
+      $input.addEventListener('input', debounce(() => filterResults($input.value), 120));
     })();
     </script>
 

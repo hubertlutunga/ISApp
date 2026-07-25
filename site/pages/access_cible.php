@@ -114,13 +114,23 @@ $accessPageUrl = 'index.php?page=access&cod=' . urlencode((string) $codevent);
 
                         <?php 
                             $get = intval($_GET['codinv']); // Assurez-vous que c'est un entier
-                            $reqinv = "SELECT * FROM invite WHERE id_inv = :id_inv AND cod_mar = :cod_mar";
+                            $reqinv = "SELECT i.*, u.noms AS hote_nom FROM invite i LEFT JOIN is_users u ON u.cod_user = i.hote WHERE i.id_inv = :id_inv AND i.cod_mar = :cod_mar LIMIT 1";
                             $stmt = $pdo->prepare($reqinv);
                             $stmt->execute([':id_inv' => $get, ':cod_mar' => $codevent]);
                             $row_inv = $stmt->fetch(PDO::FETCH_ASSOC);
 
 
                             $nom_invite = $row_inv ? $row_inv['nom'] : '';
+                            $hote_invite = '';
+                            if ($row_inv) {
+                                $hote_invite = trim((string) ($row_inv['hote_nom'] ?? ''));
+                                if ($hote_invite === '') {
+                                    $hoteRaw = trim((string) ($row_inv['hote'] ?? ''));
+                                    if ($hoteRaw !== '' && !ctype_digit($hoteRaw)) {
+                                        $hote_invite = $hoteRaw;
+                                    }
+                                }
+                            }
 
                             $reqtab = "SELECT * FROM tableevent WHERE cod_tab = :cod_tab AND cod_event = :cod_event";
                             $reqtab = $pdo->prepare($reqtab);
@@ -248,6 +258,9 @@ $accessPageUrl = 'index.php?page=access&cod=' . urlencode((string) $codevent);
 
                         <h1 style="text-align:center;"><?php echo $invite;?></h1>
                         <h2 class="text-black" style="text-align:center;"><?php echo htmlspecialchars($sing.' '.$nom_invite); ?></h2>
+                        <?php if ($hote_invite !== '') { ?>
+                        <p style="text-align:center;margin-top:-6px;margin-bottom:14px;font-size:13px;color:#64748b;font-weight:600;">Invité par <?php echo htmlspecialchars($hote_invite, ENT_QUOTES, 'UTF-8'); ?></p>
+                        <?php } ?>
                     
                         <br>
                         

@@ -30,14 +30,19 @@ $sql = "
   FROM invite i
   LEFT JOIN tableevent t
     ON t.cod_tab = i.siege
-   AND t.cod_event = :cod
-  WHERE i.cod_mar = :cod
+   AND t.cod_event = :cod_event_join
+  WHERE i.cod_mar = :cod_mar
 ";
-$params = [':cod'=>$cod];
+$params = [
+  ':cod_event_join' => $cod,
+  ':cod_mar' => $cod,
+];
 
 if ($q !== '') {
-  $sql .= " AND (i.nom LIKE :like OR i.sing LIKE :like OR t.nom_tab LIKE :like) ";
-  $params[':like'] = $like;
+  $sql .= " AND (i.nom LIKE :like_nom OR i.sing LIKE :like_sing OR t.nom_tab LIKE :like_table) ";
+  $params[':like_nom'] = $like;
+  $params[':like_sing'] = $like;
+  $params[':like_table'] = $like;
 }
 $sql .= " ORDER BY i.nom ASC";
 
@@ -79,6 +84,10 @@ try {
         </td>
       </tr>
     ';
+  }
+
+  if ($html === '') {
+    $html = '<tr><td colspan="2" class="access-table-cell" style="text-align:center;color:#64748b;padding:18px 0;">Aucun invité trouvé.</td></tr>';
   }
 
   echo json_encode(['html'=>$html, 'count'=>$count], JSON_UNESCAPED_UNICODE);

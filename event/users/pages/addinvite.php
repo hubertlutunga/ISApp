@@ -10,7 +10,6 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
    <?php
    $guestStats = EventWorkspaceService::getGuestStats($pdo, (string) $codevent, $date_event ?: null);
    extract($guestStats, EXTR_OVERWRITE);
-   $totalTables = EventTableService::countByEvent($pdo, (int) $codevent);
    ?>
       
     
@@ -24,69 +23,6 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
 <style>
   .mb-action-page{
     padding:24px 0 42px;
-  }
-
-  .mb-action-hero{
-    padding:28px 30px;
-    border-radius:30px;
-    background:linear-gradient(135deg,#0b1324 0%,#13203a 58%,#2563eb 100%);
-    box-shadow:0 24px 50px rgba(15,23,42,.18);
-    color:#f8fafc;
-    margin-bottom:26px;
-  }
-
-  .mb-action-kicker{
-    display:inline-flex;
-    align-items:center;
-    gap:8px;
-    padding:7px 12px;
-    border-radius:999px;
-    background:rgba(255,255,255,.14);
-    border:1px solid rgba(255,255,255,.16);
-    font-size:12px;
-    font-weight:800;
-    text-transform:uppercase;
-    letter-spacing:.06em;
-  }
-
-  .mb-action-title{
-    margin:16px 0 10px;
-    font-size:34px;
-    line-height:1.05;
-    font-weight:800;
-    color:#fff;
-  }
-
-  .mb-action-subtitle{
-    margin:0;
-    max-width:700px;
-    color:rgba(226,232,240,.88);
-    font-size:15px;
-    line-height:1.7;
-  }
-
-  .mb-action-stats{
-    display:flex;
-    gap:12px;
-    flex-wrap:wrap;
-    margin-top:20px;
-  }
-
-  .mb-action-stat{
-    display:inline-flex;
-    align-items:center;
-    gap:10px;
-    padding:12px 16px;
-    border-radius:18px;
-    background:rgba(255,255,255,.12);
-    border:1px solid rgba(255,255,255,.14);
-    font-weight:700;
-  }
-
-  .mb-action-stat strong{
-    font-size:18px;
-    font-weight:800;
-    color:#fff;
   }
 
   .mb-action-card{
@@ -252,8 +188,6 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
 
   @media only screen and (max-width: 769px) {
     .mb-action-page{ padding:18px 0 34px; }
-    .mb-action-hero{ padding:22px 20px; border-radius:24px; }
-    .mb-action-title{ font-size:28px; }
     .mb-action-card .content-top-agile,
     .mb-action-card .p-40{ padding-left:20px !important; padding-right:20px !important; }
     .mb-action-radio-grid{ grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
@@ -268,16 +202,6 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
 
 <div class="container h-p100 mb-action-page">
 	<?php $audienceLabels = EventWorkspaceService::audienceLabels((string) ($type_event ?? '')); ?>
-    <div class="mb-action-hero">
-      <span class="mb-action-kicker"><i class="mdi mdi-account-multiple-plus"></i> Gestion des invites</span>
-	      <h1 class="mb-action-title"><?php echo htmlspecialchars($audienceLabels['manage_title'], ENT_QUOTES, 'UTF-8'); ?></h1>
-	      <p class="mb-action-subtitle"><?php echo htmlspecialchars($audienceLabels['manage_copy'], ENT_QUOTES, 'UTF-8'); ?></p>
-      <div class="mb-action-stats">
-	        <span class="mb-action-stat"><i class="mdi mdi-account-group-outline"></i> <?php echo htmlspecialchars($audienceLabels['plural_cap'], ENT_QUOTES, 'UTF-8'); ?> <strong><?php echo (int) $total_inv; ?></strong></span>
-        <span class="mb-action-stat"><i class="mdi mdi-check-decagram-outline"></i> Confirmés <strong><?php echo (int) $total_invconf; ?></strong></span>
-        <span class="mb-action-stat"><i class="mdi mdi-table-furniture"></i> Tables <strong><?php echo (int) $totalTables; ?></strong></span>
-      </div>
-    </div>
     <div class="row align-items-start justify-content-md-center h-p100">
 			
 			<div class="col-12">
@@ -458,7 +382,7 @@ $invite = $inviteNettoye;
                           <!-- On garde TON style: un span form-control -->
                           <span style="padding:0;" class="form-control ps-15 bg-transparent">
                              <select class="form-control ps-15 bg-transparent" name="tableevent">
-                                            <option style="color:#eee;" value="">Table</option>
+                                            <option style="color:#eee;" value="">Selectionner la table</option>
                                             <?php foreach (EventTableService::listByEvent($pdo, (int) $codevent) as $data_table) {
                                             ?>
                                             <option value="<?php echo $data_table['cod_tab']?>" <?php if(@$_POST['tableevent'] == $data_table['cod_tab']){echo "selected";} ?>><?php echo $data_table['nom_tab']?></option>

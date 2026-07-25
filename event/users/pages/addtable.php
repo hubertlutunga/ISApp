@@ -80,6 +80,7 @@ $totalTables = EventTableService::countByEvent($pdo, (int) $codevent);
                 .mb-action-table-list td{ padding:16px 0; border-bottom:1px solid #eef2f7; vertical-align:middle; }
                 .mb-action-table-row:last-child td{ border-bottom:0; }
                 .mb-action-table-name{ font-size:16px; font-weight:800; color:#0f172a; }
+                .mb-action-table-code{ display:block; margin-top:4px; font-size:11px; font-weight:700; color:#94a3b8; letter-spacing:.02em; }
                 .mb-action-empty{ color:#64748b; font-style:italic; }
 
                 @media only screen and (max-width: 769px) {
@@ -335,6 +336,7 @@ if ($reqtable->rowCount() > 0) {
                                         <tr id="inv-<?= (int)$row_table['cod_tab'] ?>" class="mb-action-table-row">
                                             <td align="left">
                                                 <span class="mb-action-table-name"><?php echo htmlspecialchars($row_table['nom_tab']); ?></span>
+                                                <span class="mb-action-table-code">ID:<?php echo (int) $row_table['cod_tab']; ?></span>
             </td>
             <td align="right">
 
