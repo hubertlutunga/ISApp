@@ -14,7 +14,7 @@ require_once dirname(__DIR__) . '/PHPMailer/src/SMTP.php';
 require_once dirname(__DIR__) . '/config/database.php';
 
 $eventName = 'Creators Bomoko 2026';
-$eventDates = '5–6 juin 2026';
+$eventDates = '18–19 septembre 2026';
 $eventLocation = 'Musée National de la RDC, Kinshasa';
 $storageDir = dirname(__DIR__) . '/storage/creatorsbomoko';
 $jsonlPath = $storageDir . '/candidatures.jsonl';
@@ -38,32 +38,23 @@ $platformOptions = [
     'youtube' => 'YouTube',
     'linkedin' => 'LinkedIn',
     'x_twitter' => 'X / Twitter',
-    'podcast' => 'Podcast',
     'weibo' => 'Weibo',
+    'podcast' => 'Podcast',
     'autre' => 'Autre',
-];
-
-$experienceOptions = [
-    'moins_1_an' => 'Moins de 1 an',
-    '1_3_ans' => '1–3 ans',
-    '3_5_ans' => '3–5 ans',
-    'plus_5_ans' => 'Plus de 5 ans',
 ];
 
 $topicOptions = [
     'liberte_expression_reussite_numerique' => 'Liberté d’expression et réussite numérique',
     'monetisation_creativite_digitale' => 'Monétisation de la créativité digitale',
     'education_financiere_createurs' => 'Éducation financière pour les créateurs',
-    'ia_reseaux_sociaux' => 'Utiliser l’intelligence artificielle pour développer sa présence sur les réseaux sociaux',
+    'ecosysteme_numerique_rdc' => 'Connaître l’écosystème numérique de la RDC : lois, réglementations, pénétration numérique et créateurs de contenu',
+    'collaboration_developper_marche' => 'Collaboration : comment développer le marché ?',
+    'monetisation_conformite' => 'Monétisation : les étapes pour être en conformité',
+    'abonnes_en_acheteurs' => 'Convertir les abonnés en acheteurs',
     'proteger_activite_ligne' => 'Protéger son activité en ligne',
     'sponsors_partenariats_marques' => 'Attirer des sponsors et développer des partenariats avec des marques',
     'podcasting_impact' => 'Le podcasting comme outil d’impact',
-    'storytelling_visuel' => 'Storytelling visuel',
-    'vlogging_voyage_destinations' => 'Vlogging de voyage et promotion des destinations',
     'defis_contenu_personal_branding' => 'Défis de création de contenu et personal branding',
-    'vie_privee_sante_mentale_securite' => 'Vie privée, santé mentale et sécurité numérique',
-    'narration_rdc_ligne' => 'Changer la narration de la RDC en ligne',
-    'business_model_canvas' => 'Formation au Business Model Canvas pour créateurs de contenu',
     'autre' => 'Autre',
 ];
 
@@ -184,9 +175,8 @@ function save_application(string $jsonlPath, string $csvPath, array $data): void
 
         $columns = [
             'id', 'submitted_at', 'nom_complet', 'email', 'telephone', 'ville', 'age', 'profession',
-            'organisation', 'domaine', 'plateformes', 'liens_plateformes', 'experience', 'participation_similaire',
-            'motivation', 'thematique', 'attentes', 'disponible_presentiel', 'infos_futures',
-            'besoins_specifiques', 'source', 'ip', 'user_agent',
+            'organisation', 'domaine', 'plateformes', 'liens_plateformes', 'motivation', 'thematique',
+            'disponible_presentiel', 'besoins_specifiques', 'source', 'ip', 'user_agent',
         ];
 
         if (!$csvExists) {
@@ -227,13 +217,13 @@ CREATE TABLE IF NOT EXISTS participants_cbomoko (
     domaine VARCHAR(220) NOT NULL,
     plateformes TEXT NOT NULL,
     liens_plateformes TEXT NOT NULL,
-    experience VARCHAR(80) NOT NULL,
-    participation_similaire VARCHAR(10) NOT NULL,
+    experience VARCHAR(80) DEFAULT NULL,
+    participation_similaire VARCHAR(10) DEFAULT NULL,
     motivation TEXT NOT NULL,
     thematique VARCHAR(240) NOT NULL,
-    attentes TEXT NOT NULL,
+    attentes TEXT DEFAULT NULL,
     disponible_presentiel VARCHAR(10) NOT NULL,
-    infos_futures VARCHAR(10) NOT NULL,
+    infos_futures VARCHAR(10) DEFAULT NULL,
     besoins_specifiques VARCHAR(280) NOT NULL,
     source VARCHAR(220) NOT NULL,
     status VARCHAR(30) NOT NULL DEFAULT 'nouvelle',
@@ -269,6 +259,22 @@ SQL);
     $stmt->execute([':index_name' => 'idx_participants_cbomoko_acces']);
     if (!$stmt->fetch(PDO::FETCH_ASSOC)) {
         $pdo->exec('ALTER TABLE participants_cbomoko ADD INDEX idx_participants_cbomoko_acces (acces)');
+    }
+
+    $legacyNullableColumns = [
+        'experience' => 'experience VARCHAR(80) DEFAULT NULL',
+        'participation_similaire' => 'participation_similaire VARCHAR(10) DEFAULT NULL',
+        'attentes' => 'attentes TEXT DEFAULT NULL',
+        'infos_futures' => 'infos_futures VARCHAR(10) DEFAULT NULL',
+    ];
+
+    foreach ($legacyNullableColumns as $columnName => $definition) {
+        $stmt = $pdo->prepare('SHOW COLUMNS FROM participants_cbomoko LIKE :column_name');
+        $stmt->execute([':column_name' => $columnName]);
+        $column = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (is_array($column) && strtoupper((string) ($column['Null'] ?? '')) === 'NO') {
+            $pdo->exec('ALTER TABLE participants_cbomoko MODIFY COLUMN ' . $definition);
+        }
     }
 
     $pdo->exec(<<<'SQL'
@@ -318,13 +324,13 @@ function save_application_to_database(PDO $pdo, array $data): void
         ':domaine' => (string) ($data['domaine'] ?? ''),
         ':plateformes' => is_array($data['plateformes'] ?? null) ? implode(', ', $data['plateformes']) : (string) ($data['plateformes'] ?? ''),
         ':liens_plateformes' => (string) ($data['liens_plateformes'] ?? ''),
-        ':experience' => (string) ($data['experience'] ?? ''),
-        ':participation_similaire' => (string) ($data['participation_similaire'] ?? ''),
+        ':experience' => array_key_exists('experience', $data) ? (string) $data['experience'] : null,
+        ':participation_similaire' => array_key_exists('participation_similaire', $data) ? (string) $data['participation_similaire'] : null,
         ':motivation' => (string) ($data['motivation'] ?? ''),
         ':thematique' => (string) ($data['thematique'] ?? ''),
-        ':attentes' => (string) ($data['attentes'] ?? ''),
+        ':attentes' => array_key_exists('attentes', $data) ? (string) $data['attentes'] : null,
         ':disponible_presentiel' => (string) ($data['disponible_presentiel'] ?? ''),
-        ':infos_futures' => (string) ($data['infos_futures'] ?? ''),
+        ':infos_futures' => array_key_exists('infos_futures', $data) ? (string) $data['infos_futures'] : null,
         ':besoins_specifiques' => (string) ($data['besoins_specifiques'] ?? ''),
         ':source' => (string) ($data['source'] ?? ''),
         ':ip' => (string) ($data['ip'] ?? ''),
@@ -451,14 +457,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $platforms = array_values(array_filter((array) posted('plateformes', []), static fn ($value): bool => is_string($value)));
     $platformOther = clean_text((string) posted('plateforme_autre'), 160);
     $platformLinks = clean_multiline((string) posted('liens_plateformes'), 1200);
-    $experience = clean_text((string) posted('experience'), 80);
-    $participated = clean_text((string) posted('participation_similaire'), 10);
     $motivation = clean_multiline((string) posted('motivation'), 1800);
     $topic = clean_text((string) posted('thematique'), 100);
     $topicOther = clean_text((string) posted('thematique_autre'), 180);
-    $expectations = clean_multiline((string) posted('attentes'), 1600);
     $available = clean_text((string) posted('disponible_presentiel'), 10);
-    $futureInfo = clean_text((string) posted('infos_futures'), 10);
     $specificNeeds = clean_text((string) posted('besoins_specifiques'), 10);
     $specificNeedsDetails = clean_text((string) posted('besoins_specifiques_detail'), 240);
     $heard = clean_text((string) posted('source'), 100);
@@ -503,12 +505,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($platformLinks === '') {
         $errors['liens_plateformes'] = 'Partagez au moins un lien vers vos plateformes ou pages professionnelles.';
     }
-    if (!isset($experienceOptions[$experience])) {
-        $errors['experience'] = 'Choisissez votre durée d’expérience.';
-    }
-    if (!in_array($participated, ['oui', 'non'], true)) {
-        $errors['participation_similaire'] = 'Choisissez une réponse.';
-    }
     if ($motivation === '') {
         $errors['motivation'] = 'Expliquez pourquoi vous souhaitez participer.';
     }
@@ -517,14 +513,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($topic === 'autre' && $topicOther === '') {
         $errors['thematique_autre'] = 'Précisez la thématique.';
     }
-    if ($expectations === '') {
-        $errors['attentes'] = 'Indiquez vos attentes concrètes.';
-    }
     if (!in_array($available, ['oui', 'non'], true)) {
         $errors['disponible_presentiel'] = 'Confirmez votre disponibilité.';
-    }
-    if (!in_array($futureInfo, ['oui', 'non'], true)) {
-        $errors['infos_futures'] = 'Choisissez une réponse.';
     }
     if (!in_array($specificNeeds, ['oui', 'non'], true)) {
         $errors['besoins_specifiques'] = 'Choisissez une réponse.';
@@ -556,13 +546,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'domaine' => selected_label($domainOptions, $domain, $domainOther),
                 'plateformes' => selected_labels($platformOptions, $platforms, $platformOther),
                 'liens_plateformes' => $platformLinks,
-                'experience' => $experienceOptions[$experience] ?? $experience,
-                'participation_similaire' => $participated === 'oui' ? 'Oui' : 'Non',
                 'motivation' => $motivation,
                 'thematique' => selected_label($topicOptions, $topic, $topicOther),
-                'attentes' => $expectations,
                 'disponible_presentiel' => $available === 'oui' ? 'Oui' : 'Non',
-                'infos_futures' => $futureInfo === 'oui' ? 'Oui' : 'Non',
                 'besoins_specifiques' => $specificNeeds === 'oui' ? 'Oui : ' . $specificNeedsDetails : 'Non',
                 'source' => selected_label($heardOptions, $heard, $heardOther),
                 'ip' => clean_text((string) ($_SERVER['REMOTE_ADDR'] ?? ''), 80),
@@ -636,7 +622,7 @@ if (isset($_SESSION['creatorsbomoko_flash']) && is_array($_SESSION['creatorsbomo
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?php echo h($eventName); ?> | Formulaire de candidature</title>
-    <meta name="description" content="Formulaire de candidature pour Creators Bomoko 2026, conférence numérique organisée à Kinshasa du 5 au 6 juin 2026.">
+    <meta name="description" content="Formulaire de candidature pour Creators Bomoko 2026, conférence numérique organisée à Kinshasa du 18 au 19 septembre 2026.">
     <meta name="robots" content="index,follow,max-image-preview:large">
     <meta name="theme-color" content="#3d2010">
     <link rel="icon" type="image/png" href="images/favicom.png">
@@ -714,23 +700,24 @@ if (isset($_SESSION['creatorsbomoko_flash']) && is_array($_SESSION['creatorsbomo
         .hero:after{width:300px;height:300px;left:-110px;bottom:-120px;background:rgba(216,139,47,.28)}
         .nav{
             width:min(1180px, 100%);
-            margin:0 auto 60px;
-            display:flex;
+            margin:0 auto 52px;
+            display:none;
             align-items:center;
             justify-content:space-between;
             gap:20px;
         }
         .brand{display:flex;align-items:center;gap:14px;font-weight:900;letter-spacing:-.03em;color:#fff;text-decoration:none}
         .brand-logo-frame{
-            width:72px;height:72px;border-radius:22px;
+            width:clamp(360px, 44vw, 680px);border-radius:34px;
             display:grid;place-items:center;
-            background:linear-gradient(180deg, rgba(255,250,241,.96), rgba(255,244,223,.84));
+            padding:0;
+            background:linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,250,241,.92));
             border:1px solid rgba(255,255,255,.55);
-            box-shadow:0 18px 45px rgba(0,0,0,.24);
+            box-shadow:0 24px 70px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.9);
             overflow:hidden;
         }
-        .brand-logo{width:58px;height:58px;object-fit:contain;display:block}
-        .brand-text{text-shadow:0 3px 18px rgba(0,0,0,.28)}
+        .brand-logo{width:100%;height:auto;object-fit:contain;display:block}
+        .brand-text{display:none}
         .nav-pill{
             display:inline-flex;align-items:center;gap:9px;
             padding:10px 15px;border:1px solid rgba(255,244,223,.28);
@@ -774,17 +761,15 @@ if (isset($_SESSION['creatorsbomoko_flash']) && is_array($_SESSION['creatorsbomo
         .hero-logo-card{
             position:relative;
             display:grid;
-            grid-template-columns:92px minmax(0, 1fr);
             align-items:center;
-            gap:16px;
             margin:0 0 24px;
-            border-radius:24px;
-            padding:16px 18px;
+            border-radius:28px;
+            padding:18px 20px;
             background:
                 radial-gradient(circle at 96% 8%, rgba(22,181,168,.18), transparent 8rem),
-                linear-gradient(135deg, rgba(255,250,241,.96), rgba(255,244,223,.74));
+                linear-gradient(135deg, rgba(255,255,255,.98), rgba(255,250,241,.86));
             border:1px solid rgba(255,244,223,.54);
-            box-shadow:inset 0 1px 0 rgba(255,255,255,.66), 0 18px 42px rgba(0,0,0,.16);
+            box-shadow:inset 0 1px 0 rgba(255,255,255,.86), 0 22px 58px rgba(0,0,0,.22);
             overflow:hidden;
         }
         .hero-logo-card:before{
@@ -798,16 +783,17 @@ if (isset($_SESSION['creatorsbomoko_flash']) && is_array($_SESSION['creatorsbomo
         }
         .hero-logo{
             position:relative;z-index:1;
-            display:block;width:92px;height:92px;object-fit:contain;
-            margin:0;padding:8px;border-radius:20px;
-            background:rgba(255,255,255,.7);
-            box-shadow:0 10px 26px rgba(53,24,11,.16);
+            display:block;width:100%;height:auto;object-fit:contain;
+            margin:0 auto;padding:0;border-radius:0;
+            background:transparent;
+            filter:drop-shadow(0 10px 18px rgba(53,24,11,.16));
         }
-        .logo-copy{position:relative;z-index:1;min-width:0}
+        .logo-copy{display:none}
         .logo-tag{margin:0;color:var(--wood-dark);font-family:"Space Grotesk", Inter, sans-serif;font-size:22px;line-height:1;font-weight:900;letter-spacing:-.04em}
         .logo-subtag{display:block;margin-top:6px;color:#6b4a31;font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.08em}
         .event-card{
             width:100%;
+            text-align:left;
             background:rgba(44,21,9,.55);
             border:1px solid rgba(255,244,223,.22);
             border-radius:var(--radius);
@@ -896,8 +882,8 @@ if (isset($_SESSION['creatorsbomoko_flash']) && is_array($_SESSION['creatorsbomo
         .btn-submit{background:linear-gradient(135deg,var(--red),var(--wood),var(--blue));color:#fff;box-shadow:0 16px 36px rgba(139,74,31,.28)}
         .hidden-field{position:absolute;left:-9999px;opacity:0;pointer-events:none}
         .partners-section{width:min(1180px,100%);margin:30px auto 18px}
-        .partners-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
-        .partner-logo-card{min-height:112px;display:grid;place-items:center;padding:16px;border-radius:22px;background:#fff;border:1px solid rgba(15,23,42,.08);box-shadow:0 14px 34px rgba(67,36,15,.08)}
+        .partners-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:14px}
+        .partner-logo-card{width:min(220px,100%);min-height:112px;display:grid;place-items:center;text-align:center;padding:16px;border-radius:22px;background:#fff;border:1px solid rgba(15,23,42,.08);box-shadow:0 14px 34px rgba(67,36,15,.08)}
         .partner-logo-card img{max-width:100%;max-height:78px;object-fit:contain;filter:saturate(1.04)}
         .public-footer{width:min(1180px,100%);margin:0 auto;padding:24px clamp(18px,4vw,34px);color:var(--muted);display:grid;justify-items:center;text-align:center;gap:12px;font-weight:400}
         .footer-separator{width:100%;border:0;border-top:1px solid var(--line);margin:0 0 4px}
@@ -912,10 +898,17 @@ if (isset($_SESSION['creatorsbomoko_flash']) && is_array($_SESSION['creatorsbomo
         }
         @media (max-width: 680px){
             .hero{padding-top:20px}
-            .nav{margin-bottom:42px;align-items:flex-start}
+            .nav{margin-bottom:34px;display:grid;justify-items:center;text-align:center}
+            .brand{width:100%;justify-content:center}
+            .brand-logo-frame{width:min(100%, 360px);padding:0;border-radius:22px;margin:0 auto}
+            .brand-logo{margin:0 auto}
             .nav-pill{display:none}
-            .hero-logo-card{grid-template-columns:74px minmax(0, 1fr);padding:14px;border-radius:22px}
-            .hero-logo{width:74px;height:74px;border-radius:18px}
+            .hero-grid{justify-items:center;text-align:center}
+            .eyebrow{margin:0 auto;justify-content:center}
+            .hero-actions{justify-content:center}
+            .hero-logo-card{display:none}
+            .event-card{text-align:left}
+            .hero-logo{height:auto}
             .logo-tag{font-size:19px}
             .logo-subtag{font-size:10px}
             .grid-2,.options{grid-template-columns:1fr}
@@ -932,7 +925,7 @@ if (isset($_SESSION['creatorsbomoko_flash']) && is_array($_SESSION['creatorsbomo
         <nav class="nav" aria-label="Navigation principale">
             <a class="brand" href="index.php" aria-label="Rafraîchir la page Creators Bomoko">
                 <span class="brand-logo-frame" aria-hidden="true">
-                    <img class="brand-logo" src="images/Logo_cbomoko.png" alt="">
+                    <img class="brand-logo" src="images/CB Horizontal Dark BG.png" alt="">
                 </span>
                 <span class="brand-text">Creators Bomoko</span>
             </a>
@@ -943,7 +936,7 @@ if (isset($_SESSION['creatorsbomoko_flash']) && is_array($_SESSION['creatorsbomo
             <div>
                 <span class="eyebrow"><span class="dot"></span> Formulaire de candidature</span>
                 <h1>Creators Bomoko 2026</h1>
-                <p class="lead">Une conférence numérique organisée par l’Ambassade des États-Unis à Kinshasa pour réunir créateurs de contenu, entrepreneurs, innovateurs et acteurs des industries créatives.</p>
+                <p class="lead">Bienvenue à Creators Bomoko, le rendez-vous incontournable des talents qui façonnent la culture numérique congolaise. Les 18 et 19 septembre 2026, l’Ambassade des États-Unis à Kinshasa réunira au Musée National de la RDC créateurs de contenu, entrepreneurs, artistes, innovateurs et acteurs des industries créatives.</p>
                 <div class="hero-actions">
                     <a class="btn btn-primary" href="#formulaire">Candidater maintenant</a>
                     <a class="btn btn-secondary" href="#details">Voir les détails</a>
@@ -952,7 +945,7 @@ if (isset($_SESSION['creatorsbomoko_flash']) && is_array($_SESSION['creatorsbomo
             <div class="hero-visual">
                 <aside class="event-card" id="details">
                     <div class="hero-logo-card" aria-label="Logo Creators Bomoko">
-                        <img class="hero-logo" src="images/Logo_cbomoko.png" alt="Creators Bomoko">
+                        <img class="hero-logo" src="images/CB Horizontal White BG.png" alt="Creators Bomoko">
                         <div class="logo-copy">
                             <p class="logo-tag">Creators Bomoko</p>
                             <span class="logo-subtag">U.S. Embassy Kinshasa</span>
@@ -962,7 +955,7 @@ if (isset($_SESSION['creatorsbomoko_flash']) && is_array($_SESSION['creatorsbomo
                     <ul class="facts">
                         <li><span class="fact-icon">📅</span><span><strong>Dates</strong><br><?php echo h($eventDates); ?></span></li>
                         <li><span class="fact-icon">📍</span><span><strong>Lieu</strong><br><?php echo h($eventLocation); ?></span></li>
-                        <li><span class="fact-icon">🎙️</span><span><strong>Format</strong><br>Discussions, panels et ateliers autour de l’économie numérique, de l’innovation et des plateformes digitales.</span></li>
+                        <li><span class="fact-icon">🎙️</span><span><strong>Programme</strong><br>Conversations inspirantes, ateliers interactifs, rencontres inédites et exploration des nouvelles tendances, plateformes digitales et opportunités de l’économie créative.</span></li>
                     </ul>
                     <div class="notice">⚠️ Les places sont limitées : seules les personnes sélectionnées recevront une confirmation officielle de participation.</div>
                 </aside>
@@ -980,7 +973,8 @@ if (isset($_SESSION['creatorsbomoko_flash']) && is_array($_SESSION['creatorsbomo
         <section class="form-wrap" id="formulaire">
             <aside class="side-panel">
                 <h2>Soumettre une candidature</h2>
-                <p>Merci de remplir ce formulaire avec des informations exactes. Elles permettront de sélectionner les participants finaux et d’adapter le programme aux profils retenus.</p>
+                <p>Vous avez une voix, une vision ou un projet qui mérite d’être vu ? Creators Bomoko est fait pour vous.</p>
+                <p>Remplissez ce formulaire pour proposer votre candidature et rejoindre une nouvelle génération de créateurs qui inventent, influencent et font bouger les lignes.</p>
                 <div class="chips">
                     <span class="chip">Créateurs</span>
                     <span class="chip">Entrepreneurs</span>
@@ -1076,27 +1070,10 @@ if (isset($_SESSION['creatorsbomoko_flash']) && is_array($_SESSION['creatorsbomo
                         <textarea id="liens_plateformes" name="liens_plateformes" required><?php echo h((string) posted('liens_plateformes')); ?></textarea>
                         <?php if (isset($errors['liens_plateformes'])): ?><div class="error"><?php echo h($errors['liens_plateformes']); ?></div><?php endif; ?>
                     </div>
-                    <div class="field">
-                        <label>Depuis combien de temps travaillez-vous dans le domaine numérique ou créatif ? *</label>
-                        <div class="options">
-                            <?php foreach ($experienceOptions as $value => $label): ?>
-                                <label class="option"><input type="radio" name="experience" value="<?php echo h($value); ?>" <?php echo posted('experience') === $value ? 'checked' : ''; ?>> <span><?php echo h($label); ?></span></label>
-                            <?php endforeach; ?>
-                        </div>
-                        <?php if (isset($errors['experience'])): ?><div class="error"><?php echo h($errors['experience']); ?></div><?php endif; ?>
-                    </div>
-                    <div class="field">
-                        <label>Avez-vous déjà participé à une conférence, formation ou atelier similaire ? *</label>
-                        <div class="options">
-                            <label class="option"><input type="radio" name="participation_similaire" value="oui" <?php echo posted('participation_similaire') === 'oui' ? 'checked' : ''; ?>> <span>Oui</span></label>
-                            <label class="option"><input type="radio" name="participation_similaire" value="non" <?php echo posted('participation_similaire') === 'non' ? 'checked' : ''; ?>> <span>Non</span></label>
-                        </div>
-                        <?php if (isset($errors['participation_similaire'])): ?><div class="error"><?php echo h($errors['participation_similaire']); ?></div><?php endif; ?>
-                    </div>
                 </div>
 
                 <div class="form-section">
-                    <h3 class="section-title"><span class="num">3</span> Motivation et attentes</h3>
+                    <h3 class="section-title"><span class="num">3</span> Motivation et thématique</h3>
                     <div class="field">
                         <label for="motivation">Pourquoi souhaitez-vous participer à Creators Bomoko ? *</label>
                         <textarea id="motivation" name="motivation" required><?php echo h((string) posted('motivation')); ?></textarea>
@@ -1113,30 +1090,17 @@ if (isset($_SESSION['creatorsbomoko_flash']) && is_array($_SESSION['creatorsbomo
                         <?php if (isset($errors['thematique'])): ?><div class="error"><?php echo h($errors['thematique']); ?></div><?php endif; ?>
                         <?php if (isset($errors['thematique_autre'])): ?><div class="error"><?php echo h($errors['thematique_autre']); ?></div><?php endif; ?>
                     </div>
-                    <div class="field">
-                        <label for="attentes">Qu’attendez-vous concrètement de cette conférence ? *</label>
-                        <textarea id="attentes" name="attentes" required><?php echo h((string) posted('attentes')); ?></textarea>
-                        <?php if (isset($errors['attentes'])): ?><div class="error"><?php echo h($errors['attentes']); ?></div><?php endif; ?>
-                    </div>
                 </div>
 
                 <div class="form-section">
                     <h3 class="section-title"><span class="num">4</span> Participation et suivi</h3>
                     <div class="field">
-                        <label>Êtes-vous disponible pour participer en présentiel à Kinshasa du 5 au 6 juin 2026 ? *</label>
+                        <label>Êtes-vous disponible pour participer en présentiel à Kinshasa du 18 au 19 septembre 2026 ? *</label>
                         <div class="options">
                             <label class="option"><input type="radio" name="disponible_presentiel" value="oui" <?php echo posted('disponible_presentiel') === 'oui' ? 'checked' : ''; ?>> <span>Oui</span></label>
                             <label class="option"><input type="radio" name="disponible_presentiel" value="non" <?php echo posted('disponible_presentiel') === 'non' ? 'checked' : ''; ?>> <span>Non</span></label>
                         </div>
                         <?php if (isset($errors['disponible_presentiel'])): ?><div class="error"><?php echo h($errors['disponible_presentiel']); ?></div><?php endif; ?>
-                    </div>
-                    <div class="field">
-                        <label>Souhaitez-vous recevoir des informations futures sur les programmes de l’Ambassade des États-Unis liés au numérique, à l’entrepreneuriat et aux industries créatives ? *</label>
-                        <div class="options">
-                            <label class="option"><input type="radio" name="infos_futures" value="oui" <?php echo posted('infos_futures') === 'oui' ? 'checked' : ''; ?>> <span>Oui</span></label>
-                            <label class="option"><input type="radio" name="infos_futures" value="non" <?php echo posted('infos_futures') === 'non' ? 'checked' : ''; ?>> <span>Non</span></label>
-                        </div>
-                        <?php if (isset($errors['infos_futures'])): ?><div class="error"><?php echo h($errors['infos_futures']); ?></div><?php endif; ?>
                     </div>
                     <div class="field">
                         <label>Avez-vous des besoins spécifiques liés à votre participation ? *</label>

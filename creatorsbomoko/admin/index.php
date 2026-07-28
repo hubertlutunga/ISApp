@@ -13,7 +13,7 @@ require_once dirname(__DIR__, 2) . '/PHPMailer/src/SMTP.php';
 require_once dirname(__DIR__, 2) . '/qrscan/phpqrcode/qrlib.php';
 
 $eventName = 'Creators Bomoko 2026';
-$eventDates = '5–6 juin 2026';
+$eventDates = '18–19 septembre 2026';
 $eventLocation = 'Musée National de la RDC, Kinshasa';
 $adminEmail = getenv('CREATORSBOMOKO_ADMIN_EMAIL') ?: 'creatorsbomoko@invitationspeciale.com';
 $adminPassword = getenv('CREATORSBOMOKO_ADMIN_PASSWORD') ?: '';
@@ -57,13 +57,13 @@ CREATE TABLE IF NOT EXISTS participants_cbomoko (
     domaine VARCHAR(220) NOT NULL,
     plateformes TEXT NOT NULL,
     liens_plateformes TEXT NOT NULL,
-    experience VARCHAR(80) NOT NULL,
-    participation_similaire VARCHAR(10) NOT NULL,
+    experience VARCHAR(80) DEFAULT NULL,
+    participation_similaire VARCHAR(10) DEFAULT NULL,
     motivation TEXT NOT NULL,
     thematique VARCHAR(240) NOT NULL,
-    attentes TEXT NOT NULL,
+    attentes TEXT DEFAULT NULL,
     disponible_presentiel VARCHAR(10) NOT NULL,
-    infos_futures VARCHAR(10) NOT NULL,
+    infos_futures VARCHAR(10) DEFAULT NULL,
     besoins_specifiques VARCHAR(280) NOT NULL,
     source VARCHAR(220) NOT NULL,
     status VARCHAR(30) NOT NULL DEFAULT 'nouvelle',
@@ -99,6 +99,22 @@ SQL);
     $stmt->execute([':index_name' => 'idx_participants_cbomoko_acces']);
     if (!$stmt->fetch(PDO::FETCH_ASSOC)) {
         $pdo->exec('ALTER TABLE participants_cbomoko ADD INDEX idx_participants_cbomoko_acces (acces)');
+    }
+
+    $legacyNullableColumns = [
+        'experience' => 'experience VARCHAR(80) DEFAULT NULL',
+        'participation_similaire' => 'participation_similaire VARCHAR(10) DEFAULT NULL',
+        'attentes' => 'attentes TEXT DEFAULT NULL',
+        'infos_futures' => 'infos_futures VARCHAR(10) DEFAULT NULL',
+    ];
+
+    foreach ($legacyNullableColumns as $columnName => $definition) {
+        $stmt = $pdo->prepare('SHOW COLUMNS FROM participants_cbomoko LIKE :column_name');
+        $stmt->execute([':column_name' => $columnName]);
+        $column = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (is_array($column) && strtoupper((string) ($column['Null'] ?? '')) === 'NO') {
+            $pdo->exec('ALTER TABLE participants_cbomoko MODIFY COLUMN ' . $definition);
+        }
     }
 
     $pdo->exec(<<<'SQL'
@@ -381,12 +397,13 @@ if (cb_admin_is_logged_in() && isset($_GET['export']) && $_GET['export'] === 'cs
     header('Content-Type: text/csv; charset=UTF-8');
     header('Content-Disposition: attachment; filename="participants_cbomoko_' . date('Ymd_His') . '.csv"');
     $output = fopen('php://output', 'wb');
-    fputcsv($output, ['Référence', 'Date', 'Nom', 'Email', 'Téléphone', 'Ville', 'Âge', 'Profession', 'Domaine', 'Plateformes', 'Expérience', 'Thématique', 'Source', 'Statut']);
+    fputcsv($output, ['Référence', 'Date', 'Nom', 'Email', 'Téléphone', 'Ville', 'Âge', 'Profession', 'Organisation', 'Domaine', 'Plateformes', 'Liens', 'Motivation', 'Thématique', 'Disponibilité', 'Besoins', 'Source', 'Statut']);
     $stmt = $pdo->query('SELECT * FROM participants_cbomoko ORDER BY submitted_at DESC');
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
         fputcsv($output, [
             $row['submission_id'], $row['submitted_at'], $row['nom_complet'], $row['email'], $row['telephone'], $row['ville'], $row['age'],
-            $row['profession'], $row['domaine'], $row['plateformes'], $row['experience'], $row['thematique'], $row['source'], $row['status'],
+            $row['profession'], $row['organisation'], $row['domaine'], $row['plateformes'], $row['liens_plateformes'], $row['motivation'],
+            $row['thematique'], $row['disponible_presentiel'], $row['besoins_specifiques'], $row['source'], $row['status'],
         ]);
     }
     fclose($output);
@@ -443,9 +460,10 @@ if (cb_admin_is_logged_in() && $setupError === '') {
         a{color:inherit}.shell{width:min(1240px,100%);margin:0 auto;padding:28px clamp(16px,4vw,46px) 54px}.brand{display:flex;align-items:center;gap:14px}.brand img{width:64px;height:64px;object-fit:contain;background:#fff;border-radius:18px;padding:7px;box-shadow:0 14px 34px rgba(53,24,11,.16)}h1{font-size:clamp(30px,4vw,52px);line-height:1;margin:0;letter-spacing:-.06em}.muted{color:var(--muted);font-weight:700}.card{background:rgba(255,250,241,.94);border:1px solid rgba(139,74,31,.14);border-radius:28px;box-shadow:var(--shadow);padding:24px}.login{min-height:100vh;display:grid;place-items:center;padding:24px}.login .card{width:min(460px,100%)}label{display:block;font-weight:900;margin:0 0 8px}input,select,textarea{width:100%;border:1px solid #d9c5a8;border-radius:14px;background:#fff;padding:12px 13px;font:inherit;color:var(--ink)}textarea{min-height:88px;resize:vertical}.field{margin-bottom:16px}.btn{display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:999px;padding:12px 18px;font-weight:900;cursor:pointer;text-decoration:none}.btn-primary{background:linear-gradient(135deg,var(--red),var(--wood),var(--blue));color:#fff}.btn-soft{background:#f3dfc2;color:var(--wood-dark)}.alert{margin:0 0 18px;padding:13px 15px;border-radius:16px;font-weight:800}.alert-error{background:#fff1f0;color:#b42318;border:1px solid #ffccc7}.alert-ok{background:#ecfdf5;color:#0f766e;border:1px solid #a7f3d0}.stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px;margin-bottom:22px}.stat{position:relative;overflow:hidden;min-height:126px;border:1px solid rgba(255,255,255,.38);border-radius:26px;padding:18px;background:linear-gradient(145deg,#0f4c81,#0b6b8f 55%,#0f9ca8);box-shadow:0 18px 44px rgba(15,76,129,.16);color:#fff}.stat:nth-child(2){background:linear-gradient(145deg,#008b8b,#00a8a8 55%,#21c4b7);box-shadow:0 18px 44px rgba(0,139,139,.16)}.stat:nth-child(3){background:linear-gradient(145deg,#d97706,#f59e0b 55%,#fbbf24);box-shadow:0 18px 44px rgba(217,119,6,.16)}.stat:nth-child(4){background:linear-gradient(145deg,#4338ca,#2563eb 55%,#38bdf8);box-shadow:0 18px 44px rgba(37,99,235,.16)}.stat:nth-child(5){background:linear-gradient(145deg,#047857,#10b981 55%,#34d399);box-shadow:0 18px 44px rgba(4,120,87,.16)}.stat:nth-child(6){background:linear-gradient(145deg,#b91c1c,#ef4444 55%,#fb7185);box-shadow:0 18px 44px rgba(185,28,28,.16)}.stat:before{content:"";position:absolute;right:-32px;top:-34px;width:92px;height:92px;border-radius:999px;background:rgba(255,255,255,.16)}.stat strong{position:relative;display:block;font-size:clamp(32px,4vw,46px);line-height:1;color:#fff;letter-spacing:-.08em}.stat span{position:relative;display:block;margin-top:12px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;font-size:12px;color:rgba(255,255,255,.86)}.stat-icon{position:relative;width:38px;height:38px;border-radius:14px;display:grid;place-items:center;margin-bottom:12px;background:rgba(255,255,255,.18);font-size:18px}.filters{display:grid;grid-template-columns:1fr 220px auto auto;gap:12px;align-items:end;margin-bottom:18px}.table-wrap{overflow:auto;border-radius:22px;border:1px solid var(--line);background:#fff}table{width:100%;border-collapse:collapse;min-width:980px}th,td{padding:14px;border-bottom:1px solid #f0dfc8;text-align:left;vertical-align:top}th{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#745139;background:#fff8ed}td{font-size:14px}.badge{display:inline-flex;padding:6px 10px;border-radius:999px;background:#f3dfc2;color:var(--wood-dark);font-weight:900;font-size:12px}.candidate-name{font-weight:900}.details{max-width:520px}.details summary{cursor:pointer;font-weight:900;color:var(--wood)}.manage-form{display:grid;gap:8px;min-width:220px}
         .admin-site-header{position:sticky;top:0;z-index:10;background:linear-gradient(135deg,#35180b,#8b4a1f 52%,#0a3a73);box-shadow:0 18px 44px rgba(53,24,11,.18)}
         .admin-site-header__inner{width:min(1240px,100%);margin:0 auto;padding:14px clamp(16px,4vw,46px);display:grid;grid-template-columns:220px 1fr 260px;align-items:center;gap:18px}.header-logo-left img{width:92px;max-height:78px;object-fit:contain;display:block}.header-title{text-align:center;color:#fff}.header-title h1{font-size:clamp(26px,3.2vw,46px);color:#fff;text-shadow:0 10px 28px rgba(0,0,0,.22)}.header-title div{margin-top:5px;color:#fff4df;font-weight:900;letter-spacing:.08em;text-transform:uppercase;font-size:12px}.header-actions{display:flex;align-items:center;justify-content:flex-end;gap:12px}.header-is-logo{width:172px;max-height:58px;object-fit:contain}.header-icon{width:42px;height:42px;border-radius:15px;display:grid;place-items:center;border:1px solid rgba(255,244,223,.28);background:rgba(255,244,223,.12);color:#fff;text-decoration:none;font-size:20px;font-weight:900}.header-icon:hover{background:rgba(255,244,223,.2)}
-        .partners-section{margin:24px 0 18px;padding:0;border-radius:28px}.partners-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}.partner-logo-card{min-height:110px;display:grid;place-items:center;padding:16px;border-radius:20px;background:#fff;border:1px solid var(--line);box-shadow:0 14px 34px rgba(67,36,15,.08)}.partner-logo-card img{max-width:100%;max-height:78px;object-fit:contain;filter:saturate(1.04)}
+        .partners-section{margin:24px 0 18px;padding:0;border-radius:28px}.partners-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:14px}.partner-logo-card{width:min(220px,100%);min-height:110px;display:grid;place-items:center;text-align:center;padding:16px;border-radius:20px;background:#fff;border:1px solid var(--line);box-shadow:0 14px 34px rgba(67,36,15,.08)}.partner-logo-card img{max-width:100%;max-height:78px;object-fit:contain;filter:saturate(1.04)}
         .login .login-card{width:min(520px,100%);padding:0;overflow:hidden}.login-visual{padding:30px 28px;text-align:center;color:#fff;background:linear-gradient(135deg,#35180b,#8b4a1f 52%,#0a3a73)}.login-visual img{width:108px;height:108px;object-fit:contain;background:rgba(255,255,255,.96);border-radius:28px;padding:12px;box-shadow:0 18px 42px rgba(0,0,0,.18)}.login-visual h1{margin:16px 0 8px;color:#fff}.login-visual p{margin:0;color:#fff4df;font-weight:850}.login-body{padding:28px}.login-helper{margin:18px 0 0;text-align:center;color:var(--muted);font-weight:750;font-size:13px}.admin-footer{margin:28px auto 0;padding:18px 10px;color:var(--muted);display:grid;justify-items:center;gap:12px;text-align:center;background:transparent;box-shadow:none;border-radius:0}.admin-footer__text{font-weight:400;line-height:1.55}.footer-separator{width:100%;border:0;border-top:1px solid var(--line);margin:0 0 4px}.admin-footer__logos{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap}.admin-footer__logos img{width:86px;height:64px;object-fit:contain;background:transparent;border-radius:0;padding:0}.admin-footer__logos img.is-footer-logo{width:150px}
-        @media(max-width:1000px){.admin-site-header__inner{grid-template-columns:110px 1fr auto}.header-is-logo{width:136px}.stats{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:900px){.filters{grid-template-columns:1fr;display:grid}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:700px){.admin-site-header__inner{grid-template-columns:1fr;justify-items:center}.header-actions{justify-content:center}.admin-footer__logos img.is-footer-logo{width:130px}}@media(max-width:560px){.stats{grid-template-columns:1fr}}
+        .admin-site-header__inner{grid-template-columns:minmax(340px,520px) 1fr auto;padding:18px clamp(16px,4vw,46px)}.header-logo-left{display:grid;place-items:center;padding:0;border-radius:30px;background:linear-gradient(180deg,#fff,#fffaf1);box-shadow:0 18px 48px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.9);overflow:hidden}.header-logo-left img{width:100%;max-width:520px;height:auto;max-height:none;object-fit:contain}.login .login-card{width:min(760px,100%)}.login-visual{padding:38px 36px}.login-visual img{width:100%;max-width:640px;height:auto;border-radius:30px;padding:0;background:rgba(255,255,255,.98);box-shadow:0 24px 64px rgba(0,0,0,.28)}
+        @media(max-width:1000px){.admin-site-header__inner{grid-template-columns:minmax(280px,430px) 1fr auto}.header-is-logo{width:136px}.stats{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:900px){.filters{grid-template-columns:1fr;display:grid}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:700px){.admin-site-header__inner{grid-template-columns:1fr;justify-items:center}.header-logo-left{width:min(100%,430px)}.header-actions{justify-content:center}.admin-footer__logos img.is-footer-logo{width:130px}}@media(max-width:560px){.stats{grid-template-columns:1fr}}
     </style>
 </head>
 <body>
@@ -453,7 +471,7 @@ if (cb_admin_is_logged_in() && $setupError === '') {
     <main class="login">
         <form class="card login-card" method="post" action="index.php">
             <div class="login-visual">
-                <img src="../images/Logo_cbomoko.png" alt="Creators Bomoko">
+                <img src="../images/CB Horizontal White BG.png" alt="Creators Bomoko">
                 <h1>Connexion</h1>
                 <p>Backoffice sécurisé · Creators Bomoko 2026</p>
             </div>
@@ -483,7 +501,7 @@ if (cb_admin_is_logged_in() && $setupError === '') {
     <header class="admin-site-header">
         <div class="admin-site-header__inner">
             <a class="header-logo-left" href="index.php" aria-label="Creators Bomoko">
-                <img src="../images/Logo_cbomoko_White.png" alt="Creators Bomoko">
+                <img src="../images/CB Horizontal Dark BG.png" alt="Creators Bomoko">
             </a>
             <div class="header-title">
                 <h1>Candidatures</h1>
@@ -555,8 +573,7 @@ if (cb_admin_is_logged_in() && $setupError === '') {
                                 <strong><?php echo cb_admin_h((string) $candidate['profession']); ?></strong><br>
                                 <?php echo cb_admin_h((string) $candidate['organisation']); ?><br>
                                 <span class="muted">Domaine :</span> <?php echo cb_admin_h((string) $candidate['domaine']); ?><br>
-                                <span class="muted">Plateformes :</span> <?php echo cb_admin_h((string) $candidate['plateformes']); ?><br>
-                                <span class="muted">Expérience :</span> <?php echo cb_admin_h((string) $candidate['experience']); ?>
+                                <span class="muted">Plateformes :</span> <?php echo cb_admin_h((string) $candidate['plateformes']); ?>
                             </td>
                             <td class="details">
                                 <details>
@@ -564,7 +581,6 @@ if (cb_admin_is_logged_in() && $setupError === '') {
                                     <p><strong>Liens :</strong><br><?php echo nl2br(cb_admin_h((string) $candidate['liens_plateformes'])); ?></p>
                                     <p><strong>Motivation :</strong><br><?php echo nl2br(cb_admin_h((string) $candidate['motivation'])); ?></p>
                                     <p><strong>Thématique :</strong><br><?php echo cb_admin_h((string) $candidate['thematique']); ?></p>
-                                    <p><strong>Attentes :</strong><br><?php echo nl2br(cb_admin_h((string) $candidate['attentes'])); ?></p>
                                     <p><strong>Disponibilité :</strong> <?php echo cb_admin_h((string) $candidate['disponible_presentiel']); ?></p>
                                     <p><strong>Besoins :</strong> <?php echo cb_admin_h((string) $candidate['besoins_specifiques']); ?></p>
                                     <p><strong>Source :</strong> <?php echo cb_admin_h((string) $candidate['source']); ?></p>

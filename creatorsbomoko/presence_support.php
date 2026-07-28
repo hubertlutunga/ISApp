@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 const CBOMOKO_EVENT_NAME = 'Creators Bomoko 2026';
-const CBOMOKO_EVENT_DATES = '5–6 juin 2026';
+const CBOMOKO_EVENT_DATES = '18–19 septembre 2026';
 const CBOMOKO_EVENT_LOCATION = 'Musée National de la RDC, Kinshasa';
 
 function cbp_h(?string $value): string
@@ -65,13 +65,13 @@ CREATE TABLE IF NOT EXISTS participants_cbomoko (
     domaine VARCHAR(220) NOT NULL,
     plateformes TEXT NOT NULL,
     liens_plateformes TEXT NOT NULL,
-    experience VARCHAR(80) NOT NULL,
-    participation_similaire VARCHAR(10) NOT NULL,
+    experience VARCHAR(80) DEFAULT NULL,
+    participation_similaire VARCHAR(10) DEFAULT NULL,
     motivation TEXT NOT NULL,
     thematique VARCHAR(240) NOT NULL,
-    attentes TEXT NOT NULL,
+    attentes TEXT DEFAULT NULL,
     disponible_presentiel VARCHAR(10) NOT NULL,
-    infos_futures VARCHAR(10) NOT NULL,
+    infos_futures VARCHAR(10) DEFAULT NULL,
     besoins_specifiques VARCHAR(280) NOT NULL,
     source VARCHAR(220) NOT NULL,
     status VARCHAR(30) NOT NULL DEFAULT 'nouvelle',
@@ -94,6 +94,22 @@ SQL);
     cbp_add_column_if_missing($pdo, 'acces', 'acces VARCHAR(10) DEFAULT NULL AFTER notes_admin');
     cbp_add_column_if_missing($pdo, 'heure_arrive', 'heure_arrive DATETIME DEFAULT NULL AFTER acces');
     cbp_add_index_if_missing($pdo, 'idx_participants_cbomoko_acces', 'idx_participants_cbomoko_acces (acces)');
+
+    $legacyNullableColumns = [
+        'experience' => 'experience VARCHAR(80) DEFAULT NULL',
+        'participation_similaire' => 'participation_similaire VARCHAR(10) DEFAULT NULL',
+        'attentes' => 'attentes TEXT DEFAULT NULL',
+        'infos_futures' => 'infos_futures VARCHAR(10) DEFAULT NULL',
+    ];
+
+    foreach ($legacyNullableColumns as $columnName => $definition) {
+        $stmt = $pdo->prepare('SHOW COLUMNS FROM participants_cbomoko LIKE :column_name');
+        $stmt->execute([':column_name' => $columnName]);
+        $column = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (is_array($column) && strtoupper((string) ($column['Null'] ?? '')) === 'NO') {
+            $pdo->exec('ALTER TABLE participants_cbomoko MODIFY COLUMN ' . $definition);
+        }
+    }
 }
 
 function cbp_confirmed_participants(PDO $pdo): array
