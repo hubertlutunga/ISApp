@@ -405,20 +405,48 @@ function cbomoko_partner_logos(): array
         return [];
     }
 
-    $logos = [];
+    $allowedExtensions = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'];
+    $filesByBaseName = [];
     foreach (scandir($directory) ?: [] as $file) {
         if ($file === '.' || $file === '..' || str_starts_with($file, '.')) {
             continue;
         }
 
         $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-        if (!in_array($extension, ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'], true)) {
+        if (!in_array($extension, $allowedExtensions, true)) {
             continue;
         }
 
+        $filesByBaseName[trim(pathinfo($file, PATHINFO_FILENAME))] = $file;
+    }
+
+    $logos = [];
+    $orderedRows = [
+        'featured' => ['7', '8'],
+        'standard' => ['2', '5', '4', '3', '1', '6'],
+    ];
+
+    foreach ($orderedRows as $tier => $baseNames) {
+        foreach ($baseNames as $baseName) {
+            if (!isset($filesByBaseName[$baseName])) {
+                continue;
+            }
+
+            $file = $filesByBaseName[$baseName];
+            $logos[] = [
+                'src' => 'images/parteners/' . rawurlencode($file),
+                'name' => $baseName,
+                'tier' => $tier,
+            ];
+            unset($filesByBaseName[$baseName]);
+        }
+    }
+
+    foreach ($filesByBaseName as $baseName => $file) {
         $logos[] = [
             'src' => 'images/parteners/' . rawurlencode($file),
-            'name' => trim(pathinfo($file, PATHINFO_FILENAME)),
+            'name' => $baseName,
+            'tier' => 'standard',
         ];
     }
 
@@ -881,10 +909,15 @@ if (isset($_SESSION['creatorsbomoko_flash']) && is_array($_SESSION['creatorsbomo
         .submit-row p{margin:0;color:var(--muted);font-size:13px;max-width:430px}
         .btn-submit{background:linear-gradient(135deg,var(--red),var(--wood),var(--blue));color:#fff;box-shadow:0 16px 36px rgba(139,74,31,.28)}
         .hidden-field{position:absolute;left:-9999px;opacity:0;pointer-events:none}
-        .partners-section{width:min(1180px,100%);margin:30px auto 18px}
-        .partners-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:14px}
-        .partner-logo-card{width:min(220px,100%);min-height:112px;display:grid;place-items:center;text-align:center;padding:16px;border-radius:22px;background:#fff;border:1px solid rgba(15,23,42,.08);box-shadow:0 14px 34px rgba(67,36,15,.08)}
+        .partners-section{width:min(1180px,100%);margin:30px auto 18px;display:grid;gap:16px}
+        .partners-grid{display:flex;justify-content:center;align-items:stretch;gap:14px;width:100%}
+        .partner-logo-card{display:grid;place-items:center;text-align:center;padding:16px;border-radius:22px;background:#fff;border:1px solid rgba(15,23,42,.08);box-shadow:0 14px 34px rgba(67,36,15,.08)}
         .partner-logo-card img{max-width:100%;max-height:78px;object-fit:contain;filter:saturate(1.04)}
+        .partners-grid--featured .partner-logo-card{width:min(360px,calc(50% - 7px));min-height:150px;padding:22px}
+        .partners-grid--featured .partner-logo-card img{max-height:114px}
+        .partners-grid--standard{gap:12px}
+        .partners-grid--standard .partner-logo-card{width:150px;min-height:96px;padding:12px;border-radius:18px}
+        .partners-grid--standard .partner-logo-card img{max-height:62px}
         .public-footer{width:min(1180px,100%);margin:0 auto;padding:24px clamp(18px,4vw,34px);color:var(--muted);display:grid;justify-items:center;text-align:center;gap:12px;font-weight:400}
         .footer-separator{width:100%;border:0;border-top:1px solid var(--line);margin:0 0 4px}
         .public-footer__text{line-height:1.55}
@@ -913,6 +946,13 @@ if (isset($_SESSION['creatorsbomoko_flash']) && is_array($_SESSION['creatorsbomo
             .logo-subtag{font-size:10px}
             .grid-2,.options{grid-template-columns:1fr}
             .event-card{padding:22px}
+            .partners-section{gap:10px}
+            .partners-grid{gap:8px}
+            .partners-grid--featured .partner-logo-card{width:calc(50% - 4px);min-height:96px;padding:10px;border-radius:16px}
+            .partners-grid--featured .partner-logo-card img{max-height:72px}
+            .partners-grid--standard{gap:6px}
+            .partners-grid--standard .partner-logo-card{width:calc((100% - 30px) / 6);min-height:58px;padding:5px;border-radius:12px}
+            .partners-grid--standard .partner-logo-card img{max-height:40px}
             .submit-row .btn{width:100%}
             .public-footer{text-align:center}
             .public-footer__logos img.is-footer-logo{width:130px}
@@ -1137,16 +1177,33 @@ if (isset($_SESSION['creatorsbomoko_flash']) && is_array($_SESSION['creatorsbomo
         </section>
 
         <section class="partners-section" aria-label="Partenaires">
-            <div class="partners-grid">
-                <?php if ($partnerLogos === []): ?>
+            <?php
+            $featuredPartnerLogos = array_values(array_filter($partnerLogos, static fn (array $partnerLogo): bool => ($partnerLogo['tier'] ?? '') === 'featured'));
+            $standardPartnerLogos = array_values(array_filter($partnerLogos, static fn (array $partnerLogo): bool => ($partnerLogo['tier'] ?? '') !== 'featured'));
+            ?>
+            <?php if ($partnerLogos === []): ?>
+                <div class="partners-grid partners-grid--standard">
                     <div class="partner-logo-card">Aucun logo partenaire disponible.</div>
-                <?php endif; ?>
-                <?php foreach ($partnerLogos as $partnerLogo): ?>
-                    <div class="partner-logo-card">
-                        <img src="<?php echo h((string) $partnerLogo['src']); ?>" alt="<?php echo h((string) $partnerLogo['name']); ?>">
-                    </div>
-                <?php endforeach; ?>
-            </div>
+                </div>
+            <?php endif; ?>
+            <?php if ($featuredPartnerLogos !== []): ?>
+                <div class="partners-grid partners-grid--featured">
+                    <?php foreach ($featuredPartnerLogos as $partnerLogo): ?>
+                        <div class="partner-logo-card">
+                            <img src="<?php echo h((string) $partnerLogo['src']); ?>" alt="<?php echo h((string) $partnerLogo['name']); ?>">
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+            <?php if ($standardPartnerLogos !== []): ?>
+                <div class="partners-grid partners-grid--standard">
+                    <?php foreach ($standardPartnerLogos as $partnerLogo): ?>
+                        <div class="partner-logo-card">
+                            <img src="<?php echo h((string) $partnerLogo['src']); ?>" alt="<?php echo h((string) $partnerLogo['name']); ?>">
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
         </section>
 
         <footer class="public-footer">
