@@ -251,6 +251,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['stop_impersonation'])
 
 		<li><a href="index.php?page=admin_catalogue"><i data-feather="sliders"></i>Catalogue</a>
 		</li>
+		<?php if ($typeUser === '1') { ?>
+		<li><a href="index.php?page=nettoyage"><i data-feather="trash-2"></i>Nettoyage</a>
+		</li>
+		<?php } ?>
 		<li><a href="index.php?page=admin_promos"><i data-feather="percent"></i>Codes promo</a>
 		</li>
 

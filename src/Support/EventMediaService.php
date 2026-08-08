@@ -2,11 +2,40 @@
 
 final class EventMediaService
 {
+    public const MAX_EVENT_PHOTOS = 5;
+
+    public static function countUploadedFiles(?array $photos): int
+    {
+        if (!$photos || !isset($photos['tmp_name']) || !is_array($photos['tmp_name'])) {
+            return 0;
+        }
+
+        $count = 0;
+
+        foreach ($photos['tmp_name'] as $key => $tmpName) {
+            $error = $photos['error'][$key] ?? UPLOAD_ERR_NO_FILE;
+            if ($error === UPLOAD_ERR_OK && trim((string) $tmpName) !== '') {
+                $count++;
+            }
+        }
+
+        return $count;
+    }
+
+    public static function assertMaxEventPhotos(?array $photos, int $maxPhotos = self::MAX_EVENT_PHOTOS): void
+    {
+        if (self::countUploadedFiles($photos) > $maxPhotos) {
+            throw new RuntimeException('Vous ne pouvez pas uploader plus de ' . $maxPhotos . ' photos par commande.');
+        }
+    }
+
     public static function storeEventPhotos(PDO $pdo, int $eventId, ?array $photos, string $photoTargetDir, string $prefix): void
     {
         if (!$photos || !isset($photos['tmp_name']) || !is_array($photos['tmp_name'])) {
             return;
         }
+
+        self::assertMaxEventPhotos($photos);
 
         $insert = $pdo->prepare('INSERT INTO photos_event (cod_event, nom_photo) VALUES (?, ?)');
 

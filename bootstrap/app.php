@@ -13,6 +13,7 @@ if (!defined('ISAPP_BOOTSTRAPPED')) {
     require_once __DIR__ . '/../src/Support/EventCreationService.php';
     require_once __DIR__ . '/../src/Support/EventUpdateService.php';
     require_once __DIR__ . '/../src/Support/EventMediaService.php';
+    require_once __DIR__ . '/../src/Support/EventPhotoCleanupService.php';
     require_once __DIR__ . '/../src/Support/EventDocumentService.php';
     require_once __DIR__ . '/../src/Support/MenuCatalogService.php';
     require_once __DIR__ . '/../src/Support/MenuOrderService.php';

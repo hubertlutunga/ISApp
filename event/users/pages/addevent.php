@@ -187,6 +187,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $initialemar = EventUpdateService::buildInitialeFromRequest($_POST);
 
   try {
+    EventMediaService::assertMaxEventPhotos($_FILES['photos'] ?? null);
+
     $cod_event = EventCreationService::createManagedEvent(
       $pdo,
       [
@@ -235,7 +237,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
       return;
     }
-  } catch (PDOException $e) {
+  } catch (Throwable $e) {
     if ($isAjaxRequest) {
       http_response_code(500);
       header('Content-Type: application/json; charset=utf-8');
@@ -1325,7 +1327,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label for="fileInput" class="btnpic"><i class="fas fa-plus"></i> Importer les photos</label>
             <input type="file" name="photos[]" class="form-control ps-15 bg-transparent" accept="image/*" id="fileInput" multiple style="display:none;">
           </div>
-          <p class="field-help">Ajoutez quelques visuels pour personnaliser plus rapidement votre commande.</p>
+          <p class="field-help">Ajoutez quelques visuels pour personnaliser plus rapidement votre commande. Maximum 5 photos.</p>
           <div id="previewContainer" class="mt-2" style="display:flex;flex-wrap:wrap;"></div>
         </div>
       </div>
@@ -1542,7 +1544,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <label for="fileInput2" class="btnpic"><i class="fas fa-plus"></i> Importer les photos</label>
           <input type="file" name="photos[]" class="form-control ps-15 bg-transparent" accept="image/*" id="fileInput2" multiple style="display:none;">
         </div>
-        <p class="field-help">Ajoutez quelques visuels pour orienter la mise en page de votre invitation.</p>
+        <p class="field-help">Ajoutez quelques visuels pour orienter la mise en page de votre invitation. Maximum 5 photos.</p>
         <div id="previewContainer2" class="mt-2" style="display:flex;flex-wrap:wrap;"></div>
       </div>
 
@@ -1747,6 +1749,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   const paymentTypeInput = document.getElementById('paymentType');
   const paymentTypeOtherInput = document.getElementById('paymentTypeOther');
 
+  const MAX_ORDER_PHOTOS = 5;
   const fileInput = document.getElementById('fileInput');
   const previewContainer = document.getElementById('previewContainer');
   const fileInput2 = document.getElementById('fileInput2');
@@ -2494,27 +2497,70 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
   });
 
+  function showPhotoLimitWarning() {
+    const message = `Vous ne pouvez pas uploader plus de ${MAX_ORDER_PHOTOS} photos par commande.`;
+    if (typeof Swal !== 'undefined') {
+      Swal.fire({
+        title: 'Limite des photos',
+        text: message,
+        icon: 'warning',
+        confirmButtonText: 'Compris'
+      });
+      return;
+    }
+    alert(message);
+  }
+
+  function setInputFiles(input, files) {
+    if (!input) {
+      return;
+    }
+
+    const transfer = new DataTransfer();
+    files.forEach((file) => transfer.items.add(file));
+    input.files = transfer.files;
+  }
+
+  function countSelectedOrderPhotos() {
+    return Array.from([fileInput, fileInput2]).reduce((total, input) => total + (input?.files?.length || 0), 0);
+  }
+
   function attachImagePreview(input, container) {
     input?.addEventListener('change', (event) => {
-      const files = Array.from(event.target.files || []);
-      container.innerHTML = '';
-      files.forEach((file) => {
-        const reader = new FileReader();
-        reader.onload = (loadEvent) => {
-          const wrapper = document.createElement('div');
-          wrapper.className = 'image-container';
-          const image = document.createElement('img');
-          image.src = String(loadEvent.target?.result || '');
-          const removeButton = document.createElement('button');
-          removeButton.innerHTML = '✖';
-          removeButton.className = 'delete-icon';
-          removeButton.addEventListener('click', () => wrapper.remove());
-          wrapper.appendChild(image);
-          wrapper.appendChild(removeButton);
-          container.appendChild(wrapper);
-        };
-        reader.readAsDataURL(file);
-      });
+      let files = Array.from(event.target.files || []);
+
+      if (files.length > MAX_ORDER_PHOTOS) {
+        showPhotoLimitWarning();
+        files = files.slice(0, MAX_ORDER_PHOTOS);
+        setInputFiles(input, files);
+      }
+
+      const renderFiles = () => {
+        container.innerHTML = '';
+        Array.from(input.files || []).forEach((file, index) => {
+          const reader = new FileReader();
+          reader.onload = (loadEvent) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'image-container';
+            const image = document.createElement('img');
+            image.src = String(loadEvent.target?.result || '');
+            const removeButton = document.createElement('button');
+            removeButton.innerHTML = '✖';
+            removeButton.className = 'delete-icon';
+            removeButton.addEventListener('click', () => {
+              const remainingFiles = Array.from(input.files || []).filter((_, fileIndex) => fileIndex !== index);
+              setInputFiles(input, remainingFiles);
+              renderFiles();
+            });
+            wrapper.appendChild(image);
+            wrapper.appendChild(removeButton);
+            container.appendChild(wrapper);
+          };
+          reader.readAsDataURL(file);
+        });
+      };
+
+      renderFiles();
     });
   }
 
@@ -2552,6 +2598,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   document.getElementById('eventForm').addEventListener('submit', function onSubmit(event) {
     event.preventDefault();
+
+    if (countSelectedOrderPhotos() > MAX_ORDER_PHOTOS) {
+      showPhotoLimitWarning();
+      return;
+    }
 
     const selectedAccessoires = getSelectedAccessoireCheckboxes();
     if (selectedAccessoires.length === 0) {
