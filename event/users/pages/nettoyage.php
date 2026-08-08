@@ -228,11 +228,135 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
     }
 
+    let cleanupProgressTimer = null;
+
+    function showCleanupWarning(title, text) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({title, text, icon:'warning', confirmButtonText:'OK'});
+            return;
+        }
+
+        alert(text);
+    }
+
+    function confirmCleanup() {
+        if (typeof Swal !== 'undefined') {
+            return Swal.fire({
+                title: 'Supprimer définitivement ?',
+                text: 'Les photos ciblées seront supprimées dans la BDD et sur le serveur.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Oui, supprimer',
+                cancelButtonText: 'Annuler',
+                confirmButtonColor: '#dc2626'
+            }).then(function (result) {
+                return Boolean(result.isConfirmed);
+            });
+        }
+
+        return Promise.resolve(window.confirm('Supprimer définitivement les photos ciblées ?'));
+    }
+
+    function renderCleanupProgress(percent) {
+        const safePercent = Math.max(0, Math.min(100, Math.round(percent)));
+        const bar = document.getElementById('cleanupProgressBar');
+        const label = document.getElementById('cleanupProgressLabel');
+
+        if (bar) {
+            bar.style.width = safePercent + '%';
+        }
+
+        if (label) {
+            label.textContent = safePercent + '%';
+        }
+    }
+
+    function showCleanupProgressModal() {
+        if (typeof Swal === 'undefined') {
+            return;
+        }
+
+        Swal.fire({
+            title: 'Suppression en cours',
+            html: '<div style="text-align:left;font-weight:800;color:#334155;margin-bottom:10px;">Veuillez patienter pendant le nettoyage.</div><div style="height:14px;background:#e2e8f0;border-radius:999px;overflow:hidden;"><div id="cleanupProgressBar" style="height:100%;width:0%;background:linear-gradient(135deg,#dc2626,#f97316);transition:width .25s ease;"></div></div><div id="cleanupProgressLabel" style="margin-top:10px;font-weight:900;color:#0f172a;">0%</div>',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showConfirmButton: false,
+            didOpen: function () {
+                renderCleanupProgress(0);
+            }
+        });
+    }
+
+    function startCleanupProgress() {
+        showCleanupProgressModal();
+        let percent = 0;
+        renderCleanupProgress(percent);
+
+        cleanupProgressTimer = window.setInterval(function () {
+            if (percent < 88) {
+                percent += Math.max(1, Math.round((90 - percent) / 12));
+                renderCleanupProgress(percent);
+            }
+        }, 220);
+    }
+
+    function stopCleanupProgress() {
+        if (cleanupProgressTimer !== null) {
+            window.clearInterval(cleanupProgressTimer);
+            cleanupProgressTimer = null;
+        }
+
+        renderCleanupProgress(100);
+    }
+
+    function submitCleanupWithProgress() {
+        startCleanupProgress();
+
+        if (!window.fetch || !window.FormData) {
+            cleanupDeleteForm.dataset.confirmed = '1';
+            cleanupDeleteForm.submit();
+            return;
+        }
+
+        fetch(window.location.href, {
+            method: 'POST',
+            body: new FormData(cleanupDeleteForm),
+            credentials: 'same-origin'
+        }).then(function (response) {
+            if (!response.ok) {
+                throw new Error('La suppression a echoue. Code HTTP ' + response.status + '.');
+            }
+
+            return response.text();
+        }).then(function (html) {
+            stopCleanupProgress();
+            window.setTimeout(function () {
+                document.open();
+                document.write(html);
+                document.close();
+            }, 450);
+        }).catch(function (error) {
+            stopCleanupProgress();
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Suppression impossible',
+                    text: error.message || 'Une erreur est survenue pendant la suppression.',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+                return;
+            }
+
+            alert(error.message || 'Une erreur est survenue pendant la suppression.');
+        });
+    }
+
     cleanupDeleteForm.addEventListener('submit', function (event) {
         const confirmation = document.getElementById('confirm_cleanup')?.value || '';
         if (confirmation.trim() !== 'SUPPRIMER') {
             event.preventDefault();
-            Swal.fire({title:'Confirmation requise', text:'Tapez SUPPRIMER pour confirmer.', icon:'warning', confirmButtonText:'OK'});
+            showCleanupWarning('Confirmation requise', 'Tapez SUPPRIMER pour confirmer.');
             return;
         }
 
@@ -241,18 +365,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         event.preventDefault();
-        Swal.fire({
-            title: 'Supprimer définitivement ?',
-            text: 'Les photos ciblées seront supprimées dans la BDD et sur le serveur.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Oui, supprimer',
-            cancelButtonText: 'Annuler',
-            confirmButtonColor: '#dc2626'
-        }).then(function (result) {
-            if (result.isConfirmed) {
-                cleanupDeleteForm.dataset.confirmed = '1';
-                cleanupDeleteForm.submit();
+        confirmCleanup().then(function (confirmed) {
+            if (confirmed) {
+                submitCleanupWithProgress();
             }
         });
     });
