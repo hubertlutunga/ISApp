@@ -160,6 +160,86 @@ final class EventPhotoCleanupService
         ];
     }
 
+    public static function eventPhotoGroupsByYear(PDO $pdo, int $year): array
+    {
+        $year = self::normalizeYear($year);
+        $stmt = $pdo->prepare(
+            'SELECT e.cod_event, e.type_event, e.type_mar, e.date_event, e.date_enreg, e.lieu,
+                    COALESCE(e.date_enreg, e.date_event) AS reference_date,
+                    COUNT(p.cod_photo) AS photo_count
+             FROM events e
+             INNER JOIN photos_event p ON p.cod_event = e.cod_event
+             WHERE (e.date_enreg IS NOT NULL AND YEAR(e.date_enreg) = :year_enreg)
+                OR (e.date_event IS NOT NULL AND YEAR(e.date_event) = :year_event)
+             GROUP BY e.cod_event, e.type_event, e.type_mar, e.date_event, e.date_enreg, e.lieu
+             ORDER BY reference_date DESC, e.cod_event DESC'
+        );
+        $stmt->bindValue(':year_enreg', $year, PDO::PARAM_INT);
+        $stmt->bindValue(':year_event', $year, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public static function cleanupEvent(PDO $pdo, string $photoDir, int $eventId, bool $deleteFiles = true): array
+    {
+        if ($eventId <= 0) {
+            throw new InvalidArgumentException('Evenement invalide.');
+        }
+
+        $rows = self::photoRowsByEvent($pdo, $eventId);
+        $dbIdsToDelete = [];
+        $deletedServerFiles = 0;
+        $deletedServerBytes = 0;
+        $missingServerFiles = 0;
+        $failedServerFiles = [];
+
+        foreach ($rows as $row) {
+            $photoId = (int) ($row['cod_photo'] ?? 0);
+            $fileName = self::safeFileName((string) ($row['nom_photo'] ?? ''));
+
+            if ($photoId <= 0) {
+                continue;
+            }
+
+            $dbIdsToDelete[] = $photoId;
+
+            if (!$deleteFiles) {
+                continue;
+            }
+
+            if ($fileName === '') {
+                $missingServerFiles++;
+                continue;
+            }
+
+            $filePath = self::resolveFilePath($photoDir, $fileName);
+            if ($filePath === null || !is_file($filePath)) {
+                $missingServerFiles++;
+                continue;
+            }
+
+            $fileSize = (int) filesize($filePath);
+            if (@unlink($filePath)) {
+                $deletedServerFiles++;
+                $deletedServerBytes += $fileSize;
+                continue;
+            }
+
+            $failedServerFiles[] = $fileName;
+        }
+
+        return [
+            'event_id' => $eventId,
+            'selected_db_rows' => count($rows),
+            'deleted_db_rows' => self::deletePhotoRows($pdo, $dbIdsToDelete),
+            'deleted_server_files' => $deletedServerFiles,
+            'deleted_server_bytes' => $deletedServerBytes,
+            'missing_server_files' => $missingServerFiles,
+            'failed_server_files' => $failedServerFiles,
+        ];
+    }
+
     private static function photoRowsByYear(PDO $pdo, int $year): array
     {
         $stmt = $pdo->prepare(
@@ -173,6 +253,20 @@ final class EventPhotoCleanupService
         );
            $stmt->bindValue(':year_enreg', $year, PDO::PARAM_INT);
            $stmt->bindValue(':year_event', $year, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    private static function photoRowsByEvent(PDO $pdo, int $eventId): array
+    {
+        $stmt = $pdo->prepare(
+            'SELECT cod_photo, cod_event, nom_photo
+             FROM photos_event
+             WHERE cod_event = :event_id
+             ORDER BY cod_photo DESC'
+        );
+        $stmt->bindValue(':event_id', $eventId, PDO::PARAM_INT);
         $stmt->execute();
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
