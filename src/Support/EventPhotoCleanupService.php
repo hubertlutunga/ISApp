@@ -120,6 +120,7 @@ final class EventPhotoCleanupService
                 continue;
             }
 
+            $dbIdsToDelete[] = $photoId;
             $failedServerFiles[] = $fileName;
         }
 
@@ -166,11 +167,12 @@ final class EventPhotoCleanupService
                     COALESCE(e.date_enreg, e.date_event) AS reference_date
              FROM photos_event p
              LEFT JOIN events e ON e.cod_event = p.cod_event
-             WHERE (e.date_enreg IS NOT NULL AND YEAR(e.date_enreg) = :year)
-            OR (e.date_event IS NOT NULL AND YEAR(e.date_event) = :year)
+               WHERE (e.date_enreg IS NOT NULL AND YEAR(e.date_enreg) = :year_enreg)
+                 OR (e.date_event IS NOT NULL AND YEAR(e.date_event) = :year_event)
              ORDER BY p.cod_photo DESC'
         );
-        $stmt->bindValue(':year', $year, PDO::PARAM_INT);
+           $stmt->bindValue(':year_enreg', $year, PDO::PARAM_INT);
+           $stmt->bindValue(':year_event', $year, PDO::PARAM_INT);
         $stmt->execute();
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);

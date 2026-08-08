@@ -216,160 +216,167 @@ if (!in_array($selectedYear, $availableYears, true)) {
     </div>
 </div>
 
+<div class="cleanup-native-modal" id="cleanupProgressModal" aria-live="polite" aria-hidden="true">
+    <div class="cleanup-native-dialog">
+        <div class="cleanup-native-icon"><i class="fa fa-trash" aria-hidden="true"></i></div>
+        <h3>Suppression en cours</h3>
+        <p>Veuillez patienter pendant le nettoyage des photos.</p>
+        <div class="cleanup-native-progress-track">
+            <div class="cleanup-native-progress-bar" id="cleanupProgressBar"></div>
+        </div>
+        <strong id="cleanupProgressLabel">0%</strong>
+    </div>
+</div>
+
 <style>
 body.fixed .cleanup-wrapper{height:auto!important;min-height:100vh!important;overflow-x:hidden!important;overflow-y:visible!important}.cleanup-content-wrapper{height:auto!important;min-height:calc(100vh - 104px)!important;overflow:visible!important;padding-bottom:56px}.cleanup-content-wrapper .container-full{min-height:inherit;overflow:visible}.cleanup-page{padding-bottom:56px}
 .cleanup-page{color:#0f172a}.cleanup-hero{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:stretch;padding:30px;border-radius:30px;background:linear-gradient(135deg,#0f172a 0%,#164e63 58%,#0f766e 100%);box-shadow:0 24px 60px rgba(15,23,42,.22);color:#fff;margin-bottom:22px}.cleanup-kicker{display:inline-flex;padding:7px 12px;border-radius:999px;background:rgba(255,255,255,.14);font-weight:800;text-transform:uppercase;letter-spacing:.08em;font-size:12px}.cleanup-hero h1{margin:14px 0 8px;font-size:clamp(32px,4vw,54px);font-weight:900;letter-spacing:-.04em;color:#fff}.cleanup-hero p{max-width:780px;margin:0 0 16px;color:rgba(255,255,255,.82);font-weight:600}.cleanup-path{display:inline-flex;max-width:100%;padding:10px 14px;border-radius:14px;background:rgba(255,255,255,.12);word-break:break-all;color:#fff}.cleanup-year-card{min-width:190px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.12);border-radius:24px;padding:22px;display:flex;flex-direction:column;justify-content:center;align-items:center;backdrop-filter:blur(10px)}.cleanup-year-card span{color:rgba(255,255,255,.72);font-weight:800}.cleanup-year-card strong{font-size:52px;line-height:1;color:#fff}.cleanup-flash{border-radius:18px;padding:14px 16px;margin-bottom:18px;font-weight:800}.cleanup-flash-success{background:#ecfdf5;color:#065f46;border:1px solid #bbf7d0}.cleanup-flash-error{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}.cleanup-stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:18px}.cleanup-stat-card,.cleanup-card{background:#fff;border:1px solid #e2e8f0;border-radius:24px;box-shadow:0 16px 36px rgba(15,23,42,.07)}.cleanup-stat-card{padding:20px}.cleanup-stat-card span{display:block;color:#64748b;font-weight:900;text-transform:uppercase;letter-spacing:.06em;font-size:12px}.cleanup-stat-card strong{display:block;font-size:40px;line-height:1;margin:10px 0 4px;font-weight:900}.cleanup-stat-card small{color:#64748b;font-weight:700}.cleanup-stat-danger{background:linear-gradient(180deg,#fff 0%,#fef2f2 100%)}.cleanup-stat-warning{background:linear-gradient(180deg,#fff 0%,#fffbeb 100%)}.cleanup-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}.cleanup-card{padding:22px}.cleanup-card-head h2{margin:0 0 6px;font-weight:900;color:#0f172a}.cleanup-card-head p{margin:0 0 18px;color:#64748b;font-weight:700}.cleanup-card-inline{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}.cleanup-filter-form,.cleanup-danger-zone form{display:grid;gap:12px}.cleanup-filter-form label,.cleanup-danger-zone label{font-weight:900;color:#334155}.cleanup-filter-form select,.cleanup-danger-zone input[type=text]{height:52px;border:1px solid #cbd5e1;border-radius:16px;padding:0 14px;font-weight:800;color:#0f172a;background:#fff}.cleanup-filter-form button,.cleanup-delete-button{border:0;border-radius:16px;min-height:52px;font-weight:900;color:#fff;box-shadow:0 14px 28px rgba(15,118,110,.18);cursor:pointer}.cleanup-filter-form button{background:linear-gradient(135deg,#0f766e,#14b8a6)}.cleanup-delete-button{display:inline-flex;align-items:center;justify-content:center;gap:10px;background:linear-gradient(135deg,#dc2626,#991b1b)}.cleanup-delete-button:disabled{background:#cbd5e1;cursor:not-allowed;box-shadow:none}.cleanup-check{display:flex!important;align-items:flex-start;gap:10px;padding:14px;border-radius:16px;background:#fff7ed;border:1px solid #fed7aa}.cleanup-check input{margin-top:4px}.cleanup-pill{display:inline-flex;white-space:nowrap;padding:8px 12px;border-radius:999px;background:#e0f2fe;color:#075985;font-weight:900}.cleanup-table-shell{overflow:auto;border-radius:18px;border:1px solid #e2e8f0}.cleanup-table{width:100%;border-collapse:collapse}.cleanup-table th{background:#f8fafc;color:#334155;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.06em}.cleanup-table th,.cleanup-table td{padding:14px;border-bottom:1px solid #e2e8f0;font-weight:700}.cleanup-empty{text-align:center;color:#64748b;padding:24px!important}@media (max-width: 992px){.cleanup-hero,.cleanup-grid{grid-template-columns:1fr}.cleanup-stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media (max-width: 640px){.cleanup-stats-grid{grid-template-columns:1fr}.cleanup-hero{padding:22px}.cleanup-card-inline{display:block}}
+.cleanup-native-modal{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;background:rgba(15,23,42,.68);backdrop-filter:blur(8px);padding:18px}.cleanup-native-modal.is-visible{display:flex}.cleanup-native-dialog{width:min(440px,100%);border-radius:28px;background:#fff;padding:30px;box-shadow:0 30px 90px rgba(15,23,42,.35);text-align:center}.cleanup-native-icon{width:64px;height:64px;border-radius:22px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;background:#fee2e2;color:#dc2626;font-size:24px}.cleanup-native-dialog h3{margin:0 0 8px;color:#0f172a;font-weight:900}.cleanup-native-dialog p{margin:0 0 18px;color:#64748b;font-weight:700}.cleanup-native-progress-track{height:16px;border-radius:999px;background:#e2e8f0;overflow:hidden}.cleanup-native-progress-bar{height:100%;width:0%;border-radius:999px;background:linear-gradient(135deg,#dc2626,#f97316);transition:width .18s ease}.cleanup-native-dialog strong{display:block;margin-top:12px;font-size:24px;color:#0f172a;font-weight:900}
 </style>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const cleanupDeleteForm = document.getElementById('cleanupDeleteForm');
-    if (!cleanupDeleteForm) {
-        return;
-    }
-
-    let cleanupProgressTimer = null;
-
-    function showCleanupWarning(title, text) {
-        if (typeof Swal !== 'undefined') {
-            Swal.fire({title, text, icon:'warning', confirmButtonText:'OK'});
+(function () {
+    function onReady(callback) {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', callback);
             return;
         }
 
-        alert(text);
+        callback();
     }
 
-    function confirmCleanup() {
-        if (typeof Swal !== 'undefined') {
-            return Swal.fire({
-                title: 'Supprimer définitivement ?',
-                text: 'Les photos ciblées seront supprimées dans la BDD et sur le serveur.',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Oui, supprimer',
-                cancelButtonText: 'Annuler',
-                confirmButtonColor: '#dc2626'
-            }).then(function (result) {
-                return Boolean(result.isConfirmed);
-            });
-        }
+    onReady(function () {
+        var form = document.getElementById('cleanupDeleteForm');
+        var input = document.getElementById('confirm_cleanup');
+        var modal = document.getElementById('cleanupProgressModal');
+        var bar = document.getElementById('cleanupProgressBar');
+        var label = document.getElementById('cleanupProgressLabel');
+        var progressTimer = null;
+        var percent = 0;
+        var isSubmitting = false;
 
-        return Promise.resolve(window.confirm('Supprimer définitivement les photos ciblées ?'));
-    }
-
-    function renderCleanupProgress(percent) {
-        const safePercent = Math.max(0, Math.min(100, Math.round(percent)));
-        const bar = document.getElementById('cleanupProgressBar');
-        const label = document.getElementById('cleanupProgressLabel');
-
-        if (bar) {
-            bar.style.width = safePercent + '%';
-        }
-
-        if (label) {
-            label.textContent = safePercent + '%';
-        }
-    }
-
-    function showCleanupProgressModal() {
-        if (typeof Swal === 'undefined') {
+        if (!form) {
             return;
         }
 
-        Swal.fire({
-            title: 'Suppression en cours',
-            html: '<div style="text-align:left;font-weight:800;color:#334155;margin-bottom:10px;">Veuillez patienter pendant le nettoyage.</div><div style="height:14px;background:#e2e8f0;border-radius:999px;overflow:hidden;"><div id="cleanupProgressBar" style="height:100%;width:0%;background:linear-gradient(135deg,#dc2626,#f97316);transition:width .25s ease;"></div></div><div id="cleanupProgressLabel" style="margin-top:10px;font-weight:900;color:#0f172a;">0%</div>',
-            allowOutsideClick: false,
-            allowEscapeKey: false,
-            showConfirmButton: false,
-            didOpen: function () {
-                renderCleanupProgress(0);
+        function setProgress(value) {
+            percent = Math.max(0, Math.min(100, Math.round(value)));
+            if (bar) {
+                bar.style.width = percent + '%';
             }
-        });
-    }
-
-    function startCleanupProgress() {
-        showCleanupProgressModal();
-        let percent = 0;
-        renderCleanupProgress(percent);
-
-        cleanupProgressTimer = window.setInterval(function () {
-            if (percent < 88) {
-                percent += Math.max(1, Math.round((90 - percent) / 12));
-                renderCleanupProgress(percent);
+            if (label) {
+                label.innerHTML = percent + '%';
             }
-        }, 220);
-    }
-
-    function stopCleanupProgress() {
-        if (cleanupProgressTimer !== null) {
-            window.clearInterval(cleanupProgressTimer);
-            cleanupProgressTimer = null;
         }
 
-        renderCleanupProgress(100);
-    }
-
-    function submitCleanupWithProgress() {
-        startCleanupProgress();
-
-        if (!window.fetch || !window.FormData) {
-            cleanupDeleteForm.dataset.confirmed = '1';
-            cleanupDeleteForm.submit();
-            return;
-        }
-
-        fetch(window.location.href, {
-            method: 'POST',
-            body: new FormData(cleanupDeleteForm),
-            credentials: 'same-origin'
-        }).then(function (response) {
-            if (!response.ok) {
-                throw new Error('La suppression a echoue. Code HTTP ' + response.status + '.');
+        function showProgress() {
+            if (modal) {
+                modal.className = modal.className.replace(' is-visible', '') + ' is-visible';
+                modal.setAttribute('aria-hidden', 'false');
             }
 
-            return response.text();
-        }).then(function (html) {
-            stopCleanupProgress();
-            window.setTimeout(function () {
-                document.open();
-                document.write(html);
-                document.close();
-            }, 450);
-        }).catch(function (error) {
-            stopCleanupProgress();
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    title: 'Suppression impossible',
-                    text: error.message || 'Une erreur est survenue pendant la suppression.',
-                    icon: 'error',
-                    confirmButtonText: 'OK'
-                });
+            setProgress(0);
+            progressTimer = window.setInterval(function () {
+                if (percent < 92) {
+                    setProgress(percent + Math.max(1, Math.round((95 - percent) / 10)));
+                }
+            }, 180);
+        }
+
+        function finishProgress(callback) {
+            if (progressTimer !== null) {
+                window.clearInterval(progressTimer);
+                progressTimer = null;
+            }
+
+            setProgress(100);
+            window.setTimeout(callback, 350);
+        }
+
+        function failProgress(message) {
+            if (progressTimer !== null) {
+                window.clearInterval(progressTimer);
+                progressTimer = null;
+            }
+
+            if (modal) {
+                modal.className = modal.className.replace(' is-visible', '');
+                modal.setAttribute('aria-hidden', 'true');
+            }
+
+            alert(message || 'Une erreur est survenue pendant la suppression.');
+            isSubmitting = false;
+        }
+
+        function classicSubmitAfterProgress() {
+            showProgress();
+            var classicTimer = window.setInterval(function () {
+                if (percent >= 100) {
+                    window.clearInterval(classicTimer);
+                    form.submit();
+                    return;
+                }
+                setProgress(percent + 8);
+            }, 120);
+        }
+
+        function ajaxSubmit() {
+            var xhr;
+
+            if (!window.XMLHttpRequest || !window.FormData) {
+                classicSubmitAfterProgress();
                 return;
             }
 
-            alert(error.message || 'Une erreur est survenue pendant la suppression.');
-        });
-    }
+            showProgress();
+            xhr = new XMLHttpRequest();
+            xhr.open('POST', window.location.href, true);
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState !== 4) {
+                    return;
+                }
 
-    cleanupDeleteForm.addEventListener('submit', function (event) {
-        const confirmation = document.getElementById('confirm_cleanup')?.value || '';
-        if (confirmation.trim() !== 'SUPPRIMER') {
-            event.preventDefault();
-            showCleanupWarning('Confirmation requise', 'Tapez SUPPRIMER pour confirmer.');
-            return;
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    finishProgress(function () {
+                        document.open();
+                        document.write(xhr.responseText);
+                        document.close();
+                    });
+                    return;
+                }
+
+                failProgress('La suppression a échoué. Code HTTP ' + xhr.status + '.');
+            };
+            xhr.onerror = function () {
+                failProgress('La suppression a échoué. Vérifiez votre connexion puis réessayez.');
+            };
+            xhr.send(new FormData(form));
         }
 
-        if (cleanupDeleteForm.dataset.confirmed === '1') {
-            return;
-        }
+        form.onsubmit = function (event) {
+            var confirmation = input ? input.value : '';
 
-        event.preventDefault();
-        confirmCleanup().then(function (confirmed) {
-            if (confirmed) {
-                submitCleanupWithProgress();
+            if (event && event.preventDefault) {
+                event.preventDefault();
             }
-        });
+
+            if (isSubmitting) {
+                return false;
+            }
+
+            if (String(confirmation).replace(/^\s+|\s+$/g, '') !== 'SUPPRIMER') {
+                alert('Tapez SUPPRIMER pour confirmer.');
+                return false;
+            }
+
+            if (!window.confirm('Supprimer définitivement les photos ciblées ?')) {
+                return false;
+            }
+
+            isSubmitting = true;
+            ajaxSubmit();
+            return false;
+        };
     });
-});
+}());
 </script>
