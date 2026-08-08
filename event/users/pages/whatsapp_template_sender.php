@@ -497,6 +497,25 @@ if (!function_exists('isapp_whatsapp_sender_public_media_url')) {
     }
 }
 
+if (!function_exists('isapp_whatsapp_sender_delete_public_pdf')) {
+    function isapp_whatsapp_sender_delete_public_pdf(string $diskStem): void
+    {
+        $targetPath = isapp_whatsapp_sender_absolute_file_path($diskStem);
+        $baseDirectory = realpath(dirname($targetPath));
+        $realTargetPath = realpath($targetPath);
+
+        if ($baseDirectory === false || $realTargetPath === false) {
+            return;
+        }
+
+        if (strpos($realTargetPath, $baseDirectory . DIRECTORY_SEPARATOR) !== 0 || !is_file($realTargetPath)) {
+            return;
+        }
+
+        @unlink($realTargetPath);
+    }
+}
+
 if (!function_exists('isapp_whatsapp_sender_download_pdf')) {
     function isapp_whatsapp_sender_download_pdf(string $sourceUrl): string
     {
@@ -916,6 +935,8 @@ if (!function_exists('isapp_whatsapp_send_template_invitation')) {
             'date_envoi_whatsapp' => date('Y-m-d H:i:s'),
             'erreur_twilio' => $errorMessage,
         ]);
+
+        isapp_whatsapp_sender_delete_public_pdf($diskStem);
 
         if ($sendStatus !== 'sent') {
             throw new RuntimeException($errorMessage !== '' ? $errorMessage : 'Echec de l’envoi de l’invitation WhatsApp.');

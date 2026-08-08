@@ -5,6 +5,7 @@ if ((string) ($datasession['type_user'] ?? '') !== '1') {
 }
 
 $photoDir = realpath(__DIR__ . '/../../photosevent') ?: (__DIR__ . '/../../photosevent');
+$generatedInvitationDir = realpath(__DIR__ . '/../../pages/fichiers') ?: (__DIR__ . '/../../pages/fichiers');
 $currentYear = (int) date('Y');
 $selectedYear = (int) ($_POST['cleanup_year'] ?? $_GET['year'] ?? $currentYear);
 $flash = null;
@@ -91,6 +92,17 @@ try {
             . (int) $cleanupResult['deleted_orphan_files'] . ' fichier(s) serveur supprime(s), '
             . count((array) ($cleanupResult['failed_orphan_files'] ?? [])) . ' echec(s).';
     }
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['run_generated_invitation_cleanup'])) {
+        if (trim((string) ($_POST['confirm_generated_invitation_cleanup'] ?? '')) !== 'SUPPRIMER') {
+            throw new RuntimeException('Tapez SUPPRIMER pour confirmer la suppression des invitations generees.');
+        }
+
+        $cleanupResult = GeneratedInvitationCleanupService::cleanup($pdo, $generatedInvitationDir);
+        $flash = 'Invitations generees nettoyees : '
+            . (int) $cleanupResult['deleted_files'] . ' PDF supprime(s), '
+            . count((array) ($cleanupResult['failed_files'] ?? [])) . ' echec(s).';
+    }
 } catch (Throwable $exception) {
     if ($isCleanupJsonRequest) {
         $sendCleanupJson(false, $exception->getMessage(), null, 500);
@@ -104,6 +116,7 @@ try {
     $summary = EventPhotoCleanupService::summarize($pdo, $photoDir, $selectedYear);
     $availableYears = EventPhotoCleanupService::availableYears($pdo);
     $eventPhotoGroups = EventPhotoCleanupService::eventPhotoGroupsByYear($pdo, $selectedYear);
+    $generatedInvitationSummary = GeneratedInvitationCleanupService::summarize($pdo, $generatedInvitationDir);
 } catch (Throwable $exception) {
     $summary = [
         'db_photo_count' => 0,
@@ -121,6 +134,14 @@ try {
     ];
     $availableYears = [];
     $eventPhotoGroups = [];
+    $generatedInvitationSummary = [
+        'total_pdf_count' => 0,
+        'total_pdf_bytes' => 0,
+        'referenced_template_count' => 0,
+        'generated_pdf_count' => 0,
+        'generated_pdf_bytes' => 0,
+        'generated_files' => [],
+    ];
     $flash = $flash ?? $exception->getMessage();
     $flashType = 'error';
 }
@@ -182,6 +203,11 @@ if (!in_array($selectedYear, $availableYears, true)) {
                         <span>Orphelins serveur total</span>
                         <strong><?php echo (int) $summary['server_orphan_count']; ?></strong>
                         <small><?php echo htmlspecialchars($formatBytes((int) $summary['server_orphan_bytes']), ENT_QUOTES, 'UTF-8'); ?></small>
+                    </article>
+                    <article class="cleanup-stat-card cleanup-stat-danger">
+                        <span>Invitations générées</span>
+                        <strong><?php echo (int) $generatedInvitationSummary['generated_pdf_count']; ?></strong>
+                        <small><?php echo htmlspecialchars($formatBytes((int) $generatedInvitationSummary['generated_pdf_bytes']), ENT_QUOTES, 'UTF-8'); ?></small>
                     </article>
                 </section>
 
@@ -314,6 +340,49 @@ if (!in_array($selectedYear, $availableYears, true)) {
                     </form>
                 </section>
 
+                <section class="cleanup-card cleanup-generated-card">
+                    <div class="cleanup-card-head cleanup-card-inline">
+                        <div>
+                            <h2>Vider les invitations PDF générées</h2>
+                            <p>Supprime les PDF temporaires générés pour les invités dans le dossier <strong><?php echo htmlspecialchars($generatedInvitationDir, ENT_QUOTES, 'UTF-8'); ?></strong>, sans toucher aux modèles PDF encore liés aux événements.</p>
+                        </div>
+                        <span class="cleanup-pill"><?php echo (int) $generatedInvitationSummary['generated_pdf_count']; ?> PDF</span>
+                    </div>
+
+                    <div class="cleanup-generated-grid">
+                        <article>
+                            <span>Total PDF dossier</span>
+                            <strong><?php echo (int) $generatedInvitationSummary['total_pdf_count']; ?></strong>
+                            <small><?php echo htmlspecialchars($formatBytes((int) $generatedInvitationSummary['total_pdf_bytes']), ENT_QUOTES, 'UTF-8'); ?></small>
+                        </article>
+                        <article>
+                            <span>Modèles protégés</span>
+                            <strong><?php echo (int) $generatedInvitationSummary['referenced_template_count']; ?></strong>
+                            <small>référencés par les événements</small>
+                        </article>
+                        <article>
+                            <span>PDF supprimables</span>
+                            <strong><?php echo (int) $generatedInvitationSummary['generated_pdf_count']; ?></strong>
+                            <small><?php echo htmlspecialchars($formatBytes((int) $generatedInvitationSummary['generated_pdf_bytes']), ENT_QUOTES, 'UTF-8'); ?></small>
+                        </article>
+                    </div>
+
+                    <form method="post" class="cleanup-generated-form">
+                        <input type="hidden" name="cleanup_year" value="<?php echo (int) $selectedYear; ?>">
+                        <input type="hidden" name="run_generated_invitation_cleanup" value="1">
+
+                        <div>
+                            <label for="confirm_generated_invitation_cleanup">Confirmation</label>
+                            <input type="text" id="confirm_generated_invitation_cleanup" name="confirm_generated_invitation_cleanup" placeholder="Tapez SUPPRIMER" autocomplete="off">
+                        </div>
+
+                        <button type="submit" class="cleanup-delete-button" <?php echo (int) $generatedInvitationSummary['generated_pdf_count'] <= 0 ? 'disabled' : ''; ?>>
+                            <i class="fa fa-trash" aria-hidden="true"></i>
+                            Supprimer les invitations générées
+                        </button>
+                    </form>
+                </section>
+
                 <section class="cleanup-card cleanup-table-card">
                     <div class="cleanup-card-head cleanup-card-inline">
                         <div>
@@ -372,6 +441,7 @@ body.fixed .cleanup-wrapper{height:auto!important;min-height:100vh!important;ove
 .cleanup-native-modal{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;background:rgba(15,23,42,.68);backdrop-filter:blur(8px);padding:18px}.cleanup-native-modal.is-visible{display:flex}.cleanup-native-dialog{width:min(440px,100%);border-radius:28px;background:#fff;padding:30px;box-shadow:0 30px 90px rgba(15,23,42,.35);text-align:center}.cleanup-native-icon{width:64px;height:64px;border-radius:22px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;background:#fee2e2;color:#dc2626;font-size:24px}.cleanup-native-dialog h3{margin:0 0 8px;color:#0f172a;font-weight:900}.cleanup-native-dialog p{margin:0 0 18px;color:#64748b;font-weight:700}.cleanup-native-progress-track{height:16px;border-radius:999px;background:#e2e8f0;overflow:hidden}.cleanup-native-progress-bar{height:100%;width:0%;border-radius:999px;background:linear-gradient(135deg,#dc2626,#f97316);transition:width .18s ease}.cleanup-native-dialog strong{display:block;margin-top:12px;font-size:24px;color:#0f172a;font-weight:900}
 .cleanup-event-card{margin-bottom:18px}.cleanup-event-form{display:grid;grid-template-columns:1.4fr .9fr .8fr auto;gap:12px;align-items:end}.cleanup-event-form label{display:block;margin-bottom:8px;font-weight:900;color:#334155}.cleanup-event-form select,.cleanup-event-form input[type=text]{width:100%;height:52px;border:1px solid #cbd5e1;border-radius:16px;padding:0 14px;font-weight:800;color:#0f172a;background:#fff}.cleanup-event-form .cleanup-check{margin:0;height:52px;align-items:center!important}.cleanup-event-form .cleanup-delete-button{height:52px;padding:0 18px}@media (max-width: 1200px){.cleanup-event-form{grid-template-columns:1fr 1fr}}@media (max-width: 768px){.cleanup-event-form{grid-template-columns:1fr}}
 .cleanup-orphan-card{margin-bottom:18px;background:linear-gradient(180deg,#fff 0%,#fff7ed 100%)}.cleanup-orphan-form{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end}.cleanup-orphan-form label{display:block;margin-bottom:8px;font-weight:900;color:#334155}.cleanup-orphan-form input[type=text]{width:100%;height:52px;border:1px solid #cbd5e1;border-radius:16px;padding:0 14px;font-weight:800;color:#0f172a;background:#fff}.cleanup-orphan-form .cleanup-delete-button{height:52px;padding:0 18px}@media (max-width: 768px){.cleanup-orphan-form{grid-template-columns:1fr}}
+.cleanup-generated-card{margin-bottom:18px;background:linear-gradient(180deg,#fff 0%,#fef2f2 100%)}.cleanup-generated-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:16px}.cleanup-generated-grid article{padding:16px;border-radius:18px;background:#fff;border:1px solid #fecaca}.cleanup-generated-grid span{display:block;color:#64748b;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.06em}.cleanup-generated-grid strong{display:block;margin-top:6px;font-size:30px;font-weight:900;color:#991b1b}.cleanup-generated-grid small{color:#64748b;font-weight:800}.cleanup-generated-form{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end}.cleanup-generated-form label{display:block;margin-bottom:8px;font-weight:900;color:#334155}.cleanup-generated-form input[type=text]{width:100%;height:52px;border:1px solid #cbd5e1;border-radius:16px;padding:0 14px;font-weight:800;color:#0f172a;background:#fff}.cleanup-generated-form .cleanup-delete-button{height:52px;padding:0 18px}@media (max-width: 768px){.cleanup-generated-grid,.cleanup-generated-form{grid-template-columns:1fr}}
 </style>
 
 <script>
