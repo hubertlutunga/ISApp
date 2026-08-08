@@ -71,6 +71,8 @@ final class EventPhotoCleanupService
             'db_photo_count' => self::totalDbPhotos($pdo),
             'server_file_count' => count($files),
             'server_file_bytes' => array_sum(array_map(static fn(array $file): int => (int) $file['size'], $files)),
+            'server_orphan_count' => count(self::orphanFiles($photoDir, $referencedNames)),
+            'server_orphan_bytes' => array_sum(array_map(static fn(array $file): int => (int) $file['size'], self::orphanFiles($photoDir, $referencedNames))),
             'year_db_count' => count($rows),
             'year_linked_existing_count' => $linkedExistingFiles,
             'year_missing_file_count' => $missingLinkedFiles,
@@ -240,6 +242,36 @@ final class EventPhotoCleanupService
         ];
     }
 
+    public static function cleanupAllOrphanFiles(PDO $pdo, string $photoDir): array
+    {
+        $referencedNames = self::referencedPhotoNames($pdo);
+        $orphanFiles = self::orphanFiles($photoDir, $referencedNames);
+        $deletedFiles = 0;
+        $deletedBytes = 0;
+        $failedFiles = [];
+
+        foreach ($orphanFiles as $orphanFile) {
+            $filePath = (string) ($orphanFile['path'] ?? '');
+            $fileName = (string) ($orphanFile['name'] ?? '');
+            $fileSize = (int) ($orphanFile['size'] ?? 0);
+
+            if ($filePath !== '' && is_file($filePath) && @unlink($filePath)) {
+                $deletedFiles++;
+                $deletedBytes += $fileSize;
+                continue;
+            }
+
+            $failedFiles[] = $fileName;
+        }
+
+        return [
+            'selected_orphan_files' => count($orphanFiles),
+            'deleted_orphan_files' => $deletedFiles,
+            'deleted_orphan_bytes' => $deletedBytes,
+            'failed_orphan_files' => $failedFiles,
+        ];
+    }
+
     private static function photoRowsByYear(PDO $pdo, int $year): array
     {
         $stmt = $pdo->prepare(
@@ -342,11 +374,23 @@ final class EventPhotoCleanupService
     {
         $orphanFiles = [];
 
-        foreach (self::imageFiles($photoDir) as $file) {
+        foreach (self::orphanFiles($photoDir, $referencedNames) as $file) {
             if ((int) date('Y', (int) $file['mtime']) !== $year) {
                 continue;
             }
 
+            $orphanFiles[] = $file;
+        }
+
+        usort($orphanFiles, static fn(array $left, array $right): int => ((int) $right['mtime']) <=> ((int) $left['mtime']));
+        return $orphanFiles;
+    }
+
+    private static function orphanFiles(string $photoDir, array $referencedNames): array
+    {
+        $orphanFiles = [];
+
+        foreach (self::imageFiles($photoDir) as $file) {
             if (isset($referencedNames[(string) $file['name']])) {
                 continue;
             }
