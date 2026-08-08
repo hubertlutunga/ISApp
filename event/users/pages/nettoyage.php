@@ -10,6 +10,20 @@ $selectedYear = (int) ($_POST['cleanup_year'] ?? $_GET['year'] ?? $currentYear);
 $flash = null;
 $flashType = 'success';
 $cleanupResult = null;
+$isCleanupJsonRequest = $_SERVER['REQUEST_METHOD'] === 'POST'
+    && isset($_POST['run_photo_cleanup'])
+    && (string) ($_POST['cleanup_ajax'] ?? '') === '1';
+
+$sendCleanupJson = static function (bool $success, string $message, ?array $result = null, int $statusCode = 200): void {
+    http_response_code($statusCode);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode([
+        'success' => $success,
+        'message' => $message,
+        'result' => $result,
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+};
 
 $formatBytes = static function (int $bytes): string {
     if ($bytes >= 1073741824) {
@@ -43,8 +57,16 @@ try {
         $flash = 'Nettoyage termine : ' . (int) $cleanupResult['deleted_db_rows'] . ' ligne(s) BDD supprimee(s), '
             . (int) $cleanupResult['deleted_server_files'] . ' fichier(s) lie(s) supprime(s), '
             . (int) $cleanupResult['deleted_orphan_files'] . ' fichier(s) orphelin(s) supprime(s).';
+
+        if ($isCleanupJsonRequest) {
+            $sendCleanupJson(true, $flash, $cleanupResult);
+        }
     }
 } catch (Throwable $exception) {
+    if ($isCleanupJsonRequest) {
+        $sendCleanupJson(false, $exception->getMessage(), null, 500);
+    }
+
     $flash = $exception->getMessage();
     $flashType = 'error';
 }
@@ -159,9 +181,10 @@ if (!in_array($selectedYear, $availableYears, true)) {
                         <form method="post" id="cleanupDeleteForm">
                             <input type="hidden" name="cleanup_year" value="<?php echo (int) $selectedYear; ?>">
                             <input type="hidden" name="run_photo_cleanup" value="1">
+                            <input type="hidden" name="cleanup_ajax" value="0" id="cleanupAjaxField">
 
                             <label class="cleanup-check">
-                                <input type="checkbox" name="delete_orphan_files" value="1">
+                                <input type="checkbox" name="delete_orphan_files" value="1" checked>
                                 <span>Supprimer aussi les fichiers orphelins du serveur pour <?php echo (int) $selectedYear; ?></span>
                             </label>
 
@@ -236,121 +259,201 @@ body.fixed .cleanup-wrapper{height:auto!important;min-height:100vh!important;ove
 
 <script>
 (function () {
-    function onReady(callback) {
+    function ready(callback) {
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', callback);
-            return;
+        } else {
+            callback();
         }
-
-        callback();
     }
 
-    onReady(function () {
+    ready(function () {
         var form = document.getElementById('cleanupDeleteForm');
         var input = document.getElementById('confirm_cleanup');
+        var ajaxField = document.getElementById('cleanupAjaxField');
         var modal = document.getElementById('cleanupProgressModal');
-        var bar = document.getElementById('cleanupProgressBar');
-        var label = document.getElementById('cleanupProgressLabel');
-        var progressTimer = null;
+        var nativeBar = document.getElementById('cleanupProgressBar');
+        var nativeLabel = document.getElementById('cleanupProgressLabel');
+        var timer = null;
         var percent = 0;
-        var isSubmitting = false;
+        var sending = false;
 
         if (!form) {
             return;
         }
 
         function setProgress(value) {
+            var swalBar;
+            var swalLabel;
+
             percent = Math.max(0, Math.min(100, Math.round(value)));
-            if (bar) {
-                bar.style.width = percent + '%';
+            if (nativeBar) {
+                nativeBar.style.width = percent + '%';
             }
-            if (label) {
-                label.innerHTML = percent + '%';
+            if (nativeLabel) {
+                nativeLabel.innerHTML = percent + '%';
+            }
+
+            swalBar = document.getElementById('swalCleanupProgressBar');
+            swalLabel = document.getElementById('swalCleanupProgressLabel');
+            if (swalBar) {
+                swalBar.style.width = percent + '%';
+            }
+            if (swalLabel) {
+                swalLabel.innerHTML = percent + '%';
             }
         }
 
-        function showProgress() {
+        function showLoading() {
             if (modal) {
                 modal.className = modal.className.replace(' is-visible', '') + ' is-visible';
                 modal.setAttribute('aria-hidden', 'false');
             }
 
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Suppression en cours',
+                    html: '<div style="height:14px;background:#e2e8f0;border-radius:999px;overflow:hidden;margin-top:12px;"><div id="swalCleanupProgressBar" style="height:100%;width:0%;background:linear-gradient(135deg,#dc2626,#f97316);transition:width .18s ease;"></div></div><div id="swalCleanupProgressLabel" style="margin-top:10px;font-weight:900;color:#0f172a;">0%</div>',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false
+                });
+            }
+
             setProgress(0);
-            progressTimer = window.setInterval(function () {
-                if (percent < 92) {
-                    setProgress(percent + Math.max(1, Math.round((95 - percent) / 10)));
+            timer = window.setInterval(function () {
+                if (percent < 94) {
+                    setProgress(percent + Math.max(1, Math.round((96 - percent) / 10)));
                 }
             }, 180);
         }
 
-        function finishProgress(callback) {
-            if (progressTimer !== null) {
-                window.clearInterval(progressTimer);
-                progressTimer = null;
-            }
-
-            setProgress(100);
-            window.setTimeout(callback, 350);
-        }
-
-        function failProgress(message) {
-            if (progressTimer !== null) {
-                window.clearInterval(progressTimer);
-                progressTimer = null;
-            }
-
+        function hideNativeLoading() {
             if (modal) {
                 modal.className = modal.className.replace(' is-visible', '');
                 modal.setAttribute('aria-hidden', 'true');
             }
-
-            alert(message || 'Une erreur est survenue pendant la suppression.');
-            isSubmitting = false;
         }
 
-        function classicSubmitAfterProgress() {
-            showProgress();
-            var classicTimer = window.setInterval(function () {
-                if (percent >= 100) {
-                    window.clearInterval(classicTimer);
-                    form.submit();
-                    return;
-                }
-                setProgress(percent + 8);
-            }, 120);
+        function finish(callback) {
+            if (timer !== null) {
+                window.clearInterval(timer);
+                timer = null;
+            }
+            setProgress(100);
+            window.setTimeout(callback, 350);
         }
 
-        function ajaxSubmit() {
+        function showError(message) {
+            if (timer !== null) {
+                window.clearInterval(timer);
+                timer = null;
+            }
+            hideNativeLoading();
+            sending = false;
+
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({title:'Suppression impossible', text:message, icon:'error', confirmButtonText:'OK'});
+            } else {
+                alert(message);
+            }
+        }
+
+        function reloadPage() {
+            window.location.href = 'index.php?page=nettoyage&year=' + encodeURIComponent(String(<?php echo (int) $selectedYear; ?>));
+        }
+
+        function submitWithAjax() {
             var xhr;
 
             if (!window.XMLHttpRequest || !window.FormData) {
-                classicSubmitAfterProgress();
+                if (ajaxField) {
+                    ajaxField.value = '0';
+                }
+                showLoading();
+                window.setTimeout(function () {
+                    form.submit();
+                }, 900);
                 return;
             }
 
-            showProgress();
+            if (ajaxField) {
+                ajaxField.value = '1';
+            }
+
+            showLoading();
+
             xhr = new XMLHttpRequest();
             xhr.open('POST', window.location.href, true);
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
             xhr.onreadystatechange = function () {
+                var payload;
+
                 if (xhr.readyState !== 4) {
                     return;
                 }
 
-                if (xhr.status >= 200 && xhr.status < 300) {
-                    finishProgress(function () {
-                        document.open();
-                        document.write(xhr.responseText);
-                        document.close();
-                    });
+                if (xhr.status < 200 || xhr.status >= 300) {
+                    showError('La suppression a échoué. Code HTTP ' + xhr.status + '.');
                     return;
                 }
 
-                failProgress('La suppression a échoué. Code HTTP ' + xhr.status + '.');
+                try {
+                    payload = JSON.parse(xhr.responseText);
+                } catch (error) {
+                    showError('Réponse serveur invalide pendant la suppression.');
+                    return;
+                }
+
+                if (!payload || !payload.success) {
+                    showError(payload && payload.message ? payload.message : 'La suppression a échoué.');
+                    return;
+                }
+
+                finish(function () {
+                    hideNativeLoading();
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            title: 'Nettoyage terminé',
+                            text: payload.message || 'Suppression terminée.',
+                            icon: 'success',
+                            confirmButtonText: 'OK'
+                        }).then(reloadPage);
+                    } else {
+                        alert(payload.message || 'Suppression terminée.');
+                        reloadPage();
+                    }
+                });
             };
             xhr.onerror = function () {
-                failProgress('La suppression a échoué. Vérifiez votre connexion puis réessayez.');
+                showError('La suppression a échoué. Vérifiez votre connexion puis réessayez.');
             };
             xhr.send(new FormData(form));
+        }
+
+        function askConfirmAndSubmit() {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Supprimer définitivement ?',
+                    text: 'Les photos ciblées seront supprimées dans la BDD et sur le serveur.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Oui, supprimer',
+                    cancelButtonText: 'Annuler',
+                    confirmButtonColor: '#dc2626'
+                }).then(function (result) {
+                    if (result.isConfirmed) {
+                        sending = true;
+                        submitWithAjax();
+                    }
+                });
+                return;
+            }
+
+            if (window.confirm('Supprimer définitivement les photos ciblées ?')) {
+                sending = true;
+                submitWithAjax();
+            }
         }
 
         form.onsubmit = function (event) {
@@ -360,21 +463,20 @@ body.fixed .cleanup-wrapper{height:auto!important;min-height:100vh!important;ove
                 event.preventDefault();
             }
 
-            if (isSubmitting) {
+            if (sending) {
                 return false;
             }
 
             if (String(confirmation).replace(/^\s+|\s+$/g, '') !== 'SUPPRIMER') {
-                alert('Tapez SUPPRIMER pour confirmer.');
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({title:'Confirmation requise', text:'Tapez SUPPRIMER pour confirmer.', icon:'warning', confirmButtonText:'OK'});
+                } else {
+                    alert('Tapez SUPPRIMER pour confirmer.');
+                }
                 return false;
             }
 
-            if (!window.confirm('Supprimer définitivement les photos ciblées ?')) {
-                return false;
-            }
-
-            isSubmitting = true;
-            ajaxSubmit();
+            askConfirmAndSubmit();
             return false;
         };
     });
