@@ -4,6 +4,10 @@ if (!class_exists('WhatsAppQuotaService')) {
     require_once dirname(__DIR__, 3) . '/src/Support/WhatsAppQuotaService.php';
 }
 
+if (!class_exists('GeneratedInvitationCleanupService')) {
+    require_once dirname(__DIR__, 3) . '/src/Support/GeneratedInvitationCleanupService.php';
+}
+
 if (!defined('ISAPP_TWILIO_WHATSAPP_FROM')) {
     define('ISAPP_TWILIO_WHATSAPP_FROM', 'whatsapp:+14787726313');
 }
@@ -516,6 +520,21 @@ if (!function_exists('isapp_whatsapp_sender_delete_public_pdf')) {
     }
 }
 
+if (!function_exists('isapp_whatsapp_sender_cleanup_old_public_pdfs')) {
+    function isapp_whatsapp_sender_cleanup_old_public_pdfs(PDO $pdo): void
+    {
+        try {
+            GeneratedInvitationCleanupService::cleanup(
+                $pdo,
+                dirname(__DIR__, 2) . '/pages/fichiers',
+                GeneratedInvitationCleanupService::DEFAULT_MIN_AGE_SECONDS
+            );
+        } catch (\Throwable $exception) {
+            // Le nettoyage ne doit jamais bloquer l'envoi WhatsApp.
+        }
+    }
+}
+
 if (!function_exists('isapp_whatsapp_sender_download_pdf')) {
     function isapp_whatsapp_sender_download_pdf(string $sourceUrl): string
     {
@@ -877,6 +896,7 @@ if (!function_exists('isapp_whatsapp_send_template_invitation')) {
         $filenameBase = isapp_whatsapp_sender_filename_base($event, $invite, $recipientName);
         $diskStem = isapp_whatsapp_sender_disk_stem($filenameBase);
         $encodedStem = isapp_whatsapp_sender_encoded_stem($filenameBase);
+        isapp_whatsapp_sender_cleanup_old_public_pdfs($pdo);
         $mediaUrl = isapp_whatsapp_sender_ensure_public_pdf($relativePdfLink, $diskStem, $encodedStem);
 
         $contentSid = isapp_whatsapp_sender_template_sid();
@@ -935,8 +955,6 @@ if (!function_exists('isapp_whatsapp_send_template_invitation')) {
             'date_envoi_whatsapp' => date('Y-m-d H:i:s'),
             'erreur_twilio' => $errorMessage,
         ]);
-
-        isapp_whatsapp_sender_delete_public_pdf($diskStem);
 
         if ($sendStatus !== 'sent') {
             throw new RuntimeException($errorMessage !== '' ? $errorMessage : 'Echec de l’envoi de l’invitation WhatsApp.');
