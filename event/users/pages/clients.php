@@ -302,12 +302,46 @@
   ?>
 
   <style>
+    :root {
+      --clients-ink-900: #0f172a;
+      --clients-ink-700: #334155;
+      --clients-ink-500: #64748b;
+      --clients-primary: #0f766e;
+      --clients-primary-soft: #ccfbf1;
+      --clients-accent: #0ea5e9;
+      --clients-danger: #b91c1c;
+      --clients-border: #dbe4f0;
+    }
+
+    .content-wrapper {
+      background:
+        radial-gradient(circle at 10% -10%, rgba(14, 165, 233, 0.16) 0%, rgba(255, 255, 255, 0) 42%),
+        radial-gradient(circle at 100% 0%, rgba(20, 184, 166, 0.12) 0%, rgba(255, 255, 255, 0) 45%),
+        linear-gradient(180deg, #f6fbff 0%, #ffffff 35%, #f8fafc 100%);
+    }
+
+    .salut {
+      margin-bottom: 8px;
+    }
+
+    .salut p {
+      margin: 0;
+      padding: 16px 18px;
+      border-radius: 14px;
+      border: 1px solid rgba(14, 165, 233, 0.22);
+      background: linear-gradient(90deg, rgba(14, 165, 233, 0.1) 0%, rgba(20, 184, 166, 0.08) 100%);
+      color: var(--clients-ink-700);
+      font-weight: 700;
+      letter-spacing: .01em;
+    }
+
     .clients-admin-card {
       border: 0;
       border-radius: 28px;
       overflow: hidden;
-      box-shadow: 0 22px 48px rgba(15, 23, 42, 0.08);
-      background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+      box-shadow: 0 24px 54px rgba(15, 23, 42, 0.1);
+      background: linear-gradient(180deg, #ffffff 0%, #f8fcff 52%, #f8fafc 100%);
+      border: 1px solid rgba(14, 165, 233, 0.16);
     }
 
     .clients-admin-toolbar {
@@ -348,6 +382,13 @@
       border: 1px solid #dbe4f0;
       background: #fff;
       color: #0f172a;
+    }
+
+    .clients-admin-filters:focus,
+    .clients-admin-form-grid input:focus,
+    .clients-admin-search input:focus {
+      border-color: var(--clients-accent);
+      box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.18);
     }
 
     .clients-admin-meta {
@@ -446,6 +487,21 @@
       background: #fff;
       padding: 10px;
       min-height: 320px;
+    }
+
+    .clients-chart-empty {
+      min-height: 260px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px dashed #cbd5e1;
+      border-radius: 12px;
+      color: #64748b;
+      font-size: 13px;
+      font-weight: 700;
+      background: linear-gradient(180deg, #fff 0%, #f8fafc 100%);
+      text-align: center;
+      padding: 12px;
     }
 
     .clients-analytics-chart--full {
@@ -584,7 +640,7 @@
 
     .clients-admin-table th:last-child,
     .clients-admin-table td:last-child {
-      width: 88px;
+      width: 112px;
     }
 
     .clients-admin-table thead th {
@@ -608,6 +664,18 @@
 
     .clients-admin-row.is-hidden {
       display: none;
+    }
+
+    .clients-admin-row.is-paged-out {
+      display: none;
+    }
+
+    .clients-admin-table tbody tr {
+      transition: background-color .18s ease;
+    }
+
+    .clients-admin-table tbody tr:hover {
+      background: #f8fbff;
     }
 
     .clients-admin-main {
@@ -636,6 +704,65 @@
     .clients-admin-actions {
       text-align: right;
       white-space: nowrap;
+    }
+
+    .clients-admin-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+      padding: 12px;
+      border: 1px solid var(--clients-border);
+      border-radius: 14px;
+      background: #fff;
+    }
+
+    .clients-admin-view-switch {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px;
+      border: 1px solid var(--clients-border);
+      border-radius: 12px;
+      background: #f8fafc;
+    }
+
+    .clients-admin-view-btn {
+      border: 0;
+      background: transparent;
+      color: var(--clients-ink-700);
+      font-size: 12px;
+      font-weight: 800;
+      border-radius: 9px;
+      padding: 8px 10px;
+    }
+
+    .clients-admin-view-btn.is-active {
+      background: linear-gradient(90deg, #0ea5e9 0%, #0f766e 100%);
+      color: #fff;
+      box-shadow: 0 10px 18px rgba(15, 118, 110, 0.22);
+    }
+
+    .clients-admin-sort-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-left: auto;
+    }
+
+    .clients-admin-sort-controls select {
+      min-width: 145px;
+      height: 40px;
+      border: 1px solid var(--clients-border);
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--clients-ink-700);
+      background: #fff;
+      padding: 0 10px;
     }
 
     .clients-admin-detail-grid {
@@ -1034,6 +1161,113 @@
       background: #dbeafe;
     }
 
+    .clients-admin-table-wrap.is-cards-view .clients-admin-table thead {
+      display: none;
+    }
+
+    .clients-admin-table-wrap.is-cards-view .clients-admin-table tbody {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      padding: 14px;
+    }
+
+    .clients-admin-table-wrap.is-cards-view .clients-admin-table tbody tr {
+      display: block;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      overflow: hidden;
+      background: #fff;
+      box-shadow: 0 10px 20px rgba(15, 23, 42, 0.06);
+    }
+
+    .clients-admin-table-wrap.is-cards-view .clients-admin-table tbody td {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      border-bottom: 1px solid #eef2f7;
+      text-align: left;
+    }
+
+    .clients-admin-table-wrap.is-cards-view .clients-admin-table tbody td:last-child {
+      border-bottom: 0;
+      width: auto;
+    }
+
+    .clients-admin-table-wrap.is-cards-view .clients-admin-table tbody td::before {
+      content: attr(data-label);
+      display: block;
+      color: #64748b;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-bottom: 8px;
+    }
+
+    .clients-admin-table-wrap.is-cards-view .clients-admin-actions {
+      text-align: left;
+    }
+
+    .clients-admin-js-pagination {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+      padding: 14px;
+      border: 1px solid var(--clients-border);
+      border-radius: 16px;
+      background: #fff;
+    }
+
+    .clients-admin-js-pagination[hidden] {
+      display: none;
+    }
+
+    .clients-admin-js-pagination-summary {
+      color: var(--clients-ink-500);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .clients-admin-js-pagination-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .clients-admin-js-page {
+      min-width: 38px;
+      height: 38px;
+      border-radius: 11px;
+      border: 1px solid #dbe4f0;
+      background: #fff;
+      color: var(--clients-ink-700);
+      font-size: 12px;
+      font-weight: 800;
+      padding: 0 10px;
+    }
+
+    .clients-admin-js-page:hover:not([disabled]) {
+      border-color: #93c5fd;
+      color: #0b4b8f;
+      background: #eff6ff;
+    }
+
+    .clients-admin-js-page.is-active {
+      border-color: #0f766e;
+      background: #0f766e;
+      color: #fff;
+    }
+
+    .clients-admin-js-page[disabled] {
+      opacity: .45;
+      cursor: not-allowed;
+    }
+
     .clients-admin-pagination {
       display: flex;
       align-items: center;
@@ -1111,6 +1345,10 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
+      .clients-admin-table-wrap.is-cards-view .clients-admin-table tbody {
+        grid-template-columns: 1fr;
+      }
+
       .clients-admin-detail-grid,
       .clients-admin-form-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1125,7 +1363,7 @@
 
       .clients-admin-table th:last-child,
       .clients-admin-table td:last-child {
-        width: 72px;
+        width: 84px;
       }
 
       .clients-admin-actions .btn {
@@ -1135,6 +1373,16 @@
 
       .clients-admin-stats {
         grid-template-columns: 1fr;
+      }
+
+      .clients-admin-sort-controls {
+        width: 100%;
+        margin-left: 0;
+      }
+
+      .clients-admin-sort-controls select {
+        min-width: 0;
+        width: 100%;
       }
 
       .clients-admin-detail-grid,
@@ -1847,12 +2095,39 @@ $salut = 'Bonsoir';
 
                 <p class="clients-admin-note">Astuce : la recherche agit deja sur le nom, l'email, le telephone et les codes d'evenements affiches.</p>
 
-                <div class="clients-admin-table-wrap">
+                <div class="clients-admin-controls">
+                  <div class="clients-admin-view-switch" role="group" aria-label="Basculer l affichage clients">
+                    <button type="button" class="clients-admin-view-btn is-active" id="clientsViewTableBtn">Vue tableau</button>
+                    <button type="button" class="clients-admin-view-btn" id="clientsViewCardsBtn">Vue cartes</button>
+                  </div>
+                  <div class="clients-admin-sort-controls">
+                    <select id="clientsSortColumn" title="Trier par">
+                      <option value="name">Tri: Nom</option>
+                      <option value="quota">Tri: Quota</option>
+                      <option value="sent">Tri: Envois</option>
+                      <option value="status">Tri: Statut</option>
+                    </select>
+                    <select id="clientsSortDirection" title="Ordre de tri">
+                      <option value="asc">Ordre: Croissant</option>
+                      <option value="desc">Ordre: Decroissant</option>
+                    </select>
+                    <select id="clientsPerPage" title="Elements par page">
+                      <option value="10">10 / page</option>
+                      <option value="25" selected>25 / page</option>
+                      <option value="50">50 / page</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="clients-admin-table-wrap" id="clientsAdminTableWrap">
                   <div class="table-responsive">
                     <table class="table clients-admin-table align-middle" id="clientsAdminGrid">
                       <thead>
                         <tr>
                           <th>Client</th>
+                          <th>Quota</th>
+                          <th>Envois</th>
+                          <th>Statut</th>
                           <th class="text-end">Actions</th>
                         </tr>
                       </thead>
@@ -1866,6 +2141,8 @@ $salut = 'Bonsoir';
                         $clientControl = (array) ($row_client['control'] ?? []);
                         $isClientBlocked = (string) ($clientControl['account_status'] ?? 'active') === 'blocked';
                         $isInvitationSuspended = !empty($clientControl['invitation_sending_suspended']);
+                        $statusRank = $isClientBlocked ? 3 : ($isInvitationSuspended ? 2 : 1);
+                        $statusLabel = $isClientBlocked ? 'Bloque' : ($isInvitationSuspended ? 'Suspendu' : 'Actif');
                         $detailModalId = 'clientDetailModal' . $clientId;
                         $editModalId = 'clientEditModal' . $clientId;
                         $deleteModalId = 'clientDeleteModal' . $clientId;
@@ -1874,8 +2151,15 @@ $salut = 'Bonsoir';
                           $clientSearchIndex .= ' ' . $formatSearchValue((string) ($clientEvent['event_label'] ?? '') . ' ' . (string) ($clientEvent['event_code'] ?? ''));
                         }
                     ?>
-                    <tr class="clients-admin-row" data-client-search="<?php echo htmlspecialchars($clientSearchIndex, ENT_QUOTES, 'UTF-8'); ?>">
-                      <td>
+                    <tr
+                      class="clients-admin-row"
+                      data-client-search="<?php echo htmlspecialchars($clientSearchIndex, ENT_QUOTES, 'UTF-8'); ?>"
+                      data-client-name="<?php echo htmlspecialchars($formatSearchValue($clientName), ENT_QUOTES, 'UTF-8'); ?>"
+                      data-total-quota="<?php echo (int) ($quotaOverview['total_quota'] ?? 0); ?>"
+                      data-sent-count="<?php echo (int) ($quotaOverview['sent_count'] ?? 0); ?>"
+                      data-status-rank="<?php echo (int) $statusRank; ?>"
+                    >
+                      <td data-label="Client">
                         <div class="clients-admin-main">
                           <strong><?php echo htmlspecialchars($clientName, ENT_QUOTES, 'UTF-8'); ?></strong>
                           <span class="clients-admin-sub">Compte client #<?php echo $clientId; ?></span>
@@ -1900,7 +2184,23 @@ $salut = 'Bonsoir';
                           <?php } ?>
                         </div>
                       </td>
-                      <td class="clients-admin-actions">
+                      <td data-label="Quota">
+                        <div class="clients-admin-statstack">
+                          <span><strong>Total:</strong> <?php echo (int) ($quotaOverview['total_quota'] ?? 0); ?></span>
+                          <span><strong>Restants:</strong> <?php echo (int) ($quotaOverview['remaining_quota'] ?? 0); ?></span>
+                        </div>
+                      </td>
+                      <td data-label="Envois">
+                        <div class="clients-admin-statstack">
+                          <span><strong><?php echo (int) ($quotaOverview['sent_count'] ?? 0); ?></strong> invitation(s)</span>
+                        </div>
+                      </td>
+                      <td data-label="Statut">
+                        <div class="clients-admin-badges">
+                          <span class="clients-admin-badge <?php echo $statusRank > 1 ? 'is-alert' : 'is-success'; ?>"><?php echo htmlspecialchars($statusLabel, ENT_QUOTES, 'UTF-8'); ?></span>
+                        </div>
+                      </td>
+                      <td data-label="Actions" class="clients-admin-actions">
                         <div class="dropdown">
                           <a href="#" class="waves-effect waves-light btn btn-outline btn-rounded btn-warning mb-0 btn-sm list-icons-item dropdown-toggle" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-h" style="font-size:18px;"></i></a>
                           <div class="dropdown-menu dropdown-menu-end">
@@ -2065,11 +2365,15 @@ $salut = 'Bonsoir';
                     </div>
                     <?php }
                     } else { ?>
-                    <tr id="clientsAdminEmptyRow"><td colspan="2"><div class="clients-admin-empty" id="clientsAdminEmpty">Aucun client ne correspond a votre recherche ou a votre filtre.</div></td></tr>
+                    <tr id="clientsAdminEmptyRow"><td colspan="5"><div class="clients-admin-empty" id="clientsAdminEmpty">Aucun client ne correspond a votre recherche ou a votre filtre.</div></td></tr>
                     <?php } ?>
                       </tbody>
                     </table>
                   </div>
+                </div>
+                <div class="clients-admin-js-pagination" id="clientsAdminJsPagination" hidden>
+                  <div class="clients-admin-js-pagination-summary" id="clientsAdminJsPaginationSummary"></div>
+                  <div class="clients-admin-js-pagination-actions" id="clientsAdminJsPaginationActions"></div>
                 </div>
                 <?php if ($filteredClientQuotaRows !== []) { ?>
                 <div class="clients-admin-empty" id="clientsAdminEmpty" style="display:none;">Aucun client ne correspond a la recherche en cours.</div>
@@ -2120,6 +2424,7 @@ $salut = 'Bonsoir';
     </div>
 </div>
 
+<script src="html/assets/vendor_components/apexcharts-bundle/dist/apexcharts.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   const dailyRows = <?php echo json_encode($analyticsDailyRows, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
@@ -2128,56 +2433,86 @@ document.addEventListener('DOMContentLoaded', function () {
   const lowQuotaRows = <?php echo json_encode($lowQuotaNotifications, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
   const quotaThreshold = <?php echo (int) $quotaThreshold; ?>;
 
-  if (typeof ApexCharts !== 'undefined') {
+  const chartNoData = function (elementId, message) {
+    const el = document.getElementById(elementId);
+    if (!el) {
+      return;
+    }
+    el.innerHTML = '<div class="clients-chart-empty">' + message + '</div>';
+  };
+
+  const parseNumber = function (value) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+
+  const initClientCharts = function () {
+    if (typeof ApexCharts === 'undefined') {
+      chartNoData('clientsDailyAreaChart', 'ApexCharts indisponible. Verifiez le chargement de la librairie.');
+      chartNoData('clientsMonthlyBarChart', 'ApexCharts indisponible. Verifiez le chargement de la librairie.');
+      chartNoData('clientsTopHorizontalChart', 'ApexCharts indisponible. Verifiez le chargement de la librairie.');
+      return;
+    }
+
     const dailyChartElement = document.getElementById('clientsDailyAreaChart');
     if (dailyChartElement) {
       const dailyLabels = dailyRows.map(function (row) { return String(row.day_key || ''); });
-      const dailySeries = dailyRows.map(function (row) { return Number(row.sent_count || 0); });
-      const dailyCostSeries = dailyRows.map(function (row) { return Number(row.cost_usd || 0); });
+      const dailySeries = dailyRows.map(function (row) { return parseNumber(row.sent_count || 0); });
+      const dailyCostSeries = dailyRows.map(function (row) { return parseNumber(row.cost_usd || 0); });
 
-      const dailyChart = new ApexCharts(dailyChartElement, {
-        chart: { type: 'area', height: 290, toolbar: { show: false } },
-        series: [
-          { name: 'Invitations', data: dailySeries },
-          { name: 'Cout USD', data: dailyCostSeries }
-        ],
-        dataLabels: { enabled: false },
-        stroke: { curve: 'smooth', width: [3, 2] },
-        colors: ['#2563eb', '#0f766e'],
-        fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.34, opacityTo: 0.05 } },
-        xaxis: { categories: dailyLabels },
-        yaxis: [
-          { title: { text: 'Invitations' } },
-          { opposite: true, title: { text: 'USD' } }
-        ],
-        title: { text: 'Tendance journaliere', align: 'left', style: { fontSize: '14px', fontWeight: '700' } },
-        grid: { borderColor: '#eef2f7' }
-      });
-      dailyChart.render();
+      if (dailySeries.length === 0) {
+        chartNoData('clientsDailyAreaChart', 'Aucune donnee journaliere disponible pour le moment.');
+      } else {
+        const dailyChart = new ApexCharts(dailyChartElement, {
+          chart: { type: 'area', height: 290, toolbar: { show: false } },
+          series: [
+            { name: 'Invitations', data: dailySeries },
+            { name: 'Cout USD', data: dailyCostSeries }
+          ],
+          dataLabels: { enabled: false },
+          stroke: { curve: 'smooth', width: [3, 2] },
+          colors: ['#0ea5e9', '#0f766e'],
+          fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.34, opacityTo: 0.05 } },
+          xaxis: { categories: dailyLabels },
+          yaxis: [
+            { title: { text: 'Invitations' } },
+            { opposite: true, title: { text: 'USD' } }
+          ],
+          title: { text: 'Tendance journaliere', align: 'left', style: { fontSize: '14px', fontWeight: '700' } },
+          grid: { borderColor: '#eef2f7' },
+          noData: { text: 'Aucune donnee' }
+        });
+        dailyChart.render();
+      }
     }
 
     const monthlyChartElement = document.getElementById('clientsMonthlyBarChart');
     if (monthlyChartElement) {
       const monthlyLabels = monthlyRows.map(function (row) { return String(row.month_key || ''); });
-      const monthlySeries = monthlyRows.map(function (row) { return Number(row.sent_count || 0); });
+      const monthlySeries = monthlyRows.map(function (row) { return parseNumber(row.sent_count || 0); });
 
-      const monthlyChart = new ApexCharts(monthlyChartElement, {
-        chart: { type: 'bar', height: 290, toolbar: { show: false } },
-        series: [{ name: 'Invitations', data: monthlySeries }],
-        colors: ['#0ea5e9'],
-        plotOptions: { bar: { borderRadius: 8, columnWidth: '46%' } },
-        dataLabels: { enabled: false },
-        xaxis: { categories: monthlyLabels },
-        title: { text: 'Volume mensuel', align: 'left', style: { fontSize: '14px', fontWeight: '700' } },
-        grid: { borderColor: '#eef2f7' }
-      });
-      monthlyChart.render();
+      if (monthlySeries.length === 0) {
+        chartNoData('clientsMonthlyBarChart', 'Aucune donnee mensuelle disponible pour le moment.');
+      } else {
+        const monthlyChart = new ApexCharts(monthlyChartElement, {
+          chart: { type: 'bar', height: 290, toolbar: { show: false } },
+          series: [{ name: 'Invitations', data: monthlySeries }],
+          colors: ['#0ea5e9'],
+          plotOptions: { bar: { borderRadius: 8, columnWidth: '46%' } },
+          dataLabels: { enabled: false },
+          xaxis: { categories: monthlyLabels },
+          title: { text: 'Volume mensuel', align: 'left', style: { fontSize: '14px', fontWeight: '700' } },
+          grid: { borderColor: '#eef2f7' },
+          noData: { text: 'Aucune donnee' }
+        });
+        monthlyChart.render();
+      }
     }
 
     const topChartElement = document.getElementById('clientsTopHorizontalChart');
     if (topChartElement && Array.isArray(topClientRows) && topClientRows.length > 0) {
       const topLabels = topClientRows.map(function (row) { return String(row.client_name || 'Client'); });
-      const topSeries = topClientRows.map(function (row) { return Number(row.sent_count || 0); });
+      const topSeries = topClientRows.map(function (row) { return parseNumber(row.sent_count || 0); });
 
       const topChart = new ApexCharts(topChartElement, {
         chart: { type: 'bar', height: 260, toolbar: { show: false } },
@@ -2187,11 +2522,16 @@ document.addEventListener('DOMContentLoaded', function () {
         dataLabels: { enabled: false },
         xaxis: { categories: topLabels },
         title: { text: 'Top clients consommation', align: 'left', style: { fontSize: '14px', fontWeight: '700' } },
-        grid: { borderColor: '#eef2f7' }
+        grid: { borderColor: '#eef2f7' },
+        noData: { text: 'Aucune donnee' }
       });
       topChart.render();
+    } else if (topChartElement) {
+      chartNoData('clientsTopHorizontalChart', 'Aucune donnee top clients pour cette vue.');
     }
-  }
+  };
+
+  initClientCharts();
 
   if (Array.isArray(lowQuotaRows) && lowQuotaRows.length > 0) {
     const alertFingerprint = lowQuotaRows
@@ -2220,29 +2560,190 @@ document.addEventListener('DOMContentLoaded', function () {
 
   const input = document.getElementById('clientSearchInput');
   const cards = Array.from(document.querySelectorAll('[data-client-search]'));
-  const emptyState = document.getElementById('clientsAdminEmpty');
+  const emptyStateCandidates = Array.from(document.querySelectorAll('#clientsAdminEmpty'));
+  const emptyState = emptyStateCandidates.length > 0 ? emptyStateCandidates[emptyStateCandidates.length - 1] : null;
   const visibleCounter = document.getElementById('clientsVisibleCounter');
+  const paginationRoot = document.getElementById('clientsAdminJsPagination');
+  const paginationSummary = document.getElementById('clientsAdminJsPaginationSummary');
+  const paginationActions = document.getElementById('clientsAdminJsPaginationActions');
+  const clientRows = Array.from(document.querySelectorAll('#clientsAdminGrid tbody .clients-admin-row'));
+  const tableWrap = document.getElementById('clientsAdminTableWrap');
+  const viewTableBtn = document.getElementById('clientsViewTableBtn');
+  const viewCardsBtn = document.getElementById('clientsViewCardsBtn');
+  const sortColumnSelect = document.getElementById('clientsSortColumn');
+  const sortDirectionSelect = document.getElementById('clientsSortDirection');
+  const perPageSelect = document.getElementById('clientsPerPage');
+  const gridBody = document.querySelector('#clientsAdminGrid tbody');
+  let perPage = 25;
+  let currentPage = 1;
+  let filteredRows = clientRows.slice();
+  let currentSortColumn = sortColumnSelect ? sortColumnSelect.value : 'name';
+  let currentSortDirection = sortDirectionSelect ? sortDirectionSelect.value : 'asc';
 
   if (!input || cards.length === 0 || !emptyState || !visibleCounter) {
     return;
   }
 
+  const applyView = function (mode) {
+    if (!tableWrap || !viewTableBtn || !viewCardsBtn) {
+      return;
+    }
+    const isCards = mode === 'cards';
+    tableWrap.classList.toggle('is-cards-view', isCards);
+    viewTableBtn.classList.toggle('is-active', !isCards);
+    viewCardsBtn.classList.toggle('is-active', isCards);
+  };
+
+  const getSortValue = function (row, column) {
+    if (column === 'quota') {
+      return Number(row.getAttribute('data-total-quota') || 0);
+    }
+    if (column === 'sent') {
+      return Number(row.getAttribute('data-sent-count') || 0);
+    }
+    if (column === 'status') {
+      return Number(row.getAttribute('data-status-rank') || 0);
+    }
+    return String(row.getAttribute('data-client-name') || '').toLocaleLowerCase();
+  };
+
+  const sortRows = function () {
+    const directionMultiplier = currentSortDirection === 'desc' ? -1 : 1;
+    filteredRows.sort(function (left, right) {
+      const leftValue = getSortValue(left, currentSortColumn);
+      const rightValue = getSortValue(right, currentSortColumn);
+
+      if (typeof leftValue === 'string' || typeof rightValue === 'string') {
+        return String(leftValue).localeCompare(String(rightValue)) * directionMultiplier;
+      }
+
+      if (leftValue === rightValue) {
+        return 0;
+      }
+
+      return (leftValue > rightValue ? 1 : -1) * directionMultiplier;
+    });
+
+    if (gridBody) {
+      filteredRows.forEach(function (row) {
+        gridBody.appendChild(row);
+      });
+    }
+  };
+
+  const renderClientPagination = function () {
+    if (!paginationRoot || !paginationSummary || !paginationActions) {
+      return;
+    }
+
+    const totalRows = filteredRows.length;
+    const totalPages = Math.max(1, Math.ceil(totalRows / perPage));
+    if (currentPage > totalPages) {
+      currentPage = totalPages;
+    }
+
+    const startIndex = (currentPage - 1) * perPage;
+    const endIndex = startIndex + perPage;
+
+    filteredRows.forEach(function (row, index) {
+      const isOnPage = index >= startIndex && index < endIndex;
+      row.classList.toggle('is-paged-out', !isOnPage);
+    });
+
+    const visibleStart = totalRows === 0 ? 0 : startIndex + 1;
+    const visibleEnd = totalRows === 0 ? 0 : Math.min(endIndex, totalRows);
+
+    paginationSummary.textContent = 'Affichage ' + visibleStart + '-' + visibleEnd + ' sur ' + totalRows + ' client(s).';
+    paginationActions.innerHTML = '';
+
+    paginationRoot.hidden = totalRows <= perPage;
+
+    const buildButton = function (label, page, disabled, active) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'clients-admin-js-page' + (active ? ' is-active' : '');
+      button.textContent = label;
+      if (disabled) {
+        button.disabled = true;
+      }
+      button.addEventListener('click', function () {
+        currentPage = page;
+        renderClientPagination();
+      });
+      paginationActions.appendChild(button);
+    };
+
+    buildButton('Prev', Math.max(1, currentPage - 1), currentPage === 1, false);
+
+    const pageWindowStart = Math.max(1, currentPage - 2);
+    const pageWindowEnd = Math.min(totalPages, currentPage + 2);
+    for (let pageNumber = pageWindowStart; pageNumber <= pageWindowEnd; pageNumber += 1) {
+      buildButton(String(pageNumber), pageNumber, false, pageNumber === currentPage);
+    }
+
+    buildButton('Next', Math.min(totalPages, currentPage + 1), currentPage === totalPages, false);
+  };
+
   const render = function () {
     const query = (input.value || '').toLocaleLowerCase();
     let visibleCount = 0;
+    filteredRows = [];
 
     cards.forEach(function (card) {
       const haystack = (card.getAttribute('data-client-search') || '').toLocaleLowerCase();
       const visible = query === '' || haystack.indexOf(query) !== -1;
       card.classList.toggle('is-hidden', !visible);
+      if (!visible) {
+        card.classList.remove('is-paged-out');
+      }
       if (visible) {
+        filteredRows.push(card);
         visibleCount += 1;
       }
     });
 
+    sortRows();
+    currentPage = 1;
+    renderClientPagination();
     visibleCounter.textContent = 'Visibles : ' + visibleCount;
     emptyState.style.display = visibleCount === 0 ? '' : 'none';
   };
+
+  if (viewTableBtn && viewCardsBtn) {
+    viewTableBtn.addEventListener('click', function () {
+      applyView('table');
+    });
+    viewCardsBtn.addEventListener('click', function () {
+      applyView('cards');
+    });
+  }
+
+  if (sortColumnSelect) {
+    sortColumnSelect.addEventListener('change', function () {
+      currentSortColumn = sortColumnSelect.value || 'name';
+      currentPage = 1;
+      render();
+    });
+  }
+
+  if (sortDirectionSelect) {
+    sortDirectionSelect.addEventListener('change', function () {
+      currentSortDirection = sortDirectionSelect.value || 'asc';
+      currentPage = 1;
+      render();
+    });
+  }
+
+  if (perPageSelect) {
+    perPageSelect.addEventListener('change', function () {
+      const selectedPerPage = Number(perPageSelect.value || 25);
+      perPage = selectedPerPage > 0 ? selectedPerPage : 25;
+      currentPage = 1;
+      renderClientPagination();
+    });
+  }
+
+  applyView('table');
 
   input.addEventListener('input', render);
   render();
