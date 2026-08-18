@@ -71,6 +71,13 @@ final class UserAccountService
             ];
         }
 
+        if ((string) ($user['type_user'] ?? '') === '2' && AdminClientManagementService::isClientBlocked($pdo, (int) ($user['cod_user'] ?? 0))) {
+            return [
+                'success' => false,
+                'message' => 'Votre compte est temporairement bloque. Contactez l administration.',
+            ];
+        }
+
         $_SESSION['user_phone'] = $user['phone'];
         $_SESSION['user_email'] = $user['email'];
 
@@ -697,6 +704,68 @@ final class UserAccountService
                 'phone' => $phone,
                 'email' => $email,
             ],
+        ];
+    }
+
+    public static function ensureLearnerAccount(PDO $pdo, string $name, string $email, string $phone): array
+    {
+        $name = trim($name) !== '' ? trim($name) : 'Apprenant';
+        $email = trim($email);
+        $phone = preg_replace('/\s+/', '', $phone);
+
+        if ($email === '' && $phone === '') {
+            return [
+                'success' => false,
+                'created' => false,
+                'message' => 'Email ou telephone requis pour creer le compte apprenant.',
+            ];
+        }
+
+        $whereParts = [];
+        $bindings = [];
+
+        if ($email !== '') {
+            $whereParts[] = 'email = :email';
+            $bindings['email'] = $email;
+        }
+
+        if ($phone !== '') {
+            $whereParts[] = 'phone = :phone';
+            $bindings['phone'] = $phone;
+        }
+
+        $stmt = $pdo->prepare('SELECT cod_user, noms, email, phone FROM is_users WHERE ' . implode(' OR ', $whereParts) . ' LIMIT 1');
+        $stmt->execute($bindings);
+        $existingUser = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+        if ($existingUser !== []) {
+            return [
+                'success' => true,
+                'created' => false,
+                'user_id' => (int) ($existingUser['cod_user'] ?? 0),
+                'message' => 'Compte apprenant deja existant.',
+            ];
+        }
+
+        if ($email === '') {
+            $email = 'apprenant-' . substr(sha1($phone . microtime(true)), 0, 12) . '@invitationspeciale.local';
+        }
+
+        if ($phone === '') {
+            $phone = '+000' . substr(preg_replace('/\D+/', '', sha1($email . microtime(true))), 0, 12);
+        }
+
+        $randomPassword = bin2hex(random_bytes(16));
+        $hashedPassword = password_hash($randomPassword, PASSWORD_DEFAULT);
+
+        $insertStmt = $pdo->prepare('INSERT INTO is_users (type_user, noms, phone, email, password, recpass) VALUES (?, ?, ?, ?, ?, ?)');
+        $insertStmt->execute(['2', $name, $phone, $email, $hashedPassword, null]);
+
+        return [
+            'success' => true,
+            'created' => true,
+            'user_id' => (int) $pdo->lastInsertId(),
+            'message' => 'Compte apprenant cree.',
         ];
     }
 

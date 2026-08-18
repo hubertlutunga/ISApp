@@ -1223,10 +1223,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <span class="input-group-text bg-transparent"><i class="fas fa-ring"></i></span>
           <select class="form-control ps-15 bg-transparent" name="weddingType" id="weddingType">
             <option value="">-- Sélectionner --</option>
-            <option value="Coutumier" <?php if (($_POST['weddingType'] ?? '') === 'Coutumier') { echo 'selected'; } ?>>Mariage Coutumier</option>
-            <option value="Civil" <?php if (($_POST['weddingType'] ?? '') === 'Civil') { echo 'selected'; } ?>>Mariage Civil</option>
-            <option value="Religieux" <?php if (($_POST['weddingType'] ?? '') === 'Religieux') { echo 'selected'; } ?>>Mariage religieux</option>
+            <option value="Coutumier" <?php if (($_POST['weddingType'] ?? '') === 'Coutumier') { echo 'selected'; } ?>>Mariage coutumier</option>
+            <option value="Civil" <?php if (($_POST['weddingType'] ?? '') === 'Civil') { echo 'selected'; } ?>>Mariage civil</option>
+            <option value="bénédiction nuptiale" <?php if (($_POST['weddingType'] ?? '') === 'bénédiction nuptiale') { echo 'selected'; } ?>>Bénédiction nuptiale</option>
             <option value="Soirée dansante" <?php if (($_POST['weddingType'] ?? '') === 'Soirée dansante') { echo 'selected'; } ?>>Soirée dansante</option>
+            <option value="dîner" <?php if (($_POST['weddingType'] ?? '') === 'dîner') { echo 'selected'; } ?>>Dîner</option>
           </select>
         </div>
       </div>

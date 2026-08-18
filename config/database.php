@@ -17,7 +17,7 @@ $databaseConfig = [
     'name' => getenv('ISAPP_DB_NAME') ?: 'invizfxg_is',
     'charset' => getenv('ISAPP_DB_CHARSET') ?: 'utf8mb4',
     'user' => getenv('ISAPP_DB_USER') ?: ($isCpanelProduction ? 'invizfxg_hubert' : 'root'),
-    'password' => getenv('ISAPP_DB_PASSWORD') ?: '',
+    'password' => getenv('ISAPP_DB_PASSWORD') ?: 'Root_2023',
     'display_errors' => getenv('ISAPP_DISPLAY_ERRORS') === '1' || !$isCpanelProduction,
 ];
 

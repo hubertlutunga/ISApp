@@ -1,22 +1,21 @@
  
         
   <?php
-  
-    if(!$dataevent['photo']){
-        $bg = 'defaulwed_1.png';
-    }else{
-        $bg = $dataevent['photo'];
-    }
-  
+
+    $bg = empty($dataevent['photo']) ? 'defaulwed_1.png' : $dataevent['photo'];
+    $tableCode = isset($_GET['table']) && is_scalar($_GET['table']) ? (string) $_GET['table'] : '';
+    $selectedMenuOption = isset($_POST['menu_option']) && is_scalar($_POST['menu_option']) ? (string) $_POST['menu_option'] : '';
+    $selectedInvite = isset($_POST['invite']) && is_scalar($_POST['invite']) ? (string) $_POST['invite'] : '';
+
   ?>  
   <div class="aheto-titlebar aheto-titlebar--restaurant aheto-titlebar--height-500">
     <div class="aheto-titlebar__main   ">
-      <img class="js-bg" alt="" src="../couple/images/<?php echo $bg; ?>">
+      <img class="js-bg" alt="" src="../couple/images/<?php echo htmlspecialchars($bg, ENT_QUOTES, 'UTF-8'); ?>">
       <div class="aheto-titlebar__content w-1000">
         <div class="aheto-titlebar__text ">
           <p class="aheto-titlebar__subtitle t-white   t-medium t-center t-uppercase">Menu</p>
-          <h1 class="aheto-titlebar__title  t-white t-semibold t-center  large-size"><?php echo $typeevent;?> </h1>
-          <h1 class="aheto-titlebar__title  t-white t-center  large-size" style="font-family: 'Great Vibes', cursive;margin-top:15px;"><?php echo $fetard;?> </h1>
+          <h1 class="aheto-titlebar__title  t-white t-semibold t-center  large-size"><?php echo htmlspecialchars($typeevent, ENT_QUOTES, 'UTF-8');?> </h1>
+          <h1 class="aheto-titlebar__title  t-white t-center  large-size" style="font-family: 'Great Vibes', cursive;margin-top:15px;"><?php echo htmlspecialchars($fetard, ENT_QUOTES, 'UTF-8');?> </h1>
         </div>
       </div>
     </div>
@@ -42,16 +41,25 @@
 
 if(isset($_POST['submit'])){
 
-    $menu_option = @$_POST['menu_option']; 
-    $codevent = $_GET['cod']; 
-    $table = $_GET['table'];  
-    $invite = @$_POST['invite'];  
+  $menu_option = trim((string) $selectedMenuOption); 
+  $codevent = (string) ($codevent ?? ($_GET['cod'] ?? '')); 
+  $table = trim((string) $tableCode);  
+  $invite = trim((string) $selectedInvite);  
     
-    if (!$menu_option) {
+  if (!$table) {
+    echo '<script>
+    Swal.fire({
+      title: "Table introuvable !",
+      text: "Veuillez scanner à nouveau le QR code de votre table.",
+      icon: "warning",
+      confirmButtonText: "OK"
+    });
+    </script>';
+  } elseif (!$menu_option) {
         echo '<script>
         Swal.fire({
-            title: "Quelle boisson !",
-            text: "Veuillez sélectionner une boisson.",
+      title: "Quel menu !",
+      text: "Veuillez sélectionner un élément du menu.",
             icon: "warning",
             confirmButtonText: "OK"
         });
@@ -82,7 +90,8 @@ if(isset($_POST['submit'])){
 
               
                       // Exécutez la requête d'insertion
-                      if ($q->execute()) {
+                        if ($q->execute()) {
+                          $redirectUrl = 'index.php?page=accueil&cod=' . rawurlencode($codevent) . '&table=' . rawurlencode($table);
                           echo '<script>
                           Swal.fire({
                               title: "Commande !",
@@ -91,7 +100,7 @@ if(isset($_POST['submit'])){
                               confirmButtonText: "OK"
                           }).then((result) => {
                               if (result.isConfirmed) {
-                                  window.location.href = "index.php?page=accueil&cod=' . $codevent . '&table=' . htmlspecialchars($_GET['table']) . '"; // Rédirection vers la page de détails
+                                window.location.href = ' . json_encode($redirectUrl) . ';
                               }
                           });
                           </script>';
@@ -117,38 +126,21 @@ if(isset($_POST['submit'])){
 
 <style>
 
-  .aht-pricing__lin {
+    .aht-pricing__line {
     border: 2px solid transparent;
     padding: 10px;
     border-radius: 5px;
     transition: border-color 0.3s;
+    cursor: pointer;
 }
 
-.aht-pricing__lin.selected {
+  .aht-pricing__line.selected {
     border-color: #007bff; /* Couleur de la bordure lorsqu'il est sélectionné */
     background-color: #f0f8ff; /* Couleur de fond pour mettre en valeur */
 }
 
 
 </style>
-
-
-<script>
-document.querySelectorAll('input[name="menu_option"]').forEach((radio) => {
-    radio.addEventListener('change', function() {
-        // Retirer la classe 'selected' de tous les éléments <li>
-        document.querySelectorAll('.aht-pricing__lin').forEach((li) => {
-            li.classList.remove('selected');
-        });
-
-        // Ajouter la classe 'selected' au parent <li> du radio sélectionné
-        const parentLi = this.closest('.aht-pricing__lin');
-        if (parentLi) {
-            parentLi.classList.add('selected');
-        }
-    });
-});
-</script>
 
       <div class="row">
         <div class="col-md-12 offset-md-1">
@@ -173,14 +165,13 @@ document.querySelectorAll('input[name="menu_option"]').forEach((radio) => {
     foreach ($menuCategories as $categoryId) {
 
   $nomcat = MenuCatalogService::findCategoryName($pdo, (string) $categoryId);
+  $nomcat = $nomcat ?: 'Autres';
  
 
 
 
 ?>
-
-
-              <h4 class="aht-pricing__title"><?php echo  strtoupper($nomcat);?></h4>
+              <h4 class="aht-pricing__title"><?php echo htmlspecialchars(strtoupper($nomcat), ENT_QUOTES, 'UTF-8');?></h4>
               <span class="aht-pricing__desc"></span>
               <ul class="aht-pricing__list"> 
 <hr>
@@ -199,6 +190,8 @@ if (!empty($menusByCategory)) {
         // Récupération du nom de la catégorie
      
 $desc = $row_menu2['desc_menu'] ?? '';
+$menuId = (string) ($row_menu2['cod_mev'] ?? '');
+$menuInputId = 'menu_' . preg_replace('/[^A-Za-z0-9_-]/', '_', $menuId);
 
 if (!$desc) {
     $descmenu = 'Aucune description pour '.$row_menu2['nom'];
@@ -210,22 +203,21 @@ if (!$desc) {
 ?>
  
    
-    <li class="aht-pricing__lin" style="height:100px;"> 
+    <li class="aht-pricing__line" style="min-height:100px;"> 
       <div class="aht-pricing__price-ultraWrap">
         <div class="aht-pricing__price-wrap">
-          <span class="aht-pricing__per" onclick="selectRadio('<?php echo htmlspecialchars($row_menu2['cod_mev']); ?>')"><?php echo htmlspecialchars($row_menu2['nom']); ?></span>
+          <span class="aht-pricing__per" onclick="selectRadio(<?php echo htmlspecialchars(json_encode($menuId), ENT_QUOTES, 'UTF-8'); ?>)"><?php echo htmlspecialchars($row_menu2['nom'], ENT_QUOTES, 'UTF-8'); ?></span>
           <span class="aht-pricing__price">$ 0</span>
         </div>
-        <div class="aht-pricing__composition" style="margin-top:5px;" onclick="selectRadio('<?php echo htmlspecialchars($row_menu2['cod_mev']); ?>')"><?php echo htmlspecialchars($descmenu); ?></div>
+        <div class="aht-pricing__composition" style="margin-top:5px;" onclick="selectRadio(<?php echo htmlspecialchars(json_encode($menuId), ENT_QUOTES, 'UTF-8'); ?>)"><?php echo htmlspecialchars($descmenu, ENT_QUOTES, 'UTF-8'); ?></div>
         <div>
-          <input type="radio" name="menu_option" value="<?php echo htmlspecialchars($row_menu2['cod_mev']); ?>" 
-            <?php echo (isset($_POST['submit']) && @$_POST['menu_option'] == $row_menu2['cod_mev']) ? 'checked' : ''; ?> 
-            id="menu_<?php echo $row_menu2['cod_mev']; ?>">
-          <label for="menu_<?php echo $row_menu2['cod_mev']; ?>"> Sélectionner</label>
+          <input type="radio" name="menu_option" value="<?php echo htmlspecialchars($menuId, ENT_QUOTES, 'UTF-8'); ?>" 
+            <?php echo ($selectedMenuOption == $menuId) ? 'checked' : ''; ?> 
+            id="<?php echo htmlspecialchars($menuInputId, ENT_QUOTES, 'UTF-8'); ?>">
+          <label for="<?php echo htmlspecialchars($menuInputId, ENT_QUOTES, 'UTF-8'); ?>"> Sélectionner</label>
         </div>
       </div>
     </li>
-    <hr>
 <hr> 
    
  
@@ -235,14 +227,19 @@ if (!$desc) {
 
     } 
 
-
-    }
-
-    } 
-
 ?>
 
               </ul>
+
+<?php
+
+    }
+
+    } else {
+      echo '<p class="t-center">Aucun élément du menu n’est disponible pour cet événement.</p>';
+    }
+
+?>
             </div>
 
  
@@ -255,55 +252,43 @@ if (!$desc) {
 
 
 
-<style>
-.aht-pricing__lin {
-    border: 2px solid transparent;
-    padding: 10px;
-    border-radius: 5px;
-    transition: border-color 0.3s;
-}
-
-.aht-pricing__lin.selected {
-    border-color: #007bff; /* Couleur de la bordure lorsqu'il est sélectionné */
-    background-color: #f0f8ff; /* Couleur de fond pour mettre en valeur */
-}
-</style>
-
 <script>
-function selectRadio(value) {
-    const radio = document.querySelector(`input[name="menu_option"][value="${value}"]`);
-    if (radio) {
-        radio.checked = true; // Sélectionne le bouton radio
-        const parentLi = radio.closest('.aht-pricing__lin');
-        
-        // Retirer la classe 'selected' de tous les éléments <li>
-        document.querySelectorAll('.aht-pricing__lin').forEach((li) => {
-            li.classList.remove('selected');
-        });
-
-        // Ajouter la classe 'selected' au parent <li>
-        if (parentLi) {
-            parentLi.classList.add('selected');
-        }
-    }
-}
-
-document.querySelectorAll('input[name="menu_option"]').forEach((radio) => {
-    radio.addEventListener('change', function() {
-        document.querySelectorAll('.aht-pricing__lin').forEach((li) => {
-            li.classList.remove('selected');
-        });
-
-        const parentLi = this.closest('.aht-pricing__lin');
-        if (parentLi) {
-            parentLi.classList.add('selected');
-        }
+(function() {
+  function markSelected(radio) {
+    document.querySelectorAll('.aht-pricing__line').forEach((li) => {
+      li.classList.remove('selected');
     });
-});
+
+    const parentLi = radio.closest('.aht-pricing__line');
+    if (parentLi) {
+      parentLi.classList.add('selected');
+    }
+  }
+
+  window.selectRadio = function(value) {
+    const radio = Array.from(document.querySelectorAll('input[name="menu_option"]')).find((item) => item.value === String(value));
+    if (radio) {
+      radio.checked = true;
+      markSelected(radio);
+    }
+  };
+
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('input[name="menu_option"]').forEach((radio) => {
+      radio.addEventListener('change', function() {
+        markSelected(this);
+      });
+
+      if (radio.checked) {
+        markSelected(radio);
+      }
+    });
+  });
+})();
 </script>
 
 
-		 <?php if (!isset($_GET['table'])){
+		 <?php if ($tableCode === ''){
 
       $displayvue = 'display:none;';
       }else{
@@ -317,15 +302,15 @@ document.querySelectorAll('input[name="menu_option"]').forEach((radio) => {
     <div class="rest-reservation-container rest-reservation-container_bottom">
       <div class="rest-reservation-order">
         <div class="aheto-heading t-center aheto-heading--restaurant-contact">
-          <h2 class="aheto-heading__title    f-style-italic    f-40  t-bold ">Thanks For the Reservation</h2>
-          <p class="aheto-heading__desc   ">Your application has been accepted, the confirmation will come to the email you specified</p>
+          <h2 class="aheto-heading__title    f-style-italic    f-40  t-bold ">Merci pour votre commande</h2>
+          <p class="aheto-heading__desc   ">Sélectionnez votre nom et l’élément du menu souhaité.</p>
         </div>
         <div class="aheto-single-img   ">
           <img src="../img/restaurant/pepper.jpg" class="  " alt="single img">
         </div>
       </div>
       <div class="aheto-heading t-center aheto-heading--restaurant-contact">
-        <h2 class="aheto-heading__title    f-style-italic    f-40  t-bold ">Commande une boisson</h2>
+        <h2 class="aheto-heading__title    f-style-italic    f-40  t-bold ">Commander un menu</h2>
         <p class="aheto-heading__desc   ">Une sélection par commande</p>
       </div>
 
@@ -346,11 +331,14 @@ document.querySelectorAll('input[name="menu_option"]').forEach((radio) => {
 <?php 
 
 
-            $codtabele = $_GET['table'];
-            $reqtab = "SELECT * FROM tableevent WHERE cod_tab = :cod_tab AND cod_event = :cod_event";
-            $reqtab = $pdo->prepare($reqtab);
-            $reqtab->execute([':cod_tab' => $codtabele, ':cod_event' => $codevent]);
-            $row_tab = $reqtab->fetch(PDO::FETCH_ASSOC);
+            $codtabele = $tableCode;
+            $row_tab = null;
+            if ($codtabele !== '') {
+              $reqtab = "SELECT * FROM tableevent WHERE cod_tab = :cod_tab AND cod_event = :cod_event";
+              $reqtab = $pdo->prepare($reqtab);
+              $reqtab->execute([':cod_tab' => $codtabele, ':cod_event' => $codevent]);
+              $row_tab = $reqtab->fetch(PDO::FETCH_ASSOC);
+            }
 
             $nomtable = $row_tab ? $row_tab['nom_tab'] : 'Non définie';
                             
@@ -358,7 +346,7 @@ document.querySelectorAll('input[name="menu_option"]').forEach((radio) => {
 
 
             <div class="col-12 col-md-6 col-lg-4 wpcf7-form-control-wrap input-icon input-icon-th-large">
-               <input type="text" disabled name="table" value="<?php echo 'Table '.$nomtable;?>" size="40" class="wpcf7-form-control wpcf7-text wpcf7-tel wpcf7-validates-as-tel" aria-invalid="false" placeholder="Table" required>
+               <input type="text" disabled name="table" value="<?php echo htmlspecialchars('Table '.$nomtable, ENT_QUOTES, 'UTF-8');?>" size="40" class="wpcf7-form-control wpcf7-text wpcf7-tel wpcf7-validates-as-tel" aria-invalid="false" placeholder="Table" required>
             </div> 
 
             <div class="col-12 col-md-6 col-lg-4 wpcf7-form-control-wrap input-icon input-icon-persons"> 
@@ -367,11 +355,15 @@ document.querySelectorAll('input[name="menu_option"]').forEach((radio) => {
                                             <option style="color:#eee;" value="">Votre Nom</option>
                                             <?php 
                                             
-                              $reqinv="SELECT * FROM invite where cod_mar = '$codevent' and siege = '$codtabele' ORDER by nom ASC";
-                              $inv=$pdo->query($reqinv); 
-                                            while ($row_inv=$inv->fetch()) {
+                              $invites = [];
+                              if ($codtabele !== '') {
+                                $reqinv = $pdo->prepare("SELECT id_inv, nom FROM invite WHERE cod_mar = :cod_mar AND siege = :siege ORDER BY nom ASC");
+                                $reqinv->execute([':cod_mar' => $codevent, ':siege' => $codtabele]);
+                                $invites = $reqinv->fetchAll(PDO::FETCH_ASSOC);
+                              }
+                                            foreach ($invites as $row_inv) {
                                             ?>
-                                            <option value="<?php echo $row_inv['id_inv']?>" <?php if(@$_POST['invite'] == $row_inv['id_inv']){echo "selected";} ?>><?php echo $row_inv['nom']?></option>
+                                            <option value="<?php echo htmlspecialchars($row_inv['id_inv'], ENT_QUOTES, 'UTF-8')?>" <?php if($selectedInvite == $row_inv['id_inv']){echo "selected";} ?>><?php echo htmlspecialchars($row_inv['nom'], ENT_QUOTES, 'UTF-8')?></option>
                                             <?php } ?>  
               </select>
             

@@ -2,23 +2,18 @@
 
 require __DIR__ . '/../bootstrap/app.php';
 
-$codevent = $_GET['cod'];
+$codevent = isset($_GET['cod']) && is_scalar($_GET['cod']) ? (string) $_GET['cod'] : '';
+$dataevent = null;
 
-$stmt2 = $pdo->prepare("SELECT * from events WHERE cod_event = :cod_event");
-$stmt2->execute([
-    'cod_event' => $codevent
-]); 
-$dataevent = $stmt2->fetch(); 
-
- 
-
-
-if (!$dataevent['icone']) {
-	$favicon = '../images/Logo_invitationSpeciale_2.png';
-}else {
-	$favicon = '../couple/images/'.$dataevent['icone'];
+if ($codevent !== '') {
+  $stmt2 = $pdo->prepare("SELECT * from events WHERE cod_event = :cod_event");
+  $stmt2->execute([
+      'cod_event' => $codevent
+  ]); 
+  $dataevent = $stmt2->fetch(PDO::FETCH_ASSOC); 
 }
 
+ 
 
 
 if (!$dataevent) {
@@ -27,6 +22,7 @@ if (!$dataevent) {
 	$type_event = '';
 	$lieu = '';
 	$display = 'none';
+  $favicon = '../images/Logo_invitationSpeciale_2.png';
 } else {  
 	
 	$codevent = $dataevent['cod_event'];
@@ -34,13 +30,17 @@ if (!$dataevent) {
 	$type_event = $dataevent['type_event'];
 	$lieu = $dataevent['lieu'];
 	$display = 'block';
+  $favicon = empty($dataevent['icone']) ? '../images/Logo_invitationSpeciale_2.png' : '../couple/images/'.$dataevent['icone'];
 }
 
 //--------------------------------
 
-$stmtnv = $pdo->prepare("SELECT * FROM evenement WHERE cod_event = ?");
-$stmtnv->execute([$type_event]); // Correction ici pour utiliser $codevent
-$data_evenement = $stmtnv->fetch();
+$data_evenement = '';
+if ($type_event !== '') {
+  $stmtnv = $pdo->prepare("SELECT * FROM evenement WHERE cod_event = ?");
+  $stmtnv->execute([$type_event]); // Correction ici pour utiliser $codevent
+  $data_evenement = $stmtnv->fetch(PDO::FETCH_ASSOC);
+}
 
 if (!$data_evenement) {
 	$data_evenement = ''; 
@@ -70,6 +70,10 @@ if ($type_event == "1") {
     $typeevent = $data_evenement;
     $fetard = $dataevent['nomfetard'] ?? 'Inconnu';
 	$displayvue = 'display:none;';
+} else {
+  $typeevent = $data_evenement ?: 'Événement';
+  $fetard = $dataevent['nomfetard'] ?? 'Inconnu';
+  $displayvue = 'display:none;';
 }
 
  $fetard = ucwords(strtolower($fetard));

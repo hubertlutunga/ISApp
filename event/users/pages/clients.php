@@ -4,22 +4,129 @@
   $quotaFlash = null;
   $clientFlash = null;
   $currentAdminUser = UserAccountService::currentSessionUser($pdo) ?? [];
+  $currentAdminUserId = (int) ($currentAdminUser['cod_user'] ?? 0);
+
+  if ((string) ($currentAdminUser['type_user'] ?? '') !== '1') {
+    PageRouter::redirect('index.php?page=logout');
+  }
+
+  AdminClientManagementService::ensureControlTable($pdo);
+  WhatsAppQuotaService::ensureTable($pdo);
+
+  if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_client_submit'])) {
+    $submittedPassword = trim((string) ($_POST['password'] ?? ''));
+    $generatedPassword = '';
+
+    if ($submittedPassword === '') {
+      $generatedPassword = 'ISapp!' . bin2hex(random_bytes(4));
+      $_POST['password'] = $generatedPassword;
+      $_POST['confirm_password'] = $generatedPassword;
+    }
+
+    $result = UserAccountService::registerCustomer(
+      $pdo,
+      [
+        'noms' => (string) ($_POST['noms'] ?? ''),
+        'phone' => (string) ($_POST['phone'] ?? ''),
+        'email' => (string) ($_POST['email'] ?? ''),
+        'password' => (string) ($_POST['password'] ?? ''),
+        'confirm_password' => (string) ($_POST['confirm_password'] ?? ''),
+        'type_user' => '2',
+      ],
+      isset($mail) ? $mail : null,
+      isset($isAppConfig) && is_array($isAppConfig) ? $isAppConfig : []
+    );
+
+    if (!empty($result['success'])) {
+      $createdPhone = (string) (($result['user']['phone'] ?? '') ?: ($_POST['phone'] ?? ''));
+      $createdUserStmt = $pdo->prepare('SELECT cod_user FROM is_users WHERE phone = ? LIMIT 1');
+      $createdUserStmt->execute([$createdPhone]);
+      $createdUserId = (int) $createdUserStmt->fetchColumn();
+      $createdUserStmt->closeCursor();
+
+      if ($createdUserId > 0) {
+        AdminClientManagementService::ensureClientControl($pdo, $createdUserId);
+      }
+    }
+
+    $clientFlashMessage = (string) ($result['message'] ?? 'Operation terminee.');
+    if (!empty($result['success']) && $generatedPassword !== '') {
+      $clientFlashMessage .= ' Mot de passe provisoire: ' . $generatedPassword;
+    }
+
+    $clientFlash = [
+      'type' => !empty($result['success']) ? 'success' : 'danger',
+      'message' => $clientFlashMessage,
+    ];
+  }
+
+  if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_block_client_id'])) {
+    $targetClientId = (int) $_POST['toggle_block_client_id'];
+    $blockState = (int) ($_POST['block_state'] ?? 0) === 1;
+    $reason = trim((string) ($_POST['control_reason'] ?? ''));
+
+    try {
+      AdminClientManagementService::setClientBlocked($pdo, $currentAdminUserId, $targetClientId, $blockState, $reason);
+      $clientFlash = [
+        'type' => 'success',
+        'message' => $blockState ? 'Le client a ete bloque.' : 'Le client a ete reactive.',
+      ];
+    } catch (\Throwable $exception) {
+      $clientFlash = [
+        'type' => 'danger',
+        'message' => (string) ($exception->getMessage() ?: 'Impossible de changer l etat du client.'),
+      ];
+    }
+  }
+
+  if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_invitation_suspend_client_id'])) {
+    $targetClientId = (int) $_POST['toggle_invitation_suspend_client_id'];
+    $suspendState = (int) ($_POST['suspend_state'] ?? 0) === 1;
+    $reason = trim((string) ($_POST['control_reason'] ?? ''));
+
+    try {
+      AdminClientManagementService::setInvitationSuspended($pdo, $currentAdminUserId, $targetClientId, $suspendState, $reason);
+      $clientFlash = [
+        'type' => 'success',
+        'message' => $suspendState ? 'Envoi des invitations suspendu pour ce client.' : 'Envoi des invitations reactive pour ce client.',
+      ];
+    } catch (\Throwable $exception) {
+      $clientFlash = [
+        'type' => 'danger',
+        'message' => (string) ($exception->getMessage() ?: 'Impossible de modifier la suspension des invitations.'),
+      ];
+    }
+  }
 
   if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['quota_event_code'], $_POST['quota_client_user_id'], $_POST['bonus_quota_add'])) {
     $eventCode = trim((string) $_POST['quota_event_code']);
     $clientUserId = (int) $_POST['quota_client_user_id'];
     $bonusQuotaAdd = (int) $_POST['bonus_quota_add'];
+    $quotaScope = trim((string) ($_POST['quota_scope'] ?? 'event'));
 
     try {
-      if ($eventCode === '' || $clientUserId <= 0) {
+      if ($clientUserId <= 0) {
         throw new RuntimeException('Informations de credit invalides.');
       }
 
-      $updatedQuota = WhatsAppQuotaService::addBonusQuota($pdo, $eventCode, $clientUserId, $bonusQuotaAdd);
-      $quotaFlash = [
-        'type' => 'success',
-        'message' => 'Le credit WhatsApp a ete mis a jour. Nouveau solde restant : ' . (int) ($updatedQuota['remaining_quota'] ?? 0) . '.',
-      ];
+      if ($quotaScope === 'global') {
+        $globalBonusResult = AdminClientManagementService::addBonusQuotaToAllClientEvents($pdo, $clientUserId, $bonusQuotaAdd);
+        $globalOverview = (array) ($globalBonusResult['overview'] ?? []);
+        $quotaFlash = [
+          'type' => 'success',
+          'message' => 'Quota global mis a jour sur ' . (int) ($globalBonusResult['affected_events'] ?? 0) . ' evenement(s). Solde restant global : ' . (int) ($globalOverview['remaining_quota'] ?? 0) . '.',
+        ];
+      } else {
+        if ($eventCode === '') {
+          throw new RuntimeException('Code evenement manquant pour ce credit.');
+        }
+
+        $updatedQuota = WhatsAppQuotaService::addBonusQuota($pdo, $eventCode, $clientUserId, $bonusQuotaAdd);
+        $quotaFlash = [
+          'type' => 'success',
+          'message' => 'Le credit WhatsApp a ete mis a jour. Nouveau solde restant : ' . (int) ($updatedQuota['remaining_quota'] ?? 0) . '.',
+        ];
+      }
     } catch (\Throwable $exception) {
       $quotaFlash = [
         'type' => 'danger',
@@ -45,7 +152,7 @@
   if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_client_id'])) {
     $result = UserAccountService::adminUpdateUserProfile(
       $pdo,
-      (int) ($currentAdminUser['cod_user'] ?? 0),
+      $currentAdminUserId,
       (int) $_POST['save_client_id'],
       $_POST
     );
@@ -59,7 +166,7 @@
   if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_client_id'])) {
     $result = UserAccountService::adminDeleteClient(
       $pdo,
-      (int) ($currentAdminUser['cod_user'] ?? 0),
+      $currentAdminUserId,
       (int) $_POST['delete_client_id']
     );
 
@@ -248,6 +355,189 @@
       flex-wrap: wrap;
       gap: 10px;
       margin: 14px 0 4px;
+    }
+
+    .clients-analytics-shell {
+      border: 1px solid #dbe4f0;
+      border-radius: 24px;
+      background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+      box-shadow: 0 18px 42px rgba(15, 23, 42, 0.07);
+      padding: 20px;
+      margin-bottom: 18px;
+    }
+
+    .clients-analytics-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .clients-analytics-head h5 {
+      margin: 0;
+      color: #0f172a;
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    .clients-analytics-head p {
+      margin: 6px 0 0;
+      color: #64748b;
+    }
+
+    .clients-analytics-filter {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .clients-analytics-export {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .clients-analytics-export .btn {
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 8px 12px;
+    }
+
+    .clients-analytics-alerts {
+      border: 1px solid #fed7aa;
+      border-radius: 16px;
+      background: #fff7ed;
+      padding: 12px;
+      margin-bottom: 14px;
+    }
+
+    .clients-analytics-alerts h6 {
+      margin: 0 0 8px;
+      color: #9a3412;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .clients-analytics-alert-list {
+      display: grid;
+      gap: 6px;
+      margin: 0;
+      padding-left: 18px;
+      color: #7c2d12;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .clients-analytics-charts {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .clients-analytics-chart {
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      background: #fff;
+      padding: 10px;
+      min-height: 320px;
+    }
+
+    .clients-analytics-chart--full {
+      grid-column: 1 / -1;
+      min-height: 300px;
+    }
+
+    .clients-analytics-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .clients-analytics-kpi {
+      border: 1px solid #dbe4f0;
+      border-radius: 16px;
+      background: #fff;
+      padding: 14px;
+    }
+
+    .clients-analytics-kpi span {
+      display: block;
+      color: #64748b;
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+
+    .clients-analytics-kpi strong {
+      display: block;
+      color: #0f172a;
+      font-size: 24px;
+      line-height: 1;
+      font-weight: 900;
+    }
+
+    .clients-analytics-kpi small {
+      display: block;
+      margin-top: 6px;
+      color: #2563eb;
+      font-size: 13px;
+    }
+
+    .clients-analytics-panels {
+      display: grid;
+      grid-template-columns: 1.35fr 1fr;
+      gap: 12px;
+    }
+
+    .clients-analytics-panel {
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      background: #fff;
+      padding: 14px;
+    }
+
+    .clients-analytics-panel h6 {
+      margin: 0 0 10px;
+      color: #0f172a;
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .clients-analytics-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .clients-analytics-table th,
+    .clients-analytics-table td {
+      border-bottom: 1px solid #eef2f7;
+      padding: 8px 6px;
+      text-align: left;
+    }
+
+    .clients-analytics-table th {
+      color: #64748b;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .clients-analytics-table td {
+      color: #0f172a;
+      font-weight: 700;
+    }
+
+    .clients-admin-control-btn {
+      width: 100%;
+      margin-top: 8px;
+      text-align: left;
     }
 
     .clients-admin-pill {
@@ -801,6 +1091,18 @@
         grid-template-columns: 1fr;
       }
 
+      .clients-analytics-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .clients-analytics-panels {
+        grid-template-columns: 1fr;
+      }
+
+      .clients-analytics-charts {
+        grid-template-columns: 1fr;
+      }
+
       .clients-admin-history-toolbar {
         grid-template-columns: 1fr;
       }
@@ -947,9 +1249,40 @@ $salut = 'Bonsoir';
     $adminQuotaOverview = WhatsAppQuotaService::buildAdminOverview($pdo);
     $adminQuotaTotals = (array) ($adminQuotaOverview['totals'] ?? []);
     $clientQuotaRows = (array) ($adminQuotaOverview['clients'] ?? []);
+    $clientControlMap = AdminClientManagementService::listClientControlsByIds(
+      $pdo,
+      array_map(static fn(array $row): int => (int) ($row['cod_user'] ?? 0), $clientQuotaRows)
+    );
+
+    foreach ($clientQuotaRows as $clientQuotaIndex => $clientQuotaRow) {
+      $clientId = (int) ($clientQuotaRow['cod_user'] ?? 0);
+      $clientQuotaRows[$clientQuotaIndex]['control'] = $clientControlMap[$clientId] ?? [
+        'account_status' => 'active',
+        'invitation_sending_suspended' => false,
+      ];
+    }
+
+    $statsClientUserId = max(0, (int) ($_GET['stats_client_id'] ?? 0));
+    $quotaThreshold = max(1, (int) ($_GET['quota_threshold'] ?? 50));
+    $invitationAnalytics = AdminClientManagementService::buildInvitationAnalytics($pdo, $statsClientUserId);
+    $lowQuotaNotifications = AdminClientManagementService::buildLowQuotaNotifications($pdo, $quotaThreshold);
+    $analyticsDailyRows = (array) ($invitationAnalytics['daily_rows'] ?? []);
+    $analyticsMonthlyRows = (array) ($invitationAnalytics['monthly_rows'] ?? []);
+    $analyticsTopClients = (array) ($invitationAnalytics['top_clients'] ?? []);
+    $analyticsClients = (array) ($invitationAnalytics['clients'] ?? []);
+    $analyticsScopeLabel = 'Tous les clients';
+
+    if ($statsClientUserId > 0) {
+      foreach ($analyticsClients as $analyticsClient) {
+        if ((int) ($analyticsClient['cod_user'] ?? 0) === $statsClientUserId) {
+          $analyticsScopeLabel = (string) ($analyticsClient['noms'] ?? 'Client #' . $statsClientUserId);
+          break;
+        }
+      }
+    }
     $clientSearch = trim((string) ($_GET['q'] ?? ''));
     $clientFilter = trim((string) ($_GET['filter'] ?? 'all'));
-    $allowedClientFilters = ['all', 'with-events', 'without-events', 'low-credit', 'active-sends'];
+    $allowedClientFilters = ['all', 'with-events', 'without-events', 'low-credit', 'active-sends', 'blocked', 'invitation-suspended'];
 
     if (!in_array($clientFilter, $allowedClientFilters, true)) {
       $clientFilter = 'all';
@@ -958,6 +1291,7 @@ $salut = 'Bonsoir';
     $filteredClientQuotaRows = array_values(array_filter($clientQuotaRows, static function (array $row_client) use ($clientSearch, $clientFilter, $formatSearchValue): bool {
       $quotaOverview = (array) ($row_client['quota_overview'] ?? []);
       $clientEvents = (array) ($quotaOverview['events'] ?? []);
+      $clientControl = (array) ($row_client['control'] ?? []);
       $searchableFields = [
         (string) ($row_client['noms'] ?? ''),
         (string) ($row_client['email'] ?? ''),
@@ -992,6 +1326,14 @@ $salut = 'Bonsoir';
         return (int) ($quotaOverview['sent_count'] ?? 0) > 0;
       }
 
+      if ($clientFilter === 'blocked') {
+        return (string) ($clientControl['account_status'] ?? 'active') === 'blocked';
+      }
+
+      if ($clientFilter === 'invitation-suspended') {
+        return !empty($clientControl['invitation_sending_suspended']);
+      }
+
       return true;
     }));
 
@@ -1005,14 +1347,23 @@ $salut = 'Bonsoir';
     $visibleClientCount = count($filteredClientQuotaRows);
     $clientsWithoutEventCount = 0;
     $clientsLowCreditCount = 0;
+    $clientsBlockedCount = 0;
+    $clientsInvitationSuspendedCount = 0;
 
     foreach ($filteredClientQuotaRows as $clientQuotaRow) {
       $quotaOverview = (array) ($clientQuotaRow['quota_overview'] ?? []);
+      $clientControl = (array) ($clientQuotaRow['control'] ?? []);
       if ((int) ($quotaOverview['event_count'] ?? 0) === 0) {
         $clientsWithoutEventCount++;
       }
       if ((int) ($quotaOverview['remaining_quota'] ?? 0) <= 50) {
         $clientsLowCreditCount++;
+      }
+      if ((string) ($clientControl['account_status'] ?? 'active') === 'blocked') {
+        $clientsBlockedCount++;
+      }
+      if (!empty($clientControl['invitation_sending_suspended'])) {
+        $clientsInvitationSuspendedCount++;
       }
     }
 
@@ -1052,7 +1403,7 @@ $salut = 'Bonsoir';
 										</div>		
 									</div>
 									<div class="d-flex flex-column">
-                                        <a href="index.php?page=mb_conf_list">
+                                        <a href="index.php?page=clients">
 										<span class="text-fade fs-12">Clients</span>
 										<h2 class="text-dark hover-primary m-0 fw-600"><?php echo $total_ccli; ?></h2>
                                         </a>
@@ -1287,16 +1638,186 @@ $salut = 'Bonsoir';
             <?php } ?>
         </div>
         <?php } else { ?>
+        <div class="clients-analytics-shell">
+          <div class="clients-analytics-head">
+            <div>
+              <h5>Dashboard invitations electroniques</h5>
+              <p>Vue <?php echo htmlspecialchars($analyticsScopeLabel, ENT_QUOTES, 'UTF-8'); ?> - cout Twilio fixe a 0,005 USD par message envoye.</p>
+            </div>
+            <form method="get" action="" class="clients-analytics-filter">
+              <input type="hidden" name="page" value="clients">
+              <input type="hidden" name="view" value="clients">
+              <input type="hidden" name="q" value="<?php echo htmlspecialchars($clientSearch, ENT_QUOTES, 'UTF-8'); ?>">
+              <input type="hidden" name="filter" value="<?php echo htmlspecialchars($clientFilter, ENT_QUOTES, 'UTF-8'); ?>">
+              <select name="stats_client_id" class="form-control clients-admin-filters">
+                <option value="0">Situation globale</option>
+                <?php foreach ($analyticsClients as $analyticsClient) { ?>
+                <option value="<?php echo (int) ($analyticsClient['cod_user'] ?? 0); ?>" <?php echo (int) ($analyticsClient['cod_user'] ?? 0) === $statsClientUserId ? 'selected' : ''; ?>>
+                  <?php echo htmlspecialchars((string) ($analyticsClient['noms'] ?? 'Client'), ENT_QUOTES, 'UTF-8'); ?>
+                </option>
+                <?php } ?>
+              </select>
+              <input type="number" name="quota_threshold" value="<?php echo (int) $quotaThreshold; ?>" class="form-control clients-admin-filters" min="1" style="max-width:120px;" title="Seuil quota">
+              <button type="submit" class="btn btn-primary">Appliquer</button>
+            </form>
+          </div>
+
+          <div class="clients-analytics-export">
+            <a class="btn btn-outline btn-primary" href="pages/clients_export.php?<?php echo htmlspecialchars(http_build_query(['scope' => 'daily', 'format' => 'csv', 'stats_client_id' => $statsClientUserId, 'quota_threshold' => $quotaThreshold]), ENT_QUOTES, 'UTF-8'); ?>">CSV journalier</a>
+            <a class="btn btn-outline btn-info" href="pages/clients_export.php?<?php echo htmlspecialchars(http_build_query(['scope' => 'daily', 'format' => 'excel', 'stats_client_id' => $statsClientUserId, 'quota_threshold' => $quotaThreshold]), ENT_QUOTES, 'UTF-8'); ?>">Excel journalier</a>
+            <a class="btn btn-outline btn-primary" href="pages/clients_export.php?<?php echo htmlspecialchars(http_build_query(['scope' => 'monthly', 'format' => 'csv', 'stats_client_id' => $statsClientUserId, 'quota_threshold' => $quotaThreshold]), ENT_QUOTES, 'UTF-8'); ?>">CSV mensuel</a>
+            <a class="btn btn-outline btn-info" href="pages/clients_export.php?<?php echo htmlspecialchars(http_build_query(['scope' => 'monthly', 'format' => 'excel', 'stats_client_id' => $statsClientUserId, 'quota_threshold' => $quotaThreshold]), ENT_QUOTES, 'UTF-8'); ?>">Excel mensuel</a>
+            <a class="btn btn-outline btn-primary" href="pages/clients_export.php?<?php echo htmlspecialchars(http_build_query(['scope' => 'clients', 'format' => 'csv', 'stats_client_id' => $statsClientUserId, 'quota_threshold' => $quotaThreshold]), ENT_QUOTES, 'UTF-8'); ?>">CSV par client</a>
+            <a class="btn btn-outline btn-info" href="pages/clients_export.php?<?php echo htmlspecialchars(http_build_query(['scope' => 'clients', 'format' => 'excel', 'stats_client_id' => $statsClientUserId, 'quota_threshold' => $quotaThreshold]), ENT_QUOTES, 'UTF-8'); ?>">Excel par client</a>
+          </div>
+
+          <?php if ($lowQuotaNotifications !== []) { ?>
+          <div class="clients-analytics-alerts" id="lowQuotaAlertsBox" data-threshold="<?php echo (int) $quotaThreshold; ?>">
+            <h6>Notifications automatiques quota faible (seuil <?php echo (int) $quotaThreshold; ?>)</h6>
+            <ul class="clients-analytics-alert-list">
+              <?php foreach (array_slice($lowQuotaNotifications, 0, 8) as $lowQuotaAlert) { ?>
+              <li>
+                <?php echo htmlspecialchars((string) ($lowQuotaAlert['client_name'] ?? 'Client'), ENT_QUOTES, 'UTF-8'); ?> :
+                <?php echo (int) ($lowQuotaAlert['remaining_quota'] ?? 0); ?> restant(s)
+                <?php if (!empty($lowQuotaAlert['invitation_sending_suspended'])) { ?>
+                  (envoi suspendu)
+                <?php } ?>
+              </li>
+              <?php } ?>
+            </ul>
+          </div>
+          <?php } ?>
+
+          <div class="clients-analytics-grid">
+            <div class="clients-analytics-kpi">
+              <span>Envoyes aujourd hui</span>
+              <strong><?php echo (int) ($invitationAnalytics['sent_today'] ?? 0); ?></strong>
+              <small>USD <?php echo htmlspecialchars((string) ($invitationAnalytics['cost_today_usd'] ?? '0.000'), ENT_QUOTES, 'UTF-8'); ?></small>
+            </div>
+            <div class="clients-analytics-kpi">
+              <span>Envoyes ce mois</span>
+              <strong><?php echo (int) ($invitationAnalytics['sent_month'] ?? 0); ?></strong>
+              <small>USD <?php echo htmlspecialchars((string) ($invitationAnalytics['cost_month_usd'] ?? '0.000'), ENT_QUOTES, 'UTF-8'); ?></small>
+            </div>
+            <div class="clients-analytics-kpi">
+              <span>Envoyes au total</span>
+              <strong><?php echo (int) ($invitationAnalytics['sent_total'] ?? 0); ?></strong>
+              <small>USD <?php echo htmlspecialchars((string) ($invitationAnalytics['cost_total_usd'] ?? '0.000'), ENT_QUOTES, 'UTF-8'); ?></small>
+            </div>
+          </div>
+
+          <div class="clients-analytics-charts">
+            <div class="clients-analytics-chart">
+              <div id="clientsDailyAreaChart"></div>
+            </div>
+            <div class="clients-analytics-chart">
+              <div id="clientsMonthlyBarChart"></div>
+            </div>
+            <?php if ($analyticsTopClients !== []) { ?>
+            <div class="clients-analytics-chart clients-analytics-chart--full">
+              <div id="clientsTopHorizontalChart"></div>
+            </div>
+            <?php } ?>
+          </div>
+
+          <div class="clients-analytics-panels">
+            <section class="clients-analytics-panel">
+              <h6>Evolution journaliere (30 jours)</h6>
+              <div class="table-responsive">
+                <table class="clients-analytics-table">
+                  <thead>
+                    <tr>
+                      <th>Jour</th>
+                      <th>Envois</th>
+                      <th>Cout USD</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <?php if ($analyticsDailyRows !== []) { ?>
+                    <?php foreach ($analyticsDailyRows as $dailyRow) { ?>
+                    <tr>
+                      <td><?php echo htmlspecialchars((string) ($dailyRow['day_key'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><?php echo (int) ($dailyRow['sent_count'] ?? 0); ?></td>
+                      <td><?php echo htmlspecialchars((string) ($dailyRow['cost_usd'] ?? '0.000'), ENT_QUOTES, 'UTF-8'); ?></td>
+                    </tr>
+                    <?php } ?>
+                    <?php } else { ?>
+                    <tr><td colspan="3">Aucune donnee</td></tr>
+                    <?php } ?>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="clients-analytics-panel">
+              <h6>Evolution mensuelle (12 mois)</h6>
+              <div class="table-responsive">
+                <table class="clients-analytics-table">
+                  <thead>
+                    <tr>
+                      <th>Mois</th>
+                      <th>Envois</th>
+                      <th>Cout USD</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <?php if ($analyticsMonthlyRows !== []) { ?>
+                    <?php foreach ($analyticsMonthlyRows as $monthlyRow) { ?>
+                    <tr>
+                      <td><?php echo htmlspecialchars((string) ($monthlyRow['month_key'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><?php echo (int) ($monthlyRow['sent_count'] ?? 0); ?></td>
+                      <td><?php echo htmlspecialchars((string) ($monthlyRow['cost_usd'] ?? '0.000'), ENT_QUOTES, 'UTF-8'); ?></td>
+                    </tr>
+                    <?php } ?>
+                    <?php } else { ?>
+                    <tr><td colspan="3">Aucune donnee</td></tr>
+                    <?php } ?>
+                  </tbody>
+                </table>
+              </div>
+
+              <?php if ($analyticsTopClients !== []) { ?>
+              <h6 style="margin-top:14px;">Top clients (global)</h6>
+              <div class="table-responsive">
+                <table class="clients-analytics-table">
+                  <thead>
+                    <tr>
+                      <th>Client</th>
+                      <th>Envois</th>
+                      <th>USD</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <?php foreach ($analyticsTopClients as $topClientRow) { ?>
+                    <tr>
+                      <td><?php echo htmlspecialchars((string) ($topClientRow['client_name'] ?? 'Client'), ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><?php echo (int) ($topClientRow['sent_count'] ?? 0); ?></td>
+                      <td><?php echo htmlspecialchars((string) ($topClientRow['cost_usd'] ?? '0.000'), ENT_QUOTES, 'UTF-8'); ?></td>
+                    </tr>
+                    <?php } ?>
+                  </tbody>
+                </table>
+              </div>
+              <?php } ?>
+            </section>
+          </div>
+        </div>
+
         <div class="card rounded-4 clients-admin-card">
             <div class="box-header d-flex b-0 justify-content-between align-items-center flex-wrap" style="gap:16px;">
                 <div>
                   <h4 class="box-title mb-0">Gestion des clients</h4>
                   <p class="mb-0" style="margin-top:6px;color:#64748b;font-size:14px;">Recherchez un client, suivez ses quotas WhatsApp et gerez ses evenements plus rapidement.</p>
                 </div>
+                <div>
+                  <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createClientModal">Nouveau client</button>
+                </div>
                 <div class="clients-admin-meta">
                   <span class="clients-admin-pill" id="clientsVisibleCounter">Visibles : <?php echo (int) $visibleClientCount; ?></span>
                   <span class="clients-admin-pill is-warning">Credits faibles : <?php echo (int) $clientsLowCreditCount; ?></span>
                   <span class="clients-admin-pill is-neutral">Sans evenement : <?php echo (int) $clientsWithoutEventCount; ?></span>
+                  <span class="clients-admin-pill is-neutral">Bloques : <?php echo (int) $clientsBlockedCount; ?></span>
+                  <span class="clients-admin-pill is-neutral">Invitations suspendues : <?php echo (int) $clientsInvitationSuspendedCount; ?></span>
                 </div>
             </div>
 
@@ -1313,6 +1834,8 @@ $salut = 'Bonsoir';
                     <option value="without-events" <?php echo $clientFilter === 'without-events' ? 'selected' : ''; ?>>Sans evenement</option>
                     <option value="low-credit" <?php echo $clientFilter === 'low-credit' ? 'selected' : ''; ?>>Credits faibles</option>
                     <option value="active-sends" <?php echo $clientFilter === 'active-sends' ? 'selected' : ''; ?>>Envois actifs</option>
+                    <option value="blocked" <?php echo $clientFilter === 'blocked' ? 'selected' : ''; ?>>Clients bloques</option>
+                    <option value="invitation-suspended" <?php echo $clientFilter === 'invitation-suspended' ? 'selected' : ''; ?>>Envois suspendus</option>
                   </select>
                   <button type="submit" class="btn btn-primary">Filtrer</button>
                   <?php if ($clientSearch !== '' || $clientFilter !== 'all') { ?>
@@ -1340,6 +1863,9 @@ $salut = 'Bonsoir';
                         $clientEvents = (array) ($quotaOverview['events'] ?? []);
                         $clientName = ucfirst((string) ($row_client['noms'] ?? 'Client'));
                         $clientId = (int) ($row_client['cod_user'] ?? 0);
+                        $clientControl = (array) ($row_client['control'] ?? []);
+                        $isClientBlocked = (string) ($clientControl['account_status'] ?? 'active') === 'blocked';
+                        $isInvitationSuspended = !empty($clientControl['invitation_sending_suspended']);
                         $detailModalId = 'clientDetailModal' . $clientId;
                         $editModalId = 'clientEditModal' . $clientId;
                         $deleteModalId = 'clientDeleteModal' . $clientId;
@@ -1363,6 +1889,12 @@ $salut = 'Bonsoir';
                           <?php if ((int) ($quotaOverview['remaining_quota'] ?? 0) <= 50) { ?>
                           <span class="clients-admin-badge is-alert">Credit faible</span>
                           <?php } ?>
+                          <?php if ($isClientBlocked) { ?>
+                          <span class="clients-admin-badge is-alert">Compte bloque</span>
+                          <?php } ?>
+                          <?php if ($isInvitationSuspended) { ?>
+                          <span class="clients-admin-badge is-alert">Invitations suspendues</span>
+                          <?php } ?>
                           <?php if ((int) ($quotaOverview['event_count'] ?? 0) === 0) { ?>
                           <span class="clients-admin-badge is-neutral">Sans evenement</span>
                           <?php } ?>
@@ -1380,6 +1912,18 @@ $salut = 'Bonsoir';
                             </form>
                             <?php } ?>
                             <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#<?php echo $editModalId; ?>">Modifier</button>
+                            <form action="" method="post">
+                              <input type="hidden" name="toggle_block_client_id" value="<?php echo $clientId; ?>">
+                              <input type="hidden" name="block_state" value="<?php echo $isClientBlocked ? '0' : '1'; ?>">
+                              <input type="hidden" name="control_reason" value="Action admin depuis module clients">
+                              <button type="submit" class="dropdown-item"><?php echo $isClientBlocked ? 'Activer le compte' : 'Bloquer le compte'; ?></button>
+                            </form>
+                            <form action="" method="post">
+                              <input type="hidden" name="toggle_invitation_suspend_client_id" value="<?php echo $clientId; ?>">
+                              <input type="hidden" name="suspend_state" value="<?php echo $isInvitationSuspended ? '0' : '1'; ?>">
+                              <input type="hidden" name="control_reason" value="Action admin depuis module clients">
+                              <button type="submit" class="dropdown-item"><?php echo $isInvitationSuspended ? 'Reprendre les envois' : 'Suspendre les envois'; ?></button>
+                            </form>
                             <button type="button" class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#<?php echo $deleteModalId; ?>">Supprimer</button>
                           </div>
                         </div>
@@ -1421,6 +1965,16 @@ $salut = 'Bonsoir';
                               <?php } ?>
                             </div>
                             <?php if ($clientEvents !== []) { ?>
+                            <form action="" method="post" class="d-flex align-items-center flex-wrap" style="gap:8px; margin-bottom: 16px;">
+                              <input type="hidden" name="quota_scope" value="global">
+                              <input type="hidden" name="quota_event_code" value="ALL">
+                              <input type="hidden" name="quota_client_user_id" value="<?php echo $clientId; ?>">
+                              <input type="number" name="bonus_quota_add" class="form-control" min="1" step="1" value="100" style="max-width:180px;" required>
+                              <button type="submit" class="btn btn-sm btn-success">Ajouter un quota global</button>
+                              <small class="text-muted">Applique le bonus a tous les evenements du client.</small>
+                            </form>
+                            <?php } ?>
+                            <?php if ($clientEvents !== []) { ?>
                             <div class="clients-admin-modal-events">
                               <?php foreach ($clientEvents as $clientEvent) {
                                 $eventTotalQuota = max(1, (int) ($clientEvent['total_quota'] ?? 0));
@@ -1443,6 +1997,7 @@ $salut = 'Bonsoir';
                                   <div class="clients-admin-progress-bar" style="width: <?php echo $eventUsagePercent; ?>%;"></div>
                                 </div>
                                 <form action="" method="post" class="d-flex align-items-center flex-wrap" style="gap:8px;">
+                                  <input type="hidden" name="quota_scope" value="event">
                                   <input type="hidden" name="quota_event_code" value="<?php echo htmlspecialchars((string) ($clientEvent['event_code'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
                                   <input type="hidden" name="quota_client_user_id" value="<?php echo $clientId; ?>">
                                   <input type="number" name="bonus_quota_add" class="form-control" min="1" step="1" value="50" style="max-width:150px;" required>
@@ -1521,12 +2076,148 @@ $salut = 'Bonsoir';
                 <?php } ?>
             </div>	
         </div>
+
+        <div class="modal fade" id="createClientModal" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content rounded-4">
+              <div class="modal-header">
+                <h5 class="modal-title mb-0">Creer un nouveau client</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+              </div>
+              <div class="modal-body">
+                <p class="clients-admin-note">Si vous laissez le mot de passe vide, un mot de passe provisoire sera genere automatiquement.</p>
+                <form action="" method="post" class="clients-admin-form-grid">
+                  <input type="hidden" name="create_client_submit" value="1">
+                  <label class="is-full">
+                    <span>Noms et prenoms</span>
+                    <input type="text" name="noms" required>
+                  </label>
+                  <label>
+                    <span>Telephone (format +243...)</span>
+                    <input type="text" name="phone" required>
+                  </label>
+                  <label>
+                    <span>Email</span>
+                    <input type="email" name="email" required>
+                  </label>
+                  <label>
+                    <span>Mot de passe (optionnel)</span>
+                    <input type="text" name="password" autocomplete="new-password">
+                  </label>
+                  <label>
+                    <span>Confirmation mot de passe</span>
+                    <input type="text" name="confirm_password" autocomplete="new-password">
+                  </label>
+                  <div class="is-full d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary">Creer le client</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
           <?php } ?>
     </div>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+  const dailyRows = <?php echo json_encode($analyticsDailyRows, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+  const monthlyRows = <?php echo json_encode($analyticsMonthlyRows, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+  const topClientRows = <?php echo json_encode($analyticsTopClients, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+  const lowQuotaRows = <?php echo json_encode($lowQuotaNotifications, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+  const quotaThreshold = <?php echo (int) $quotaThreshold; ?>;
+
+  if (typeof ApexCharts !== 'undefined') {
+    const dailyChartElement = document.getElementById('clientsDailyAreaChart');
+    if (dailyChartElement) {
+      const dailyLabels = dailyRows.map(function (row) { return String(row.day_key || ''); });
+      const dailySeries = dailyRows.map(function (row) { return Number(row.sent_count || 0); });
+      const dailyCostSeries = dailyRows.map(function (row) { return Number(row.cost_usd || 0); });
+
+      const dailyChart = new ApexCharts(dailyChartElement, {
+        chart: { type: 'area', height: 290, toolbar: { show: false } },
+        series: [
+          { name: 'Invitations', data: dailySeries },
+          { name: 'Cout USD', data: dailyCostSeries }
+        ],
+        dataLabels: { enabled: false },
+        stroke: { curve: 'smooth', width: [3, 2] },
+        colors: ['#2563eb', '#0f766e'],
+        fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.34, opacityTo: 0.05 } },
+        xaxis: { categories: dailyLabels },
+        yaxis: [
+          { title: { text: 'Invitations' } },
+          { opposite: true, title: { text: 'USD' } }
+        ],
+        title: { text: 'Tendance journaliere', align: 'left', style: { fontSize: '14px', fontWeight: '700' } },
+        grid: { borderColor: '#eef2f7' }
+      });
+      dailyChart.render();
+    }
+
+    const monthlyChartElement = document.getElementById('clientsMonthlyBarChart');
+    if (monthlyChartElement) {
+      const monthlyLabels = monthlyRows.map(function (row) { return String(row.month_key || ''); });
+      const monthlySeries = monthlyRows.map(function (row) { return Number(row.sent_count || 0); });
+
+      const monthlyChart = new ApexCharts(monthlyChartElement, {
+        chart: { type: 'bar', height: 290, toolbar: { show: false } },
+        series: [{ name: 'Invitations', data: monthlySeries }],
+        colors: ['#0ea5e9'],
+        plotOptions: { bar: { borderRadius: 8, columnWidth: '46%' } },
+        dataLabels: { enabled: false },
+        xaxis: { categories: monthlyLabels },
+        title: { text: 'Volume mensuel', align: 'left', style: { fontSize: '14px', fontWeight: '700' } },
+        grid: { borderColor: '#eef2f7' }
+      });
+      monthlyChart.render();
+    }
+
+    const topChartElement = document.getElementById('clientsTopHorizontalChart');
+    if (topChartElement && Array.isArray(topClientRows) && topClientRows.length > 0) {
+      const topLabels = topClientRows.map(function (row) { return String(row.client_name || 'Client'); });
+      const topSeries = topClientRows.map(function (row) { return Number(row.sent_count || 0); });
+
+      const topChart = new ApexCharts(topChartElement, {
+        chart: { type: 'bar', height: 260, toolbar: { show: false } },
+        series: [{ name: 'Invitations', data: topSeries }],
+        colors: ['#f59e0b'],
+        plotOptions: { bar: { horizontal: true, borderRadius: 8 } },
+        dataLabels: { enabled: false },
+        xaxis: { categories: topLabels },
+        title: { text: 'Top clients consommation', align: 'left', style: { fontSize: '14px', fontWeight: '700' } },
+        grid: { borderColor: '#eef2f7' }
+      });
+      topChart.render();
+    }
+  }
+
+  if (Array.isArray(lowQuotaRows) && lowQuotaRows.length > 0) {
+    const alertFingerprint = lowQuotaRows
+      .slice(0, 10)
+      .map(function (row) { return String(row.client_user_id || 0) + ':' + String(row.remaining_quota || 0); })
+      .join('|');
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const storageKey = 'isapp_low_quota_alerts_' + todayKey + '_' + String(quotaThreshold);
+    const previousFingerprint = window.localStorage ? localStorage.getItem(storageKey) : null;
+
+    if (previousFingerprint !== alertFingerprint) {
+      if (window.localStorage) {
+        localStorage.setItem(storageKey, alertFingerprint);
+      }
+
+      if (typeof Swal !== 'undefined') {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Alerte quota faible',
+          text: lowQuotaRows.length + ' client(s) sont en dessous du seuil de ' + quotaThreshold + ' invitations.',
+          confirmButtonText: 'Voir'
+        });
+      }
+    }
+  }
+
   const input = document.getElementById('clientSearchInput');
   const cards = Array.from(document.querySelectorAll('[data-client-search]'));
   const emptyState = document.getElementById('clientsAdminEmpty');

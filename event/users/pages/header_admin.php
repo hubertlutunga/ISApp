@@ -269,6 +269,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['stop_impersonation'])
 
 		<li><a href="index.php?page=dashboard_finance"><i data-feather="arrow-up"></i>Finances</a></li>
 
+
 		<li><a href="index.php?page=clients"><i data-feather="user"></i>Clients</a> 
 		</li>
 
@@ -276,6 +277,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['stop_impersonation'])
 		<li><a href="index.php?page=messages_clients"><i data-feather="message-circle"></i>Messages clients</a>
 		</li>
 		<?php } ?>
+
+		<li><a href="index.php?page=apprenants"><i data-feather="users"></i>Apprenants</a> 
+		</li>
 	
 		<?php 
 		

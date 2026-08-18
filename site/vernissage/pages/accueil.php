@@ -275,6 +275,12 @@ if(isset($_POST['submit'])){
    $q->execute();
    $q->closeCursor(); 
 
+   try {
+      UserAccountService::ensureLearnerAccount($pdo, $nomComplet, $normalizedEmail, $normalizedPhone);
+   } catch (Throwable $exception) {
+      // Ne pas bloquer l'inscription si la creation du compte apprenant echoue.
+   }
+
    
 
     

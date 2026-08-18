@@ -98,6 +98,7 @@ $normalizedPublicType = normalize_public_event_type((string) $data_evenement);
 $publicEventLabels = [
     'logo_cta' => 'VENEZ PARTICIPER',
     'hero_cta' => 'Participer',
+    'lms_cta' => 'Se connecter à mon espace',
     'join_kicker' => 'REJOIGNEZ-NOUS',
     'join_title' => "Obtenir la direction vers le lieu de l'événement",
     'form_kicker' => 'Comment participer ?',
@@ -109,10 +110,13 @@ $publicEventLabels = [
     'duplicate_message' => "Cette adresse email ou ce numéro de téléphone a déjà été enregistré pour cet événement.",
 ];
 
+$publicLmsUrl = '../../event/index.php?page=lms&cod=' . rawurlencode((string) $codevent);
+
 if (strpos($normalizedPublicType, 'formation') !== false) {
     $publicEventLabels = [
         'logo_cta' => 'REJOIGNEZ LA FORMATION',
         'hero_cta' => "S'inscrire",
+        'lms_cta' => 'Se connecter à mon espace',
         'join_kicker' => 'FORMATION',
         'join_title' => 'Consulter le lieu et les informations de la session',
         'form_kicker' => 'Comment participer à la formation ?',
@@ -301,9 +305,46 @@ if(!empty($page) && in_array($_GET['page'].".php",$pages)) {
 
  
 
-      <?php
-        include($content);
-      ?>
+            <?php
+                ob_start();
+                include($content);
+                $publicPageHtml = (string) ob_get_clean();
+
+                if (!empty($publicLmsUrl) && stripos($publicPageHtml, 'classroom.google.com') !== false) {
+                        $publicLmsHref = htmlspecialchars((string) $publicLmsUrl, ENT_QUOTES, 'UTF-8');
+                        $publicPageHtml = preg_replace('/<a\b([^>]*)href=(\"|\')https?:\/\/classroom\.google\.com[^\"\']*(\"|\')([^>]*)>/i', '<a$1href="' . $publicLmsHref . '"$4>', $publicPageHtml);
+                        $publicPageHtml = preg_replace('/https?:\/\/classroom\.google\.com[^\"\'\s<]*/i', $publicLmsHref, $publicPageHtml);
+                        $publicPageHtml = preg_replace('/\s+target=(\"|\')_blank(\"|\')/i', '', $publicPageHtml);
+                        $publicPageHtml = preg_replace('/\s+rel=(\"|\')noopener(\"|\')/i', '', $publicPageHtml);
+                }
+
+                echo $publicPageHtml;
+            ?>
+
+            <?php if (!empty($publicLmsUrl)) { ?>
+            <script>
+            (function() {
+                const lmsUrl = <?php echo json_encode($publicLmsUrl, JSON_UNESCAPED_SLASHES); ?>;
+                function isGoogleClassroomUrl(value) {
+                    return typeof value === 'string' && value.indexOf('classroom.google.com') !== -1;
+                }
+
+                document.querySelectorAll('a[href*="classroom.google.com"]').forEach(function(link) {
+                    link.setAttribute('href', lmsUrl);
+                    link.removeAttribute('target');
+                    link.removeAttribute('rel');
+                });
+
+                document.addEventListener('click', function(event) {
+                    const link = event.target.closest ? event.target.closest('a[href]') : null;
+                    if (link && isGoogleClassroomUrl(link.getAttribute('href'))) {
+                        event.preventDefault();
+                        window.location.href = lmsUrl;
+                    }
+                });
+            })();
+            </script>
+            <?php } ?>
          
 
  

@@ -94,6 +94,9 @@ $eventDate = isset($dataevent['date_event'])
                         <!-- Countdown end -->
                         <div class="banner-btn">
                            <a href="#participer" class="btn"><?php echo htmlspecialchars((string) ($publicEventLabels['hero_cta'] ?? 'Participer'), ENT_QUOTES, 'UTF-8'); ?></a>
+                           <?php if (!empty($publicLmsUrl) && (strpos((string) ($normalizedPublicType ?? ''), 'formation') !== false || stripos($heroTitle, 'LMS') !== false || stripos($heroTitle, 'UFC') !== false)) { ?>
+                           <a href="<?php echo htmlspecialchars($publicLmsUrl, ENT_QUOTES, 'UTF-8'); ?>" class="btn" style="margin-left:10px;background:#0f766e;border-color:#0f766e;"><?php echo htmlspecialchars((string) ($publicEventLabels['lms_cta'] ?? 'Se connecter à mon espace'), ENT_QUOTES, 'UTF-8'); ?></a>
+                           <?php } ?>
                         </div>
 
                      </div>

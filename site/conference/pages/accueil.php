@@ -64,6 +64,13 @@ if (isset($data_frame)) {
 }
 
 
+if (!empty($publicLmsUrl) && is_string($dataframe) && stripos($dataframe, 'classroom.google.com') !== false) {
+   $publicLmsHref = htmlspecialchars((string) $publicLmsUrl, ENT_QUOTES, 'UTF-8');
+   $dataframe = preg_replace('/href=(\"|\')https?:\/\/classroom\.google\.com[^\"\']*(\"|\')/i', 'href="' . $publicLmsHref . '"', $dataframe);
+   $dataframe = preg_replace('/https?:\/\/classroom\.google\.com[^\"\'\s<]*/i', $publicLmsUrl, $dataframe);
+}
+
+
 ?>
 
 
@@ -275,6 +282,12 @@ if(isset($_POST['submit'])){
    $q->execute();
    $q->closeCursor(); 
 
+   try {
+      UserAccountService::ensureLearnerAccount($pdo, $nomComplet, $normalizedEmail, $normalizedPhone);
+   } catch (Throwable $exception) {
+      // Ne pas bloquer l'inscription si la creation du compte apprenant echoue.
+   }
+
    
 
     
@@ -291,7 +304,12 @@ if(isset($_POST['submit'])){
         $speudo = $nom;
         $email = $emailinvite;
         $subject = strtoupper($fetard.' '.($publicEventLabels['subject_suffix'] ?? 'RSVP'));
-        $message = "Bonjour $speudo,\n\n".($publicEventLabels['email_message'] ?? "Votre inscription nous est parvenue avec succès.")."\n\nMerci!";
+        $lmsMailMessage = '';
+        if (!empty($publicLmsUrl) && (strpos((string) ($normalizedPublicType ?? ''), 'formation') !== false || stripos((string) ($dataevent['themeconf'] ?? ''), 'LMS') !== false || stripos((string) ($dataevent['themeconf'] ?? ''), 'UFC') !== false)) {
+           $lmsMailMessage = "\n\nMon espace – LMS UFC : " . $publicLmsUrl
+              . "\nPour votre première connexion, ouvrez ce lien puis cliquez sur Première connexion / définir mon mot de passe.";
+        }
+        $message = "Bonjour $speudo,\n\n".($publicEventLabels['email_message'] ?? "Votre inscription nous est parvenue avec succès.").$lmsMailMessage."\n\nMerci!";
 
         $headers = "From: contact@invitationspeciale.com\r\n";
         $headers .= "Reply-To: contact@invitationspeciale.com\r\n";

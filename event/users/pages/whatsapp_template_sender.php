@@ -8,6 +8,10 @@ if (!class_exists('GeneratedInvitationCleanupService')) {
     require_once dirname(__DIR__, 3) . '/src/Support/GeneratedInvitationCleanupService.php';
 }
 
+if (!class_exists('AdminClientManagementService')) {
+    require_once dirname(__DIR__, 3) . '/src/Support/AdminClientManagementService.php';
+}
+
 if (!defined('ISAPP_TWILIO_WHATSAPP_FROM')) {
     define('ISAPP_TWILIO_WHATSAPP_FROM', 'whatsapp:+14787726313');
 }
@@ -881,6 +885,9 @@ if (!function_exists('isapp_whatsapp_send_template_invitation')) {
         }
 
         $clientUserId = WhatsAppQuotaService::resolveClientUserId($event, (int) ($options['client_user_id'] ?? 0));
+        if ($clientUserId > 0) {
+            AdminClientManagementService::assertClientInvitationsEnabled($pdo, $clientUserId);
+        }
         $quotaBeforeSend = WhatsAppQuotaService::assertQuotaAvailable($pdo, $eventCode, $clientUserId);
 
         $invite = isapp_whatsapp_sender_fetch_invite($pdo, $inviteId, $eventCode);
