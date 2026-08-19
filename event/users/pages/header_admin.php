@@ -10,6 +10,17 @@
 	$datasession = $stmtss->fetch(PDO::FETCH_ASSOC) ?: ['noms' => 'Utilisateur', 'type_user' => ''];
 	$typeUser = (string) ($datasession['type_user'] ?? '');
 	$isImpersonating = UserAccountService::isImpersonating();
+	$headerLowQuotaNotifications = [];
+	$headerLowQuotaThreshold = 50;
+
+	if ($typeUser === '1' && class_exists('AdminClientManagementService')) {
+		$headerLowQuotaThreshold = max(1, (int) ($_GET['quota_threshold'] ?? 50));
+		try {
+			$headerLowQuotaNotifications = AdminClientManagementService::buildLowQuotaNotifications($pdo, $headerLowQuotaThreshold);
+		} catch (Throwable $exception) {
+			$headerLowQuotaNotifications = [];
+		}
+	}
 
  
 	if ((($_GET['page'] ?? '') === 'admin_accueil' OR ($_GET['page'] ?? '') === 'factures') && $typeUser !== '1') {
@@ -18,6 +29,109 @@
 	}
 
 ?>
+
+<style>
+	.header-notif-menu .dropdown-menu {
+		width: 360px;
+		max-width: calc(100vw - 32px);
+		border-radius: 16px;
+		overflow: hidden;
+		border: 1px solid #dbe4f0;
+		box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
+		padding: 0;
+	}
+
+	.header-notif-head {
+		padding: 14px 16px;
+		border-bottom: 1px solid #e2e8f0;
+		background: linear-gradient(90deg, #ecfeff 0%, #f0f9ff 100%);
+	}
+
+	.header-notif-head strong {
+		display: block;
+		color: #0f172a;
+		font-size: 14px;
+		font-weight: 800;
+	}
+
+	.header-notif-head span {
+		color: #475569;
+		font-size: 12px;
+	}
+
+	.header-notif-list {
+		max-height: 320px;
+		overflow-y: auto;
+	}
+
+	.header-notif-item {
+		display: block;
+		padding: 12px 16px;
+		text-decoration: none;
+		border-bottom: 1px solid #f1f5f9;
+	}
+
+	.header-notif-item:hover,
+	.header-notif-item:focus-visible {
+		background: #f8fafc;
+	}
+
+	.header-notif-item strong {
+		display: block;
+		color: #0f172a;
+		font-size: 13px;
+		font-weight: 800;
+		margin-bottom: 2px;
+	}
+
+	.header-notif-item span {
+		display: block;
+		color: #64748b;
+		font-size: 12px;
+	}
+
+	.header-notif-foot {
+		padding: 10px 14px;
+		background: #fff;
+	}
+
+	.header-notif-foot a {
+		display: block;
+		text-align: center;
+		font-size: 12px;
+		font-weight: 800;
+		text-decoration: none;
+		color: #0f766e;
+	}
+
+	.header-notif-empty {
+		padding: 18px 16px;
+		color: #64748b;
+		font-size: 12px;
+	}
+
+	.header-notif-badge {
+		position: absolute;
+		top: -4px;
+		right: -6px;
+		min-width: 18px;
+		height: 18px;
+		padding: 0 5px;
+		border-radius: 999px;
+		background: #ef4444;
+		color: #fff;
+		font-size: 10px;
+		font-weight: 800;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		border: 2px solid #0f172a;
+	}
+
+	.header-notif-trigger {
+		position: relative;
+	}
+</style>
 
 <?php
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['stop_impersonation'])) {
@@ -126,38 +240,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['stop_impersonation'])
 		<?php 
 	} 
 ?>
-				<!-- <li class="dropdown notifications-menu btn-group">
-				<a href="#" class="waves-effect waves-light btn-primary-light svg-bt-icon" data-bs-toggle="dropdown" title="Notifications">
-					<i class="fas fa-bell" style="color: white;"></i>
-					<div class="pulse-wave"></div>
-				</a>
-					<ul class="dropdown-menu animated bounceIn">
-					  <li class="header">
-						<div class="p-20">
-							<div class="flexbox">
-								<div>
-									<h4 class="mb-0 mt-0">Notifications</h4>
-								</div>
-								<div>
-									<a href="#" class="text-danger">Vider</a>
-								</div>
-							</div>
+				<?php if ($typeUser === '1') {
+					$notifCount = count($headerLowQuotaNotifications);
+					$notifBadgeCount = min($notifCount, 99);
+				?>
+				<li class="dropdown notifications-menu btn-group header-notif-menu">
+					<a href="#" class="waves-effect waves-light dropdown-toggle header-notif-trigger" data-bs-toggle="dropdown" title="Notifications quota">
+						<i class="fas fa-bell" style="color: white;"></i>
+						<?php if ($notifCount > 0) { ?>
+						<span class="header-notif-badge"><?php echo (int) $notifBadgeCount; ?></span>
+						<?php } ?>
+					</a>
+					<div class="dropdown-menu dropdown-menu-end">
+						<div class="header-notif-head">
+							<strong>Notifications quota faible</strong>
+							<span>Seuil actuel: <?php echo (int) $headerLowQuotaThreshold; ?> - <?php echo (int) $notifCount; ?> client(s) concernes</span>
 						</div>
-					  </li>
-					  <li> 
-						<ul class="menu sm-scrol">
-						  <li>
-							<a href="#" class="listenot">
-							  <i class="fa fa-users text-info"></i> Hubert Lutunga - J'y serai.
+						<div class="header-notif-list">
+							<?php if ($notifCount > 0) {
+								foreach (array_slice($headerLowQuotaNotifications, 0, 12) as $headerNotifRow) {
+									$notifClientName = (string) ($headerNotifRow['client_name'] ?? 'Client');
+									$notifRemaining = (int) ($headerNotifRow['remaining_quota'] ?? 0);
+									$notifClientId = (int) ($headerNotifRow['client_user_id'] ?? 0);
+								?>
+							<a class="header-notif-item" href="index.php?<?php echo htmlspecialchars(http_build_query(['page' => 'clients', 'view' => 'clients', 'filter' => 'low-credit', 'stats_client_id' => $notifClientId, 'quota_threshold' => $headerLowQuotaThreshold]), ENT_QUOTES, 'UTF-8'); ?>">
+								<strong><?php echo htmlspecialchars($notifClientName, ENT_QUOTES, 'UTF-8'); ?></strong>
+								<span><?php echo $notifRemaining; ?> invitation(s) restante(s)</span>
 							</a>
-						  </li>   
-						</ul>
-					  </li>
-					  <li class="footer">
-						  <a href="#" class="listenot">Voir toutes</a>
-					  </li>
-					</ul>
-				</li> -->
+							<?php }
+							} else { ?>
+							<div class="header-notif-empty">Aucune alerte quota faible pour le moment.</div>
+							<?php } ?>
+						</div>
+						<div class="header-notif-foot">
+							<a href="index.php?page=clients&filter=low-credit&view=clients&quota_threshold=<?php echo (int) $headerLowQuotaThreshold; ?>">Voir tous les clients a risque</a>
+						</div>
+					</div>
+				</li>
+				<?php } ?>
 
 				<li class="btn-group nav-item d-xl-inline-flex d-none">
 					<a href="#" class="waves-effect waves-light nav-link btn-primary-light svg-bt-icon" title="" id="live-chat">

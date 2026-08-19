@@ -191,6 +191,10 @@
   $whatsAppHistoryUsers = [];
   $whatsAppHistorySearch = trim((string) ($_GET['history_q'] ?? ''));
   $whatsAppHistoryUserId = max(0, (int) ($_GET['history_user_id'] ?? 0));
+  $whatsAppHistoryPeriod = trim((string) ($_GET['history_period'] ?? 'all'));
+  if (!in_array($whatsAppHistoryPeriod, ['all', 'today', 'month'], true)) {
+    $whatsAppHistoryPeriod = 'all';
+  }
   $whatsAppHistoryPage = max(1, (int) ($_GET['history_page'] ?? 1));
   $whatsAppHistoryPerPage = 25;
   $whatsAppHistoryTotalRows = 0;
@@ -204,6 +208,9 @@
   }
   if ($whatsAppHistoryUserId > 0) {
     $whatsAppHistoryBaseParams['history_user_id'] = $whatsAppHistoryUserId;
+  }
+  if ($whatsAppHistoryPeriod !== 'all') {
+    $whatsAppHistoryBaseParams['history_period'] = $whatsAppHistoryPeriod;
   }
 
   if ($clientsView === 'whatsapp-sends') {
@@ -247,6 +254,12 @@
           OR LOWER(COALESCE(logs.event_code, "")) LIKE :history_search
         )';
         $historyBindings['history_search'] = '%' . $formatSearchValue($whatsAppHistorySearch) . '%';
+      }
+
+      if ($whatsAppHistoryPeriod === 'today') {
+        $historyWhereClauses[] = 'DATE(logs.sent_at) = CURRENT_DATE';
+      } elseif ($whatsAppHistoryPeriod === 'month') {
+        $historyWhereClauses[] = 'YEAR(logs.sent_at) = YEAR(CURRENT_DATE) AND MONTH(logs.sent_at) = MONTH(CURRENT_DATE)';
       }
 
       $historyWhereSql = $historyWhereClauses !== [] ? ' WHERE ' . implode(' AND ', $historyWhereClauses) : '';
@@ -303,21 +316,31 @@
 
   <style>
     :root {
-      --clients-ink-900: #0f172a;
+      --is-primary: #146ef5;
+      --is-primary-dark: #0b1f3a;
+      --is-bg: #f5f7fb;
+      --is-card: #ffffff;
+      --is-text: #122033;
+      --is-muted: #718096;
+      --is-border: #e7ecf3;
+      --is-success: #0f9d7a;
+      --is-gold: #c7a764;
+      --is-radius: 18px;
+      --clients-ink-900: var(--is-text);
       --clients-ink-700: #334155;
-      --clients-ink-500: #64748b;
-      --clients-primary: #0f766e;
+      --clients-ink-500: var(--is-muted);
+      --clients-primary: var(--is-success);
       --clients-primary-soft: #ccfbf1;
-      --clients-accent: #0ea5e9;
+      --clients-accent: var(--is-primary);
       --clients-danger: #b91c1c;
-      --clients-border: #dbe4f0;
+      --clients-border: var(--is-border);
     }
 
     .content-wrapper {
       background:
-        radial-gradient(circle at 10% -10%, rgba(14, 165, 233, 0.16) 0%, rgba(255, 255, 255, 0) 42%),
-        radial-gradient(circle at 100% 0%, rgba(20, 184, 166, 0.12) 0%, rgba(255, 255, 255, 0) 45%),
-        linear-gradient(180deg, #f6fbff 0%, #ffffff 35%, #f8fafc 100%);
+        radial-gradient(circle at 10% -10%, rgba(20, 110, 245, 0.12) 0%, rgba(255, 255, 255, 0) 45%),
+        radial-gradient(circle at 110% 10%, rgba(15, 157, 122, 0.08) 0%, rgba(255, 255, 255, 0) 35%),
+        linear-gradient(180deg, var(--is-bg) 0%, #f9fbff 55%, #f4f7fc 100%);
     }
 
     .salut {
@@ -399,54 +422,173 @@
     }
 
     .clients-analytics-shell {
-      border: 1px solid #dbe4f0;
-      border-radius: 24px;
-      background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
-      box-shadow: 0 18px 42px rgba(15, 23, 42, 0.07);
-      padding: 20px;
+      border: 1px solid var(--is-border);
+      border-radius: 22px;
+      background: var(--is-card);
+      box-shadow: 0 18px 42px rgba(11, 31, 58, 0.08);
+      padding: 26px;
+      margin-bottom: 20px;
+    }
+
+    .clients-analytics-hero {
+      display: grid;
+      grid-template-columns: 1.35fr 1fr;
+      gap: 16px;
+      align-items: stretch;
       margin-bottom: 18px;
     }
 
-    .clients-analytics-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-bottom: 16px;
-    }
-
-    .clients-analytics-head h5 {
+    .clients-analytics-hero-main h2 {
       margin: 0;
-      color: #0f172a;
-      font-size: 22px;
+      color: var(--is-primary-dark);
+      font-size: 34px;
+      line-height: 1.12;
       font-weight: 900;
+      letter-spacing: -0.02em;
     }
 
-    .clients-analytics-head p {
-      margin: 6px 0 0;
-      color: #64748b;
+    .clients-analytics-hero-main p {
+      margin: 10px 0 0;
+      color: var(--is-muted);
+      font-size: 15px;
+      line-height: 1.75;
+      max-width: 740px;
+    }
+
+    .clients-analytics-price-chip {
+      margin-top: 14px;
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      border-radius: 999px;
+      padding: 8px 14px;
+      border: 1px solid #d7e2f3;
+      background: #f8fbff;
+      color: #2f425f;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .02em;
+    }
+
+    .clients-analytics-filter-card {
+      border-radius: var(--is-radius);
+      border: 1px solid var(--is-border);
+      background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .clients-analytics-filter-label {
+      margin: 0;
+      color: var(--is-primary-dark);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .08em;
     }
 
     .clients-analytics-filter {
-      display: flex;
+      display: grid;
+      grid-template-columns: 1.1fr 108px 128px;
       gap: 8px;
       align-items: center;
-      flex-wrap: wrap;
+    }
+
+    .clients-analytics-apply {
+      height: 48px;
+      border: 0;
+      border-radius: 14px;
+      background: linear-gradient(90deg, var(--is-primary) 0%, #2a8cff 100%);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: .01em;
+      box-shadow: 0 14px 24px rgba(20, 110, 245, 0.28);
+      transition: transform .2s ease, box-shadow .2s ease;
+    }
+
+    .clients-analytics-apply:hover,
+    .clients-analytics-apply:focus-visible {
+      transform: translateY(-1px);
+      box-shadow: 0 18px 28px rgba(20, 110, 245, 0.32);
+    }
+
+    .clients-analytics-apply.is-loading {
+      opacity: .88;
+      pointer-events: none;
     }
 
     .clients-analytics-export {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 10px;
+      border-radius: var(--is-radius);
+      border: 1px solid var(--is-border);
+      background: #fbfdff;
+      padding: 14px;
+      margin-bottom: 16px;
     }
 
-    .clients-analytics-export .btn {
-      border-radius: 12px;
+    .clients-analytics-export-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      color: var(--is-primary-dark);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .clients-analytics-export-groups {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .clients-analytics-export-group {
+      border: 1px solid var(--is-border);
+      border-radius: 14px;
+      background: #fff;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .clients-analytics-export-group h6 {
+      margin: 0;
+      color: #41536c;
       font-size: 12px;
-      font-weight: 800;
-      padding: 8px 12px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .clients-analytics-export-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .clients-analytics-export-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid #d8e3f2;
+      border-radius: 11px;
+      background: #fff;
+      color: #355073;
+      text-decoration: none;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      transition: all .2s ease;
+    }
+
+    .clients-analytics-export-btn:hover,
+    .clients-analytics-export-btn:focus-visible {
+      color: var(--is-primary);
+      border-color: #9dc2ff;
+      background: #f5f9ff;
     }
 
     .clients-analytics-alerts {
@@ -477,16 +619,48 @@
     .clients-analytics-charts {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
-      margin-bottom: 12px;
+      gap: 14px;
+      margin-bottom: 14px;
     }
 
     .clients-analytics-chart {
-      border: 1px solid #e2e8f0;
-      border-radius: 16px;
+      border: 1px solid var(--is-border);
+      border-radius: var(--is-radius);
       background: #fff;
-      padding: 10px;
-      min-height: 320px;
+      padding: 16px;
+      min-height: 350px;
+      box-shadow: 0 10px 24px rgba(11, 31, 58, 0.05);
+    }
+
+    .clients-analytics-chart-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .clients-analytics-chart-head h6 {
+      margin: 0;
+      color: var(--is-primary-dark);
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .clients-analytics-chart-head p {
+      margin: 4px 0 0;
+      color: var(--is-muted);
+      font-size: 13px;
+    }
+
+    .clients-analytics-chart-menu {
+      border: 0;
+      background: #f2f6fd;
+      color: #486184;
+      width: 30px;
+      height: 30px;
+      border-radius: 10px;
+      font-weight: 900;
     }
 
     .clients-chart-empty {
@@ -506,87 +680,228 @@
 
     .clients-analytics-chart--full {
       grid-column: 1 / -1;
-      min-height: 300px;
+      min-height: 320px;
     }
 
     .clients-analytics-grid {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
       margin-bottom: 14px;
     }
 
     .clients-analytics-kpi {
-      border: 1px solid #dbe4f0;
-      border-radius: 16px;
+      border: 1px solid var(--is-border);
+      border-radius: var(--is-radius);
       background: #fff;
-      padding: 14px;
+      padding: 16px;
+      min-height: 182px;
+      box-shadow: 0 10px 24px rgba(11, 31, 58, 0.06);
+      transition: transform .25s ease, box-shadow .25s ease;
+    }
+
+    .clients-analytics-kpi.is-clients {
+      background: linear-gradient(135deg, #faf7ff 0%, #ffffff 72%);
+      border-color: #ece7ff;
+    }
+
+    .clients-analytics-kpi.is-today {
+      background: linear-gradient(135deg, #f3f8ff 0%, #ffffff 72%);
+      border-color: #dfebff;
+    }
+
+    .clients-analytics-kpi.is-month {
+      background: linear-gradient(135deg, #f5f5ff 0%, #ffffff 72%);
+      border-color: #e5e5ff;
+    }
+
+    .clients-analytics-kpi.is-total {
+      background: linear-gradient(135deg, #f1fdf9 0%, #ffffff 72%);
+      border-color: #d9f6eb;
+    }
+
+    .clients-analytics-kpi:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 16px 28px rgba(11, 31, 58, 0.1);
+    }
+
+    .clients-analytics-kpi-link {
+      display: block;
+      color: inherit;
+      text-decoration: none;
+      border-radius: var(--is-radius);
+    }
+
+    .clients-analytics-kpi-link:hover,
+    .clients-analytics-kpi-link:focus-visible {
+      color: inherit;
+      transform: translateY(-2px);
+      box-shadow: 0 16px 30px rgba(15, 23, 42, 0.08);
+    }
+
+    .clients-analytics-kpi-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .clients-analytics-kpi-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      border: 1px solid transparent;
+    }
+
+    .clients-analytics-kpi.is-clients .clients-analytics-kpi-icon {
+      color: #4f46e5;
+      background: #eef2ff;
+      border-color: #dfe3ff;
+    }
+
+    .clients-analytics-kpi.is-today .clients-analytics-kpi-icon {
+      color: #146ef5;
+      background: #edf4ff;
+      border-color: #d9e7ff;
+    }
+
+    .clients-analytics-kpi.is-month .clients-analytics-kpi-icon {
+      color: #5b5bd6;
+      background: #f1f1ff;
+      border-color: #e0e0ff;
+    }
+
+    .clients-analytics-kpi.is-total .clients-analytics-kpi-icon {
+      color: #0f9d7a;
+      background: #ebfbf6;
+      border-color: #ccf3e8;
     }
 
     .clients-analytics-kpi span {
       display: block;
-      color: #64748b;
-      font-size: 12px;
+      color: var(--is-muted);
+      font-size: 13px;
       margin-bottom: 8px;
+      font-weight: 600;
     }
 
     .clients-analytics-kpi strong {
       display: block;
-      color: #0f172a;
-      font-size: 24px;
+      color: var(--is-primary-dark);
+      font-size: 36px;
       line-height: 1;
-      font-weight: 900;
+      font-weight: 800;
+      letter-spacing: -0.02em;
     }
 
     .clients-analytics-kpi small {
       display: block;
-      margin-top: 6px;
-      color: #2563eb;
+      margin-top: 8px;
+      color: #2f4d75;
       font-size: 13px;
+      font-weight: 600;
     }
 
-    .clients-analytics-panels {
-      display: grid;
-      grid-template-columns: 1.35fr 1fr;
-      gap: 12px;
+    .clients-analytics-kpi em {
+      display: inline-block;
+      margin-top: 10px;
+      color: #375a82;
+      font-size: 12px;
+      font-style: normal;
+      font-weight: 600;
+      transition: color .2s ease;
     }
 
-    .clients-analytics-panel {
-      border: 1px solid #e2e8f0;
-      border-radius: 16px;
+    .clients-analytics-kpi-link:hover em,
+    .clients-analytics-kpi-link:focus-visible em {
+      color: var(--is-primary);
+    }
+
+    .clients-analytics-insights {
+      border: 1px solid var(--is-border);
+      border-radius: var(--is-radius);
       background: #fff;
       padding: 14px;
+      margin-bottom: 14px;
     }
 
-    .clients-analytics-panel h6 {
-      margin: 0 0 10px;
-      color: #0f172a;
-      font-size: 14px;
-      font-weight: 900;
+    .clients-analytics-insights-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .clients-analytics-insight {
+      border: 1px solid #edf2f9;
+      border-radius: 14px;
+      background: #fbfdff;
+      padding: 12px;
+    }
+
+    .clients-analytics-insight:nth-child(1) {
+      background: linear-gradient(135deg, #f5f9ff 0%, #ffffff 90%);
+      border-color: #e1ebfb;
+    }
+
+    .clients-analytics-insight:nth-child(2) {
+      background: linear-gradient(135deg, #f4f6ff 0%, #ffffff 90%);
+      border-color: #e3e7ff;
+    }
+
+    .clients-analytics-insight:nth-child(3) {
+      background: linear-gradient(135deg, #f7f4ff 0%, #ffffff 90%);
+      border-color: #e9e3ff;
+    }
+
+    .clients-analytics-insight:nth-child(4) {
+      background: linear-gradient(135deg, #f2fbf7 0%, #ffffff 90%);
+      border-color: #ddf3e9;
+    }
+
+    .clients-analytics-insight span {
+      display: block;
+      color: #6b7f99;
+      font-size: 12px;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .clients-analytics-insight strong {
+      display: block;
+      color: #0f284c;
+      font-size: 20px;
+      line-height: 1.2;
+      font-weight: 700;
     }
 
     .clients-analytics-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 12px;
+      font-size: 13px;
     }
 
     .clients-analytics-table th,
     .clients-analytics-table td {
-      border-bottom: 1px solid #eef2f7;
-      padding: 8px 6px;
+      border-bottom: 1px solid #edf2f9;
+      padding: 10px 8px;
       text-align: left;
     }
 
     .clients-analytics-table th {
-      color: #64748b;
+      color: #64809d;
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: .04em;
+      font-size: 11px;
     }
 
     .clients-analytics-table td {
-      color: #0f172a;
+      color: #193457;
       font-weight: 700;
     }
 
@@ -1053,7 +1368,7 @@
 
     .clients-admin-history-toolbar {
       display: grid;
-      grid-template-columns: minmax(240px, 1.6fr) minmax(220px, 0.8fr) auto auto;
+      grid-template-columns: minmax(220px, 1.4fr) minmax(180px, 0.8fr) minmax(170px, 0.7fr) auto auto;
       gap: 12px;
       align-items: center;
       padding: 18px 24px 0;
@@ -1325,12 +1640,32 @@
         grid-template-columns: 1fr;
       }
 
-      .clients-analytics-grid {
+      .clients-analytics-shell {
+        padding: 20px;
+      }
+
+      .clients-analytics-hero {
         grid-template-columns: 1fr;
       }
 
-      .clients-analytics-panels {
+      .clients-analytics-hero-main h2 {
+        font-size: 30px;
+      }
+
+      .clients-analytics-filter {
+        grid-template-columns: 1fr 120px 138px;
+      }
+
+      .clients-analytics-export-groups {
         grid-template-columns: 1fr;
+      }
+
+      .clients-analytics-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .clients-analytics-insights-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
       .clients-analytics-charts {
@@ -1356,6 +1691,27 @@
     }
 
     @media (max-width: 575px) {
+      .clients-analytics-hero-main h2 {
+        font-size: 25px;
+      }
+
+      .clients-analytics-filter {
+        grid-template-columns: 1fr;
+      }
+
+      .clients-analytics-apply,
+      .clients-analytics-filter .clients-admin-filters {
+        width: 100%;
+      }
+
+      .clients-analytics-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .clients-analytics-insights-grid {
+        grid-template-columns: 1fr;
+      }
+
       .clients-admin-table thead th,
       .clients-admin-table tbody td {
         padding: 14px 12px;
@@ -1517,8 +1873,21 @@ $salut = 'Bonsoir';
     $analyticsDailyRows = (array) ($invitationAnalytics['daily_rows'] ?? []);
     $analyticsMonthlyRows = (array) ($invitationAnalytics['monthly_rows'] ?? []);
     $analyticsTopClients = (array) ($invitationAnalytics['top_clients'] ?? []);
+    if ($analyticsTopClients === []) {
+      $globalInvitationAnalytics = AdminClientManagementService::buildInvitationAnalytics($pdo, 0);
+      $analyticsTopClients = (array) ($globalInvitationAnalytics['top_clients'] ?? []);
+    }
     $analyticsClients = (array) ($invitationAnalytics['clients'] ?? []);
     $analyticsScopeLabel = 'Tous les clients';
+    $sentToday = (int) ($invitationAnalytics['sent_today'] ?? 0);
+    $sentMonth = (int) ($invitationAnalytics['sent_month'] ?? 0);
+    $sentTotal = (int) ($invitationAnalytics['sent_total'] ?? 0);
+    $costToday = (float) ($invitationAnalytics['cost_today_usd'] ?? 0);
+    $daysInCurrentMonth = max(1, (int) date('j'));
+    $averageDailyThisMonth = $sentMonth / $daysInCurrentMonth;
+    $monthSharePercent = $sentTotal > 0 ? (($sentMonth / $sentTotal) * 100) : 0;
+    $topClientName = (string) (($analyticsTopClients[0]['client_name'] ?? '') ?: 'Aucun client');
+    $topClientSentCount = (int) ($analyticsTopClients[0]['sent_count'] ?? 0);
 
     if ($statsClientUserId > 0) {
       foreach ($analyticsClients as $analyticsClient) {
@@ -1640,74 +2009,7 @@ $salut = 'Bonsoir';
           <?php echo htmlspecialchars($clientFlash['message'], ENT_QUOTES, 'UTF-8'); ?>
         </div>
         <?php } ?>
-				<div class="box box-body">
-					<div class="row"> 
-						<div class="col-xxl-3 col-xl-3 col-lg-3 col-md-6 col-12">
-							<div class="box-body rounded-0 p-0 pb-lg-0 pb-sm-15 pb-xs-15 be-1 fill-icon">
-								<div class="d-flex align-items-center">
-									<div class="w-70 h-70 me-15 bg-info-light rounded-circle text-center p-10">
-										<div class="w-50 h-50 bg-info rounded-circle">
-										  <i class="fas fa-user fs-24 l-h-50"></i>
-										</div>		
-									</div>
-									<div class="d-flex flex-column">
-                                        <a href="index.php?page=clients">
-										<span class="text-fade fs-12">Clients</span>
-										<h2 class="text-dark hover-primary m-0 fw-600"><?php echo $total_ccli; ?></h2>
-                                        </a>
-									</div>
-								</div>
-							</div>
-						</div>  
-            <div class="col-xxl-3 col-xl-3 col-lg-3 col-md-6 col-12">
-              <a href="index.php?page=clients&view=whatsapp-sends" class="clients-admin-summary-link <?php echo $clientsView === 'whatsapp-sends' ? 'is-active' : ''; ?>">
-              <div class="box-body rounded-0 p-0 pb-lg-0 pb-sm-15 pb-xs-15 be-1 fill-icon">
-                <div class="d-flex align-items-center">
-                  <div class="w-70 h-70 me-15 bg-success-light rounded-circle text-center p-10">
-                    <div class="w-50 h-50 bg-success rounded-circle">
-                      <i class="fas fa-paper-plane fs-24 l-h-50"></i>
-                    </div>
-                  </div>
-                  <div class="d-flex flex-column">
-                    <span class="text-fade fs-12">Envois WhatsApp</span>
-                    <h2 class="text-dark m-0 fw-600"><?php echo (int) ($adminQuotaTotals['sent_count'] ?? 0); ?></h2>
-                  </div>
-                </div>
-              </div>
-              </a>
-            </div>
-            <div class="col-xxl-3 col-xl-3 col-lg-3 col-md-6 col-12">
-              <div class="box-body rounded-0 p-0 pb-lg-0 pb-sm-15 pb-xs-15 be-1 fill-icon">
-                <div class="d-flex align-items-center">
-                  <div class="w-70 h-70 me-15 bg-primary-light rounded-circle text-center p-10">
-                    <div class="w-50 h-50 bg-primary rounded-circle">
-                      <i class="fas fa-layer-group fs-24 l-h-50"></i>
-                    </div>
-                  </div>
-                  <div class="d-flex flex-column">
-                    <span class="text-fade fs-12">Quota total</span>
-                    <h2 class="text-dark m-0 fw-600"><?php echo (int) ($adminQuotaTotals['total_quota'] ?? 0); ?></h2>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="col-xxl-3 col-xl-3 col-lg-3 col-md-6 col-12">
-              <div class="box-body rounded-0 p-0 pb-lg-0 pb-sm-15 pb-xs-15 be-1 fill-icon">
-                <div class="d-flex align-items-center">
-                  <div class="w-70 h-70 me-15 bg-warning-light rounded-circle text-center p-10">
-                    <div class="w-50 h-50 bg-warning rounded-circle">
-                      <i class="fas fa-battery-three-quarters fs-24 l-h-50"></i>
-                    </div>
-                  </div>
-                  <div class="d-flex flex-column">
-                    <span class="text-fade fs-12">Restants</span>
-                    <h2 class="text-dark m-0 fw-600"><?php echo (int) ($adminQuotaTotals['remaining_quota'] ?? 0); ?></h2>
-                  </div>
-                </div>
-              </div>
-            </div>
-					</div>
-				</div>
+
 
 
 
@@ -1774,8 +2076,13 @@ $salut = 'Bonsoir';
                 <option value="<?php echo (int) ($whatsAppHistoryUser['client_user_id'] ?? 0); ?>" <?php echo (int) ($whatsAppHistoryUser['client_user_id'] ?? 0) === $whatsAppHistoryUserId ? 'selected' : ''; ?>><?php echo htmlspecialchars((string) ($whatsAppHistoryUser['client_name'] ?? 'Utilisateur inconnu'), ENT_QUOTES, 'UTF-8'); ?></option>
                 <?php } ?>
               </select>
+              <select name="history_period" id="historyPeriodFilter" class="form-control clients-admin-filters">
+                <option value="all" <?php echo $whatsAppHistoryPeriod === 'all' ? 'selected' : ''; ?>>Periode: Tout</option>
+                <option value="today" <?php echo $whatsAppHistoryPeriod === 'today' ? 'selected' : ''; ?>>Periode: Aujourd hui</option>
+                <option value="month" <?php echo $whatsAppHistoryPeriod === 'month' ? 'selected' : ''; ?>>Periode: Ce mois</option>
+              </select>
               <button type="submit" class="btn btn-primary">Filtrer</button>
-              <?php if ($whatsAppHistorySearch !== '' || $whatsAppHistoryUserId > 0) { ?>
+              <?php if ($whatsAppHistorySearch !== '' || $whatsAppHistoryUserId > 0 || $whatsAppHistoryPeriod !== 'all') { ?>
               <a href="index.php?page=clients&view=whatsapp-sends" class="btn btn-outline btn-secondary">Reinitialiser</a>
               <?php } else { ?>
               <span></span>
@@ -1887,168 +2194,141 @@ $salut = 'Bonsoir';
         </div>
         <?php } else { ?>
         <div class="clients-analytics-shell">
-          <div class="clients-analytics-head">
-            <div>
-              <h5>Dashboard invitations electroniques</h5>
-              <p>Vue <?php echo htmlspecialchars($analyticsScopeLabel, ENT_QUOTES, 'UTF-8'); ?> - cout Twilio fixe a 0,005 USD par message envoye.</p>
+          <div class="clients-analytics-hero">
+            <div class="clients-analytics-hero-main">
+              <h2>Dashboard Invitations electroniques</h2>
+              <p>Suivez vos envois, votre consommation Twilio et l activite de vos clients en temps reel.</p>
+              <span class="clients-analytics-price-chip"><i class="fas fa-circle" style="font-size:8px;color:var(--is-gold);"></i> Cout Twilio : 0,005 USD / message</span>
             </div>
-            <form method="get" action="" class="clients-analytics-filter">
-              <input type="hidden" name="page" value="clients">
-              <input type="hidden" name="view" value="clients">
-              <input type="hidden" name="q" value="<?php echo htmlspecialchars($clientSearch, ENT_QUOTES, 'UTF-8'); ?>">
-              <input type="hidden" name="filter" value="<?php echo htmlspecialchars($clientFilter, ENT_QUOTES, 'UTF-8'); ?>">
-              <select name="stats_client_id" class="form-control clients-admin-filters">
-                <option value="0">Situation globale</option>
-                <?php foreach ($analyticsClients as $analyticsClient) { ?>
-                <option value="<?php echo (int) ($analyticsClient['cod_user'] ?? 0); ?>" <?php echo (int) ($analyticsClient['cod_user'] ?? 0) === $statsClientUserId ? 'selected' : ''; ?>>
-                  <?php echo htmlspecialchars((string) ($analyticsClient['noms'] ?? 'Client'), ENT_QUOTES, 'UTF-8'); ?>
-                </option>
-                <?php } ?>
-              </select>
-              <input type="number" name="quota_threshold" value="<?php echo (int) $quotaThreshold; ?>" class="form-control clients-admin-filters" min="1" style="max-width:120px;" title="Seuil quota">
-              <button type="submit" class="btn btn-primary">Appliquer</button>
-            </form>
+            <div class="clients-analytics-filter-card">
+              <p class="clients-analytics-filter-label">Contexte analytique</p>
+              <form id="clientsAnalyticsFilterForm" method="get" action="" class="clients-analytics-filter">
+                <input type="hidden" name="page" value="clients">
+                <input type="hidden" name="view" value="clients">
+                <input type="hidden" name="q" value="<?php echo htmlspecialchars($clientSearch, ENT_QUOTES, 'UTF-8'); ?>">
+                <input type="hidden" name="filter" value="<?php echo htmlspecialchars($clientFilter, ENT_QUOTES, 'UTF-8'); ?>">
+                <select name="stats_client_id" class="form-control clients-admin-filters" title="Client cible">
+                  <option value="0">Situation globale</option>
+                  <?php foreach ($analyticsClients as $analyticsClient) { ?>
+                  <option value="<?php echo (int) ($analyticsClient['cod_user'] ?? 0); ?>" <?php echo (int) ($analyticsClient['cod_user'] ?? 0) === $statsClientUserId ? 'selected' : ''; ?>>
+                    <?php echo htmlspecialchars((string) ($analyticsClient['noms'] ?? 'Client'), ENT_QUOTES, 'UTF-8'); ?>
+                  </option>
+                  <?php } ?>
+                </select>
+                <input type="number" name="quota_threshold" value="<?php echo (int) $quotaThreshold; ?>" class="form-control clients-admin-filters" min="1" title="Seuil quota">
+                <button id="clientsAnalyticsApplyBtn" type="submit" class="clients-analytics-apply"><i class="fas fa-filter"></i> Appliquer</button>
+              </form>
+            </div>
           </div>
 
           <div class="clients-analytics-export">
-            <a class="btn btn-outline btn-primary" href="pages/clients_export.php?<?php echo htmlspecialchars(http_build_query(['scope' => 'daily', 'format' => 'csv', 'stats_client_id' => $statsClientUserId, 'quota_threshold' => $quotaThreshold]), ENT_QUOTES, 'UTF-8'); ?>">CSV journalier</a>
-            <a class="btn btn-outline btn-info" href="pages/clients_export.php?<?php echo htmlspecialchars(http_build_query(['scope' => 'daily', 'format' => 'excel', 'stats_client_id' => $statsClientUserId, 'quota_threshold' => $quotaThreshold]), ENT_QUOTES, 'UTF-8'); ?>">Excel journalier</a>
-            <a class="btn btn-outline btn-primary" href="pages/clients_export.php?<?php echo htmlspecialchars(http_build_query(['scope' => 'monthly', 'format' => 'csv', 'stats_client_id' => $statsClientUserId, 'quota_threshold' => $quotaThreshold]), ENT_QUOTES, 'UTF-8'); ?>">CSV mensuel</a>
-            <a class="btn btn-outline btn-info" href="pages/clients_export.php?<?php echo htmlspecialchars(http_build_query(['scope' => 'monthly', 'format' => 'excel', 'stats_client_id' => $statsClientUserId, 'quota_threshold' => $quotaThreshold]), ENT_QUOTES, 'UTF-8'); ?>">Excel mensuel</a>
-            <a class="btn btn-outline btn-primary" href="pages/clients_export.php?<?php echo htmlspecialchars(http_build_query(['scope' => 'clients', 'format' => 'csv', 'stats_client_id' => $statsClientUserId, 'quota_threshold' => $quotaThreshold]), ENT_QUOTES, 'UTF-8'); ?>">CSV par client</a>
-            <a class="btn btn-outline btn-info" href="pages/clients_export.php?<?php echo htmlspecialchars(http_build_query(['scope' => 'clients', 'format' => 'excel', 'stats_client_id' => $statsClientUserId, 'quota_threshold' => $quotaThreshold]), ENT_QUOTES, 'UTF-8'); ?>">Excel par client</a>
+            <div class="clients-analytics-export-head"><i class="fas fa-download"></i> Exporter les donnees</div>
+            <div class="clients-analytics-export-groups">
+              <div class="clients-analytics-export-group">
+                <h6>Export journalier</h6>
+                <div class="clients-analytics-export-links">
+                  <a class="clients-analytics-export-btn" href="pages/clients_export.php?<?php echo htmlspecialchars(http_build_query(['scope' => 'daily', 'format' => 'csv', 'stats_client_id' => $statsClientUserId, 'quota_threshold' => $quotaThreshold]), ENT_QUOTES, 'UTF-8'); ?>"><i class="fas fa-file-alt"></i> CSV</a>
+                  <a class="clients-analytics-export-btn" href="pages/clients_export.php?<?php echo htmlspecialchars(http_build_query(['scope' => 'daily', 'format' => 'excel', 'stats_client_id' => $statsClientUserId, 'quota_threshold' => $quotaThreshold]), ENT_QUOTES, 'UTF-8'); ?>"><i class="fas fa-file-excel"></i> Excel</a>
+                </div>
+              </div>
+              <div class="clients-analytics-export-group">
+                <h6>Export mensuel</h6>
+                <div class="clients-analytics-export-links">
+                  <a class="clients-analytics-export-btn" href="pages/clients_export.php?<?php echo htmlspecialchars(http_build_query(['scope' => 'monthly', 'format' => 'csv', 'stats_client_id' => $statsClientUserId, 'quota_threshold' => $quotaThreshold]), ENT_QUOTES, 'UTF-8'); ?>"><i class="fas fa-file-alt"></i> CSV</a>
+                  <a class="clients-analytics-export-btn" href="pages/clients_export.php?<?php echo htmlspecialchars(http_build_query(['scope' => 'monthly', 'format' => 'excel', 'stats_client_id' => $statsClientUserId, 'quota_threshold' => $quotaThreshold]), ENT_QUOTES, 'UTF-8'); ?>"><i class="fas fa-file-excel"></i> Excel</a>
+                </div>
+              </div>
+              <div class="clients-analytics-export-group">
+                <h6>Export par client</h6>
+                <div class="clients-analytics-export-links">
+                  <a class="clients-analytics-export-btn" href="pages/clients_export.php?<?php echo htmlspecialchars(http_build_query(['scope' => 'clients', 'format' => 'csv', 'stats_client_id' => $statsClientUserId, 'quota_threshold' => $quotaThreshold]), ENT_QUOTES, 'UTF-8'); ?>"><i class="fas fa-file-alt"></i> CSV</a>
+                  <a class="clients-analytics-export-btn" href="pages/clients_export.php?<?php echo htmlspecialchars(http_build_query(['scope' => 'clients', 'format' => 'excel', 'stats_client_id' => $statsClientUserId, 'quota_threshold' => $quotaThreshold]), ENT_QUOTES, 'UTF-8'); ?>"><i class="fas fa-file-excel"></i> Excel</a>
+                </div>
+              </div>
+            </div>
           </div>
-
-          <?php if ($lowQuotaNotifications !== []) { ?>
-          <div class="clients-analytics-alerts" id="lowQuotaAlertsBox" data-threshold="<?php echo (int) $quotaThreshold; ?>">
-            <h6>Notifications automatiques quota faible (seuil <?php echo (int) $quotaThreshold; ?>)</h6>
-            <ul class="clients-analytics-alert-list">
-              <?php foreach (array_slice($lowQuotaNotifications, 0, 8) as $lowQuotaAlert) { ?>
-              <li>
-                <?php echo htmlspecialchars((string) ($lowQuotaAlert['client_name'] ?? 'Client'), ENT_QUOTES, 'UTF-8'); ?> :
-                <?php echo (int) ($lowQuotaAlert['remaining_quota'] ?? 0); ?> restant(s)
-                <?php if (!empty($lowQuotaAlert['invitation_sending_suspended'])) { ?>
-                  (envoi suspendu)
-                <?php } ?>
-              </li>
-              <?php } ?>
-            </ul>
-          </div>
-          <?php } ?>
 
           <div class="clients-analytics-grid">
-            <div class="clients-analytics-kpi">
-              <span>Envoyes aujourd hui</span>
-              <strong><?php echo (int) ($invitationAnalytics['sent_today'] ?? 0); ?></strong>
-              <small>USD <?php echo htmlspecialchars((string) ($invitationAnalytics['cost_today_usd'] ?? '0.000'), ENT_QUOTES, 'UTF-8'); ?></small>
-            </div>
-            <div class="clients-analytics-kpi">
-              <span>Envoyes ce mois</span>
-              <strong><?php echo (int) ($invitationAnalytics['sent_month'] ?? 0); ?></strong>
-              <small>USD <?php echo htmlspecialchars((string) ($invitationAnalytics['cost_month_usd'] ?? '0.000'), ENT_QUOTES, 'UTF-8'); ?></small>
-            </div>
-            <div class="clients-analytics-kpi">
-              <span>Envoyes au total</span>
-              <strong><?php echo (int) ($invitationAnalytics['sent_total'] ?? 0); ?></strong>
-              <small>USD <?php echo htmlspecialchars((string) ($invitationAnalytics['cost_total_usd'] ?? '0.000'), ENT_QUOTES, 'UTF-8'); ?></small>
-            </div>
+            <article class="clients-analytics-kpi is-clients">
+              <div class="clients-analytics-kpi-top">
+                <span>Clients actifs</span>
+                <i class="fas fa-users clients-analytics-kpi-icon"></i>
+              </div>
+              <strong><?php echo (int) $total_ccli; ?></strong>
+              <small>Base clients globale</small>
+            </article>
+
+            <a class="clients-analytics-kpi-link" href="index.php?<?php echo htmlspecialchars(http_build_query(['page' => 'clients', 'view' => 'whatsapp-sends', 'history_period' => 'today', 'history_user_id' => $statsClientUserId]), ENT_QUOTES, 'UTF-8'); ?>">
+              <article class="clients-analytics-kpi is-today">
+                <div class="clients-analytics-kpi-top">
+                  <span>Envoyes aujourd hui</span>
+                  <i class="fas fa-paper-plane clients-analytics-kpi-icon"></i>
+                </div>
+                <strong><?php echo $sentToday; ?></strong>
+                <small><?php echo htmlspecialchars(number_format($costToday, 3, '.', ''), ENT_QUOTES, 'UTF-8'); ?> USD</small>
+                <em>Voir les messages concernes <i class="fas fa-arrow-right"></i></em>
+              </article>
+            </a>
+
+            <a class="clients-analytics-kpi-link" href="index.php?<?php echo htmlspecialchars(http_build_query(['page' => 'clients', 'view' => 'whatsapp-sends', 'history_period' => 'month', 'history_user_id' => $statsClientUserId]), ENT_QUOTES, 'UTF-8'); ?>">
+              <article class="clients-analytics-kpi is-month">
+                <div class="clients-analytics-kpi-top">
+                  <span>Envoyes ce mois</span>
+                  <i class="fas fa-calendar-alt clients-analytics-kpi-icon"></i>
+                </div>
+                <strong><?php echo $sentMonth; ?></strong>
+                <small><?php echo htmlspecialchars((string) ($invitationAnalytics['cost_month_usd'] ?? '0.000'), ENT_QUOTES, 'UTF-8'); ?> USD</small>
+                <em>Voir les messages concernes <i class="fas fa-arrow-right"></i></em>
+              </article>
+            </a>
+
+            <a class="clients-analytics-kpi-link" href="index.php?<?php echo htmlspecialchars(http_build_query(['page' => 'clients', 'view' => 'whatsapp-sends', 'history_period' => 'all', 'history_user_id' => $statsClientUserId]), ENT_QUOTES, 'UTF-8'); ?>">
+              <article class="clients-analytics-kpi is-total">
+                <div class="clients-analytics-kpi-top">
+                  <span>Envoyes au total</span>
+                  <i class="fas fa-chart-line clients-analytics-kpi-icon"></i>
+                </div>
+                <strong><?php echo $sentTotal; ?></strong>
+                <small><?php echo htmlspecialchars((string) ($invitationAnalytics['cost_total_usd'] ?? '0.000'), ENT_QUOTES, 'UTF-8'); ?> USD</small>
+                <em>Voir les messages concernes <i class="fas fa-arrow-right"></i></em>
+              </article>
+            </a>
           </div>
+
+          <section class="clients-analytics-insights">
+            <div class="clients-analytics-insights-grid">
+              <article class="clients-analytics-insight">
+                <span>Cout moyen aujourd hui</span>
+                <strong><?php echo htmlspecialchars(number_format($sentToday > 0 ? ($costToday / $sentToday) : 0.005, 3, '.', ''), ENT_QUOTES, 'UTF-8'); ?> USD / message</strong>
+              </article>
+              <article class="clients-analytics-insight">
+                <span>Moyenne quotidienne ce mois</span>
+                <strong><?php echo htmlspecialchars(number_format($averageDailyThisMonth, 1, '.', ''), ENT_QUOTES, 'UTF-8'); ?> messages</strong>
+              </article>
+              <article class="clients-analytics-insight">
+                <span>Client le plus actif</span>
+                <strong><?php echo htmlspecialchars($topClientName, ENT_QUOTES, 'UTF-8'); ?> (<?php echo $topClientSentCount; ?>)</strong>
+              </article>
+              <article class="clients-analytics-insight">
+                <span>Part du mois dans le total</span>
+                <strong><?php echo htmlspecialchars(number_format($monthSharePercent, 1, '.', ''), ENT_QUOTES, 'UTF-8'); ?> %</strong>
+              </article>
+            </div>
+          </section>
 
           <div class="clients-analytics-charts">
-            <div class="clients-analytics-chart">
-              <div id="clientsDailyAreaChart"></div>
-            </div>
-            <div class="clients-analytics-chart">
-              <div id="clientsMonthlyBarChart"></div>
-            </div>
-            <?php if ($analyticsTopClients !== []) { ?>
             <div class="clients-analytics-chart clients-analytics-chart--full">
+              <div class="clients-analytics-chart-head">
+                <div>
+                  <h6>Top clients (global)</h6>
+                  <p>Comparatif des clients les plus actifs</p>
+                </div>
+                <button type="button" class="clients-analytics-chart-menu" aria-label="Options">...</button>
+              </div>
               <div id="clientsTopHorizontalChart"></div>
             </div>
-            <?php } ?>
           </div>
 
-          <div class="clients-analytics-panels">
-            <section class="clients-analytics-panel">
-              <h6>Evolution journaliere (30 jours)</h6>
-              <div class="table-responsive">
-                <table class="clients-analytics-table">
-                  <thead>
-                    <tr>
-                      <th>Jour</th>
-                      <th>Envois</th>
-                      <th>Cout USD</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <?php if ($analyticsDailyRows !== []) { ?>
-                    <?php foreach ($analyticsDailyRows as $dailyRow) { ?>
-                    <tr>
-                      <td><?php echo htmlspecialchars((string) ($dailyRow['day_key'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo (int) ($dailyRow['sent_count'] ?? 0); ?></td>
-                      <td><?php echo htmlspecialchars((string) ($dailyRow['cost_usd'] ?? '0.000'), ENT_QUOTES, 'UTF-8'); ?></td>
-                    </tr>
-                    <?php } ?>
-                    <?php } else { ?>
-                    <tr><td colspan="3">Aucune donnee</td></tr>
-                    <?php } ?>
-                  </tbody>
-                </table>
-              </div>
-            </section>
-
-            <section class="clients-analytics-panel">
-              <h6>Evolution mensuelle (12 mois)</h6>
-              <div class="table-responsive">
-                <table class="clients-analytics-table">
-                  <thead>
-                    <tr>
-                      <th>Mois</th>
-                      <th>Envois</th>
-                      <th>Cout USD</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <?php if ($analyticsMonthlyRows !== []) { ?>
-                    <?php foreach ($analyticsMonthlyRows as $monthlyRow) { ?>
-                    <tr>
-                      <td><?php echo htmlspecialchars((string) ($monthlyRow['month_key'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo (int) ($monthlyRow['sent_count'] ?? 0); ?></td>
-                      <td><?php echo htmlspecialchars((string) ($monthlyRow['cost_usd'] ?? '0.000'), ENT_QUOTES, 'UTF-8'); ?></td>
-                    </tr>
-                    <?php } ?>
-                    <?php } else { ?>
-                    <tr><td colspan="3">Aucune donnee</td></tr>
-                    <?php } ?>
-                  </tbody>
-                </table>
-              </div>
-
-              <?php if ($analyticsTopClients !== []) { ?>
-              <h6 style="margin-top:14px;">Top clients (global)</h6>
-              <div class="table-responsive">
-                <table class="clients-analytics-table">
-                  <thead>
-                    <tr>
-                      <th>Client</th>
-                      <th>Envois</th>
-                      <th>USD</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <?php foreach ($analyticsTopClients as $topClientRow) { ?>
-                    <tr>
-                      <td><?php echo htmlspecialchars((string) ($topClientRow['client_name'] ?? 'Client'), ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo (int) ($topClientRow['sent_count'] ?? 0); ?></td>
-                      <td><?php echo htmlspecialchars((string) ($topClientRow['cost_usd'] ?? '0.000'), ENT_QUOTES, 'UTF-8'); ?></td>
-                    </tr>
-                    <?php } ?>
-                  </tbody>
-                </table>
-              </div>
-              <?php } ?>
-            </section>
-          </div>
         </div>
 
         <div class="card rounded-4 clients-admin-card">
@@ -2424,14 +2704,30 @@ $salut = 'Bonsoir';
     </div>
 </div>
 
+<?php
+$analyticsTopClientsJson = json_encode(
+  $analyticsTopClients,
+  JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE
+);
+
+if ($analyticsTopClientsJson === false) {
+  $analyticsTopClientsJson = '[]';
+}
+?>
+
 <script src="html/assets/vendor_components/apexcharts-bundle/dist/apexcharts.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  const dailyRows = <?php echo json_encode($analyticsDailyRows, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
-  const monthlyRows = <?php echo json_encode($analyticsMonthlyRows, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
-  const topClientRows = <?php echo json_encode($analyticsTopClients, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
-  const lowQuotaRows = <?php echo json_encode($lowQuotaNotifications, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
-  const quotaThreshold = <?php echo (int) $quotaThreshold; ?>;
+  const topClientRows = <?php echo $analyticsTopClientsJson; ?>;
+  const analyticsFilterForm = document.getElementById('clientsAnalyticsFilterForm');
+  const analyticsApplyBtn = document.getElementById('clientsAnalyticsApplyBtn');
+
+  if (analyticsFilterForm && analyticsApplyBtn) {
+    analyticsFilterForm.addEventListener('submit', function () {
+      analyticsApplyBtn.classList.add('is-loading');
+      analyticsApplyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Chargement...';
+    });
+  }
 
   const chartNoData = function (elementId, message) {
     const el = document.getElementById(elementId);
@@ -2448,65 +2744,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
   const initClientCharts = function () {
     if (typeof ApexCharts === 'undefined') {
-      chartNoData('clientsDailyAreaChart', 'ApexCharts indisponible. Verifiez le chargement de la librairie.');
-      chartNoData('clientsMonthlyBarChart', 'ApexCharts indisponible. Verifiez le chargement de la librairie.');
       chartNoData('clientsTopHorizontalChart', 'ApexCharts indisponible. Verifiez le chargement de la librairie.');
       return;
-    }
-
-    const dailyChartElement = document.getElementById('clientsDailyAreaChart');
-    if (dailyChartElement) {
-      const dailyLabels = dailyRows.map(function (row) { return String(row.day_key || ''); });
-      const dailySeries = dailyRows.map(function (row) { return parseNumber(row.sent_count || 0); });
-      const dailyCostSeries = dailyRows.map(function (row) { return parseNumber(row.cost_usd || 0); });
-
-      if (dailySeries.length === 0) {
-        chartNoData('clientsDailyAreaChart', 'Aucune donnee journaliere disponible pour le moment.');
-      } else {
-        const dailyChart = new ApexCharts(dailyChartElement, {
-          chart: { type: 'area', height: 290, toolbar: { show: false } },
-          series: [
-            { name: 'Invitations', data: dailySeries },
-            { name: 'Cout USD', data: dailyCostSeries }
-          ],
-          dataLabels: { enabled: false },
-          stroke: { curve: 'smooth', width: [3, 2] },
-          colors: ['#0ea5e9', '#0f766e'],
-          fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.34, opacityTo: 0.05 } },
-          xaxis: { categories: dailyLabels },
-          yaxis: [
-            { title: { text: 'Invitations' } },
-            { opposite: true, title: { text: 'USD' } }
-          ],
-          title: { text: 'Tendance journaliere', align: 'left', style: { fontSize: '14px', fontWeight: '700' } },
-          grid: { borderColor: '#eef2f7' },
-          noData: { text: 'Aucune donnee' }
-        });
-        dailyChart.render();
-      }
-    }
-
-    const monthlyChartElement = document.getElementById('clientsMonthlyBarChart');
-    if (monthlyChartElement) {
-      const monthlyLabels = monthlyRows.map(function (row) { return String(row.month_key || ''); });
-      const monthlySeries = monthlyRows.map(function (row) { return parseNumber(row.sent_count || 0); });
-
-      if (monthlySeries.length === 0) {
-        chartNoData('clientsMonthlyBarChart', 'Aucune donnee mensuelle disponible pour le moment.');
-      } else {
-        const monthlyChart = new ApexCharts(monthlyChartElement, {
-          chart: { type: 'bar', height: 290, toolbar: { show: false } },
-          series: [{ name: 'Invitations', data: monthlySeries }],
-          colors: ['#0ea5e9'],
-          plotOptions: { bar: { borderRadius: 8, columnWidth: '46%' } },
-          dataLabels: { enabled: false },
-          xaxis: { categories: monthlyLabels },
-          title: { text: 'Volume mensuel', align: 'left', style: { fontSize: '14px', fontWeight: '700' } },
-          grid: { borderColor: '#eef2f7' },
-          noData: { text: 'Aucune donnee' }
-        });
-        monthlyChart.render();
-      }
     }
 
     const topChartElement = document.getElementById('clientsTopHorizontalChart');
@@ -2515,14 +2754,15 @@ document.addEventListener('DOMContentLoaded', function () {
       const topSeries = topClientRows.map(function (row) { return parseNumber(row.sent_count || 0); });
 
       const topChart = new ApexCharts(topChartElement, {
-        chart: { type: 'bar', height: 260, toolbar: { show: false } },
+        chart: { type: 'bar', height: 270, toolbar: { show: false }, zoom: { enabled: false } },
         series: [{ name: 'Invitations', data: topSeries }],
-        colors: ['#f59e0b'],
-        plotOptions: { bar: { horizontal: true, borderRadius: 8 } },
+        colors: ['#0f9d7a'],
+        plotOptions: { bar: { horizontal: true, borderRadius: 8, barHeight: '52%' } },
         dataLabels: { enabled: false },
-        xaxis: { categories: topLabels },
-        title: { text: 'Top clients consommation', align: 'left', style: { fontSize: '14px', fontWeight: '700' } },
-        grid: { borderColor: '#eef2f7' },
+        xaxis: { categories: topLabels, labels: { style: { colors: '#6b7f99' } } },
+        yaxis: { labels: { style: { colors: '#6b7f99' } } },
+        tooltip: { theme: 'light' },
+        grid: { borderColor: '#edf2f9', strokeDashArray: 4 },
         noData: { text: 'Aucune donnee' }
       });
       topChart.render();
@@ -2532,31 +2772,6 @@ document.addEventListener('DOMContentLoaded', function () {
   };
 
   initClientCharts();
-
-  if (Array.isArray(lowQuotaRows) && lowQuotaRows.length > 0) {
-    const alertFingerprint = lowQuotaRows
-      .slice(0, 10)
-      .map(function (row) { return String(row.client_user_id || 0) + ':' + String(row.remaining_quota || 0); })
-      .join('|');
-    const todayKey = new Date().toISOString().slice(0, 10);
-    const storageKey = 'isapp_low_quota_alerts_' + todayKey + '_' + String(quotaThreshold);
-    const previousFingerprint = window.localStorage ? localStorage.getItem(storageKey) : null;
-
-    if (previousFingerprint !== alertFingerprint) {
-      if (window.localStorage) {
-        localStorage.setItem(storageKey, alertFingerprint);
-      }
-
-      if (typeof Swal !== 'undefined') {
-        Swal.fire({
-          icon: 'warning',
-          title: 'Alerte quota faible',
-          text: lowQuotaRows.length + ' client(s) sont en dessous du seuil de ' + quotaThreshold + ' invitations.',
-          confirmButtonText: 'Voir'
-        });
-      }
-    }
-  }
 
   const input = document.getElementById('clientSearchInput');
   const cards = Array.from(document.querySelectorAll('[data-client-search]'));
