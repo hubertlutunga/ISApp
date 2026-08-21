@@ -162,8 +162,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
 	<!-- Vendor JS -->
-	<script src="users/src/js/vendors.min.js"></script>
-	<script src="users/src/js/pages/chat-popup.js"></script>
+    <script src="users/html/template/horizontal/src/js/vendors.min.js"></script>
+    <script src="users/html/template/horizontal/src/js/pages/chat-popup.js"></script>
     <script src="users/assets/icons/feather-icons/feather.min.js"></script>	
 	
 	
