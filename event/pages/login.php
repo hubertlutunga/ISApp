@@ -46,6 +46,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     select {
         font-size: 16px !important; /* Empêche le zoom sur iOS */
     }
+
+    .login-loading-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(8, 15, 34, 0.65);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s ease;
+        z-index: 9999;
+    }
+
+    .login-loading-overlay.is-active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .login-loading-card {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 20px 24px;
+        min-width: 240px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 18px 40px rgba(2, 6, 23, 0.25);
+    }
+
+    .login-loading-spinner {
+        width: 24px;
+        height: 24px;
+        border: 3px solid #dbe4ff;
+        border-top-color: #1a73e8;
+        border-radius: 50%;
+        animation: login-spin 0.8s linear infinite;
+    }
+
+    .login-loading-text {
+        margin: 0;
+        color: #0f172a;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+    }
+
+    @keyframes login-spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
 </style>
 
 
@@ -53,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 								<p class="mb-0 text-fade">Connexion</p>							
 							</div>
 							<div class="p-40">
-  <form action="" method="post">
+  <form action="" method="post" id="loginForm">
     <div class="form-group">
         <div class="input-group mb-3">
             <span class="input-group-text bg-transparent"><i class="fas fa-envelope"></i></span>
@@ -73,7 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
     <div class="row">
         <div class="col-12 text-center">
-            <button type="submit" class="btn btn-primary w-p100 mt-10">Se Connecter</button>
+            <button type="submit" class="btn btn-primary w-p100 mt-10" id="loginSubmitBtn">Se Connecter</button>
         </div>
     </div>
 </form>
@@ -112,11 +164,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		</div>
 	</div>
 
+    <div class="login-loading-overlay" id="loginLoadingOverlay" aria-hidden="true">
+        <div class="login-loading-card" role="status" aria-live="polite">
+            <span class="login-loading-spinner" aria-hidden="true"></span>
+            <p class="login-loading-text">Connexion en cours...</p>
+        </div>
+    </div>
+
 
 	<!-- Vendor JS -->
     <script src="users/html/template/horizontal/src/js/vendors.min.js"></script>
     <script src="users/html/template/horizontal/src/js/pages/chat-popup.js"></script>
     <script src="users/assets/icons/feather-icons/feather.min.js"></script>	
+    <script>
+    (function () {
+        var form = document.getElementById('loginForm');
+        var overlay = document.getElementById('loginLoadingOverlay');
+        var submitButton = document.getElementById('loginSubmitBtn');
+
+        if (!form || !overlay || !submitButton) {
+            return;
+        }
+
+        form.addEventListener('submit', function () {
+            if (!form.checkValidity()) {
+                return;
+            }
+
+            overlay.classList.add('is-active');
+            overlay.setAttribute('aria-hidden', 'false');
+            submitButton.disabled = true;
+            submitButton.setAttribute('aria-busy', 'true');
+            submitButton.textContent = 'Connexion...';
+        });
+    })();
+    </script>
 	
 	
 </body>
