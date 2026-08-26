@@ -47,56 +47,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         font-size: 16px !important; /* Empêche le zoom sur iOS */
     }
 
-    .login-loading-overlay {
+    .login-progress-shell {
         position: fixed;
-        inset: 0;
-        background: rgba(8, 15, 34, 0.65);
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 5px;
+        background: rgba(15, 23, 42, 0.12);
         opacity: 0;
         visibility: hidden;
-        transition: opacity 0.2s ease;
         z-index: 9999;
+        transition: opacity 0.2s ease;
     }
 
-    .login-loading-overlay.is-active {
+    .login-progress-shell.is-active {
         opacity: 1;
         visibility: visible;
     }
 
-    .login-loading-card {
-        background: #ffffff;
-        border-radius: 16px;
-        padding: 20px 24px;
-        min-width: 240px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        box-shadow: 0 18px 40px rgba(2, 6, 23, 0.25);
+    .login-progress-fill {
+        width: 0;
+        height: 100%;
+        background: linear-gradient(90deg, #1a73e8 0%, #4dabff 55%, #7ec8ff 100%);
+        box-shadow: 0 0 12px rgba(26, 115, 232, 0.6);
+        transition: width 0.18s ease;
     }
 
-    .login-loading-spinner {
-        width: 24px;
-        height: 24px;
-        border: 3px solid #dbe4ff;
-        border-top-color: #1a73e8;
-        border-radius: 50%;
-        animation: login-spin 0.8s linear infinite;
-    }
-
-    .login-loading-text {
-        margin: 0;
-        color: #0f172a;
-        font-size: 14px;
-        font-weight: 600;
+    .login-progress-toast {
+        position: fixed;
+        top: 14px;
+        right: 14px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.88);
+        color: #fff;
+        font-size: 12px;
+        font-weight: 700;
         letter-spacing: 0.01em;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-8px);
+        transition: opacity 0.2s ease, transform 0.2s ease;
+        z-index: 9999;
     }
 
-    @keyframes login-spin {
-        to {
-            transform: rotate(360deg);
-        }
+    .login-progress-shell.is-active + .login-progress-toast {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
     }
 </style>
 
@@ -164,12 +162,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		</div>
 	</div>
 
-    <div class="login-loading-overlay" id="loginLoadingOverlay" aria-hidden="true">
-        <div class="login-loading-card" role="status" aria-live="polite">
-            <span class="login-loading-spinner" aria-hidden="true"></span>
-            <p class="login-loading-text">Connexion en cours...</p>
-        </div>
+    <div class="login-progress-shell" id="loginProgressShell" aria-hidden="true">
+        <div class="login-progress-fill" id="loginProgressFill"></div>
     </div>
+    <p class="login-progress-toast" id="loginProgressToast" role="status" aria-live="polite">Connexion... 0%</p>
 
 
 	<!-- Vendor JS -->
@@ -179,23 +175,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script>
     (function () {
         var form = document.getElementById('loginForm');
-        var overlay = document.getElementById('loginLoadingOverlay');
+        var progressShell = document.getElementById('loginProgressShell');
+        var progressFill = document.getElementById('loginProgressFill');
+        var progressToast = document.getElementById('loginProgressToast');
         var submitButton = document.getElementById('loginSubmitBtn');
+        var progressTimer = null;
+        var progressValue = 0;
 
-        if (!form || !overlay || !submitButton) {
+        if (!form || !progressShell || !progressFill || !progressToast || !submitButton) {
             return;
         }
+
+        var updateProgress = function (value) {
+            progressValue = Math.max(0, Math.min(100, value));
+            progressFill.style.width = progressValue + '%';
+            progressToast.textContent = 'Connexion... ' + progressValue + '%';
+        };
+
+        var startProgress = function () {
+            progressShell.classList.add('is-active');
+            progressShell.setAttribute('aria-hidden', 'false');
+            updateProgress(12);
+
+            progressTimer = window.setInterval(function () {
+                if (progressValue >= 92) {
+                    return;
+                }
+
+                var step = progressValue < 55 ? 8 : 3;
+                updateProgress(progressValue + step);
+            }, 170);
+        };
 
         form.addEventListener('submit', function () {
             if (!form.checkValidity()) {
                 return;
             }
 
-            overlay.classList.add('is-active');
-            overlay.setAttribute('aria-hidden', 'false');
+            startProgress();
             submitButton.disabled = true;
             submitButton.setAttribute('aria-busy', 'true');
-            submitButton.textContent = 'Connexion...';
+            submitButton.textContent = 'Connexion en cours...';
+        });
+
+        window.addEventListener('beforeunload', function () {
+            if (!progressShell.classList.contains('is-active')) {
+                return;
+            }
+
+            updateProgress(100);
+            if (progressTimer !== null) {
+                window.clearInterval(progressTimer);
+            }
         });
     })();
     </script>
