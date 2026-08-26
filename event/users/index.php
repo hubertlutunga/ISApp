@@ -10,6 +10,13 @@ if ($content === null) {
 }
 
 $isAjaxRequest = strtolower((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')) === 'xmlhttprequest';
+$currentPage = trim((string) ($_GET['page'] ?? ''));
+
+// Load heavy UI libraries only on pages that really need them.
+$pagesUsingJqueryUi = [
+  'addevent_CAGE',
+];
+$needsJqueryUi = in_array($currentPage, $pagesUsingJqueryUi, true);
 
 if ($isAjaxRequest) {
   include($content);
@@ -53,20 +60,13 @@ $mail = new PHPMailer(true);
      
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
  
-
+<?php if ($needsJqueryUi) { ?>
   <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+<?php } ?>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<?php if ($needsJqueryUi) { ?>
   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-
-	<!-- calendrier--> 
-
-  <link href="https://unpkg.com/@fullcalendar/core/main.css" rel="stylesheet" />
-  <link href="https://unpkg.com/@fullcalendar/daygrid/main.css" rel="stylesheet" />
-  <script src="https://unpkg.com/@fullcalendar/core/main.js"></script>
-  <script src="https://unpkg.com/@fullcalendar/daygrid/main.js"></script>
-  <script src="https://unpkg.com/@fullcalendar/locales/fr.js"></script>
-
-  
+<?php } ?>
 
 	<!-- sweet--> 
   <script src="../../sweet/sweetalert2.all.min.js"></script>

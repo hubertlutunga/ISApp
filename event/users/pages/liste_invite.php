@@ -814,7 +814,7 @@
  
                        
 					   <a class="dropdown-item" href="#" onclick="<?php echo htmlspecialchars($hasInvitationPreview ? 'openModal(' . json_encode(ucfirst((string) $row_inv['nom']), JSON_UNESCAPED_UNICODE) . ', ' . json_encode((string) ((int) $row_inv['id_inv'])) . ')' : 'showInvitationDesignPending(event)', ENT_QUOTES, 'UTF-8'); ?>" style="color:<?php echo $hasInvitationPreview ? '#495057' : '#adb5bd'; ?>;">
-					   <i class="fa fa-share"></i> Partager l'invitation</a> 
+					   <i class="fa fa-share"></i> Envoyer l'invitation</a> 
 
 					   
 		<a class="dropdown-item" <?php echo $hasInvitationPreview ? 'target="_blank"' : ''; ?>
