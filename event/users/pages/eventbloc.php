@@ -3,7 +3,7 @@
 // =====================
 //  CONDITIONS & PAGINATION
 // =====================
-$eventListing = EventBackofficeService::findPaginatedEvents($pdo, $_GET, $datasession ?? [], 50);
+$eventListing = EventBackofficeService::findPaginatedEvents($pdo, $_GET, $datasession ?? [], 25);
 $events = $eventListing['events'];
 $page_i = $eventListing['page'];
 $pages = $eventListing['pages'];

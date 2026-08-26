@@ -2393,8 +2393,8 @@ $salut = 'Bonsoir';
                     </select>
                     <select id="clientsPerPage" title="Elements par page">
                       <option value="10">10 / page</option>
-                      <option value="25" selected>25 / page</option>
-                      <option value="50">50 / page</option>
+                      <option value="25">25 / page</option>
+                      <option value="50" selected>50 / page</option>
                     </select>
                   </div>
                 </div>
@@ -2704,7 +2704,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const sortDirectionSelect = document.getElementById('clientsSortDirection');
   const perPageSelect = document.getElementById('clientsPerPage');
   const gridBody = document.querySelector('#clientsAdminGrid tbody');
-  let perPage = 25;
+  let perPage = 50;
   let currentPage = 1;
   let filteredRows = clientRows.slice();
   let currentSortColumn = sortColumnSelect ? sortColumnSelect.value : 'name';
@@ -2866,8 +2866,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
   if (perPageSelect) {
     perPageSelect.addEventListener('change', function () {
-      const selectedPerPage = Number(perPageSelect.value || 25);
-      perPage = selectedPerPage > 0 ? selectedPerPage : 25;
+      const selectedPerPage = Number(perPageSelect.value || 50);
+      perPage = selectedPerPage > 0 ? selectedPerPage : 50;
       currentPage = 1;
       renderClientPagination();
     });
