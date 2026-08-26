@@ -2423,7 +2423,6 @@ $salut = 'Bonsoir';
                         $isInvitationSuspended = !empty($clientControl['invitation_sending_suspended']);
                         $statusRank = $isClientBlocked ? 3 : ($isInvitationSuspended ? 2 : 1);
                         $statusLabel = $isClientBlocked ? 'Bloque' : ($isInvitationSuspended ? 'Suspendu' : 'Actif');
-                        $detailModalId = 'clientDetailModal' . $clientId;
                         $editModalId = 'clientEditModal' . $clientId;
                         $deleteModalId = 'clientDeleteModal' . $clientId;
                         $clientSearchIndex = $formatSearchValue($clientName . ' ' . (string) ($row_client['email'] ?? '') . ' ' . (string) ($row_client['phone'] ?? ''));
@@ -2484,7 +2483,7 @@ $salut = 'Bonsoir';
                         <div class="dropdown">
                           <a href="#" class="waves-effect waves-light btn btn-outline btn-rounded btn-warning mb-0 btn-sm list-icons-item dropdown-toggle" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-h" style="font-size:18px;"></i></a>
                           <div class="dropdown-menu dropdown-menu-end">
-                            <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#<?php echo $detailModalId; ?>">Detail</button>
+                            <a class="dropdown-item" href="index.php?page=client_detail&amp;client_id=<?php echo $clientId; ?>">Detail</a>
                             <?php if ((string) ($row_client['type_user'] ?? '') === '2') { ?>
                             <form action="" method="post">
                               <input type="hidden" name="impersonate_user_id" value="<?php echo $clientId; ?>">
@@ -2509,90 +2508,6 @@ $salut = 'Bonsoir';
                         </div>
                       </td>
                     </tr>
-
-                    <div class="modal fade" id="<?php echo $detailModalId; ?>" tabindex="-1" aria-hidden="true">
-                      <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-                        <div class="modal-content rounded-4">
-                          <div class="modal-header">
-                            <div>
-                              <h5 class="modal-title mb-0"><?php echo htmlspecialchars($clientName, ENT_QUOTES, 'UTF-8'); ?></h5>
-                              <small class="text-muted">Vue detaillee du client et de ses quotas.</small>
-                            </div>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
-                          </div>
-                          <div class="modal-body">
-                            <div class="clients-admin-detail-grid">
-                              <div class="clients-admin-detail-card"><span>Envois</span><strong><?php echo (int) ($quotaOverview['sent_count'] ?? 0); ?></strong></div>
-                              <div class="clients-admin-detail-card"><span>Quota total</span><strong><?php echo (int) ($quotaOverview['total_quota'] ?? 0); ?></strong></div>
-                              <div class="clients-admin-detail-card"><span>Restants</span><strong><?php echo (int) ($quotaOverview['remaining_quota'] ?? 0); ?></strong></div>
-                              <div class="clients-admin-detail-card"><span>Evenements</span><strong><?php echo (int) ($quotaOverview['event_count'] ?? 0); ?></strong></div>
-                            </div>
-                            <div class="clients-admin-main" style="margin-bottom:18px;">
-                              <strong><?php echo htmlspecialchars($clientName, ENT_QUOTES, 'UTF-8'); ?></strong>
-                              <strong><?php echo htmlspecialchars((string) ($row_client['email'] ?? 'Aucun email'), ENT_QUOTES, 'UTF-8'); ?></strong>
-                              <span class="clients-admin-sub"><?php echo htmlspecialchars((string) ($row_client['phone'] ?? 'Aucun telephone'), ENT_QUOTES, 'UTF-8'); ?></span>
-                            </div>
-                            <div class="clients-admin-badges" style="margin-bottom:18px;">
-                              <span class="clients-admin-badge"><?php echo (int) ($quotaOverview['event_count'] ?? 0); ?> evenement(s)</span>
-                              <?php if ((int) ($quotaOverview['sent_count'] ?? 0) > 0) { ?>
-                              <span class="clients-admin-badge is-success"><?php echo (int) ($quotaOverview['sent_count'] ?? 0); ?> envoi(s)</span>
-                              <?php } ?>
-                              <?php if ((int) ($quotaOverview['remaining_quota'] ?? 0) <= 50) { ?>
-                              <span class="clients-admin-badge is-alert">Credit faible</span>
-                              <?php } ?>
-                              <?php if ((int) ($quotaOverview['event_count'] ?? 0) === 0) { ?>
-                              <span class="clients-admin-badge is-neutral">Sans evenement</span>
-                              <?php } ?>
-                            </div>
-                            <?php if ($clientEvents !== []) { ?>
-                            <form action="" method="post" class="d-flex align-items-center flex-wrap" style="gap:8px; margin-bottom: 16px;">
-                              <input type="hidden" name="quota_scope" value="global">
-                              <input type="hidden" name="quota_event_code" value="ALL">
-                              <input type="hidden" name="quota_client_user_id" value="<?php echo $clientId; ?>">
-                              <input type="number" name="bonus_quota_add" class="form-control" min="1" step="1" value="100" style="max-width:180px;" required>
-                              <button type="submit" class="btn btn-sm btn-success">Ajouter un quota global</button>
-                              <small class="text-muted">Applique le bonus a tous les evenements du client.</small>
-                            </form>
-                            <?php } ?>
-                            <?php if ($clientEvents !== []) { ?>
-                            <div class="clients-admin-modal-events">
-                              <?php foreach ($clientEvents as $clientEvent) {
-                                $eventTotalQuota = max(1, (int) ($clientEvent['total_quota'] ?? 0));
-                                $eventRemainingQuota = (int) ($clientEvent['remaining_quota'] ?? 0);
-                                $eventUsagePercent = min(100, max(0, (int) round(($eventRemainingQuota / $eventTotalQuota) * 100)));
-                              ?>
-                              <section class="clients-admin-event">
-                                <div class="clients-admin-event-head">
-                                  <div>
-                                    <h6 class="clients-admin-event-title"><?php echo htmlspecialchars((string) ($clientEvent['event_label'] ?? 'Evenement'), ENT_QUOTES, 'UTF-8'); ?></h6>
-                                    <div class="clients-admin-event-code">Code evenement : <?php echo htmlspecialchars((string) ($clientEvent['event_code'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></div>
-                                  </div>
-                                  <div class="clients-admin-event-stats">
-                                    Envoyes <strong><?php echo (int) ($clientEvent['sent_count'] ?? 0); ?></strong>
-                                    | Restants <strong><?php echo $eventRemainingQuota; ?></strong>
-                                    | Bonus <strong>+<?php echo (int) ($clientEvent['bonus_quota'] ?? 0); ?></strong>
-                                  </div>
-                                </div>
-                                <div class="clients-admin-progress">
-                                  <div class="clients-admin-progress-bar" style="width: <?php echo $eventUsagePercent; ?>%;"></div>
-                                </div>
-                                <form action="" method="post" class="d-flex align-items-center flex-wrap" style="gap:8px;">
-                                  <input type="hidden" name="quota_scope" value="event">
-                                  <input type="hidden" name="quota_event_code" value="<?php echo htmlspecialchars((string) ($clientEvent['event_code'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
-                                  <input type="hidden" name="quota_client_user_id" value="<?php echo $clientId; ?>">
-                                  <input type="number" name="bonus_quota_add" class="form-control" min="1" step="1" value="50" style="max-width:150px;" required>
-                                  <button type="submit" class="btn btn-sm btn-outline btn-success">Ajouter du credit</button>
-                                </form>
-                              </section>
-                              <?php } ?>
-                            </div>
-                            <?php } else { ?>
-                            <div class="clients-admin-empty">Aucun evenement rattache a ce client pour le moment.</div>
-                            <?php } ?>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
 
                     <div class="modal fade" id="<?php echo $editModalId; ?>" tabindex="-1" aria-hidden="true">
                       <div class="modal-dialog modal-dialog-centered">
