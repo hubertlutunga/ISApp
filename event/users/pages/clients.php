@@ -3432,53 +3432,13 @@ document.addEventListener('DOMContentLoaded', function () {
 	<!-- Page Content overlay -->
 	
 	
-	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jQuery-slimScroll/1.3.8/jquery.slimscroll.min.js"></script>
-	<!-- Vendor JS -->
-	<script src="html/template/horizontal/src/js/vendors.min.js"></script>
-	<script src="html/template/horizontal/src/js/pages/chat-popup.js"></script>
-  	<script src="html/assets/icons/feather-icons/feather.min.js"></script>
-  	<script src="html/assets/vendor_components/Flot/jquery.flot.js"></script>
-	<script src="html/assets/vendor_components/Flot/jquery.flot.resize.js"></script>
-	<script src="html/assets/vendor_components/Flot/jquery.flot.pie.js"></script>
-	<script src="html/assets/vendor_components/Flot/jquery.flot.categories.js"></script>
-	<script src="html/assets/vendor_components/echarts/dist/echarts-en.min.js"></script>
-	<script src="html/assets/vendor_components/apexcharts-bundle/dist/apexcharts.js"></script>
-	<script src="html/assets/vendor_plugins/bootstrap-slider/bootstrap-slider.js"></script>
-	<script src="html/assets/vendor_components/OwlCarousel2/dist/owl.carousel.js"></script>
-	<script src="html/assets/vendor_components/flexslider/jquery.flexslider.js"></script>
-	<script src="html/assets/vendor_components/Web-Ticker-master/jquery.webticker.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-
-	
-	<!-- Cartiy Admin App -->
-	<script src="html/template/horizontal/src/js/demo.js"></script>
-	<script src="html/template/horizontal/src/js/jquery.smartmenus.js"></script>
-	<script src="html/template/horizontal/src/js/menus.js"></script>
-	<script src="html/template/horizontal/src/js/template.js"></script>
-	<script src="html/template/horizontal/src/js/pages/dashboard.js"></script>
-	<script src="html/template/horizontal/src/js/pages/slider.js"></script>
-
-	
-	<!-- Vendor JS --> 
-	<script src="html/assets/vendor_components/full-calendar/moment.js"></script>
-	<script src="html/assets/vendor_components/full-calendar/fullcalendar.min.js"></script> 
-
-	
-	
-	<!-- selecter JS --> 
-	<script src="html/assets/vendor_components/bootstrap-select/dist/js/bootstrap-select.js"></script>
-	<script src="html/assets/vendor_components/bootstrap-tagsinput/dist/bootstrap-tagsinput.js"></script>
-	<script src="html/assets/vendor_components/bootstrap-touchspin/dist/jquery.bootstrap-touchspin.min.js"></script>
-	<script src="html/assets/vendor_components/select2/dist/js/select2.full.js"></script>
-	<script src="html/assets/vendor_plugins/input-mask/jquery.inputmask.js"></script>
-	<script src="html/assets/vendor_plugins/input-mask/jquery.inputmask.date.extensions.js"></script>
-	<script src="html/assets/vendor_plugins/input-mask/jquery.inputmask.extensions.js"></script>
-	<script src="html/assets/vendor_components/moment/min/moment.min.js"></script>
-	<script src="html/assets/vendor_components/bootstrap-daterangepicker/daterangepicker.js"></script>
-	<script src="html/assets/vendor_components/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js"></script>
-	<script src="html/assets/vendor_components/bootstrap-colorpicker/dist/js/bootstrap-colorpicker.min.js"></script>
-	<script src="html/assets/vendor_plugins/timepicker/bootstrap-timepicker.min.js"></script>
-	<script src="html/assets/vendor_plugins/iCheck/icheck.min.js"></script>
-	 
-	<script src="html/template/horizontal/src/js/pages/advanced-form-element.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jQuery-slimScroll/1.3.8/jquery.slimscroll.min.js"></script>
+  <!-- Core Admin JS (allégé) -->
+  <script src="html/template/horizontal/src/js/vendors.min.js"></script>
+  <script src="html/template/horizontal/src/js/pages/chat-popup.js"></script>
+  <script src="html/assets/icons/feather-icons/feather.min.js"></script>
+  <script src="html/template/horizontal/src/js/demo.js"></script>
+  <script src="html/template/horizontal/src/js/jquery.smartmenus.js"></script>
+  <script src="html/template/horizontal/src/js/menus.js"></script>
+  <script src="html/template/horizontal/src/js/template.js"></script>
 	  
