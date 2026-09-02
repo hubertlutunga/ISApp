@@ -976,7 +976,7 @@ if (isset($_SESSION['creatorsbomoko_flash']) && is_array($_SESSION['creatorsbomo
             <div>
                 <span class="eyebrow"><span class="dot"></span> Formulaire de candidature</span>
                 <h1>Creators Bomoko 2026</h1>
-                <p class="lead">Bienvenue à Creators Bomoko, le rendez-vous incontournable des talents qui façonnent la culture numérique congolaise. Les 18 et 19 septembre 2026, l’Ambassade des États-Unis à Kinshasa réunira au Musée National de la RDC créateurs de contenu, entrepreneurs, artistes, innovateurs et acteurs des industries créatives.</p>
+                <p class="lead">Êtes-vous créateur de contenu ?<br>Aspirez-vous à devenir créateur de contenu ?<br><br>L’ambassade des États-Unis à Kinshasa vous invite à Creators Bomoko !<br><br>Un événement de deux jours pour transformer votre passion en entreprise, développer votre influence et rejoindre un mouvement qui connecte les créateurs congolais aux opportunités mondiales.<br><br>Rejoignez le mouvement.<br><br>Lieu : Musée National Congolais, Kinshasa<br><br>Date : 18-19 Septembre 2026<br>Participation gratuite mais inscription Obligatoire !</p>
                 <div class="hero-actions">
                     <a class="btn btn-primary" href="#formulaire">Candidater maintenant</a>
                     <a class="btn btn-secondary" href="#details">Voir les détails</a>
