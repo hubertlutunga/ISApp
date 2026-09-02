@@ -976,7 +976,7 @@ if (isset($_SESSION['creatorsbomoko_flash']) && is_array($_SESSION['creatorsbomo
             <div>
                 <span class="eyebrow"><span class="dot"></span> Formulaire de candidature</span>
                 <h1>Creators Bomoko 2026</h1>
-                <p class="lead">Êtes-vous créateur de contenu ?<br>Aspirez-vous à devenir créateur de contenu ?<br><br>L’ambassade des États-Unis à Kinshasa vous invite à Creators Bomoko !<br><br>Un événement de deux jours pour transformer votre passion en entreprise, développer votre influence et rejoindre un mouvement qui connecte les créateurs congolais aux opportunités mondiales.<br><br>Rejoignez le mouvement.<br><br>Lieu : Musée National Congolais, Kinshasa<br><br>Date : 18-19 Septembre 2026<br>Participation gratuite mais inscription Obligatoire !</p>
+                <p class="lead">Êtes-vous créateur de contenu ?<br>Aspirez-vous à devenir créateur de contenu ?<br><br>L’ambassade des États-Unis à Kinshasa vous invite à Creators Bomoko !<br><br>Un événement de deux jours pour transformer votre passion en entreprise, développer votre influence et rejoindre un mouvement qui connecte les créateurs congolais aux opportunités mondiales.</p>
                 <div class="hero-actions">
                     <a class="btn btn-primary" href="#formulaire">Candidater maintenant</a>
                     <a class="btn btn-secondary" href="#details">Voir les détails</a>
@@ -991,13 +991,13 @@ if (isset($_SESSION['creatorsbomoko_flash']) && is_array($_SESSION['creatorsbomo
                             <span class="logo-subtag">U.S. Embassy Kinshasa</span>
                         </div>
                     </div>
-                    <h2>Informations clés</h2>
+                    <h2>Rejoignez le mouvement.</h2>
                     <ul class="facts">
-                        <li><span class="fact-icon">📅</span><span><strong>Dates</strong><br><?php echo h($eventDates); ?></span></li>
-                        <li><span class="fact-icon">📍</span><span><strong>Lieu</strong><br><?php echo h($eventLocation); ?></span></li>
+                        <li><span class="fact-icon">📍</span><span><strong>Lieu</strong><br>Musée National Congolais, Kinshasa</span></li>
+                        <li><span class="fact-icon">📅</span><span><strong>Date</strong><br>18-19 Septembre 2026</span></li>
                         <li><span class="fact-icon">🎙️</span><span><strong>Programme</strong><br>Conversations inspirantes, ateliers interactifs, rencontres inédites et exploration des nouvelles tendances, plateformes digitales et opportunités de l’économie créative.</span></li>
                     </ul>
-                    <div class="notice">⚠️ Les places sont limitées : seules les personnes sélectionnées recevront une confirmation officielle de participation.</div>
+                    <div class="notice">Participation gratuite mais inscription Obligatoire !</div>
                 </aside>
             </div>
         </div>
