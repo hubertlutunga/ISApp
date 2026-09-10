@@ -342,6 +342,75 @@ function cb_admin_send_invitation_email(array $candidate, string $eventName, str
     }
 }
 
+function cb_admin_send_rejection_email(array $candidate): array
+{
+    $recipientEmail = filter_var((string) ($candidate['email'] ?? ''), FILTER_VALIDATE_EMAIL);
+    if (!$recipientEmail) {
+        return ['success' => false, 'message' => 'Adresse e-mail invalide.'];
+    }
+
+    $smtpPassword = getenv('CREATORSBOMOKO_SMTP_PASSWORD') ?: '';
+    $smtpHost = getenv('CREATORSBOMOKO_SMTP_HOST') ?: 'invitationspeciale.com';
+    $smtpUser = getenv('CREATORSBOMOKO_SMTP_USER') ?: 'creatorsbomoko@invitationspeciale.com';
+    $smtpPort = (int) (getenv('CREATORSBOMOKO_SMTP_PORT') ?: 587);
+
+    if ($smtpPassword === '') {
+        return ['success' => false, 'message' => 'Configuration SMTP manquante.'];
+    }
+
+    try {
+        $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+        $mail->CharSet = 'UTF-8';
+        $mail->isSMTP();
+        $mail->Host = $smtpHost;
+        $mail->SMTPAuth = true;
+        $mail->Username = $smtpUser;
+        $mail->Password = $smtpPassword;
+        $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port = $smtpPort;
+        $mail->setFrom($smtpUser, 'Creators Bomoko 2026');
+        $mail->addAddress((string) $recipientEmail, (string) ($candidate['nom_complet'] ?? 'Candidat'));
+        $mail->addReplyTo($smtpUser, 'Creators Bomoko');
+        $mail->isHTML(true);
+
+        $mail->Subject = "Résultat de votre candidature – Creators' Bomoko";
+        $mail->Body = '
+            <div style="margin:0;padding:0;background:#f6efe4;font-family:Inter,Arial,sans-serif;color:#1f2937;">
+                <div style="max-width:720px;margin:0 auto;padding:28px 14px;">
+                    <div style="background:linear-gradient(135deg,#35180b,#8b4a1f 52%,#0a3a73);border-radius:28px 28px 0 0;padding:34px 28px;color:#fff;text-align:center;">
+                        <div style="display:inline-block;padding:9px 14px;border:1px solid rgba(255,255,255,.32);border-radius:999px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#fff4df;">Résultat de candidature</div>
+                        <h1 style="margin:18px 0 8px;font-size:32px;line-height:1.08;letter-spacing:-1px;">Creators\' Bomoko</h1>
+                        <p style="margin:0;color:#fff4df;font-size:16px;">Information concernant votre candidature</p>
+                    </div>
+                    <div style="background:#fffaf1;border:1px solid #ead8bd;border-top:0;border-radius:0 0 28px 28px;padding:30px 28px;">
+                        <p style="font-size:16px;line-height:1.75;margin:0 0 18px;">Nous vous remercions sincèrement de l\'intérêt que vous avez porté au sommet Creators\' Bomoko et pour le temps consacré à votre candidature.</p>
+                        <p style="font-size:16px;line-height:1.75;margin:0 0 18px;">Après examen attentif des candidatures reçues, nous regrettons de vous informer que nous ne sommes pas en mesure de retenir votre candidature pour cette édition du sommet. Cette décision résulte du nombre limité de places disponibles ainsi que de considérations liées aux critères de sélection, aux contraintes logistiques et à la représentativité géographique des participants.</p>
+                        <p style="font-size:16px;line-height:1.75;margin:0 0 18px;">Nous vous encourageons vivement à rester connecté(e) avec nous afin de ne manquer aucune de nos prochaines activités, initiatives et opportunités. Nous partageons régulièrement nos programmes et annonces sur nos différentes plateformes :</p>
+                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:separate;border-spacing:0 10px;margin:4px 0 22px;">
+                            <tr><td style="padding:14px 16px;background:#ffffff;border:1px solid #ead8bd;border-radius:16px;"><strong style="color:#8b4a1f;">Facebook :</strong> <a href="https://www.facebook.com/ambassadeusakinshasa/" style="color:#0a3a73;font-weight:800;">https://www.facebook.com/ambassadeusakinshasa/</a></td></tr>
+                            <tr><td style="padding:14px 16px;background:#ffffff;border:1px solid #ead8bd;border-radius:16px;"><strong style="color:#8b4a1f;">X :</strong> <a href="https://x.com/USEmbKinshasa" style="color:#0a3a73;font-weight:800;">https://x.com/USEmbKinshasa</a></td></tr>
+                            <tr><td style="padding:14px 16px;background:#ffffff;border:1px solid #ead8bd;border-radius:16px;"><strong style="color:#8b4a1f;">Flickr :</strong> <a href="https://www.flickr.com/photos/usembassykinshasa/albums/with/72177720332621975" style="color:#0a3a73;font-weight:800;">https://www.flickr.com/photos/usembassykinshasa/albums/with/72177720332621975</a></td></tr>
+                            <tr><td style="padding:14px 16px;background:#ffffff;border:1px solid #ead8bd;border-radius:16px;"><strong style="color:#8b4a1f;">YouTube :</strong> <a href="https://www.youtube.com/channel/UCSGR4tE5Avq7mHRMLuyWP1w/videos" style="color:#0a3a73;font-weight:800;">https://www.youtube.com/channel/UCSGR4tE5Avq7mHRMLuyWP1w/videos</a></td></tr>
+                            <tr><td style="padding:14px 16px;background:#ffffff;border:1px solid #ead8bd;border-radius:16px;"><strong style="color:#8b4a1f;">Centre culturel :</strong> <a href="https://forms.cloud.microsoft/g/x5dbNGBkYa" style="color:#0a3a73;font-weight:800;">https://forms.cloud.microsoft/g/x5dbNGBkYa</a></td></tr>
+                        </table>
+                        <p style="font-size:16px;line-height:1.75;margin:0 0 18px;">Nous vous remercions encore une fois pour votre intérêt envers Creators\' Bomoko et pour votre engagement dans l\'écosystème des créateurs en République démocratique du Congo.</p>
+                        <p style="font-size:16px;line-height:1.75;margin:0 0 24px;">Nous espérons avoir le plaisir de vous retrouver dans le cadre de futures initiatives.</p>
+                        <p style="margin:0;line-height:1.7;">Cordialement,<br><br><strong>L\'équipe Creators\' Bomoko</strong></p>
+                    </div>
+                    <div style="text-align:center;color:#64748b;font-size:12px;line-height:1.6;margin-top:16px;">Creators Bomoko powered by U.S Embassy Kinshasa · Designed by Hubert Solutions</div>
+                </div>
+            </div>';
+        $mail->AltBody = "Nous vous remercions sincèrement de l'intérêt que vous avez porté au sommet Creators' Bomoko et pour le temps consacré à votre candidature.\n\nAprès examen attentif des candidatures reçues, nous regrettons de vous informer que nous ne sommes pas en mesure de retenir votre candidature pour cette édition du sommet. Cette décision résulte du nombre limité de places disponibles ainsi que de considérations liées aux critères de sélection, aux contraintes logistiques et à la représentativité géographique des participants.\n\nNous vous encourageons vivement à rester connecté(e) avec nous afin de ne manquer aucune de nos prochaines activités, initiatives et opportunités. Nous partageons régulièrement nos programmes et annonces sur nos différentes plateformes :\n\nFacebook : https://www.facebook.com/ambassadeusakinshasa/\nX : https://x.com/USEmbKinshasa\nFlickr : https://www.flickr.com/photos/usembassykinshasa/albums/with/72177720332621975\nYouTube : https://www.youtube.com/channel/UCSGR4tE5Avq7mHRMLuyWP1w/videos\nCentre culturel : https://forms.cloud.microsoft/g/x5dbNGBkYa\n\nNous vous remercions encore une fois pour votre intérêt envers Creators' Bomoko et pour votre engagement dans l'écosystème des créateurs en République démocratique du Congo.\n\nNous espérons avoir le plaisir de vous retrouver dans le cadre de futures initiatives.\n\nCordialement,\n\nL'équipe Creators' Bomoko";
+        $mail->send();
+
+        return ['success' => true, 'message' => 'Message de rejet envoyé.'];
+    } catch (Throwable $exception) {
+        error_log('[Creators Bomoko Rejection] ' . $exception->getMessage());
+
+        return ['success' => false, 'message' => $exception->getMessage()];
+    }
+}
+
 try {
     cb_admin_ensure_tables($pdo);
     cb_admin_seed_first_user($pdo, $adminEmail, $adminPassword);
@@ -416,6 +485,99 @@ if (cb_admin_is_logged_in() && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST[
                 $flash = $invitationResult['success']
                     ? 'Candidature confirmée et invitation envoyée au participant.'
                     : 'Candidature confirmée, mais l’e-mail d’invitation n’a pas pu être envoyé automatiquement.';
+            } elseif (is_array($candidate) && $status === 'rejetee' && $previousStatus !== 'rejetee') {
+                $candidate['status'] = 'rejetee';
+                $rejectionResult = cb_admin_send_rejection_email($candidate);
+                $flash = $rejectionResult['success']
+                    ? 'Candidature non retenue et message de rejet envoyé au participant.'
+                    : 'Candidature non retenue, mais l’e-mail de rejet n’a pas pu être envoyé automatiquement.';
+            }
+        }
+    }
+}
+
+if (cb_admin_is_logged_in() && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_action'] ?? '') === 'bulk_update_candidates') {
+    if (!hash_equals($csrfToken, (string) ($_POST['csrf_token'] ?? ''))) {
+        $flash = 'Session expirée. Action par lot annulée.';
+    } else {
+        $bulkStatus = (string) ($_POST['bulk_status'] ?? '');
+        $rawCandidateIds = $_POST['candidate_ids'] ?? [];
+        if (!is_array($rawCandidateIds)) {
+            $rawCandidateIds = [];
+        }
+
+        $candidateIds = array_values(array_unique(array_filter(
+            array_map(static fn ($value): int => (int) $value, $rawCandidateIds),
+            static fn (int $candidateId): bool => $candidateId > 0
+        )));
+
+        if ($candidateIds === []) {
+            $flash = 'Sélectionnez au moins un candidat avant d’appliquer une action par lot.';
+        } elseif (count($candidateIds) > 20) {
+            $flash = 'Vous pouvez traiter au maximum 20 candidats par lot.';
+        } elseif (!isset($statuses[$bulkStatus])) {
+            $flash = 'Choisissez une action par lot valide.';
+        } else {
+            $placeholders = [];
+            $params = [];
+            foreach ($candidateIds as $index => $candidateId) {
+                $placeholder = ':candidate_id_' . $index;
+                $placeholders[] = $placeholder;
+                $params[$placeholder] = $candidateId;
+            }
+
+            $candidateStmt = $pdo->prepare('SELECT * FROM participants_cbomoko WHERE id IN (' . implode(',', $placeholders) . ') ORDER BY submitted_at DESC');
+            $candidateStmt->execute($params);
+            $bulkCandidates = $candidateStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            if ($bulkCandidates === []) {
+                $flash = 'Aucun candidat valide trouvé pour cette action par lot.';
+            } else {
+                $updateStmt = $pdo->prepare('UPDATE participants_cbomoko SET status = :status WHERE id = :id');
+                $processedCount = count($bulkCandidates);
+                $updatedCount = 0;
+                $emailSentCount = 0;
+                $emailFailedCount = 0;
+                $emailSkippedCount = 0;
+
+                foreach ($bulkCandidates as $candidate) {
+                    $previousStatus = (string) ($candidate['status'] ?? '');
+                    if ($previousStatus !== $bulkStatus) {
+                        $updateStmt->execute([
+                            ':status' => $bulkStatus,
+                            ':id' => (int) $candidate['id'],
+                        ]);
+                        $updatedCount++;
+                    }
+
+                    if ($bulkStatus === 'confirmee') {
+                        if ($previousStatus === 'confirmee') {
+                            $emailSkippedCount++;
+                            continue;
+                        }
+
+                        $candidate['status'] = 'confirmee';
+                        $invitationResult = cb_admin_send_invitation_email($candidate, $eventName, $eventDates, $eventLocation);
+                        $invitationResult['success'] ? $emailSentCount++ : $emailFailedCount++;
+                    } elseif ($bulkStatus === 'rejetee') {
+                        if ($previousStatus === 'rejetee') {
+                            $emailSkippedCount++;
+                            continue;
+                        }
+
+                        $candidate['status'] = 'rejetee';
+                        $rejectionResult = cb_admin_send_rejection_email($candidate);
+                        $rejectionResult['success'] ? $emailSentCount++ : $emailFailedCount++;
+                    }
+                }
+
+                $candidateWord = $processedCount > 1 ? 'candidatures traitées' : 'candidature traitée';
+                $updateWord = $updatedCount > 1 ? 'statuts mis à jour' : 'statut mis à jour';
+                $flash = $processedCount . ' ' . $candidateWord . ' : ' . $updatedCount . ' ' . $updateWord . ' vers « ' . ($statuses[$bulkStatus] ?? $bulkStatus) . ' ».';
+
+                if (in_array($bulkStatus, ['confirmee', 'rejetee'], true)) {
+                    $flash .= ' E-mails envoyés : ' . $emailSentCount . '. Échecs : ' . $emailFailedCount . '. Déjà au statut ciblé : ' . $emailSkippedCount . '.';
+                }
             }
         }
     }
@@ -485,13 +647,13 @@ if (cb_admin_is_logged_in() && $setupError === '') {
     <style>
         :root{--ink:#25140b;--muted:#725c45;--paper:#fffaf1;--cream:#fff4df;--wood:#8b4a1f;--wood-dark:#35180b;--blue:#0a3a73;--cyan:#16b5a8;--red:#d7354a;--line:#ead7bd;--shadow:0 24px 80px rgba(67,36,15,.16)}
         *{box-sizing:border-box} body{margin:0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);background:radial-gradient(circle at 10% 0%,rgba(22,181,168,.16),transparent 30rem),radial-gradient(circle at 90% 0%,rgba(215,53,74,.12),transparent 28rem),linear-gradient(180deg,#fff9ee,#f4e6d2)}
-        a{color:inherit}.shell{width:min(1240px,100%);margin:0 auto;padding:28px clamp(16px,4vw,46px) 54px}.brand{display:flex;align-items:center;gap:14px}.brand img{width:64px;height:64px;object-fit:contain;background:#fff;border-radius:18px;padding:7px;box-shadow:0 14px 34px rgba(53,24,11,.16)}h1{font-size:clamp(30px,4vw,52px);line-height:1;margin:0;letter-spacing:-.06em}.muted{color:var(--muted);font-weight:700}.card{background:rgba(255,250,241,.94);border:1px solid rgba(139,74,31,.14);border-radius:28px;box-shadow:var(--shadow);padding:24px}.login{min-height:100vh;display:grid;place-items:center;padding:24px}.login .card{width:min(460px,100%)}label{display:block;font-weight:900;margin:0 0 8px}input,select,textarea{width:100%;border:1px solid #d9c5a8;border-radius:14px;background:#fff;padding:12px 13px;font:inherit;color:var(--ink)}textarea{min-height:88px;resize:vertical}.field{margin-bottom:16px}.btn{display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:999px;padding:12px 18px;font-weight:900;cursor:pointer;text-decoration:none}.btn-primary{background:linear-gradient(135deg,var(--red),var(--wood),var(--blue));color:#fff}.btn-soft{background:#f3dfc2;color:var(--wood-dark)}.alert{margin:0 0 18px;padding:13px 15px;border-radius:16px;font-weight:800}.alert-error{background:#fff1f0;color:#b42318;border:1px solid #ffccc7}.alert-ok{background:#ecfdf5;color:#0f766e;border:1px solid #a7f3d0}.stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px;margin-bottom:22px}.stat{position:relative;overflow:hidden;min-height:126px;border:1px solid rgba(255,255,255,.38);border-radius:26px;padding:18px;background:linear-gradient(145deg,#0f4c81,#0b6b8f 55%,#0f9ca8);box-shadow:0 18px 44px rgba(15,76,129,.16);color:#fff}.stat:nth-child(2){background:linear-gradient(145deg,#008b8b,#00a8a8 55%,#21c4b7);box-shadow:0 18px 44px rgba(0,139,139,.16)}.stat:nth-child(3){background:linear-gradient(145deg,#d97706,#f59e0b 55%,#fbbf24);box-shadow:0 18px 44px rgba(217,119,6,.16)}.stat:nth-child(4){background:linear-gradient(145deg,#4338ca,#2563eb 55%,#38bdf8);box-shadow:0 18px 44px rgba(37,99,235,.16)}.stat:nth-child(5){background:linear-gradient(145deg,#047857,#10b981 55%,#34d399);box-shadow:0 18px 44px rgba(4,120,87,.16)}.stat:nth-child(6){background:linear-gradient(145deg,#b91c1c,#ef4444 55%,#fb7185);box-shadow:0 18px 44px rgba(185,28,28,.16)}.stat:before{content:"";position:absolute;right:-32px;top:-34px;width:92px;height:92px;border-radius:999px;background:rgba(255,255,255,.16)}.stat strong{position:relative;display:block;font-size:clamp(32px,4vw,46px);line-height:1;color:#fff;letter-spacing:-.08em}.stat span{position:relative;display:block;margin-top:12px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;font-size:12px;color:rgba(255,255,255,.86)}.stat-icon{position:relative;width:38px;height:38px;border-radius:14px;display:grid;place-items:center;margin-bottom:12px;background:rgba(255,255,255,.18);font-size:18px}.filters{display:grid;grid-template-columns:1fr 220px auto auto;gap:12px;align-items:end;margin-bottom:18px}.table-wrap{overflow:auto;border-radius:22px;border:1px solid var(--line);background:#fff}table{width:100%;border-collapse:collapse;min-width:980px}th,td{padding:14px;border-bottom:1px solid #f0dfc8;text-align:left;vertical-align:top}th{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#745139;background:#fff8ed}td{font-size:14px}.badge{display:inline-flex;padding:6px 10px;border-radius:999px;background:#f3dfc2;color:var(--wood-dark);font-weight:900;font-size:12px}.candidate-name{font-weight:900}.details{max-width:520px}.details summary{cursor:pointer;font-weight:900;color:var(--wood)}.manage-form{display:grid;gap:8px;min-width:220px}
+        a{color:inherit}.shell{width:min(1240px,100%);margin:0 auto;padding:28px clamp(16px,4vw,46px) 54px}.brand{display:flex;align-items:center;gap:14px}.brand img{width:64px;height:64px;object-fit:contain;background:#fff;border-radius:18px;padding:7px;box-shadow:0 14px 34px rgba(53,24,11,.16)}h1{font-size:clamp(30px,4vw,52px);line-height:1;margin:0;letter-spacing:-.06em}.muted{color:var(--muted);font-weight:700}.card{background:rgba(255,250,241,.94);border:1px solid rgba(139,74,31,.14);border-radius:28px;box-shadow:var(--shadow);padding:24px}.login{min-height:100vh;display:grid;place-items:center;padding:24px}.login .card{width:min(460px,100%)}label{display:block;font-weight:900;margin:0 0 8px}input,select,textarea{width:100%;border:1px solid #d9c5a8;border-radius:14px;background:#fff;padding:12px 13px;font:inherit;color:var(--ink)}textarea{min-height:88px;resize:vertical}.field{margin-bottom:16px}.btn{display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:999px;padding:12px 18px;font-weight:900;cursor:pointer;text-decoration:none}.btn:disabled{opacity:.45;cursor:not-allowed}.btn-primary{background:linear-gradient(135deg,var(--red),var(--wood),var(--blue));color:#fff}.btn-soft{background:#f3dfc2;color:var(--wood-dark)}.alert{margin:0 0 18px;padding:13px 15px;border-radius:16px;font-weight:800}.alert-error{background:#fff1f0;color:#b42318;border:1px solid #ffccc7}.alert-ok{background:#ecfdf5;color:#0f766e;border:1px solid #a7f3d0}.stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px;margin-bottom:22px}.stat{position:relative;overflow:hidden;min-height:126px;border:1px solid rgba(255,255,255,.38);border-radius:26px;padding:18px;background:linear-gradient(145deg,#0f4c81,#0b6b8f 55%,#0f9ca8);box-shadow:0 18px 44px rgba(15,76,129,.16);color:#fff}.stat:nth-child(2){background:linear-gradient(145deg,#008b8b,#00a8a8 55%,#21c4b7);box-shadow:0 18px 44px rgba(0,139,139,.16)}.stat:nth-child(3){background:linear-gradient(145deg,#d97706,#f59e0b 55%,#fbbf24);box-shadow:0 18px 44px rgba(217,119,6,.16)}.stat:nth-child(4){background:linear-gradient(145deg,#4338ca,#2563eb 55%,#38bdf8);box-shadow:0 18px 44px rgba(37,99,235,.16)}.stat:nth-child(5){background:linear-gradient(145deg,#047857,#10b981 55%,#34d399);box-shadow:0 18px 44px rgba(4,120,87,.16)}.stat:nth-child(6){background:linear-gradient(145deg,#b91c1c,#ef4444 55%,#fb7185);box-shadow:0 18px 44px rgba(185,28,28,.16)}.stat:before{content:"";position:absolute;right:-32px;top:-34px;width:92px;height:92px;border-radius:999px;background:rgba(255,255,255,.16)}.stat strong{position:relative;display:block;font-size:clamp(32px,4vw,46px);line-height:1;color:#fff;letter-spacing:-.08em}.stat span{position:relative;display:block;margin-top:12px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;font-size:12px;color:rgba(255,255,255,.86)}.stat-icon{position:relative;width:38px;height:38px;border-radius:14px;display:grid;place-items:center;margin-bottom:12px;background:rgba(255,255,255,.18);font-size:18px}.filters{display:grid;grid-template-columns:1fr 220px auto auto;gap:12px;align-items:end;margin-bottom:18px}.bulk-actions{display:grid;grid-template-columns:1fr 220px auto auto auto auto;gap:12px;align-items:end;margin:0 0 18px;padding:16px;border:1px dashed #d8bd93;border-radius:20px;background:#fff8ed}.bulk-actions__intro{font-weight:950;color:var(--wood-dark)}.bulk-actions__intro span{display:block;margin-top:5px;color:var(--muted);font-size:13px;line-height:1.45;font-weight:750}.bulk-count{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:10px 14px;border-radius:999px;background:#fff;border:1px solid var(--line);font-weight:950;color:var(--wood)}.select-cell{width:54px;text-align:center}.bulk-check,input.bulk-master{width:auto;min-width:18px;height:18px;padding:0;accent-color:var(--wood);cursor:pointer}.table-wrap{overflow:auto;border-radius:22px;border:1px solid var(--line);background:#fff}table{width:100%;border-collapse:collapse;min-width:1030px}th,td{padding:14px;border-bottom:1px solid #f0dfc8;text-align:left;vertical-align:top}th{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#745139;background:#fff8ed}td{font-size:14px}.badge{display:inline-flex;padding:6px 10px;border-radius:999px;background:#f3dfc2;color:var(--wood-dark);font-weight:900;font-size:12px}.candidate-name{font-weight:900}.details{max-width:520px}.details summary{cursor:pointer;font-weight:900;color:var(--wood)}.manage-form{display:grid;gap:8px;min-width:220px}
         .admin-site-header{position:sticky;top:0;z-index:10;background:linear-gradient(135deg,#35180b,#8b4a1f 52%,#0a3a73);box-shadow:0 18px 44px rgba(53,24,11,.18)}
         .admin-site-header__inner{width:min(1240px,100%);margin:0 auto;padding:14px clamp(16px,4vw,46px);display:grid;grid-template-columns:220px 1fr 260px;align-items:center;gap:18px}.header-logo-left img{width:92px;max-height:78px;object-fit:contain;display:block}.header-title{text-align:center;color:#fff}.header-title h1{font-size:clamp(26px,3.2vw,46px);color:#fff;text-shadow:0 10px 28px rgba(0,0,0,.22)}.header-title div{margin-top:5px;color:#fff4df;font-weight:900;letter-spacing:.08em;text-transform:uppercase;font-size:12px}.header-actions{display:flex;align-items:center;justify-content:flex-end;gap:12px}.header-is-logo{width:172px;max-height:58px;object-fit:contain}.header-icon{width:42px;height:42px;border-radius:15px;display:grid;place-items:center;border:1px solid rgba(255,244,223,.28);background:rgba(255,244,223,.12);color:#fff;text-decoration:none;font-size:20px;font-weight:900}.header-icon:hover{background:rgba(255,244,223,.2)}
         .partners-section{margin:24px 0 18px;padding:0;border-radius:28px;display:grid;gap:16px}.partners-grid{display:flex;justify-content:center;align-items:stretch;gap:14px;width:100%}.partner-logo-card{display:grid;place-items:center;text-align:center;padding:16px;border-radius:20px;background:#fff;border:1px solid var(--line);box-shadow:0 14px 34px rgba(67,36,15,.08)}.partner-logo-card img{max-width:100%;max-height:78px;object-fit:contain;filter:saturate(1.04)}.partners-grid--featured .partner-logo-card{width:min(360px,calc(50% - 7px));min-height:150px;padding:22px}.partners-grid--featured .partner-logo-card img{max-height:114px}.partners-grid--standard{gap:12px}.partners-grid--standard .partner-logo-card{width:150px;min-height:96px;padding:12px;border-radius:18px}.partners-grid--standard .partner-logo-card img{max-height:62px}
         .login .login-card{width:min(520px,100%);padding:0;overflow:hidden}.login-visual{padding:30px 28px;text-align:center;color:#fff;background:linear-gradient(135deg,#35180b,#8b4a1f 52%,#0a3a73)}.login-visual img{width:108px;height:108px;object-fit:contain;background:rgba(255,255,255,.96);border-radius:28px;padding:12px;box-shadow:0 18px 42px rgba(0,0,0,.18)}.login-visual h1{margin:16px 0 8px;color:#fff}.login-visual p{margin:0;color:#fff4df;font-weight:850}.login-body{padding:28px}.login-helper{margin:18px 0 0;text-align:center;color:var(--muted);font-weight:750;font-size:13px}.admin-footer{margin:28px auto 0;padding:18px 10px;color:var(--muted);display:grid;justify-items:center;gap:12px;text-align:center;background:transparent;box-shadow:none;border-radius:0}.admin-footer__text{font-weight:400;line-height:1.55}.footer-separator{width:100%;border:0;border-top:1px solid var(--line);margin:0 0 4px}.admin-footer__logos{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap}.admin-footer__logos img{width:86px;height:64px;object-fit:contain;background:transparent;border-radius:0;padding:0}.admin-footer__logos img.is-footer-logo{width:150px}
         .admin-site-header__inner{grid-template-columns:240px 1fr auto;padding:18px clamp(16px,4vw,46px)}.header-logo-left{display:grid;place-items:center;width:220px;padding:0;border-radius:22px;background:linear-gradient(180deg,#fff,#fffaf1);box-shadow:0 14px 34px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.9);overflow:hidden}.header-logo-left img{width:100%;max-width:220px;height:auto;max-height:none;object-fit:contain}.login .login-card{width:min(760px,100%)}.login-visual{padding:38px 36px}.login-visual img{width:100%;max-width:640px;height:auto;border-radius:30px;padding:0;background:rgba(255,255,255,.98);box-shadow:0 24px 64px rgba(0,0,0,.28)}
-        @media(max-width:1000px){.admin-site-header__inner{grid-template-columns:240px 1fr auto}.header-is-logo{width:136px}.stats{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:900px){.filters{grid-template-columns:1fr;display:grid}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:700px){.admin-site-header__inner{grid-template-columns:1fr;justify-items:center}.header-logo-left{width:min(100%,220px)}.header-actions{justify-content:center}.partners-section{gap:10px}.partners-grid{gap:8px}.partners-grid--featured .partner-logo-card{width:calc(50% - 4px);min-height:96px;padding:10px;border-radius:16px}.partners-grid--featured .partner-logo-card img{max-height:72px}.partners-grid--standard{gap:6px}.partners-grid--standard .partner-logo-card{width:calc((100% - 30px) / 6);min-height:58px;padding:5px;border-radius:12px}.partners-grid--standard .partner-logo-card img{max-height:40px}.admin-footer__logos img.is-footer-logo{width:130px}}@media(max-width:560px){.stats{grid-template-columns:1fr}}
+        @media(max-width:1000px){.admin-site-header__inner{grid-template-columns:240px 1fr auto}.header-is-logo{width:136px}.stats{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:900px){.filters,.bulk-actions{grid-template-columns:1fr;display:grid}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:700px){.admin-site-header__inner{grid-template-columns:1fr;justify-items:center}.header-logo-left{width:min(100%,220px)}.header-actions{justify-content:center}.partners-section{gap:10px}.partners-grid{gap:8px}.partners-grid--featured .partner-logo-card{width:calc(50% - 4px);min-height:96px;padding:10px;border-radius:16px}.partners-grid--featured .partner-logo-card img{max-height:72px}.partners-grid--standard{gap:6px}.partners-grid--standard .partner-logo-card{width:calc((100% - 30px) / 6);min-height:58px;padding:5px;border-radius:12px}.partners-grid--standard .partner-logo-card img{max-height:40px}.admin-footer__logos img.is-footer-logo{width:130px}}@media(max-width:560px){.stats{grid-template-columns:1fr}}
     </style>
 </head>
 <body>
@@ -574,10 +736,33 @@ if (cb_admin_is_logged_in() && $setupError === '') {
                 <a class="btn btn-soft" href="?export=csv">Exporter CSV</a>
             </form>
 
+            <form id="bulk-action-form" class="bulk-actions" method="post" action="index.php?<?php echo http_build_query(['q' => $q, 'status' => $statusFilter]); ?>">
+                <input type="hidden" name="form_action" value="bulk_update_candidates">
+                <input type="hidden" name="csrf_token" value="<?php echo cb_admin_h($csrfToken); ?>">
+                <div class="bulk-actions__intro">
+                    Action par lot
+                    <span>Sélectionnez jusqu’à 20 candidats affichés. Les e-mails partent automatiquement pour les statuts Confirmée et Rejetée.</span>
+                </div>
+                <div>
+                    <label for="bulk_status">Action</label>
+                    <select id="bulk_status" name="bulk_status" required>
+                        <option value="">Choisir un statut</option>
+                        <?php foreach ($statuses as $value => $label): ?>
+                            <option value="<?php echo cb_admin_h($value); ?>"><?php echo cb_admin_h($label); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <button class="btn btn-soft" type="button" data-bulk-select-visible>Sélectionner 20</button>
+                <button class="btn btn-soft" type="button" data-bulk-clear>Effacer</button>
+                <button class="btn btn-primary" type="submit">Appliquer</button>
+                <div class="bulk-count" data-bulk-count aria-live="polite">0/20 sélectionné</div>
+            </form>
+
             <div class="table-wrap">
                 <table>
                     <thead>
                     <tr>
+                        <th class="select-cell"><input class="bulk-master" type="checkbox" id="bulk-check-all" aria-label="Sélectionner les 20 premiers candidats affichés"></th>
                         <th>Candidat</th>
                         <th>Profil</th>
                         <th>Motivation</th>
@@ -586,10 +771,13 @@ if (cb_admin_is_logged_in() && $setupError === '') {
                     </thead>
                     <tbody>
                     <?php if ($candidates === []): ?>
-                        <tr><td colspan="4">Aucune candidature trouvée.</td></tr>
+                        <tr><td colspan="5">Aucune candidature trouvée.</td></tr>
                     <?php endif; ?>
                     <?php foreach ($candidates as $candidate): ?>
                         <tr>
+                            <td class="select-cell">
+                                <input class="bulk-check" type="checkbox" name="candidate_ids[]" value="<?php echo (int) $candidate['id']; ?>" form="bulk-action-form" aria-label="Sélectionner <?php echo cb_admin_h((string) $candidate['nom_complet']); ?>">
+                            </td>
                             <td>
                                 <div class="candidate-name"><?php echo cb_admin_h((string) $candidate['nom_complet']); ?></div>
                                 <div><?php echo cb_admin_h((string) $candidate['email']); ?></div>
@@ -672,5 +860,97 @@ if (cb_admin_is_logged_in() && $setupError === '') {
         </footer>
     </main>
 <?php endif; ?>
+<script>
+(() => {
+    const form = document.getElementById('bulk-action-form');
+    if (!form) {
+        return;
+    }
+
+    const maxSelection = 20;
+    const checks = Array.from(document.querySelectorAll('.bulk-check'));
+    const countLabel = document.querySelector('[data-bulk-count]');
+    const master = document.getElementById('bulk-check-all');
+    const statusSelect = document.getElementById('bulk_status');
+    const submitButton = form.querySelector('button[type="submit"]');
+    const selectVisibleButton = form.querySelector('[data-bulk-select-visible]');
+    const clearButton = form.querySelector('[data-bulk-clear]');
+
+    const selectedCount = () => checks.filter((check) => check.checked).length;
+    const refresh = () => {
+        const selected = selectedCount();
+        if (countLabel) {
+            countLabel.textContent = selected + '/' + maxSelection + ' sélectionné' + (selected > 1 ? 's' : '');
+        }
+        if (submitButton) {
+            submitButton.disabled = selected === 0 || !statusSelect.value;
+        }
+        if (master) {
+            master.checked = checks.length > 0 && selected === Math.min(checks.length, maxSelection);
+            master.indeterminate = selected > 0 && selected < Math.min(checks.length, maxSelection);
+        }
+    };
+
+    checks.forEach((check) => {
+        check.addEventListener('change', () => {
+            if (check.checked && selectedCount() > maxSelection) {
+                check.checked = false;
+                alert('Vous pouvez sélectionner au maximum ' + maxSelection + ' candidats par lot.');
+            }
+            refresh();
+        });
+    });
+
+    master?.addEventListener('change', () => {
+        let selected = 0;
+        checks.forEach((check) => {
+            if (!master.checked) {
+                check.checked = false;
+                return;
+            }
+            check.checked = selected < maxSelection;
+            if (check.checked) {
+                selected++;
+            }
+        });
+        refresh();
+    });
+
+    selectVisibleButton?.addEventListener('click', () => {
+        checks.forEach((check, index) => {
+            check.checked = index < maxSelection;
+        });
+        refresh();
+    });
+
+    clearButton?.addEventListener('click', () => {
+        checks.forEach((check) => {
+            check.checked = false;
+        });
+        refresh();
+    });
+
+    statusSelect?.addEventListener('change', refresh);
+    form.addEventListener('submit', (event) => {
+        const selected = selectedCount();
+        if (selected === 0) {
+            event.preventDefault();
+            alert('Sélectionnez au moins un candidat.');
+            return;
+        }
+        if (selected > maxSelection) {
+            event.preventDefault();
+            alert('Vous pouvez traiter au maximum ' + maxSelection + ' candidats par lot.');
+            return;
+        }
+        if (!statusSelect.value) {
+            event.preventDefault();
+            alert('Choisissez une action à appliquer.');
+        }
+    });
+
+    refresh();
+})();
+</script>
 </body>
 </html>
