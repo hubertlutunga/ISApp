@@ -381,31 +381,62 @@ final class AdminClientManagementService
 
     public static function buildClientConsumptionStats(PDO $pdo, int $lowQuotaThreshold = 50): array
     {
-        $stmt = $pdo->query(
+        self::ensureControlTable($pdo);
+        WhatsAppQuotaService::ensureTable($pdo);
+
+        $defaultEventQuota = WhatsAppQuotaService::DEFAULT_EVENT_QUOTA;
+        $lowQuotaThreshold = max(1, $lowQuotaThreshold);
+
+        $stmt = $pdo->prepare(
             'SELECT
                 u.cod_user,
                 u.noms,
                 u.email,
                 u.phone,
-                COALESCE(SUM(CASE WHEN logs.send_status = "sent" AND DATE(logs.sent_at) = CURRENT_DATE() THEN 1 ELSE 0 END), 0) AS sent_today,
-                COALESCE(SUM(CASE WHEN logs.send_status = "sent" AND YEAR(logs.sent_at) = YEAR(CURRENT_DATE()) AND MONTH(logs.sent_at) = MONTH(CURRENT_DATE()) THEN 1 ELSE 0 END), 0) AS sent_month,
-                COALESCE(SUM(CASE WHEN logs.send_status = "sent" THEN 1 ELSE 0 END), 0) AS sent_total
+                COALESCE(q.event_count, 0) AS event_count,
+                COALESCE(q.total_quota, 0) AS total_quota,
+                COALESCE(q.remaining_quota, 0) AS remaining_quota,
+                COALESCE(q.sent_today, 0) AS sent_today,
+                COALESCE(q.sent_month, 0) AS sent_month,
+                COALESCE(q.sent_total, 0) AS sent_total,
+                COALESCE(c.account_status, "active") AS account_status,
+                COALESCE(c.invitation_sending_suspended, 0) AS invitation_sending_suspended
              FROM is_users u
-             LEFT JOIN events e ON (e.cod_user = u.cod_user OR e.cod_user2 = u.cod_user)
-             LEFT JOIN whatsapp_message_logs logs ON logs.event_code = e.cod_event
+             LEFT JOIN (
+                SELECT
+                    e.cod_user AS client_user_id,
+                    COUNT(*) AS event_count,
+                    SUM(COALESCE(credits.base_quota, :default_quota) + COALESCE(credits.bonus_quota, 0)) AS total_quota,
+                    SUM(GREATEST((COALESCE(credits.base_quota, :default_quota) + COALESCE(credits.bonus_quota, 0)) - COALESCE(logs.sent_total, 0), 0)) AS remaining_quota,
+                    SUM(COALESCE(logs.sent_today, 0)) AS sent_today,
+                    SUM(COALESCE(logs.sent_month, 0)) AS sent_month,
+                    SUM(COALESCE(logs.sent_total, 0)) AS sent_total
+                 FROM events e
+                 LEFT JOIN whatsapp_event_credits credits
+                   ON credits.event_code = e.cod_event AND credits.client_user_id = e.cod_user
+                 LEFT JOIN (
+                    SELECT
+                        event_code,
+                        COUNT(*) AS sent_total,
+                        SUM(CASE WHEN sent_at >= CURRENT_DATE() AND sent_at < DATE_ADD(CURRENT_DATE(), INTERVAL 1 DAY) THEN 1 ELSE 0 END) AS sent_today,
+                        SUM(CASE WHEN sent_at >= DATE_FORMAT(CURRENT_DATE(), "%Y-%m-01 00:00:00") AND sent_at < DATE_FORMAT(DATE_ADD(CURRENT_DATE(), INTERVAL 1 MONTH), "%Y-%m-01 00:00:00") THEN 1 ELSE 0 END) AS sent_month
+                     FROM whatsapp_message_logs
+                     WHERE send_status = "sent"
+                     GROUP BY event_code
+                 ) logs ON logs.event_code = e.cod_event
+                 WHERE COALESCE(e.cod_user, "") <> ""
+                 GROUP BY e.cod_user
+             ) q ON q.client_user_id = u.cod_user
+             LEFT JOIN admin_client_controls c ON c.client_user_id = u.cod_user
              WHERE u.type_user = "2"
-             GROUP BY u.cod_user, u.noms, u.email, u.phone
              ORDER BY u.noms ASC, u.cod_user DESC'
         );
+        $stmt->bindValue(':default_quota', $defaultEventQuota, PDO::PARAM_INT);
+        $stmt->execute();
         $rows = $stmt ? ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: []) : [];
         if ($stmt) {
             $stmt->closeCursor();
         }
-
-        $controlMap = self::listClientControlsByIds(
-            $pdo,
-            array_map(static fn(array $row): int => (int) ($row['cod_user'] ?? 0), $rows)
-        );
 
         $result = [];
         foreach ($rows as $row) {
@@ -417,26 +448,24 @@ final class AdminClientManagementService
             $sentToday = (int) ($row['sent_today'] ?? 0);
             $sentMonth = (int) ($row['sent_month'] ?? 0);
             $sentTotal = (int) ($row['sent_total'] ?? 0);
-            $quotaOverview = WhatsAppQuotaService::getClientOverview($pdo, $clientUserId);
-            $control = $controlMap[$clientUserId] ?? self::defaultControl($clientUserId);
 
             $result[] = [
                 'client_user_id' => $clientUserId,
                 'client_name' => (string) ($row['noms'] ?? 'Client'),
                 'email' => (string) ($row['email'] ?? ''),
                 'phone' => (string) ($row['phone'] ?? ''),
-                'event_count' => (int) ($quotaOverview['event_count'] ?? 0),
-                'total_quota' => (int) ($quotaOverview['total_quota'] ?? 0),
-                'remaining_quota' => (int) ($quotaOverview['remaining_quota'] ?? 0),
+                'event_count' => (int) ($row['event_count'] ?? 0),
+                'total_quota' => (int) ($row['total_quota'] ?? 0),
+                'remaining_quota' => (int) ($row['remaining_quota'] ?? 0),
                 'sent_today' => $sentToday,
                 'sent_month' => $sentMonth,
                 'sent_total' => $sentTotal,
                 'cost_today_usd' => self::formatUsd($sentToday * self::TWILIO_UNIT_COST_USD),
                 'cost_month_usd' => self::formatUsd($sentMonth * self::TWILIO_UNIT_COST_USD),
                 'cost_total_usd' => self::formatUsd($sentTotal * self::TWILIO_UNIT_COST_USD),
-                'account_status' => (string) ($control['account_status'] ?? 'active'),
-                'invitation_sending_suspended' => !empty($control['invitation_sending_suspended']),
-                'is_low_quota' => (int) ($quotaOverview['remaining_quota'] ?? 0) <= max(1, $lowQuotaThreshold),
+                'account_status' => ((string) ($row['account_status'] ?? 'active')) === 'blocked' ? 'blocked' : 'active',
+                'invitation_sending_suspended' => (int) ($row['invitation_sending_suspended'] ?? 0) === 1,
+                'is_low_quota' => (int) ($row['remaining_quota'] ?? 0) <= $lowQuotaThreshold,
             ];
         }
 

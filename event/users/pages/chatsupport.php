@@ -1,4 +1,5 @@
 	<div id="chat-box-body">
+        <?php $chatEventCode = isset($codevent) ? trim((string) $codevent) : ''; ?>
 		<div id="chat-circle" class="waves-effect waves-circle btn btn-circle btn-sm btn-warning l-h-50">
             <div id="chat-overlay"></div>
             <span class="icon-Group-chat fs-18"><span class="path1"></span><span class="path2"></span></span>
@@ -84,8 +85,9 @@
     <div class="chat-logs" id="chat-logs" style="overflow-y: auto; max-height: 300px;">
  
         <?php 
+          if ($chatEventCode !== '') {
             $stmtsup= $pdo->prepare("SELECT * FROM support WHERE cod_event = :cod_event ORDER BY cod_sup ASC");
-            $stmtsup->execute([':cod_event' => $codevent]);
+            $stmtsup->execute([':cod_event' => $chatEventCode]);
 
             if ($stmtsup->rowCount() > 0) {
                 while ($row_sup = $stmtsup->fetch(PDO::FETCH_ASSOC)) { 
@@ -142,8 +144,11 @@
                 }
             } else {
                 echo '<em></em>';
-            }		
-        ?>    
+                        }
+                    } else {
+              echo '<em></em>';
+                    }
+                ?>
 
 
     </div><!-- chat-log -->
@@ -161,7 +166,7 @@
 
                 <form id="chat-form"> 
  
-                    <input type="hidden" name="codevent" value="<?php echo $codevent; ?>">
+                    <input type="hidden" name="codevent" value="<?php echo htmlspecialchars($chatEventCode, ENT_QUOTES, 'UTF-8'); ?>">
  
 <textarea name="besoin"  id="besoin-input" placeholder="Besoin d'aide ?" autocomplete="off"></textarea>
 
@@ -208,7 +213,7 @@ document.addEventListener("DOMContentLoaded", function () {
         e.preventDefault();
 
         const besoin = besoinInput.value.trim();
-        const codevent = "<?php echo $codevent; ?>";
+        const codevent = <?php echo json_encode($chatEventCode); ?>;
 
         if (besoin === "") return;
 

@@ -797,18 +797,25 @@ if (!empty($events)) {
 
 <!-- STATISTIQUES PAR UTILISATEUR (créaevent) : total et par mois -->
 <?php
-// Statistiques globales (total distinct cod_event par utilisateur)
-$stmtStats = $pdo->query("SELECT cod_user, COUNT(DISTINCT cod_event) as total FROM creaevent GROUP BY cod_user ORDER BY total DESC");
-$userStats = $stmtStats->fetchAll(PDO::FETCH_ASSOC);
-
-// Statistiques du mois en cours (distinct cod_event par utilisateur)
-$mois = date('m');
-$annee = date('Y');
-$stmtStatsMois = $pdo->prepare("SELECT cod_user, COUNT(DISTINCT cod_event) as total_mois FROM creaevent WHERE MONTH(date_enreg) = ? AND YEAR(date_enreg) = ? GROUP BY cod_user ORDER BY total_mois DESC");
-$stmtStatsMois->execute([$mois, $annee]);
-$userStatsMois = [];
-foreach ($stmtStatsMois->fetchAll(PDO::FETCH_ASSOC) as $row) {
-  $userStatsMois[$row['cod_user']] = $row['total_mois'];
+// Statistiques globales + mois en cours en une seule requête, sans N+1 sur is_users.
+$stmtStats = $pdo->query(
+  "SELECT
+      ce.cod_user,
+      COALESCE(u.noms, ce.cod_user) AS nom,
+      COUNT(DISTINCT ce.cod_event) AS total,
+      COUNT(DISTINCT CASE
+        WHEN ce.date_enreg >= DATE_FORMAT(CURRENT_DATE(), '%Y-%m-01 00:00:00')
+         AND ce.date_enreg < DATE_FORMAT(DATE_ADD(CURRENT_DATE(), INTERVAL 1 MONTH), '%Y-%m-01 00:00:00')
+        THEN ce.cod_event
+      END) AS total_mois
+   FROM creaevent ce
+   LEFT JOIN is_users u ON u.cod_user = ce.cod_user
+   GROUP BY ce.cod_user, u.noms
+   ORDER BY total DESC"
+);
+$userStats = $stmtStats ? ($stmtStats->fetchAll(PDO::FETCH_ASSOC) ?: []) : [];
+if ($stmtStats) {
+  $stmtStats->closeCursor();
 }
 
 if ($userStats) {
@@ -817,11 +824,8 @@ if ($userStats) {
   echo '<table style="width:auto; min-width:420px; border-collapse:collapse; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,0.03);">';
   echo '<tr style="background:#e2e8f0; color:#334155; font-weight:700;"><th style="padding:10px 18px;">Utilisateur</th><th style="padding:10px 18px;">Total réalisés</th><th style="padding:10px 18px;">Ce mois</th></tr>';
   foreach ($userStats as $row) {
-    // Récupérer le nom de l'utilisateur
-    $stmtNom = $pdo->prepare("SELECT noms FROM is_users WHERE cod_user = ?");
-    $stmtNom->execute([$row['cod_user']]);
-    $nom = $stmtNom->fetchColumn() ?: $row['cod_user'];
-    $totalMois = $userStatsMois[$row['cod_user']] ?? 0;
+    $nom = $row['nom'] ?: $row['cod_user'];
+    $totalMois = (int) ($row['total_mois'] ?? 0);
     echo '<tr>';
     echo '<td style="padding:8px 18px; border-bottom:1px solid #e2e8f0;">' . htmlspecialchars($nom) . '</td>';
     echo '<td style="padding:8px 18px; border-bottom:1px solid #e2e8f0; text-align:center; font-weight:600; color:#0f172a;">' . (int)$row['total'] . '</td>';
