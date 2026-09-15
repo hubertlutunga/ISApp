@@ -411,6 +411,85 @@ function cb_admin_send_rejection_email(array $candidate): array
     }
 }
 
+function cb_admin_safe_attachment_name(string $fileName): string
+{
+    $fileName = trim(basename($fileName));
+    $fileName = preg_replace('/[^A-Za-z0-9._ -]+/u', '-', $fileName) ?? 'programme-creators-bomoko.pdf';
+    $fileName = trim($fileName, " .-\t\n\r\0\x0B");
+
+    return $fileName !== '' ? $fileName : 'programme-creators-bomoko.pdf';
+}
+
+function cb_admin_send_program_email(array $candidate, string $programPath, string $programFileName, string $eventName, string $eventDates, string $eventLocation): array
+{
+    $recipientEmail = filter_var((string) ($candidate['email'] ?? ''), FILTER_VALIDATE_EMAIL);
+    if (!$recipientEmail || !is_file($programPath)) {
+        return ['success' => false, 'message' => 'Adresse e-mail invalide ou fichier introuvable.'];
+    }
+
+    $smtpPassword = getenv('CREATORSBOMOKO_SMTP_PASSWORD') ?: '';
+    $smtpHost = getenv('CREATORSBOMOKO_SMTP_HOST') ?: 'invitationspeciale.com';
+    $smtpUser = getenv('CREATORSBOMOKO_SMTP_USER') ?: 'creatorsbomoko@invitationspeciale.com';
+    $smtpPort = (int) (getenv('CREATORSBOMOKO_SMTP_PORT') ?: 587);
+
+    if ($smtpPassword === '') {
+        return ['success' => false, 'message' => 'Configuration SMTP manquante.'];
+    }
+
+    try {
+        $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+        $mail->CharSet = 'UTF-8';
+        $mail->isSMTP();
+        $mail->Host = $smtpHost;
+        $mail->SMTPAuth = true;
+        $mail->Username = $smtpUser;
+        $mail->Password = $smtpPassword;
+        $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port = $smtpPort;
+        $mail->setFrom($smtpUser, 'Creators Bomoko 2026');
+        $mail->addAddress((string) $recipientEmail, (string) ($candidate['nom_complet'] ?? 'Participant'));
+        $mail->addReplyTo($smtpUser, 'Creators Bomoko');
+        $mail->addAttachment($programPath, $programFileName);
+        $mail->isHTML(true);
+
+        $safeName = cb_admin_h((string) ($candidate['nom_complet'] ?? 'Participant'));
+        $safeEventName = cb_admin_h($eventName);
+        $safeEventDates = cb_admin_h($eventDates);
+        $safeEventLocation = cb_admin_h($eventLocation);
+
+        $mail->Subject = "Programme Creators' Bomoko 2026";
+        $mail->Body = '
+            <div style="margin:0;padding:0;background:#f6efe4;font-family:Inter,Arial,sans-serif;color:#1f2937;">
+                <div style="max-width:680px;margin:0 auto;padding:28px 14px;">
+                    <div style="background:linear-gradient(135deg,#35180b,#8b4a1f 52%,#0a3a73);border-radius:28px 28px 0 0;padding:34px 28px;color:#fff;text-align:center;">
+                        <div style="display:inline-block;padding:9px 14px;border:1px solid rgba(255,255,255,.32);border-radius:999px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#fff4df;">Programme officiel</div>
+                        <h1 style="margin:18px 0 8px;font-size:32px;line-height:1.08;letter-spacing:-1px;">' . $safeEventName . '</h1>
+                        <p style="margin:0;color:#fff4df;font-size:16px;">Votre participation est confirmée.</p>
+                    </div>
+                    <div style="background:#fffaf1;border:1px solid #ead8bd;border-top:0;border-radius:0 0 28px 28px;padding:30px 28px;">
+                        <p style="font-size:16px;line-height:1.75;margin:0 0 18px;">Bonjour <strong>' . $safeName . '</strong>,</p>
+                        <p style="font-size:16px;line-height:1.75;margin:0 0 18px;">Nous avons le plaisir de vous transmettre le programme de <strong>' . $safeEventName . '</strong> en pièce jointe.</p>
+                        <ul style="font-size:16px;line-height:1.75;margin:0 0 22px;padding-left:20px;">
+                            <li><strong>Dates :</strong> ' . $safeEventDates . '</li>
+                            <li><strong>Lieu :</strong> ' . $safeEventLocation . '</li>
+                        </ul>
+                        <p style="font-size:16px;line-height:1.75;margin:0 0 18px;">Merci de consulter attentivement le document afin de préparer votre participation.</p>
+                        <p style="margin:24px 0 0;line-height:1.7;">À très bientôt,<br><strong>L’équipe Creators Bomoko</strong></p>
+                    </div>
+                    <div style="text-align:center;color:#64748b;font-size:12px;line-height:1.6;margin-top:16px;">Creators Bomoko powered by U.S Embassy Kinshasa · Designed by Hubert Solutions</div>
+                </div>
+            </div>';
+        $mail->AltBody = "Bonjour " . (string) ($candidate['nom_complet'] ?? 'Participant') . ",\n\nNous avons le plaisir de vous transmettre le programme de {$eventName} en pièce jointe.\n\nDates : {$eventDates}\nLieu : {$eventLocation}\n\nMerci de consulter attentivement le document afin de préparer votre participation.\n\nÀ très bientôt,\nL'équipe Creators Bomoko";
+        $mail->send();
+
+        return ['success' => true, 'message' => 'Programme envoyé.'];
+    } catch (Throwable $exception) {
+        error_log('[Creators Bomoko Programme] ' . $exception->getMessage());
+
+        return ['success' => false, 'message' => $exception->getMessage()];
+    }
+}
+
 try {
     cb_admin_ensure_tables($pdo);
     cb_admin_seed_first_user($pdo, $adminEmail, $adminPassword);
@@ -583,6 +662,50 @@ if (cb_admin_is_logged_in() && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST[
     }
 }
 
+if (cb_admin_is_logged_in() && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_action'] ?? '') === 'broadcast_program') {
+    if (!hash_equals($csrfToken, (string) ($_POST['csrf_token'] ?? ''))) {
+        $flash = 'Session expirée. Envoi du programme annulé.';
+    } else {
+        $uploadedProgram = $_FILES['programme_pdf'] ?? null;
+        $uploadError = is_array($uploadedProgram) ? (int) ($uploadedProgram['error'] ?? UPLOAD_ERR_NO_FILE) : UPLOAD_ERR_NO_FILE;
+        $programTmpPath = is_array($uploadedProgram) ? (string) ($uploadedProgram['tmp_name'] ?? '') : '';
+        $programOriginalName = is_array($uploadedProgram) ? (string) ($uploadedProgram['name'] ?? '') : '';
+        $programSize = is_array($uploadedProgram) ? (int) ($uploadedProgram['size'] ?? 0) : 0;
+        $programExtension = strtolower(pathinfo($programOriginalName, PATHINFO_EXTENSION));
+        $maxProgramSize = 12 * 1024 * 1024;
+
+        if ($uploadError !== UPLOAD_ERR_OK) {
+            $flash = 'Veuillez joindre le programme au format PDF avant de lancer l’envoi.';
+        } elseif (!is_uploaded_file($programTmpPath) || $programExtension !== 'pdf') {
+            $flash = 'Le fichier joint doit être un PDF valide.';
+        } elseif ($programSize <= 0 || $programSize > $maxProgramSize) {
+            $flash = 'Le PDF doit peser moins de 12 Mo.';
+        } else {
+            $confirmedStmt = $pdo->query("SELECT * FROM participants_cbomoko WHERE status = 'confirmee' ORDER BY nom_complet ASC");
+            $confirmedCandidates = $confirmedStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            if ($confirmedCandidates === []) {
+                $flash = 'Aucun participant confirmé trouvé pour l’envoi du programme.';
+            } else {
+                if (function_exists('set_time_limit')) {
+                    @set_time_limit(0);
+                }
+
+                $programFileName = cb_admin_safe_attachment_name($programOriginalName !== '' ? $programOriginalName : 'programme-creators-bomoko.pdf');
+                $sentCount = 0;
+                $failedCount = 0;
+
+                foreach ($confirmedCandidates as $candidate) {
+                    $programResult = cb_admin_send_program_email($candidate, $programTmpPath, $programFileName, $eventName, $eventDates, $eventLocation);
+                    $programResult['success'] ? $sentCount++ : $failedCount++;
+                }
+
+                $flash = 'Diffusion du programme terminée. E-mails envoyés : ' . $sentCount . '. Échecs : ' . $failedCount . '. Confirmés ciblés : ' . count($confirmedCandidates) . '.';
+            }
+        }
+    }
+}
+
 if (cb_admin_is_logged_in() && isset($_GET['export']) && $_GET['export'] === 'csv') {
     header('Content-Type: text/csv; charset=UTF-8');
     header('Content-Disposition: attachment; filename="participants_cbomoko_' . date('Ymd_His') . '.csv"');
@@ -647,13 +770,13 @@ if (cb_admin_is_logged_in() && $setupError === '') {
     <style>
         :root{--ink:#25140b;--muted:#725c45;--paper:#fffaf1;--cream:#fff4df;--wood:#8b4a1f;--wood-dark:#35180b;--blue:#0a3a73;--cyan:#16b5a8;--red:#d7354a;--line:#ead7bd;--shadow:0 24px 80px rgba(67,36,15,.16)}
         *{box-sizing:border-box} body{margin:0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);background:radial-gradient(circle at 10% 0%,rgba(22,181,168,.16),transparent 30rem),radial-gradient(circle at 90% 0%,rgba(215,53,74,.12),transparent 28rem),linear-gradient(180deg,#fff9ee,#f4e6d2)}
-        a{color:inherit}.shell{width:min(1240px,100%);margin:0 auto;padding:28px clamp(16px,4vw,46px) 54px}.brand{display:flex;align-items:center;gap:14px}.brand img{width:64px;height:64px;object-fit:contain;background:#fff;border-radius:18px;padding:7px;box-shadow:0 14px 34px rgba(53,24,11,.16)}h1{font-size:clamp(30px,4vw,52px);line-height:1;margin:0;letter-spacing:-.06em}.muted{color:var(--muted);font-weight:700}.card{background:rgba(255,250,241,.94);border:1px solid rgba(139,74,31,.14);border-radius:28px;box-shadow:var(--shadow);padding:24px}.login{min-height:100vh;display:grid;place-items:center;padding:24px}.login .card{width:min(460px,100%)}label{display:block;font-weight:900;margin:0 0 8px}input,select,textarea{width:100%;border:1px solid #d9c5a8;border-radius:14px;background:#fff;padding:12px 13px;font:inherit;color:var(--ink)}textarea{min-height:88px;resize:vertical}.field{margin-bottom:16px}.btn{display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:999px;padding:12px 18px;font-weight:900;cursor:pointer;text-decoration:none}.btn:disabled{opacity:.45;cursor:not-allowed}.btn-primary{background:linear-gradient(135deg,var(--red),var(--wood),var(--blue));color:#fff}.btn-soft{background:#f3dfc2;color:var(--wood-dark)}.alert{margin:0 0 18px;padding:13px 15px;border-radius:16px;font-weight:800}.alert-error{background:#fff1f0;color:#b42318;border:1px solid #ffccc7}.alert-ok{background:#ecfdf5;color:#0f766e;border:1px solid #a7f3d0}.stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px;margin-bottom:22px}.stat{position:relative;overflow:hidden;min-height:126px;border:1px solid rgba(255,255,255,.38);border-radius:26px;padding:18px;background:linear-gradient(145deg,#0f4c81,#0b6b8f 55%,#0f9ca8);box-shadow:0 18px 44px rgba(15,76,129,.16);color:#fff}.stat:nth-child(2){background:linear-gradient(145deg,#008b8b,#00a8a8 55%,#21c4b7);box-shadow:0 18px 44px rgba(0,139,139,.16)}.stat:nth-child(3){background:linear-gradient(145deg,#d97706,#f59e0b 55%,#fbbf24);box-shadow:0 18px 44px rgba(217,119,6,.16)}.stat:nth-child(4){background:linear-gradient(145deg,#4338ca,#2563eb 55%,#38bdf8);box-shadow:0 18px 44px rgba(37,99,235,.16)}.stat:nth-child(5){background:linear-gradient(145deg,#047857,#10b981 55%,#34d399);box-shadow:0 18px 44px rgba(4,120,87,.16)}.stat:nth-child(6){background:linear-gradient(145deg,#b91c1c,#ef4444 55%,#fb7185);box-shadow:0 18px 44px rgba(185,28,28,.16)}.stat:before{content:"";position:absolute;right:-32px;top:-34px;width:92px;height:92px;border-radius:999px;background:rgba(255,255,255,.16)}.stat strong{position:relative;display:block;font-size:clamp(32px,4vw,46px);line-height:1;color:#fff;letter-spacing:-.08em}.stat span{position:relative;display:block;margin-top:12px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;font-size:12px;color:rgba(255,255,255,.86)}.stat-icon{position:relative;width:38px;height:38px;border-radius:14px;display:grid;place-items:center;margin-bottom:12px;background:rgba(255,255,255,.18);font-size:18px}.filters{display:grid;grid-template-columns:1fr 220px auto auto;gap:12px;align-items:end;margin-bottom:18px}.bulk-actions{display:grid;grid-template-columns:1fr 220px auto auto auto auto;gap:12px;align-items:end;margin:0 0 18px;padding:16px;border:1px dashed #d8bd93;border-radius:20px;background:#fff8ed}.bulk-actions__intro{font-weight:950;color:var(--wood-dark)}.bulk-actions__intro span{display:block;margin-top:5px;color:var(--muted);font-size:13px;line-height:1.45;font-weight:750}.bulk-count{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:10px 14px;border-radius:999px;background:#fff;border:1px solid var(--line);font-weight:950;color:var(--wood)}.select-cell{width:54px;text-align:center}.bulk-check,input.bulk-master{width:auto;min-width:18px;height:18px;padding:0;accent-color:var(--wood);cursor:pointer}.table-wrap{overflow:auto;border-radius:22px;border:1px solid var(--line);background:#fff}table{width:100%;border-collapse:collapse;min-width:1030px}th,td{padding:14px;border-bottom:1px solid #f0dfc8;text-align:left;vertical-align:top}th{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#745139;background:#fff8ed}td{font-size:14px}.badge{display:inline-flex;padding:6px 10px;border-radius:999px;background:#f3dfc2;color:var(--wood-dark);font-weight:900;font-size:12px}.candidate-name{font-weight:900}.details{max-width:520px}.details summary{cursor:pointer;font-weight:900;color:var(--wood)}.manage-form{display:grid;gap:8px;min-width:220px}
+        a{color:inherit}.shell{width:min(1240px,100%);margin:0 auto;padding:28px clamp(16px,4vw,46px) 54px}.brand{display:flex;align-items:center;gap:14px}.brand img{width:64px;height:64px;object-fit:contain;background:#fff;border-radius:18px;padding:7px;box-shadow:0 14px 34px rgba(53,24,11,.16)}h1{font-size:clamp(30px,4vw,52px);line-height:1;margin:0;letter-spacing:-.06em}.muted{color:var(--muted);font-weight:700}.card{background:rgba(255,250,241,.94);border:1px solid rgba(139,74,31,.14);border-radius:28px;box-shadow:var(--shadow);padding:24px}.login{min-height:100vh;display:grid;place-items:center;padding:24px}.login .card{width:min(460px,100%)}label{display:block;font-weight:900;margin:0 0 8px}input,select,textarea{width:100%;border:1px solid #d9c5a8;border-radius:14px;background:#fff;padding:12px 13px;font:inherit;color:var(--ink)}textarea{min-height:88px;resize:vertical}.field{margin-bottom:16px}.btn{display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:999px;padding:12px 18px;font-weight:900;cursor:pointer;text-decoration:none}.btn:disabled{opacity:.45;cursor:not-allowed}.btn-primary{background:linear-gradient(135deg,var(--red),var(--wood),var(--blue));color:#fff}.btn-soft{background:#f3dfc2;color:var(--wood-dark)}.alert{margin:0 0 18px;padding:13px 15px;border-radius:16px;font-weight:800}.alert-error{background:#fff1f0;color:#b42318;border:1px solid #ffccc7}.alert-ok{background:#ecfdf5;color:#0f766e;border:1px solid #a7f3d0}.stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px;margin-bottom:22px}.stat{position:relative;overflow:hidden;min-height:126px;border:1px solid rgba(255,255,255,.38);border-radius:26px;padding:18px;background:linear-gradient(145deg,#0f4c81,#0b6b8f 55%,#0f9ca8);box-shadow:0 18px 44px rgba(15,76,129,.16);color:#fff}.stat:nth-child(2){background:linear-gradient(145deg,#008b8b,#00a8a8 55%,#21c4b7);box-shadow:0 18px 44px rgba(0,139,139,.16)}.stat:nth-child(3){background:linear-gradient(145deg,#d97706,#f59e0b 55%,#fbbf24);box-shadow:0 18px 44px rgba(217,119,6,.16)}.stat:nth-child(4){background:linear-gradient(145deg,#4338ca,#2563eb 55%,#38bdf8);box-shadow:0 18px 44px rgba(37,99,235,.16)}.stat:nth-child(5){background:linear-gradient(145deg,#047857,#10b981 55%,#34d399);box-shadow:0 18px 44px rgba(4,120,87,.16)}.stat:nth-child(6){background:linear-gradient(145deg,#b91c1c,#ef4444 55%,#fb7185);box-shadow:0 18px 44px rgba(185,28,28,.16)}.stat:before{content:"";position:absolute;right:-32px;top:-34px;width:92px;height:92px;border-radius:999px;background:rgba(255,255,255,.16)}.stat strong{position:relative;display:block;font-size:clamp(32px,4vw,46px);line-height:1;color:#fff;letter-spacing:-.08em}.stat span{position:relative;display:block;margin-top:12px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;font-size:12px;color:rgba(255,255,255,.86)}.stat-icon{position:relative;width:38px;height:38px;border-radius:14px;display:grid;place-items:center;margin-bottom:12px;background:rgba(255,255,255,.18);font-size:18px}.filters{display:grid;grid-template-columns:1fr 220px auto auto;gap:12px;align-items:end;margin-bottom:18px}.program-broadcast{display:grid;grid-template-columns:1fr minmax(260px,420px) auto;gap:12px;align-items:end;margin:0 0 18px;padding:18px;border:1px solid rgba(10,58,115,.18);border-radius:22px;background:linear-gradient(135deg,#eef7f8,#fff8ed)}.program-broadcast__intro{font-weight:950;color:var(--wood-dark)}.program-broadcast__intro span{display:block;margin-top:5px;color:var(--muted);font-size:13px;line-height:1.45;font-weight:750}.bulk-actions{display:grid;grid-template-columns:1fr 220px auto auto auto auto;gap:12px;align-items:end;margin:0 0 18px;padding:16px;border:1px dashed #d8bd93;border-radius:20px;background:#fff8ed}.bulk-actions__intro{font-weight:950;color:var(--wood-dark)}.bulk-actions__intro span{display:block;margin-top:5px;color:var(--muted);font-size:13px;line-height:1.45;font-weight:750}.bulk-count{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:10px 14px;border-radius:999px;background:#fff;border:1px solid var(--line);font-weight:950;color:var(--wood)}.select-cell{width:54px;text-align:center}.bulk-check,input.bulk-master{width:auto;min-width:18px;height:18px;padding:0;accent-color:var(--wood);cursor:pointer}.table-wrap{overflow:auto;border-radius:22px;border:1px solid var(--line);background:#fff}table{width:100%;border-collapse:collapse;min-width:1030px}th,td{padding:14px;border-bottom:1px solid #f0dfc8;text-align:left;vertical-align:top}th{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#745139;background:#fff8ed}td{font-size:14px}.badge{display:inline-flex;padding:6px 10px;border-radius:999px;background:#f3dfc2;color:var(--wood-dark);font-weight:900;font-size:12px}.candidate-name{font-weight:900}.details{max-width:520px}.details summary{cursor:pointer;font-weight:900;color:var(--wood)}.manage-form{display:grid;gap:8px;min-width:220px}
         .admin-site-header{position:sticky;top:0;z-index:10;background:linear-gradient(135deg,#35180b,#8b4a1f 52%,#0a3a73);box-shadow:0 18px 44px rgba(53,24,11,.18)}
         .admin-site-header__inner{width:min(1240px,100%);margin:0 auto;padding:14px clamp(16px,4vw,46px);display:grid;grid-template-columns:220px 1fr 260px;align-items:center;gap:18px}.header-logo-left img{width:92px;max-height:78px;object-fit:contain;display:block}.header-title{text-align:center;color:#fff}.header-title h1{font-size:clamp(26px,3.2vw,46px);color:#fff;text-shadow:0 10px 28px rgba(0,0,0,.22)}.header-title div{margin-top:5px;color:#fff4df;font-weight:900;letter-spacing:.08em;text-transform:uppercase;font-size:12px}.header-actions{display:flex;align-items:center;justify-content:flex-end;gap:12px}.header-is-logo{width:172px;max-height:58px;object-fit:contain}.header-icon{width:42px;height:42px;border-radius:15px;display:grid;place-items:center;border:1px solid rgba(255,244,223,.28);background:rgba(255,244,223,.12);color:#fff;text-decoration:none;font-size:20px;font-weight:900}.header-icon:hover{background:rgba(255,244,223,.2)}
         .partners-section{margin:24px 0 18px;padding:0;border-radius:28px;display:grid;gap:16px}.partners-grid{display:flex;justify-content:center;align-items:stretch;gap:14px;width:100%}.partner-logo-card{display:grid;place-items:center;text-align:center;padding:16px;border-radius:20px;background:#fff;border:1px solid var(--line);box-shadow:0 14px 34px rgba(67,36,15,.08)}.partner-logo-card img{max-width:100%;max-height:78px;object-fit:contain;filter:saturate(1.04)}.partners-grid--featured .partner-logo-card{width:min(360px,calc(50% - 7px));min-height:150px;padding:22px}.partners-grid--featured .partner-logo-card img{max-height:114px}.partners-grid--standard{gap:12px}.partners-grid--standard .partner-logo-card{width:150px;min-height:96px;padding:12px;border-radius:18px}.partners-grid--standard .partner-logo-card img{max-height:62px}
         .login .login-card{width:min(520px,100%);padding:0;overflow:hidden}.login-visual{padding:30px 28px;text-align:center;color:#fff;background:linear-gradient(135deg,#35180b,#8b4a1f 52%,#0a3a73)}.login-visual img{width:108px;height:108px;object-fit:contain;background:rgba(255,255,255,.96);border-radius:28px;padding:12px;box-shadow:0 18px 42px rgba(0,0,0,.18)}.login-visual h1{margin:16px 0 8px;color:#fff}.login-visual p{margin:0;color:#fff4df;font-weight:850}.login-body{padding:28px}.login-helper{margin:18px 0 0;text-align:center;color:var(--muted);font-weight:750;font-size:13px}.admin-footer{margin:28px auto 0;padding:18px 10px;color:var(--muted);display:grid;justify-items:center;gap:12px;text-align:center;background:transparent;box-shadow:none;border-radius:0}.admin-footer__text{font-weight:400;line-height:1.55}.footer-separator{width:100%;border:0;border-top:1px solid var(--line);margin:0 0 4px}.admin-footer__logos{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap}.admin-footer__logos img{width:86px;height:64px;object-fit:contain;background:transparent;border-radius:0;padding:0}.admin-footer__logos img.is-footer-logo{width:150px}
         .admin-site-header__inner{grid-template-columns:240px 1fr auto;padding:18px clamp(16px,4vw,46px)}.header-logo-left{display:grid;place-items:center;width:220px;padding:0;border-radius:22px;background:linear-gradient(180deg,#fff,#fffaf1);box-shadow:0 14px 34px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.9);overflow:hidden}.header-logo-left img{width:100%;max-width:220px;height:auto;max-height:none;object-fit:contain}.login .login-card{width:min(760px,100%)}.login-visual{padding:38px 36px}.login-visual img{width:100%;max-width:640px;height:auto;border-radius:30px;padding:0;background:rgba(255,255,255,.98);box-shadow:0 24px 64px rgba(0,0,0,.28)}
-        @media(max-width:1000px){.admin-site-header__inner{grid-template-columns:240px 1fr auto}.header-is-logo{width:136px}.stats{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:900px){.filters,.bulk-actions{grid-template-columns:1fr;display:grid}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:700px){.admin-site-header__inner{grid-template-columns:1fr;justify-items:center}.header-logo-left{width:min(100%,220px)}.header-actions{justify-content:center}.partners-section{gap:10px}.partners-grid{gap:8px}.partners-grid--featured .partner-logo-card{width:calc(50% - 4px);min-height:96px;padding:10px;border-radius:16px}.partners-grid--featured .partner-logo-card img{max-height:72px}.partners-grid--standard{gap:6px}.partners-grid--standard .partner-logo-card{width:calc((100% - 30px) / 6);min-height:58px;padding:5px;border-radius:12px}.partners-grid--standard .partner-logo-card img{max-height:40px}.admin-footer__logos img.is-footer-logo{width:130px}}@media(max-width:560px){.stats{grid-template-columns:1fr}}
+        @media(max-width:1000px){.admin-site-header__inner{grid-template-columns:240px 1fr auto}.header-is-logo{width:136px}.stats{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:900px){.filters,.program-broadcast,.bulk-actions{grid-template-columns:1fr;display:grid}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:700px){.admin-site-header__inner{grid-template-columns:1fr;justify-items:center}.header-logo-left{width:min(100%,220px)}.header-actions{justify-content:center}.partners-section{gap:10px}.partners-grid{gap:8px}.partners-grid--featured .partner-logo-card{width:calc(50% - 4px);min-height:96px;padding:10px;border-radius:16px}.partners-grid--featured .partner-logo-card img{max-height:72px}.partners-grid--standard{gap:6px}.partners-grid--standard .partner-logo-card{width:calc((100% - 30px) / 6);min-height:58px;padding:5px;border-radius:12px}.partners-grid--standard .partner-logo-card img{max-height:40px}.admin-footer__logos img.is-footer-logo{width:130px}}@media(max-width:560px){.stats{grid-template-columns:1fr}}
     </style>
 </head>
 <body>
@@ -716,6 +839,20 @@ if (cb_admin_is_logged_in() && $setupError === '') {
             <div class="stat"><div class="stat-icon">✓</div><strong><?php echo (int) $stats['confirmee']; ?></strong><span>Confirmées</span></div>
             <div class="stat"><div class="stat-icon">×</div><strong><?php echo (int) $stats['rejetee']; ?></strong><span>Rejetées</span></div>
         </section>
+
+        <form class="program-broadcast" method="post" action="index.php" enctype="multipart/form-data">
+            <input type="hidden" name="form_action" value="broadcast_program">
+            <input type="hidden" name="csrf_token" value="<?php echo cb_admin_h($csrfToken); ?>">
+            <div class="program-broadcast__intro">
+                Diffuser le programme PDF
+                <span>Joignez le programme en PDF. Il sera envoyé par e-mail à tous les participants confirmés actuels : <?php echo (int) $stats['confirmee']; ?> destinataire<?php echo (int) $stats['confirmee'] > 1 ? 's' : ''; ?>.</span>
+            </div>
+            <div>
+                <label for="programme_pdf">Programme en PDF</label>
+                <input type="file" id="programme_pdf" name="programme_pdf" accept="application/pdf,.pdf" required>
+            </div>
+            <button class="btn btn-primary" type="submit" <?php echo (int) $stats['confirmee'] === 0 ? 'disabled' : ''; ?>>Envoyer aux confirmés</button>
+        </form>
 
         <section class="card">
             <form class="filters" method="get" action="index.php">

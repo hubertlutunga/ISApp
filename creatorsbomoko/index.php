@@ -19,6 +19,10 @@ $eventLocation = 'Musée National de la RDC, Kinshasa';
 $storageDir = dirname(__DIR__) . '/storage/creatorsbomoko';
 $jsonlPath = $storageDir . '/candidatures.jsonl';
 $csvPath = $storageDir . '/candidatures.csv';
+$registrationsClosedEnv = getenv('CREATORSBOMOKO_REGISTRATIONS_CLOSED');
+$registrationsClosed = $registrationsClosedEnv === false || $registrationsClosedEnv === ''
+    ? true
+    : filter_var($registrationsClosedEnv, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) !== false;
 
 $domainOptions = [
     'creation_contenu' => 'Création de contenu',
@@ -398,6 +402,73 @@ function send_candidate_acknowledgement(string $recipientEmail, string $recipien
     }
 }
 
+function send_registration_closed_email(string $recipientEmail, string $recipientName, string $eventName): array
+{
+    try {
+        $smtpHost = getenv('CREATORSBOMOKO_SMTP_HOST') ?: 'invitationspeciale.com';
+        $smtpUser = getenv('CREATORSBOMOKO_SMTP_USER') ?: 'creatorsbomoko@invitationspeciale.com';
+        $smtpPassword = getenv('CREATORSBOMOKO_SMTP_PASSWORD') ?: '';
+        $smtpPort = (int) (getenv('CREATORSBOMOKO_SMTP_PORT') ?: 587);
+        if ($smtpPassword === '') {
+            return ['success' => false, 'message' => 'Configuration SMTP manquante.'];
+        }
+
+        $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+        $mail->CharSet = 'UTF-8';
+        $mail->isSMTP();
+        $mail->Host = $smtpHost;
+        $mail->Port = $smtpPort;
+        $mail->SMTPAuth = true;
+        $mail->Username = $smtpUser;
+        $mail->Password = $smtpPassword;
+        $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+
+        $mail->setFrom($smtpUser, 'Creators Bomoko');
+        $mail->addReplyTo($smtpUser, 'Creators Bomoko');
+        $mail->addAddress($recipientEmail, $recipientName !== '' ? $recipientName : 'Participant');
+        $mail->isHTML(true);
+
+        $mail->Subject = "Creators' Bomoko – Inscriptions clôturées";
+        $mail->Body = '
+            <div style="margin:0;padding:0;background:#f6efe4;font-family:Inter,Arial,sans-serif;color:#1f2937;">
+                <div style="max-width:720px;margin:0 auto;padding:28px 14px;">
+                    <div style="background:linear-gradient(135deg,#35180b,#8b4a1f 52%,#0a3a73);border-radius:28px 28px 0 0;padding:34px 28px;color:#fff;text-align:center;">
+                        <div style="display:inline-block;padding:9px 14px;border:1px solid rgba(255,255,255,.32);border-radius:999px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#fff4df;">Inscriptions clôturées</div>
+                        <h1 style="margin:18px 0 8px;font-size:32px;line-height:1.08;letter-spacing:-1px;">Creators\' Bomoko</h1>
+                        <p style="margin:0;color:#fff4df;font-size:16px;">Capacité maximale atteinte</p>
+                    </div>
+                    <div style="background:#fffaf1;border:1px solid #ead8bd;border-top:0;border-radius:0 0 28px 28px;padding:30px 28px;">
+                        <p style="font-size:16px;line-height:1.75;margin:0 0 18px;">Bonjour,</p>
+                        <p style="font-size:16px;line-height:1.75;margin:0 0 18px;">Nous vous remercions sincèrement pour l\'intérêt que vous avez porté au Sommet Creators\' Bomoko.</p>
+                        <p style="font-size:16px;line-height:1.75;margin:0 0 18px;">En raison du fort intérêt suscité par cet événement, nous avons atteint la capacité maximale d\'accueil et ne sommes malheureusement plus en mesure d\'accepter de nouvelles inscriptions.</p>
+                        <p style="font-size:16px;line-height:1.75;margin:0 0 18px;">Nous vous encourageons vivement à rester connecté(e) avec nous afin de ne manquer aucune de nos prochaines activités, initiatives et opportunités. Nous partageons régulièrement nos programmes et annonces sur nos différentes plateformes :</p>
+                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:separate;border-spacing:0 10px;margin:4px 0 22px;">
+                            <tr><td style="padding:14px 16px;background:#ffffff;border:1px solid #ead8bd;border-radius:16px;"><strong style="color:#8b4a1f;">Facebook :</strong> <a href="https://www.facebook.com/ambassadeusakinshasa/" style="color:#0a3a73;font-weight:800;">Ambassade des États-Unis à Kinshasa</a></td></tr>
+                            <tr><td style="padding:14px 16px;background:#ffffff;border:1px solid #ead8bd;border-radius:16px;"><strong style="color:#8b4a1f;">X :</strong> <a href="https://x.com/USEmbKinshasa" style="color:#0a3a73;font-weight:800;">U.S. Embassy Kinshasa</a></td></tr>
+                            <tr><td style="padding:14px 16px;background:#ffffff;border:1px solid #ead8bd;border-radius:16px;"><strong style="color:#8b4a1f;">Flickr :</strong> <a href="https://www.flickr.com/photos/usembassykinshasa/albums/with/72177720332621975" style="color:#0a3a73;font-weight:800;">U.S. Embassy Kinshasa – Flickr</a></td></tr>
+                            <tr><td style="padding:14px 16px;background:#ffffff;border:1px solid #ead8bd;border-radius:16px;"><strong style="color:#8b4a1f;">YouTube :</strong> <a href="https://www.youtube.com/channel/UCSGR4tE5Avq7mHRMLuyWP1w/videos" style="color:#0a3a73;font-weight:800;">U.S. Embassy Kinshasa – YouTube</a></td></tr>
+                            <tr><td style="padding:14px 16px;background:#ffffff;border:1px solid #ead8bd;border-radius:16px;"><strong style="color:#8b4a1f;">Centre culturel :</strong> <a href="https://forms.cloud.microsoft/g/x5dbNGBkYa" style="color:#0a3a73;font-weight:800;">Centre culturel – Inscription et informations</a></td></tr>
+                        </table>
+                        <p style="font-size:16px;line-height:1.75;margin:0 0 18px;">Nous vous remercions encore une fois pour votre intérêt envers Creators\' Bomoko et pour votre engagement en faveur de l\'écosystème des créateurs en République démocratique du Congo.</p>
+                        <p style="font-size:16px;line-height:1.75;margin:0;">Nous espérons avoir le plaisir de vous retrouver prochainement dans le cadre de nos futures initiatives et opportunités.</p>
+                    </div>
+                    <div style="text-align:center;color:#64748b;font-size:12px;line-height:1.6;margin-top:16px;">Creators Bomoko powered by U.S Embassy Kinshasa · Designed by Hubert Solutions</div>
+                </div>
+            </div>';
+        $mail->AltBody = "Bonjour,\n\nNous vous remercions sincèrement pour l'intérêt que vous avez porté au Sommet Creators' Bomoko.\n\nEn raison du fort intérêt suscité par cet événement, nous avons atteint la capacité maximale d'accueil et ne sommes malheureusement plus en mesure d'accepter de nouvelles inscriptions.\n\nNous vous encourageons vivement à rester connecté(e) avec nous afin de ne manquer aucune de nos prochaines activités, initiatives et opportunités. Nous partageons régulièrement nos programmes et annonces sur nos différentes plateformes :\nFacebook : Ambassade des États-Unis à Kinshasa\nX : U.S. Embassy Kinshasa\nFlickr : U.S. Embassy Kinshasa – Flickr\nYouTube : U.S. Embassy Kinshasa – YouTube\nCentre culturel : Centre culturel – Inscription et informations\n\nNous vous remercions encore une fois pour votre intérêt envers Creators' Bomoko et pour votre engagement en faveur de l'écosystème des créateurs en République démocratique du Congo.\nNous espérons avoir le plaisir de vous retrouver prochainement dans le cadre de nos futures initiatives et opportunités.";
+        $mail->send();
+
+        return ['success' => true];
+    } catch (Throwable $exception) {
+        error_log('[Creators Bomoko Closed Mail] ' . $exception->getMessage());
+
+        return [
+            'success' => false,
+            'message' => $exception->getMessage(),
+        ];
+    }
+}
+
 function cbomoko_partner_logos(): array
 {
     $directory = __DIR__ . '/images/parteners';
@@ -459,6 +530,7 @@ if (empty($_SESSION['creatorsbomoko_csrf'])) {
 
 $errors = [];
 $successId = clean_text((string) ($_GET['merci'] ?? ''), 40);
+$isClosedRedirect = (string) ($_GET['inscriptions'] ?? '') === 'cloturees';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrfToken = (string) posted('csrf_token');
@@ -470,6 +542,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!hash_equals((string) $_SESSION['creatorsbomoko_csrf'], $csrfToken)) {
         $errors['global'] = 'Session expirée. Veuillez réessayer.';
+    }
+
+    if ($registrationsClosed) {
+        $closedFullName = clean_text((string) posted('nom_complet'), 180);
+        $closedEmail = filter_var(trim((string) posted('email')), FILTER_SANITIZE_EMAIL);
+
+        if (!$closedEmail || !filter_var($closedEmail, FILTER_VALIDATE_EMAIL)) {
+            $errors['email'] = 'Indiquez une adresse e-mail valide afin de recevoir le message d’information.';
+        }
+
+        if ($errors === []) {
+            $mailResult = send_registration_closed_email((string) $closedEmail, $closedFullName, $eventName);
+            $_SESSION['creatorsbomoko_flash'] = [
+                'icon' => $mailResult['success'] ? 'info' : 'warning',
+                'title' => 'Inscriptions clôturées',
+                'text' => $mailResult['success']
+                    ? 'Les inscriptions sont clôturées. Un message d’information a été envoyé à votre adresse e-mail.'
+                    : 'Les inscriptions sont clôturées. Le message d’information n’a pas pu être envoyé automatiquement.',
+            ];
+            $_SESSION['creatorsbomoko_csrf'] = bin2hex(random_bytes(32));
+
+            $redirectPath = strtok((string) ($_SERVER['REQUEST_URI'] ?? '/creatorsbomoko/'), '?') ?: '/creatorsbomoko/';
+            header('Location: ' . $redirectPath . '?inscriptions=cloturees');
+            exit;
+        }
     }
 
     $fullName = clean_text((string) posted('nom_complet'), 180);
@@ -630,6 +727,14 @@ if (isset($_SESSION['creatorsbomoko_flash']) && is_array($_SESSION['creatorsbomo
         'icon' => 'success',
         'title' => 'Candidature reçue !',
         'text' => 'Votre candidature a bien été enregistrée. Référence : ' . $successId,
+        'confirmButtonText' => 'OK',
+        'confirmButtonColor' => '#8b4a1f',
+    ];
+} elseif ($isClosedRedirect) {
+    $sweetAlert = [
+        'icon' => 'info',
+        'title' => 'Inscriptions clôturées',
+        'text' => 'Nous avons atteint la capacité maximale de participants pour Creators\' Bomoko.',
         'confirmButtonText' => 'OK',
         'confirmButtonColor' => '#8b4a1f',
     ];
@@ -834,6 +939,9 @@ if (isset($_SESSION['creatorsbomoko_flash']) && is_array($_SESSION['creatorsbomo
         .facts li{display:flex;gap:12px;align-items:flex-start;color:#fff8ed}
         .fact-icon{width:34px;height:34px;flex:0 0 34px;border-radius:12px;display:grid;place-items:center;background:rgba(255,244,223,.16)}
         .notice{margin-top:22px;padding:15px;border-radius:20px;background:rgba(216,139,47,.18);border:1px solid rgba(216,139,47,.34);color:#fff7ed;font-weight:700}
+        .closed-card{background:rgba(255,250,241,.94);border:1px solid rgba(15,23,42,.08);border-radius:var(--radius);box-shadow:var(--shadow);padding:clamp(24px,4vw,42px)}
+        .closed-card h2{font-family:"Space Grotesk", Inter, sans-serif;letter-spacing:-.05em;line-height:1.05;margin:0 0 14px;font-size:clamp(30px,4vw,50px);color:var(--wood-dark)}
+        .closed-card p{font-size:16px;line-height:1.75;color:#3b2a1c;margin:0 0 18px}.closed-highlight{display:inline-flex;align-items:center;gap:10px;padding:10px 14px;border-radius:999px;background:#fff1f0;border:1px solid #ffccc7;color:#b42318;font-weight:950;text-transform:uppercase;letter-spacing:.08em;font-size:12px;margin-bottom:18px}.social-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:22px 0}.social-list a{display:block;padding:14px 16px;border:1px solid var(--line);border-radius:18px;background:#fff;text-decoration:none;font-weight:850;color:var(--blue)}.social-list strong{display:block;color:var(--wood);font-size:13px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
         main{padding:0 clamp(18px, 4vw, 56px) 70px}
         .intro{
             width:min(1180px, 100%);
@@ -945,6 +1053,7 @@ if (isset($_SESSION['creatorsbomoko_flash']) && is_array($_SESSION['creatorsbomo
             .logo-tag{font-size:19px}
             .logo-subtag{font-size:10px}
             .grid-2,.options{grid-template-columns:1fr}
+            .social-list{grid-template-columns:1fr}
             .event-card{padding:22px}
             .partners-section{gap:10px}
             .partners-grid{gap:8px}
@@ -969,16 +1078,16 @@ if (isset($_SESSION['creatorsbomoko_flash']) && is_array($_SESSION['creatorsbomo
                 </span>
                 <span class="brand-text">Creators Bomoko</span>
             </a>
-            <a class="nav-pill" href="#formulaire">Soumettre ma candidature</a>
+            <a class="nav-pill" href="#formulaire"><?php echo $registrationsClosed ? 'Inscriptions clôturées' : 'Soumettre ma candidature'; ?></a>
         </nav>
 
         <div class="hero-grid">
             <div>
-                <span class="eyebrow"><span class="dot"></span> Formulaire de candidature</span>
+                <span class="eyebrow"><span class="dot"></span> <?php echo $registrationsClosed ? 'Inscriptions clôturées' : 'Formulaire de candidature'; ?></span>
                 <h1>Creators Bomoko 2026</h1>
-                <p class="lead">Êtes-vous créateur de contenu ?<br>Aspirez-vous à devenir créateur de contenu ?<br><br>L’ambassade des États-Unis à Kinshasa vous invite à Creators Bomoko !<br><br>Un événement de deux jours pour transformer votre passion en entreprise, développer votre influence et rejoindre un mouvement qui connecte les créateurs congolais aux opportunités mondiales.</p>
+                <p class="lead"><?php echo $registrationsClosed ? 'Merci pour votre intérêt envers Creators\' Bomoko. En raison du fort intérêt suscité par cet événement, nous avons atteint la capacité maximale d’accueil et ne sommes plus en mesure d’accepter de nouvelles inscriptions.' : 'Êtes-vous créateur de contenu ?<br>Aspirez-vous à devenir créateur de contenu ?<br><br>L’ambassade des États-Unis à Kinshasa vous invite à Creators Bomoko !<br><br>Un événement de deux jours pour transformer votre passion en entreprise, développer votre influence et rejoindre un mouvement qui connecte les créateurs congolais aux opportunités mondiales.'; ?></p>
                 <div class="hero-actions">
-                    <a class="btn btn-primary" href="#formulaire">Candidater maintenant</a>
+                    <a class="btn btn-primary" href="#formulaire"><?php echo $registrationsClosed ? 'Voir le message' : 'Candidater maintenant'; ?></a>
                     <a class="btn btn-secondary" href="#details">Voir les détails</a>
                 </div>
             </div>
@@ -997,7 +1106,7 @@ if (isset($_SESSION['creatorsbomoko_flash']) && is_array($_SESSION['creatorsbomo
                         <li><span class="fact-icon">📅</span><span><strong>Date</strong><br>18-19 Septembre 2026</span></li>
                         <li><span class="fact-icon">🎙️</span><span><strong>Programme</strong><br>Conversations inspirantes, ateliers interactifs, rencontres inédites et exploration des nouvelles tendances, plateformes digitales et opportunités de l’économie créative.</span></li>
                     </ul>
-                    <div class="notice">Participation gratuite mais inscription Obligatoire !</div>
+                    <div class="notice"><?php echo $registrationsClosed ? 'Inscriptions clôturées : la capacité maximale de participants est atteinte.' : 'Participation gratuite mais inscription Obligatoire !'; ?></div>
                 </aside>
             </div>
         </div>
@@ -1007,14 +1116,19 @@ if (isset($_SESSION['creatorsbomoko_flash']) && is_array($_SESSION['creatorsbomo
         <section class="intro" aria-label="Résumé de l’événement">
             <div class="intro-card"><strong>2 jours</strong><span>de panels et ateliers pratiques</span></div>
             <div class="intro-card"><strong>Kinshasa</strong><span>au Musée National de la RDC</span></div>
-            <div class="intro-card"><strong>Sélection</strong><span>sur base des candidatures reçues</span></div>
+            <div class="intro-card"><strong><?php echo $registrationsClosed ? 'Complet' : 'Sélection'; ?></strong><span><?php echo $registrationsClosed ? 'capacité maximale de participants atteinte' : 'sur base des candidatures reçues'; ?></span></div>
         </section>
 
         <section class="form-wrap" id="formulaire">
             <aside class="side-panel">
-                <h2>Soumettre une candidature</h2>
-                <p>Vous avez une voix, une vision ou un projet qui mérite d’être vu ? Creators Bomoko est fait pour vous.</p>
-                <p>Remplissez ce formulaire pour proposer votre candidature et rejoindre une nouvelle génération de créateurs qui inventent, influencent et font bouger les lignes.</p>
+                <h2><?php echo $registrationsClosed ? 'Inscriptions clôturées' : 'Soumettre une candidature'; ?></h2>
+                <?php if ($registrationsClosed): ?>
+                    <p>Nous vous remercions sincèrement pour l’intérêt que vous avez porté au Sommet Creators’ Bomoko.</p>
+                    <p>En raison du fort intérêt suscité par cet événement, nous avons atteint la capacité maximale d’accueil.</p>
+                <?php else: ?>
+                    <p>Vous avez une voix, une vision ou un projet qui mérite d’être vu ? Creators Bomoko est fait pour vous.</p>
+                    <p>Remplissez ce formulaire pour proposer votre candidature et rejoindre une nouvelle génération de créateurs qui inventent, influencent et font bouger les lignes.</p>
+                <?php endif; ?>
                 <div class="chips">
                     <span class="chip">Créateurs</span>
                     <span class="chip">Entrepreneurs</span>
@@ -1024,6 +1138,25 @@ if (isset($_SESSION['creatorsbomoko_flash']) && is_array($_SESSION['creatorsbomo
                 </div>
             </aside>
 
+            <?php if ($registrationsClosed): ?>
+                <section class="closed-card" aria-label="Message inscriptions clôturées">
+                    <div class="closed-highlight">Capacité maximale atteinte</div>
+                    <h2>Creators' Bomoko – Inscriptions clôturées</h2>
+                    <p>Bonjour,</p>
+                    <p>Nous vous remercions sincèrement pour l'intérêt que vous avez porté au Sommet Creators' Bomoko.</p>
+                    <p>En raison du fort intérêt suscité par cet événement, nous avons atteint la capacité maximale d'accueil et ne sommes malheureusement plus en mesure d'accepter de nouvelles inscriptions.</p>
+                    <p>Nous vous encourageons vivement à rester connecté(e) avec nous afin de ne manquer aucune de nos prochaines activités, initiatives et opportunités. Nous partageons régulièrement nos programmes et annonces sur nos différentes plateformes :</p>
+                    <div class="social-list" aria-label="Plateformes officielles">
+                        <a href="https://www.facebook.com/ambassadeusakinshasa/" target="_blank" rel="noopener"><strong>Facebook</strong>Ambassade des États-Unis à Kinshasa</a>
+                        <a href="https://x.com/USEmbKinshasa" target="_blank" rel="noopener"><strong>X</strong>U.S. Embassy Kinshasa</a>
+                        <a href="https://www.flickr.com/photos/usembassykinshasa/albums/with/72177720332621975" target="_blank" rel="noopener"><strong>Flickr</strong>U.S. Embassy Kinshasa – Flickr</a>
+                        <a href="https://www.youtube.com/channel/UCSGR4tE5Avq7mHRMLuyWP1w/videos" target="_blank" rel="noopener"><strong>YouTube</strong>U.S. Embassy Kinshasa – YouTube</a>
+                        <a href="https://forms.cloud.microsoft/g/x5dbNGBkYa" target="_blank" rel="noopener"><strong>Centre culturel</strong>Centre culturel – Inscription et informations</a>
+                    </div>
+                    <p>Nous vous remercions encore une fois pour votre intérêt envers Creators' Bomoko et pour votre engagement en faveur de l'écosystème des créateurs en République démocratique du Congo.</p>
+                    <p>Nous espérons avoir le plaisir de vous retrouver prochainement dans le cadre de nos futures initiatives et opportunités.</p>
+                </section>
+            <?php else: ?>
             <form method="post" action="#formulaire" novalidate>
                 <input type="hidden" name="csrf_token" value="<?php echo h($csrfToken); ?>">
                 <div class="hidden-field" aria-hidden="true">
@@ -1174,6 +1307,7 @@ if (isset($_SESSION['creatorsbomoko_flash']) && is_array($_SESSION['creatorsbomo
                     <button class="btn btn-submit" type="submit">Envoyer ma candidature</button>
                 </div>
             </form>
+            <?php endif; ?>
         </section>
 
         <section class="partners-section" aria-label="Partenaires">
