@@ -297,6 +297,31 @@ CREATE TABLE IF NOT EXISTS users_cbomoko (
     KEY idx_users_cbomoko_active (is_active)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 SQL);
+
+    $pdo->exec(<<<'SQL'
+CREATE TABLE IF NOT EXISTS cbomoko_settings (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    setting_key VARCHAR(120) NOT NULL,
+    setting_value VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_cbomoko_settings_key (setting_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+SQL);
+}
+
+function get_registrations_closed(PDO $pdo, bool $fallback): bool
+{
+    $stmt = $pdo->prepare('SELECT setting_value FROM cbomoko_settings WHERE setting_key = :setting_key LIMIT 1');
+    $stmt->execute([':setting_key' => 'registrations_closed']);
+    $value = $stmt->fetchColumn();
+
+    if ($value === false) {
+        return $fallback;
+    }
+
+    return filter_var((string) $value, FILTER_VALIDATE_BOOLEAN);
 }
 
 function save_application_to_database(PDO $pdo, array $data): void
@@ -526,6 +551,13 @@ function cbomoko_partner_logos(): array
 
 if (empty($_SESSION['creatorsbomoko_csrf'])) {
     $_SESSION['creatorsbomoko_csrf'] = bin2hex(random_bytes(32));
+}
+
+try {
+    ensure_cbomoko_tables($pdo);
+    $registrationsClosed = get_registrations_closed($pdo, $registrationsClosed);
+} catch (Throwable $exception) {
+    error_log('[Creators Bomoko Settings] ' . $exception->getMessage());
 }
 
 $errors = [];

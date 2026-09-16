@@ -17,6 +17,10 @@ $eventDates = '18–19 septembre 2026';
 $eventLocation = 'Musée National de la RDC, Kinshasa';
 $adminEmail = getenv('CREATORSBOMOKO_ADMIN_EMAIL') ?: 'creatorsbomoko@invitationspeciale.com';
 $adminPassword = getenv('CREATORSBOMOKO_ADMIN_PASSWORD') ?: '';
+$registrationsClosedEnv = getenv('CREATORSBOMOKO_REGISTRATIONS_CLOSED');
+$registrationsClosed = $registrationsClosedEnv === false || $registrationsClosedEnv === ''
+    ? true
+    : filter_var($registrationsClosedEnv, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) !== false;
 $statuses = [
     'nouvelle' => 'Nouvelle',
     'en_etude' => 'En étude',
@@ -133,6 +137,40 @@ CREATE TABLE IF NOT EXISTS users_cbomoko (
     KEY idx_users_cbomoko_active (is_active)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 SQL);
+
+    $pdo->exec(<<<'SQL'
+CREATE TABLE IF NOT EXISTS cbomoko_settings (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    setting_key VARCHAR(120) NOT NULL,
+    setting_value VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_cbomoko_settings_key (setting_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+SQL);
+}
+
+function cb_admin_get_registrations_closed(PDO $pdo, bool $fallback): bool
+{
+    $stmt = $pdo->prepare('SELECT setting_value FROM cbomoko_settings WHERE setting_key = :setting_key LIMIT 1');
+    $stmt->execute([':setting_key' => 'registrations_closed']);
+    $value = $stmt->fetchColumn();
+
+    if ($value === false) {
+        return $fallback;
+    }
+
+    return filter_var((string) $value, FILTER_VALIDATE_BOOLEAN);
+}
+
+function cb_admin_set_registrations_closed(PDO $pdo, bool $isClosed): void
+{
+    $stmt = $pdo->prepare('INSERT INTO cbomoko_settings (setting_key, setting_value) VALUES (:setting_key, :setting_value) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value), updated_at = CURRENT_TIMESTAMP');
+    $stmt->execute([
+        ':setting_key' => 'registrations_closed',
+        ':setting_value' => $isClosed ? '1' : '0',
+    ]);
 }
 
 function cb_admin_seed_first_user(PDO $pdo, string $email, string $password): void
@@ -493,6 +531,7 @@ function cb_admin_send_program_email(array $candidate, string $programPath, stri
 try {
     cb_admin_ensure_tables($pdo);
     cb_admin_seed_first_user($pdo, $adminEmail, $adminPassword);
+    $registrationsClosed = cb_admin_get_registrations_closed($pdo, $registrationsClosed);
     $setupError = '';
 } catch (Throwable $exception) {
     error_log('[Creators Bomoko Admin] ' . $exception->getMessage());
@@ -533,6 +572,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_action'] ?? '') === '
         }
 
         $loginError = 'Identifiants incorrects.';
+    }
+}
+
+if (cb_admin_is_logged_in() && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_action'] ?? '') === 'toggle_registrations') {
+    if (!hash_equals($csrfToken, (string) ($_POST['csrf_token'] ?? ''))) {
+        $flash = 'Session expirée. Action annulée.';
+    } else {
+        $targetState = (string) ($_POST['target_state'] ?? 'closed');
+        $newClosedState = $targetState === 'open' ? false : true;
+
+        try {
+            cb_admin_set_registrations_closed($pdo, $newClosedState);
+            $registrationsClosed = $newClosedState;
+            $flash = $registrationsClosed
+                ? 'Le formulaire de candidature est maintenant clôturé.'
+                : 'Le formulaire de candidature est maintenant ré-ouvert.';
+        } catch (Throwable $exception) {
+            error_log('[Creators Bomoko Admin Toggle] ' . $exception->getMessage());
+            $flash = 'Impossible de mettre à jour l’état du formulaire pour le moment.';
+        }
     }
 }
 
@@ -838,6 +897,26 @@ if (cb_admin_is_logged_in() && $setupError === '') {
             <div class="stat"><div class="stat-icon">★</div><strong><?php echo (int) $stats['preselectionnee']; ?></strong><span>Présélection</span></div>
             <div class="stat"><div class="stat-icon">✓</div><strong><?php echo (int) $stats['confirmee']; ?></strong><span>Confirmées</span></div>
             <div class="stat"><div class="stat-icon">×</div><strong><?php echo (int) $stats['rejetee']; ?></strong><span>Rejetées</span></div>
+        </section>
+
+        <section class="card" style="display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:18px;">
+            <div>
+                <div style="font-weight:900;font-size:18px;line-height:1.3;margin-bottom:8px;">Formulaire de candidature</div>
+                <div class="muted" style="font-weight:800;">
+                    État actuel :
+                    <span class="badge" style="margin-left:6px;background:<?php echo $registrationsClosed ? '#ffe5e3' : '#dcfce7'; ?>;color:<?php echo $registrationsClosed ? '#b42318' : '#166534'; ?>;">
+                        <?php echo $registrationsClosed ? 'Clôturé' : 'Ouvert'; ?>
+                    </span>
+                </div>
+            </div>
+            <form method="post" action="index.php" style="margin:0;display:flex;align-items:center;gap:10px;">
+                <input type="hidden" name="form_action" value="toggle_registrations">
+                <input type="hidden" name="csrf_token" value="<?php echo cb_admin_h($csrfToken); ?>">
+                <input type="hidden" name="target_state" value="<?php echo $registrationsClosed ? 'open' : 'closed'; ?>">
+                <button class="btn <?php echo $registrationsClosed ? 'btn-primary' : 'btn-soft'; ?>" type="submit">
+                    <?php echo $registrationsClosed ? 'Ré-ouvrir les candidatures' : 'Clôturer les candidatures'; ?>
+                </button>
+            </form>
         </section>
 
         <form class="program-broadcast" method="post" action="index.php" enctype="multipart/form-data">
