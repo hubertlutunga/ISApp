@@ -49,10 +49,10 @@ $absent = max(0, $total - $present);
         body{margin:0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:linear-gradient(145deg,#fffaf1,#eef7f8 55%,#fff);color:var(--ink)}
         a{color:inherit}
         .hero{padding:26px clamp(14px,4vw,46px);background:linear-gradient(135deg,var(--wood-dark),var(--wood) 54%,var(--blue));color:#fff}
-        .hero-inner{width:min(1240px,100%);margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+        .hero-inner{width:min(1240px,100%);margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:nowrap}
         .hero-logo{display:grid;gap:8px;text-decoration:none}
-        .hero-logo img{width:min(200px,76vw);height:auto;object-fit:contain;background:linear-gradient(180deg,#fff,#fffaf1);border-radius:24px;box-shadow:0 18px 46px rgba(0,0,0,.24)}
-        .is-logo{width:min(200px,52vw);height:auto;object-fit:contain;filter:drop-shadow(0 10px 24px rgba(0,0,0,.22))}
+        .hero-logo img{width:clamp(120px,52vw,200px);height:auto;object-fit:contain;background:linear-gradient(180deg,#fff,#fffaf1);border-radius:24px;box-shadow:0 18px 46px rgba(0,0,0,.24)}
+        .is-logo{width:clamp(90px,38vw,200px);height:auto;object-fit:contain;filter:drop-shadow(0 10px 24px rgba(0,0,0,.22))}
         .shell{width:min(1240px,100%);margin:0 auto;padding:24px clamp(14px,4vw,46px) 56px}
         .page-title{margin:2px 0 14px;text-align:center;font-size:clamp(26px,4vw,40px);letter-spacing:-.05em;color:var(--wood-dark)}
         .alert{padding:14px 16px;border-radius:18px;margin-bottom:16px;font-weight:850}
@@ -94,11 +94,12 @@ $absent = max(0, $total - $present);
         .name-link{text-decoration:none;font-weight:900;color:#0f172a}
         .name-link:hover{text-decoration:underline}
         .name-link.is-present{color:#166534}
+        .profile-sub{display:block;margin-top:4px;font-size:12px;color:var(--muted);font-weight:700}
         .click-row{cursor:pointer}
         .footer{margin-top:26px;padding:18px 10px;text-align:center;color:var(--muted);font-weight:400;display:grid;justify-items:center;gap:12px}
         .footer-separator{width:100%;border:0;border-top:1px solid var(--line);margin:0 0 4px}
         @media(max-width:900px){.stats{grid-template-columns:1fr}table{min-width:620px}}
-        @media(max-width:680px){.hero-inner{justify-content:center}.table-card,.qr-card{padding:14px}}
+        @media(max-width:680px){.hero{padding:20px 12px}.hero-inner{justify-content:space-between;gap:8px}.hero-logo img{width:min(46vw,170px)}.is-logo{width:min(34vw,130px)}.table-card,.qr-card{padding:14px}}
     </style>
 </head>
 <body>
@@ -150,12 +151,11 @@ $absent = max(0, $total - $present);
                 <thead>
                 <tr>
                     <th>Nom</th>
-                    <th>Profil</th>
                 </tr>
                 </thead>
                 <tbody>
                 <?php if ($participants === []): ?>
-                    <tr><td colspan="2">Aucun participant confirmé pour le moment.</td></tr>
+                    <tr><td>Aucun participant confirmé pour le moment.</td></tr>
                 <?php endif; ?>
                 <?php foreach ($participants as $participant): ?>
                     <?php
@@ -170,8 +170,8 @@ $absent = max(0, $total - $present);
                             <a class="name-link <?php echo $isPresent ? 'is-present' : ''; ?>" href="<?php echo cbp_h($targetUrl); ?>">
                                 <?php echo cbp_h((string) $participant['nom_complet']); ?>
                             </a>
+                            <span class="profile-sub"><?php echo cbp_h((string) $participant['profession']); ?></span>
                         </td>
-                        <td><?php echo cbp_h((string) $participant['profession']); ?></td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>
