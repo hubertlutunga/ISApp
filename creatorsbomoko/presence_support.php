@@ -23,7 +23,7 @@ function cbp_access_code(): string
         return trim($envCode);
     }
 
-    return 'CBOMOKO2026';
+    return '026';
 }
 
 function cbp_add_column_if_missing(PDO $pdo, string $column, string $definition): void
