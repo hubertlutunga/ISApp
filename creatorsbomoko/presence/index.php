@@ -172,15 +172,14 @@ $absent = max(0, $total - $present);
                         : (string) ((int) ($participant['id'] ?? 0));
                     $isPresent = cbp_is_present_for_day($participant, $activeDay);
                     $targetUrl = '../presence_cible.php?id=' . rawurlencode($identifier) . '&day=' . $activeDay;
-                    $day1State = cbp_is_present_for_day($participant, 1) ? 'J1 present' : 'J1 absent';
-                    $day2State = cbp_is_present_for_day($participant, 2) ? 'J2 present' : 'J2 absent';
+                    $presenceRatio = cbp_presence_days_count($participant) . '/2';
                     ?>
                     <tr class="click-row <?php echo $isPresent ? 'row-present' : ''; ?>" data-href="<?php echo cbp_h($targetUrl); ?>" tabindex="0" role="link">
                         <td>
                             <a class="name-link <?php echo $isPresent ? 'is-present' : ''; ?>" href="<?php echo cbp_h($targetUrl); ?>">
                                 <?php echo cbp_h((string) $participant['nom_complet']); ?>
                             </a>
-                            <span class="profile-sub"><?php echo cbp_h((string) $participant['profession']); ?> · <?php echo cbp_h($day1State . ' / ' . $day2State); ?></span>
+                            <span class="profile-sub"><?php echo cbp_h((string) $participant['profession']); ?> · <?php echo cbp_h($presenceRatio); ?></span>
                         </td>
                     </tr>
                 <?php endforeach; ?>

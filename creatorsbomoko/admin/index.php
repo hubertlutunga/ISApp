@@ -105,6 +105,32 @@ SQL);
         $pdo->exec('ALTER TABLE participants_cbomoko ADD INDEX idx_participants_cbomoko_acces (acces)');
     }
 
+    $stmt = $pdo->prepare('SHOW COLUMNS FROM participants_cbomoko LIKE :column_name');
+    $stmt->execute([':column_name' => 'acces_jour1']);
+    if (!$stmt->fetch(PDO::FETCH_ASSOC)) {
+        $pdo->exec('ALTER TABLE participants_cbomoko ADD COLUMN acces_jour1 VARCHAR(10) DEFAULT NULL AFTER heure_arrive');
+    }
+
+    $stmt = $pdo->prepare('SHOW COLUMNS FROM participants_cbomoko LIKE :column_name');
+    $stmt->execute([':column_name' => 'heure_arrive_jour1']);
+    if (!$stmt->fetch(PDO::FETCH_ASSOC)) {
+        $pdo->exec('ALTER TABLE participants_cbomoko ADD COLUMN heure_arrive_jour1 DATETIME DEFAULT NULL AFTER acces_jour1');
+    }
+
+    $stmt = $pdo->prepare('SHOW COLUMNS FROM participants_cbomoko LIKE :column_name');
+    $stmt->execute([':column_name' => 'acces_jour2']);
+    if (!$stmt->fetch(PDO::FETCH_ASSOC)) {
+        $pdo->exec('ALTER TABLE participants_cbomoko ADD COLUMN acces_jour2 VARCHAR(10) DEFAULT NULL AFTER heure_arrive_jour1');
+    }
+
+    $stmt = $pdo->prepare('SHOW COLUMNS FROM participants_cbomoko LIKE :column_name');
+    $stmt->execute([':column_name' => 'heure_arrive_jour2']);
+    if (!$stmt->fetch(PDO::FETCH_ASSOC)) {
+        $pdo->exec('ALTER TABLE participants_cbomoko ADD COLUMN heure_arrive_jour2 DATETIME DEFAULT NULL AFTER acces_jour2');
+    }
+
+    $pdo->exec("UPDATE participants_cbomoko SET acces_jour1 = 'oui', heure_arrive_jour1 = COALESCE(heure_arrive_jour1, heure_arrive) WHERE acces = 'oui' AND (acces_jour1 IS NULL OR acces_jour1 = '')");
+
     $legacyNullableColumns = [
         'experience' => 'experience VARCHAR(80) DEFAULT NULL',
         'participation_similaire' => 'participation_similaire VARCHAR(10) DEFAULT NULL',
@@ -782,7 +808,7 @@ if (cb_admin_is_logged_in() && isset($_GET['export']) && $_GET['export'] === 'cs
     exit;
 }
 
-$stats = ['total' => 0, 'nouvelle' => 0, 'en_etude' => 0, 'preselectionnee' => 0, 'confirmee' => 0, 'rejetee' => 0];
+$stats = ['total' => 0, 'nouvelle' => 0, 'en_etude' => 0, 'preselectionnee' => 0, 'confirmee' => 0, 'rejetee' => 0, 'present_jour1' => 0, 'present_jour2' => 0];
 $candidates = [];
 $q = cb_admin_clean((string) ($_GET['q'] ?? ''), 120);
 $statusFilter = (string) ($_GET['status'] ?? '');
@@ -796,6 +822,12 @@ if (cb_admin_is_logged_in() && $setupError === '') {
         if (array_key_exists($key, $stats)) {
             $stats[$key] = (int) $row['total'];
         }
+    }
+
+    $presenceStatsRow = $pdo->query("SELECT SUM(CASE WHEN (acces_jour1 = 'oui' OR (acces = 'oui' AND (acces_jour1 IS NULL OR acces_jour1 = ''))) THEN 1 ELSE 0 END) AS present_jour1, SUM(CASE WHEN acces_jour2 = 'oui' THEN 1 ELSE 0 END) AS present_jour2 FROM participants_cbomoko WHERE status = 'confirmee'")->fetch(PDO::FETCH_ASSOC);
+    if (is_array($presenceStatsRow)) {
+        $stats['present_jour1'] = (int) ($presenceStatsRow['present_jour1'] ?? 0);
+        $stats['present_jour2'] = (int) ($presenceStatsRow['present_jour2'] ?? 0);
     }
 
     $where = [];
@@ -897,6 +929,8 @@ if (cb_admin_is_logged_in() && $setupError === '') {
             <div class="stat"><div class="stat-icon">★</div><strong><?php echo (int) $stats['preselectionnee']; ?></strong><span>Présélection</span></div>
             <div class="stat"><div class="stat-icon">✓</div><strong><?php echo (int) $stats['confirmee']; ?></strong><span>Confirmées</span></div>
             <div class="stat"><div class="stat-icon">×</div><strong><?php echo (int) $stats['rejetee']; ?></strong><span>Rejetées</span></div>
+            <div class="stat"><div class="stat-icon">J1</div><strong><?php echo (int) $stats['present_jour1']; ?></strong><span>Présence Jour 1</span></div>
+            <div class="stat"><div class="stat-icon">J2</div><strong><?php echo (int) $stats['present_jour2']; ?></strong><span>Présence Jour 2</span></div>
         </section>
 
         <section class="card" style="display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:18px;">

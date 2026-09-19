@@ -99,6 +99,9 @@ SQL);
     cbp_add_column_if_missing($pdo, 'acces_jour2', 'acces_jour2 VARCHAR(10) DEFAULT NULL AFTER heure_arrive_jour1');
     cbp_add_column_if_missing($pdo, 'heure_arrive_jour2', 'heure_arrive_jour2 DATETIME DEFAULT NULL AFTER acces_jour2');
 
+    // Backfill legacy single-day access records into Day 1 to preserve historical attendance.
+    $pdo->exec("UPDATE participants_cbomoko SET acces_jour1 = 'oui', heure_arrive_jour1 = COALESCE(heure_arrive_jour1, heure_arrive) WHERE acces = 'oui' AND (acces_jour1 IS NULL OR acces_jour1 = '')");
+
     $legacyNullableColumns = [
         'experience' => 'experience VARCHAR(80) DEFAULT NULL',
         'participation_similaire' => 'participation_similaire VARCHAR(10) DEFAULT NULL',
@@ -183,6 +186,19 @@ function cbp_arrival_for_day(array $participant, int $day): string
         : (string) ($participant['heure_arrive_jour1'] ?? '');
 
     return cbp_format_datetime($value);
+}
+
+function cbp_presence_days_count(array $participant): int
+{
+    $count = 0;
+    if (cbp_is_present_for_day($participant, 1)) {
+        $count++;
+    }
+    if (cbp_is_present_for_day($participant, 2)) {
+        $count++;
+    }
+
+    return $count;
 }
 
 function cbp_mark_access_confirmed(PDO $pdo, int $id, int $day): void
