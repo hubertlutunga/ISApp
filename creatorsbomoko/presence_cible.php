@@ -16,10 +16,11 @@ if (empty($_SESSION['cbomoko_presence_token'])) {
 }
 
 $identifier = trim((string) ($_GET['id'] ?? ''));
+$activeDay = cbp_resolve_day((string) ($_GET['day'] ?? ''));
 $flash = '';
 $error = '';
 $participant = null;
-$accessCode = '026';
+$accessCode = cbp_access_code();
 $token = (string) $_SESSION['cbomoko_presence_token'];
 
 try {
@@ -34,9 +35,9 @@ try {
             if ($participantToConfirm === null) {
                 $error = 'Participant introuvable ou non confirmé.';
             } else {
-                cbp_mark_access_confirmed($pdo, (int) $participantToConfirm['id']);
+                cbp_mark_access_confirmed($pdo, (int) $participantToConfirm['id'], $activeDay);
                 $_SESSION['cbomoko_presence_token'] = bin2hex(random_bytes(32));
-                header('Location: presence/?acces=ok');
+                header('Location: presence/?acces=ok&day=' . $activeDay);
                 exit;
             }
         }
@@ -48,16 +49,20 @@ try {
     }
 
     if ((string) ($_GET['acces'] ?? '') === 'ok') {
-        $flash = 'Accès confirmé avec succès.';
+        $flash = 'Accès confirmé avec succès pour ' . cbp_day_label($activeDay) . '.';
     }
 } catch (Throwable $exception) {
     error_log('[Creators Bomoko Accès] ' . $exception->getMessage());
     $error = 'Impossible de charger la fiche participant.';
 }
 
-$isPresent = is_array($participant) && (string) ($participant['acces'] ?? '') === 'oui';
-$arrivalTime = is_array($participant) ? cbp_format_datetime((string) ($participant['heure_arrive'] ?? '')) : '';
-$confirmUrl = 'presence_cible.php?id=' . rawurlencode($identifier) . '&action=confirm&token=' . rawurlencode($token);
+$isPresent = is_array($participant) && cbp_is_present_for_day($participant, $activeDay);
+$arrivalTime = is_array($participant) ? cbp_arrival_for_day($participant, $activeDay) : '';
+$day1Present = is_array($participant) ? cbp_is_present_for_day($participant, 1) : false;
+$day2Present = is_array($participant) ? cbp_is_present_for_day($participant, 2) : false;
+$day1Arrival = is_array($participant) ? cbp_arrival_for_day($participant, 1) : '';
+$day2Arrival = is_array($participant) ? cbp_arrival_for_day($participant, 2) : '';
+$confirmUrl = 'presence_cible.php?id=' . rawurlencode($identifier) . '&day=' . $activeDay . '&action=confirm&token=' . rawurlencode($token);
 ?>
 <!doctype html>
 <html lang="fr">
@@ -97,7 +102,7 @@ $confirmUrl = 'presence_cible.php?id=' . rawurlencode($identifier) . '&action=co
                     <div class="muted">Réf. <?php echo cbp_h((string) $participant['submission_id']); ?></div>
                 </div>
                 <span class="badge <?php echo $isPresent ? 'badge-ok' : 'badge-wait'; ?>">
-                    <?php echo $isPresent ? 'Accès confirmé' : 'À confirmer'; ?>
+                    <?php echo $isPresent ? 'Présent ' . cbp_h(cbp_day_label($activeDay)) : 'À confirmer ' . cbp_h(cbp_day_label($activeDay)); ?>
                 </span>
             </div>
 
@@ -116,13 +121,15 @@ $confirmUrl = 'presence_cible.php?id=' . rawurlencode($identifier) . '&action=co
                 <div class="answer"><span>Motivation</span><?php echo nl2br(cbp_h((string) $participant['motivation'])); ?></div>
                 <div class="answer"><span>Thématique</span><?php echo cbp_h((string) $participant['thematique']); ?></div>
                 <div class="answer"><span>Besoins spécifiques</span><?php echo cbp_h((string) $participant['besoins_specifiques']); ?></div>
+                <div class="answer"><span>Jour 1 (18 Septembre)</span><?php echo $day1Present ? 'Présent' : 'Absent'; ?><?php echo $day1Arrival !== '' ? ' · ' . cbp_h($day1Arrival) : ''; ?></div>
+                <div class="answer"><span>Jour 2 (19 Septembre)</span><?php echo $day2Present ? 'Présent' : 'Absent'; ?><?php echo $day2Arrival !== '' ? ' · ' . cbp_h($day2Arrival) : ''; ?></div>
             </div>
 
             <div class="actions">
                 <?php if ($isPresent): ?>
-                    <div class="arrival-chip">Arrivé à <?php echo cbp_h($arrivalTime !== '' ? $arrivalTime : 'heure non disponible'); ?></div>
+                    <div class="arrival-chip"><?php echo cbp_h(cbp_day_label($activeDay)); ?> confirmé à <?php echo cbp_h($arrivalTime !== '' ? $arrivalTime : 'heure non disponible'); ?></div>
                 <?php else: ?>
-                    <a class="btn btn-primary" href="#" onclick="confirmAcces(event)">✓ Confirmer l'accès</a>
+                    <a class="btn btn-primary" href="#" onclick="confirmAcces(event)">✓ Confirmer l'accès <?php echo cbp_h(cbp_day_label($activeDay)); ?></a>
                 <?php endif; ?>
             </div>
         </section>

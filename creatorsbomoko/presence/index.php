@@ -18,6 +18,7 @@ if (empty($_SESSION['cbomoko_presence_token'])) {
 $flash = '';
 $error = '';
 $participants = [];
+$activeDay = cbp_resolve_day((string) ($_GET['day'] ?? ''));
 
 try {
     cbp_ensure_presence_schema($pdo);
@@ -25,7 +26,7 @@ try {
     $participants = cbp_confirmed_participants($pdo);
 
     if ((string) ($_GET['acces'] ?? '') === 'ok') {
-        $flash = 'Accès confirmé avec succès.';
+        $flash = 'Accès confirmé avec succès pour ' . cbp_day_label($activeDay) . '.';
     }
 } catch (Throwable $exception) {
     error_log('[Creators Bomoko Presence Page] ' . $exception->getMessage());
@@ -33,7 +34,7 @@ try {
 }
 
 $total = count($participants);
-$present = count(array_filter($participants, static fn (array $participant): bool => (string) ($participant['acces'] ?? '') === 'oui'));
+$present = count(array_filter($participants, static fn (array $participant): bool => cbp_is_present_for_day($participant, $activeDay)));
 $absent = max(0, $total - $present);
 ?>
 <!doctype html>
@@ -58,6 +59,9 @@ $absent = max(0, $total - $present);
         .alert{padding:14px 16px;border-radius:18px;margin-bottom:16px;font-weight:850}
         .alert-error{background:#fff1f0;color:var(--danger);border:1px solid #ffccc7}
         .alert-ok{background:#ecfdf5;color:var(--ok);border:1px solid #a7f3d0}
+        .day-switch{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:0 0 16px}
+        .day-btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:999px;text-decoration:none;font-weight:900;border:1px solid #d9c5a8;background:#fff;color:var(--wood-dark)}
+        .day-btn.is-active{background:linear-gradient(135deg,#ef4444,var(--wood),var(--blue));color:#fff;border-color:transparent}
         .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:16px}
         .stat{position:relative;overflow:hidden;border-radius:24px;padding:18px;color:#fff;box-shadow:var(--shadow)}
         .stat:after{content:"";position:absolute;right:-24px;top:-30px;width:88px;height:88px;border-radius:999px;background:rgba(255,255,255,.16)}
@@ -116,11 +120,15 @@ $absent = max(0, $total - $present);
     <?php if ($flash !== ''): ?><div class="alert alert-ok"><?php echo cbp_h($flash); ?></div><?php endif; ?>
     <?php if ($error !== ''): ?><div class="alert alert-error"><?php echo cbp_h($error); ?></div><?php endif; ?>
     <h2 class="page-title">Contrôle de présence</h2>
+    <div class="day-switch" aria-label="Sélection du jour">
+        <a class="day-btn <?php echo $activeDay === 1 ? 'is-active' : ''; ?>" href="?day=1">Jour 1 · 18 Septembre</a>
+        <a class="day-btn <?php echo $activeDay === 2 ? 'is-active' : ''; ?>" href="?day=2">Jour 2 · 19 Septembre</a>
+    </div>
 
     <section class="stats" aria-label="Statistiques">
         <div class="stat stat-total"><strong><?php echo $total; ?></strong><span>Confirmés</span></div>
-        <div class="stat stat-present"><strong><?php echo $present; ?></strong><span>Présents</span></div>
-        <div class="stat stat-absent"><strong><?php echo $absent; ?></strong><span>Absents</span></div>
+        <div class="stat stat-present"><strong><?php echo $present; ?></strong><span>Présents <?php echo cbp_h(cbp_day_label($activeDay)); ?></span></div>
+        <div class="stat stat-absent"><strong><?php echo $absent; ?></strong><span>Absents <?php echo cbp_h(cbp_day_label($activeDay)); ?></span></div>
     </section>
 
     <section class="qr-card" aria-label="Scanner QR">
@@ -162,15 +170,17 @@ $absent = max(0, $total - $present);
                     $identifier = trim((string) ($participant['submission_id'] ?? '')) !== ''
                         ? (string) $participant['submission_id']
                         : (string) ((int) ($participant['id'] ?? 0));
-                    $isPresent = (string) ($participant['acces'] ?? '') === 'oui';
-                    $targetUrl = '../presence_cible.php?id=' . rawurlencode($identifier);
+                    $isPresent = cbp_is_present_for_day($participant, $activeDay);
+                    $targetUrl = '../presence_cible.php?id=' . rawurlencode($identifier) . '&day=' . $activeDay;
+                    $day1State = cbp_is_present_for_day($participant, 1) ? 'J1 present' : 'J1 absent';
+                    $day2State = cbp_is_present_for_day($participant, 2) ? 'J2 present' : 'J2 absent';
                     ?>
                     <tr class="click-row <?php echo $isPresent ? 'row-present' : ''; ?>" data-href="<?php echo cbp_h($targetUrl); ?>" tabindex="0" role="link">
                         <td>
                             <a class="name-link <?php echo $isPresent ? 'is-present' : ''; ?>" href="<?php echo cbp_h($targetUrl); ?>">
                                 <?php echo cbp_h((string) $participant['nom_complet']); ?>
                             </a>
-                            <span class="profile-sub"><?php echo cbp_h((string) $participant['profession']); ?></span>
+                            <span class="profile-sub"><?php echo cbp_h((string) $participant['profession']); ?> · <?php echo cbp_h($day1State . ' / ' . $day2State); ?></span>
                         </td>
                     </tr>
                 <?php endforeach; ?>
@@ -194,6 +204,7 @@ if (!window.Swal) {
 <script src="https://unpkg.com/html5-qrcode" onerror="window.__qrLibFailed = true;"></script>
 <script>
 (() => {
+    const activeDay = <?php echo (int) $activeDay; ?>;
     const qrReader = document.getElementById('qr-reader');
     const btnStart = document.getElementById('btnStartQr');
     const btnStop = document.getElementById('btnStopQr');
@@ -263,7 +274,7 @@ if (!window.Swal) {
 
                 setStatus('QR détecté. Ouverture de la fiche...');
                 await stopQr();
-                window.location.href = '../presence_cible.php?id=' + encodeURIComponent(identifier);
+                window.location.href = '../presence_cible.php?id=' + encodeURIComponent(identifier) + '&day=' + encodeURIComponent(activeDay);
             },
             () => {}
         );

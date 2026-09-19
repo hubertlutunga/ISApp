@@ -94,6 +94,10 @@ SQL);
     cbp_add_column_if_missing($pdo, 'acces', 'acces VARCHAR(10) DEFAULT NULL AFTER notes_admin');
     cbp_add_column_if_missing($pdo, 'heure_arrive', 'heure_arrive DATETIME DEFAULT NULL AFTER acces');
     cbp_add_index_if_missing($pdo, 'idx_participants_cbomoko_acces', 'idx_participants_cbomoko_acces (acces)');
+    cbp_add_column_if_missing($pdo, 'acces_jour1', 'acces_jour1 VARCHAR(10) DEFAULT NULL AFTER heure_arrive');
+    cbp_add_column_if_missing($pdo, 'heure_arrive_jour1', 'heure_arrive_jour1 DATETIME DEFAULT NULL AFTER acces_jour1');
+    cbp_add_column_if_missing($pdo, 'acces_jour2', 'acces_jour2 VARCHAR(10) DEFAULT NULL AFTER heure_arrive_jour1');
+    cbp_add_column_if_missing($pdo, 'heure_arrive_jour2', 'heure_arrive_jour2 DATETIME DEFAULT NULL AFTER acces_jour2');
 
     $legacyNullableColumns = [
         'experience' => 'experience VARCHAR(80) DEFAULT NULL',
@@ -114,7 +118,7 @@ SQL);
 
 function cbp_confirmed_participants(PDO $pdo): array
 {
-    $stmt = $pdo->query("SELECT id, submission_id, nom_complet, email, telephone, ville, profession, organisation, domaine, plateformes, acces, heure_arrive, updated_at FROM participants_cbomoko WHERE status = 'confirmee' ORDER BY nom_complet ASC");
+    $stmt = $pdo->query("SELECT id, submission_id, nom_complet, email, telephone, ville, profession, organisation, domaine, plateformes, acces, heure_arrive, acces_jour1, heure_arrive_jour1, acces_jour2, heure_arrive_jour2, updated_at FROM participants_cbomoko WHERE status = 'confirmee' ORDER BY nom_complet ASC");
 
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
@@ -146,9 +150,51 @@ function cbp_find_confirmed_participant_by_identifier(PDO $pdo, string $identifi
     return is_array($participant) ? $participant : null;
 }
 
-function cbp_mark_access_confirmed(PDO $pdo, int $id): void
+function cbp_resolve_day(?string $rawDay): int
 {
-    $stmt = $pdo->prepare("UPDATE participants_cbomoko SET acces = 'oui', heure_arrive = COALESCE(heure_arrive, NOW()) WHERE id = :id AND status = 'confirmee'");
+    if ($rawDay === '1' || $rawDay === '2') {
+        return (int) $rawDay;
+    }
+
+    $today = (new DateTimeImmutable('now'))->format('Y-m-d');
+    $eventDayTwo = '2026-09-19';
+
+    return $today >= $eventDayTwo ? 2 : 1;
+}
+
+function cbp_day_label(int $day): string
+{
+    return $day === 2 ? 'Jour 2' : 'Jour 1';
+}
+
+function cbp_is_present_for_day(array $participant, int $day): bool
+{
+    if ($day === 2) {
+        return (string) ($participant['acces_jour2'] ?? '') === 'oui';
+    }
+
+    return (string) ($participant['acces_jour1'] ?? '') === 'oui';
+}
+
+function cbp_arrival_for_day(array $participant, int $day): string
+{
+    $value = $day === 2
+        ? (string) ($participant['heure_arrive_jour2'] ?? '')
+        : (string) ($participant['heure_arrive_jour1'] ?? '');
+
+    return cbp_format_datetime($value);
+}
+
+function cbp_mark_access_confirmed(PDO $pdo, int $id, int $day): void
+{
+    if ($day === 2) {
+        $stmt = $pdo->prepare("UPDATE participants_cbomoko SET acces = 'oui', heure_arrive = COALESCE(heure_arrive, NOW()), acces_jour2 = 'oui', heure_arrive_jour2 = COALESCE(heure_arrive_jour2, NOW()) WHERE id = :id AND status = 'confirmee'");
+        $stmt->execute([':id' => $id]);
+
+        return;
+    }
+
+    $stmt = $pdo->prepare("UPDATE participants_cbomoko SET acces = 'oui', heure_arrive = COALESCE(heure_arrive, NOW()), acces_jour1 = 'oui', heure_arrive_jour1 = COALESCE(heure_arrive_jour1, NOW()) WHERE id = :id AND status = 'confirmee'");
     $stmt->execute([':id' => $id]);
 }
 
