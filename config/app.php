@@ -48,6 +48,20 @@ $appConfig = [
         'key' => getenv('ISAPP_PUBLIC_TRACE_KEY') ?: '',
         'directory' => getenv('ISAPP_PUBLIC_TRACE_DIR') ?: dirname(__DIR__) . '/storage/traces/public-site',
     ],
+    'contact_captcha' => [
+        'enabled' => getenv('ISAPP_CONTACT_CAPTCHA_ENABLED') === '1',
+        'provider' => getenv('ISAPP_CONTACT_CAPTCHA_PROVIDER') ?: 'turnstile',
+        'turnstile' => [
+            'site_key' => getenv('ISAPP_TURNSTILE_SITE_KEY') ?: '',
+            'secret_key' => getenv('ISAPP_TURNSTILE_SECRET_KEY') ?: '',
+        ],
+        'recaptcha_v3' => [
+            'site_key' => getenv('ISAPP_RECAPTCHA_V3_SITE_KEY') ?: '',
+            'secret_key' => getenv('ISAPP_RECAPTCHA_V3_SECRET_KEY') ?: '',
+            'min_score' => (float) (getenv('ISAPP_RECAPTCHA_V3_MIN_SCORE') ?: 0.5),
+            'action' => getenv('ISAPP_RECAPTCHA_V3_ACTION') ?: 'home_contact',
+        ],
+    ],
 ];
 
 $localConfigPath = __DIR__ . '/app.local.php';

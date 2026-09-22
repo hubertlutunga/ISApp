@@ -13,12 +13,170 @@ $contactFormValues = [
   'msg' => trim((string) ($_POST['msg'] ?? '')),
 ];
 
+$contactCaptchaConfig = is_array($isAppConfig['contact_captcha'] ?? null) ? $isAppConfig['contact_captcha'] : [];
+$contactCaptchaProvider = strtolower(trim((string) ($contactCaptchaConfig['provider'] ?? '')));
+$contactCaptchaProvider = $contactCaptchaProvider === 'recaptcha_v3' ? 'recaptcha_v3' : 'turnstile';
+$contactCaptchaAction = trim((string) (($contactCaptchaConfig['recaptcha_v3']['action'] ?? 'home_contact')));
+if ($contactCaptchaAction === '') {
+  $contactCaptchaAction = 'home_contact';
+}
+
+$turnstileSiteKey = trim((string) ($contactCaptchaConfig['turnstile']['site_key'] ?? ''));
+$turnstileSecretKey = trim((string) ($contactCaptchaConfig['turnstile']['secret_key'] ?? ''));
+$recaptchaSiteKey = trim((string) ($contactCaptchaConfig['recaptcha_v3']['site_key'] ?? ''));
+$recaptchaSecretKey = trim((string) ($contactCaptchaConfig['recaptcha_v3']['secret_key'] ?? ''));
+$recaptchaMinScore = (float) ($contactCaptchaConfig['recaptcha_v3']['min_score'] ?? 0.5);
+
+$contactCaptchaEnabled = ($contactCaptchaConfig['enabled'] ?? false) === true;
+if ($contactCaptchaProvider === 'turnstile') {
+  $contactCaptchaEnabled = $contactCaptchaEnabled && $turnstileSiteKey !== '' && $turnstileSecretKey !== '';
+} else {
+  $contactCaptchaEnabled = $contactCaptchaEnabled && $recaptchaSiteKey !== '' && $recaptchaSecretKey !== '';
+}
+
+$contactCaptchaClientConfig = [
+  'enabled' => $contactCaptchaEnabled,
+  'provider' => $contactCaptchaProvider,
+  'siteKey' => $contactCaptchaProvider === 'turnstile' ? $turnstileSiteKey : $recaptchaSiteKey,
+  'action' => $contactCaptchaAction,
+];
+
+$contactRateLimitWindow = 600;
+$contactRateLimitMaxAttempts = 5;
+$contactMinSubmitDelay = 4;
+
+if (empty($_SESSION['home_contact_csrf'])) {
+  $_SESSION['home_contact_csrf'] = bin2hex(random_bytes(32));
+}
+
+$contactCsrfToken = (string) $_SESSION['home_contact_csrf'];
+$contactFormRenderedAt = time();
+
+$contactClientIp = trim((string) (($_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['REMOTE_ADDR'] ?? 'unknown')));
+$contactClientIpKey = preg_replace('/[^a-f0-9:.]/i', '', $contactClientIp);
+if ($contactClientIpKey === '' || $contactClientIpKey === null) {
+  $contactClientIpKey = 'unknown';
+}
+$contactRateKey = 'home_contact_rate_' . hash('sha256', $contactClientIpKey);
+
+if (!isset($_SESSION[$contactRateKey]) || !is_array($_SESSION[$contactRateKey])) {
+  $_SESSION[$contactRateKey] = [];
+}
+
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && (string) ($_POST['form_name'] ?? '') === 'home_contact') {
+  $submittedToken = (string) ($_POST['home_contact_token'] ?? '');
+  $submittedAt = (int) ($_POST['home_contact_ts'] ?? 0);
+  $honeypotValue = trim((string) ($_POST['company_website'] ?? ''));
+  $requestTimestamp = time();
+
+  $_SESSION[$contactRateKey] = array_values(array_filter(
+    $_SESSION[$contactRateKey],
+    static function ($timestamp) use ($requestTimestamp, $contactRateLimitWindow): bool {
+      return is_int($timestamp) && ($requestTimestamp - $timestamp) <= $contactRateLimitWindow;
+    }
+  ));
+
+  if (count($_SESSION[$contactRateKey]) >= $contactRateLimitMaxAttempts) {
+    $contactFormState = [
+      'status' => 'error',
+      'message' => 'Trop de tentatives en peu de temps. Réessayez dans quelques minutes.',
+    ];
+  } else {
+    $_SESSION[$contactRateKey][] = $requestTimestamp;
+  }
+
   $contactName = $contactFormValues['name'];
   $contactEmail = $contactFormValues['email'];
   $contactMessage = $contactFormValues['msg'];
 
-  if ($contactName === '' || $contactEmail === '' || $contactMessage === '') {
+  if ($contactFormState['status'] === 'error') {
+    // Rate limit already reached.
+  } elseif (!hash_equals($contactCsrfToken, $submittedToken)) {
+    $contactFormState = [
+      'status' => 'error',
+      'message' => 'Session expirée. Veuillez recharger la page et réessayer.',
+    ];
+  } elseif ($honeypotValue !== '') {
+    $contactFormState = [
+      'status' => 'success',
+      'message' => 'Votre message a bien été envoyé à contact@invitationspeciale.com.',
+    ];
+    $contactFormValues = [
+      'name' => '',
+      'email' => '',
+      'msg' => '',
+    ];
+  } elseif ($submittedAt <= 0 || ($requestTimestamp - $submittedAt) < $contactMinSubmitDelay) {
+    $contactFormState = [
+      'status' => 'error',
+      'message' => 'Validation anti-spam: patientez quelques secondes puis renvoyez le formulaire.',
+    ];
+  } elseif ($contactCaptchaEnabled) {
+    $captchaResponse = trim((string) ($_POST['cf-turnstile-response'] ?? $_POST['g-recaptcha-response'] ?? ''));
+    $captchaEndpoint = $contactCaptchaProvider === 'turnstile'
+      ? 'https://challenges.cloudflare.com/turnstile/v0/siteverify'
+      : 'https://www.google.com/recaptcha/api/siteverify';
+    $captchaSecretKey = $contactCaptchaProvider === 'turnstile' ? $turnstileSecretKey : $recaptchaSecretKey;
+
+    $captchaPayload = [
+      'secret' => $captchaSecretKey,
+      'response' => $captchaResponse,
+      'remoteip' => $contactClientIp,
+    ];
+
+    if ($captchaResponse === '') {
+      $contactFormState = [
+        'status' => 'error',
+        'message' => 'Veuillez valider la verification anti-robot.',
+      ];
+    } else {
+      $verifyResult = null;
+      $verifyRawResponse = '';
+
+      if (function_exists('curl_init')) {
+        $ch = curl_init($captchaEndpoint);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($captchaPayload));
+        curl_setopt($ch, CURLOPT_TIMEOUT, 8);
+        $verifyRawResponse = (string) curl_exec($ch);
+        curl_close($ch);
+      } else {
+        $context = stream_context_create([
+          'http' => [
+            'method' => 'POST',
+            'header' => "Content-type: application/x-www-form-urlencoded\r\n",
+            'content' => http_build_query($captchaPayload),
+            'timeout' => 8,
+          ],
+        ]);
+        $verifyRawResponse = (string) @file_get_contents($captchaEndpoint, false, $context);
+      }
+
+      if ($verifyRawResponse !== '') {
+        $decoded = json_decode($verifyRawResponse, true);
+        if (is_array($decoded)) {
+          $verifyResult = $decoded;
+        }
+      }
+
+      $captchaIsValid = is_array($verifyResult) && !empty($verifyResult['success']);
+      if ($captchaIsValid && $contactCaptchaProvider === 'recaptcha_v3') {
+        $score = isset($verifyResult['score']) ? (float) $verifyResult['score'] : 0.0;
+        $action = trim((string) ($verifyResult['action'] ?? ''));
+        if ($score < $recaptchaMinScore || $action !== $contactCaptchaAction) {
+          $captchaIsValid = false;
+        }
+      }
+
+      if (!$captchaIsValid) {
+        $contactFormState = [
+          'status' => 'error',
+          'message' => 'Verification anti-robot echouee. Merci de reessayer.',
+        ];
+      }
+    }
+  } elseif ($contactName === '' || $contactEmail === '' || $contactMessage === '') {
     $contactFormState = [
       'status' => 'error',
       'message' => 'Veuillez remplir tous les champs du formulaire.',
@@ -73,9 +231,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && (string) ($_POST['form_n
         'msg' => '',
       ];
     } catch (Throwable $exception) {
+      error_log('[home_contact] Mail send failed: ' . $exception->getMessage());
       $contactFormState = [
         'status' => 'error',
-        'message' => 'Envoi impossible pour le moment. ' . trim((string) $exception->getMessage()),
+        'message' => 'Envoi impossible pour le moment. Merci de réessayer un peu plus tard.',
       ];
     }
   }
@@ -207,6 +366,19 @@ $heroVerticalModels = $showcaseModels !== [] ? array_merge($showcaseModels, $sho
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border: 0;
+  }
+
+  .is-home-honeypot {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+
+  .is-home-captcha-wrap {
+    margin-top: 2px;
+    min-height: 66px;
   }
 
   .is-home-wrap {
@@ -1507,6 +1679,16 @@ $heroVerticalModels = $showcaseModels !== [] ? array_merge($showcaseModels, $sho
 
           <form class="is-home-contact-form" id="contactForm" method="post" action="" aria-label="Formulaire de contact Invitation Spéciale">
             <input type="hidden" name="form_name" value="home_contact" />
+            <input type="hidden" name="home_contact_token" value="<?php echo htmlspecialchars($contactCsrfToken, ENT_QUOTES, 'UTF-8'); ?>" />
+            <input type="hidden" name="home_contact_ts" value="<?php echo htmlspecialchars((string) $contactFormRenderedAt, ENT_QUOTES, 'UTF-8'); ?>" />
+            <?php if ($contactCaptchaEnabled && $contactCaptchaProvider === 'recaptcha_v3'): ?>
+              <input type="hidden" name="g-recaptcha-response" id="homeRecaptchaResponse" value="" />
+            <?php endif; ?>
+
+            <div class="is-home-honeypot" aria-hidden="true">
+              <label for="homeContactWebsite">Site web</label>
+              <input id="homeContactWebsite" name="company_website" type="text" tabindex="-1" autocomplete="off" />
+            </div>
 
             <label class="sr-only" for="homeContactName">Nom</label>
             <input id="homeContactName" name="name" required placeholder="Votre nom" value="<?php echo htmlspecialchars($contactFormValues['name'], ENT_QUOTES, 'UTF-8'); ?>" />
@@ -1516,6 +1698,12 @@ $heroVerticalModels = $showcaseModels !== [] ? array_merge($showcaseModels, $sho
 
             <label class="sr-only" for="homeContactMessage">Message</label>
             <textarea id="homeContactMessage" name="msg" rows="5" required placeholder="Parlez-nous de votre événement, de votre style souhaité et de votre calendrier."><?php echo htmlspecialchars($contactFormValues['msg'], ENT_QUOTES, 'UTF-8'); ?></textarea>
+
+            <?php if ($contactCaptchaEnabled && $contactCaptchaProvider === 'turnstile'): ?>
+              <div class="is-home-captcha-wrap">
+                <div class="cf-turnstile" data-sitekey="<?php echo htmlspecialchars($turnstileSiteKey, ENT_QUOTES, 'UTF-8'); ?>" data-theme="light" data-action="home_contact"></div>
+              </div>
+            <?php endif; ?>
 
             <div class="is-home-contact-actions">
               <button class="is-home-btn is-home-btn-primary" type="submit">Envoyer le message</button>
@@ -1561,10 +1749,17 @@ $heroVerticalModels = $showcaseModels !== [] ? array_merge($showcaseModels, $sho
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<?php if ($contactCaptchaEnabled && $contactCaptchaProvider === 'turnstile'): ?>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<?php endif; ?>
+<?php if ($contactCaptchaEnabled && $contactCaptchaProvider === 'recaptcha_v3'): ?>
+  <script src="https://www.google.com/recaptcha/api.js?render=<?php echo rawurlencode($recaptchaSiteKey); ?>"></script>
+<?php endif; ?>
 <script>
   const homeCalendarEvents = <?php echo json_encode($calendarEventsByDate, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
   const initialCalendarMonth = <?php echo json_encode($initialCalendarMonth, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
   const contactFeedback = <?php echo json_encode($contactFormState, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+  const contactCaptchaConfig = <?php echo json_encode($contactCaptchaClientConfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
 
   document.getElementById('homeYear').textContent = new Date().getFullYear();
 
@@ -1583,6 +1778,42 @@ $heroVerticalModels = $showcaseModels !== [] ? array_merge($showcaseModels, $sho
       homePrimaryMenu.classList.remove('is-open');
     });
   });
+
+  (function initContactCaptcha() {
+    if (!contactCaptchaConfig || !contactCaptchaConfig.enabled || contactCaptchaConfig.provider !== 'recaptcha_v3') {
+      return;
+    }
+
+    const form = document.getElementById('contactForm');
+    const tokenInput = document.getElementById('homeRecaptchaResponse');
+
+    if (!form || !tokenInput || !window.grecaptcha || typeof window.grecaptcha.ready !== 'function') {
+      return;
+    }
+
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+
+      window.grecaptcha.ready(function () {
+        window.grecaptcha.execute(contactCaptchaConfig.siteKey, {
+          action: contactCaptchaConfig.action || 'home_contact'
+        }).then(function (token) {
+          tokenInput.value = token || '';
+          form.submit();
+        }).catch(function () {
+          Swal.fire({
+            title: 'Verification anti-robot',
+            text: 'Impossible de valider la verification pour le moment. Merci de reessayer.',
+            icon: 'error',
+            confirmButtonText: 'Fermer',
+            confirmButtonColor: '#5f7c6b',
+            background: '#fffdf9',
+            color: '#22312b'
+          });
+        });
+      });
+    });
+  }());
 
   (function initWeddingCalendar() {
     const monthLabel = document.getElementById('calendarMonthLabel');
