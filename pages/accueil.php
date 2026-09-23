@@ -15,7 +15,10 @@ $contactFormValues = [
 
 $contactCaptchaConfig = is_array($isAppConfig['contact_captcha'] ?? null) ? $isAppConfig['contact_captcha'] : [];
 $contactCaptchaProvider = strtolower(trim((string) ($contactCaptchaConfig['provider'] ?? '')));
-$contactCaptchaProvider = $contactCaptchaProvider === 'recaptcha_v3' ? 'recaptcha_v3' : 'turnstile';
+$allowedContactCaptchaProviders = ['turnstile', 'recaptcha_v2', 'recaptcha_v3'];
+if (!in_array($contactCaptchaProvider, $allowedContactCaptchaProviders, true)) {
+  $contactCaptchaProvider = 'turnstile';
+}
 $contactCaptchaAction = trim((string) (($contactCaptchaConfig['recaptcha_v3']['action'] ?? 'home_contact')));
 if ($contactCaptchaAction === '') {
   $contactCaptchaAction = 'home_contact';
@@ -23,6 +26,8 @@ if ($contactCaptchaAction === '') {
 
 $turnstileSiteKey = trim((string) ($contactCaptchaConfig['turnstile']['site_key'] ?? ''));
 $turnstileSecretKey = trim((string) ($contactCaptchaConfig['turnstile']['secret_key'] ?? ''));
+$recaptchaV2SiteKey = trim((string) ($contactCaptchaConfig['recaptcha_v2']['site_key'] ?? ''));
+$recaptchaV2SecretKey = trim((string) ($contactCaptchaConfig['recaptcha_v2']['secret_key'] ?? ''));
 $recaptchaSiteKey = trim((string) ($contactCaptchaConfig['recaptcha_v3']['site_key'] ?? ''));
 $recaptchaSecretKey = trim((string) ($contactCaptchaConfig['recaptcha_v3']['secret_key'] ?? ''));
 $recaptchaMinScore = (float) ($contactCaptchaConfig['recaptcha_v3']['min_score'] ?? 0.5);
@@ -30,6 +35,8 @@ $recaptchaMinScore = (float) ($contactCaptchaConfig['recaptcha_v3']['min_score']
 $contactCaptchaEnabled = ($contactCaptchaConfig['enabled'] ?? false) === true;
 if ($contactCaptchaProvider === 'turnstile') {
   $contactCaptchaEnabled = $contactCaptchaEnabled && $turnstileSiteKey !== '' && $turnstileSecretKey !== '';
+} elseif ($contactCaptchaProvider === 'recaptcha_v2') {
+  $contactCaptchaEnabled = $contactCaptchaEnabled && $recaptchaV2SiteKey !== '' && $recaptchaV2SecretKey !== '';
 } else {
   $contactCaptchaEnabled = $contactCaptchaEnabled && $recaptchaSiteKey !== '' && $recaptchaSecretKey !== '';
 }
@@ -37,7 +44,9 @@ if ($contactCaptchaProvider === 'turnstile') {
 $contactCaptchaClientConfig = [
   'enabled' => $contactCaptchaEnabled,
   'provider' => $contactCaptchaProvider,
-  'siteKey' => $contactCaptchaProvider === 'turnstile' ? $turnstileSiteKey : $recaptchaSiteKey,
+  'siteKey' => $contactCaptchaProvider === 'turnstile'
+    ? $turnstileSiteKey
+    : ($contactCaptchaProvider === 'recaptcha_v2' ? $recaptchaV2SiteKey : $recaptchaSiteKey),
   'action' => $contactCaptchaAction,
 ];
 
@@ -116,7 +125,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && (string) ($_POST['form_n
     $captchaEndpoint = $contactCaptchaProvider === 'turnstile'
       ? 'https://challenges.cloudflare.com/turnstile/v0/siteverify'
       : 'https://www.google.com/recaptcha/api/siteverify';
-    $captchaSecretKey = $contactCaptchaProvider === 'turnstile' ? $turnstileSecretKey : $recaptchaSecretKey;
+    $captchaSecretKey = $contactCaptchaProvider === 'turnstile'
+      ? $turnstileSecretKey
+      : ($contactCaptchaProvider === 'recaptcha_v2' ? $recaptchaV2SecretKey : $recaptchaSecretKey);
 
     $captchaPayload = [
       'secret' => $captchaSecretKey,
@@ -1704,6 +1715,11 @@ $heroVerticalModels = $showcaseModels !== [] ? array_merge($showcaseModels, $sho
                 <div class="cf-turnstile" data-sitekey="<?php echo htmlspecialchars($turnstileSiteKey, ENT_QUOTES, 'UTF-8'); ?>" data-theme="light" data-action="home_contact"></div>
               </div>
             <?php endif; ?>
+            <?php if ($contactCaptchaEnabled && $contactCaptchaProvider === 'recaptcha_v2'): ?>
+              <div class="is-home-captcha-wrap">
+                <div class="g-recaptcha" data-sitekey="<?php echo htmlspecialchars($recaptchaV2SiteKey, ENT_QUOTES, 'UTF-8'); ?>"></div>
+              </div>
+            <?php endif; ?>
 
             <div class="is-home-contact-actions">
               <button class="is-home-btn is-home-btn-primary" type="submit">Envoyer le message</button>
@@ -1751,6 +1767,9 @@ $heroVerticalModels = $showcaseModels !== [] ? array_merge($showcaseModels, $sho
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <?php if ($contactCaptchaEnabled && $contactCaptchaProvider === 'turnstile'): ?>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<?php endif; ?>
+<?php if ($contactCaptchaEnabled && $contactCaptchaProvider === 'recaptcha_v2'): ?>
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 <?php endif; ?>
 <?php if ($contactCaptchaEnabled && $contactCaptchaProvider === 'recaptcha_v3'): ?>
   <script src="https://www.google.com/recaptcha/api.js?render=<?php echo rawurlencode($recaptchaSiteKey); ?>"></script>

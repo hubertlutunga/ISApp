@@ -55,6 +55,10 @@ $appConfig = [
             'site_key' => getenv('ISAPP_TURNSTILE_SITE_KEY') ?: '',
             'secret_key' => getenv('ISAPP_TURNSTILE_SECRET_KEY') ?: '',
         ],
+        'recaptcha_v2' => [
+            'site_key' => getenv('ISAPP_RECAPTCHA_V2_SITE_KEY') ?: '',
+            'secret_key' => getenv('ISAPP_RECAPTCHA_V2_SECRET_KEY') ?: '',
+        ],
         'recaptcha_v3' => [
             'site_key' => getenv('ISAPP_RECAPTCHA_V3_SITE_KEY') ?: '',
             'secret_key' => getenv('ISAPP_RECAPTCHA_V3_SECRET_KEY') ?: '',
