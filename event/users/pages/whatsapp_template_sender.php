@@ -248,6 +248,19 @@ if (!function_exists('isapp_whatsapp_sender_template_signature')) {
     }
 }
 
+if (!function_exists('isapp_whatsapp_sender_template_event_label')) {
+    function isapp_whatsapp_sender_template_event_label(array $event, string $fallbackEventLabel): string
+    {
+        $eventType = (string) ($event['type_event'] ?? '');
+
+        if ($eventType === '2') {
+            return 'à l’anniversaire';
+        }
+
+        return $fallbackEventLabel;
+    }
+}
+
 if (!function_exists('isapp_whatsapp_sender_event_label')) {
     function isapp_whatsapp_sender_event_label(array $event): string
     {
@@ -903,6 +916,7 @@ if (!function_exists('isapp_whatsapp_send_template_invitation')) {
         $recipientName = isapp_whatsapp_sender_display_name($invite, $fallbackInviteName);
         $eventLabel = isapp_whatsapp_sender_event_label($event);
         $signature = isapp_whatsapp_sender_signature($event);
+        $templateEventLabel = isapp_whatsapp_sender_template_event_label($event, $eventLabel);
         $templateSignature = isapp_whatsapp_sender_template_signature($event, $signature);
         $filenameBase = isapp_whatsapp_sender_filename_base($event, $invite, $recipientName);
         $diskStem = isapp_whatsapp_sender_disk_stem($filenameBase);
@@ -918,7 +932,7 @@ if (!function_exists('isapp_whatsapp_send_template_invitation')) {
 
         $contentVariables = [
             '1' => $recipientName,
-            '2' => $eventLabel,
+            '2' => $templateEventLabel,
             '3' => $templateSignature,
             '4' => $encodedStem,
         ];
