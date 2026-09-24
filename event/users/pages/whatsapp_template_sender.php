@@ -337,6 +337,10 @@ if (!function_exists('isapp_whatsapp_sender_invitation_sentence')) {
             return 'Nous avons le plaisir de vous transmettre votre invitation ' . $eventLabel . '.';
         }
 
+        if ($eventType === '2') {
+            return 'Nous avons le plaisir de vous transmettre votre invitation ' . $eventLabel . '.';
+        }
+
         if ($eventType === '1') {
             $weddingType = isapp_whatsapp_sender_normalize_wedding_type((string) ($event['type_mar'] ?? ''));
 
