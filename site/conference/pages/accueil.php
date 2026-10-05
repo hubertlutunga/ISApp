@@ -241,7 +241,7 @@ if (!empty($publicLmsUrl) && is_string($dataframe) && stripos($dataframe, 'class
 
 
 
-      <section class="ts-contact-form" style="border-top:1px solid #ddd;" id="participer">
+      <section class="ts-contact-form" style="border-top:1px solid #ddd;<?php echo $rsvpOpenModal ? 'display:none;' : ''; ?>" id="participer">
          <div class="container">
             <div class="row">
                <div class="col-lg-8 mx-auto">
