@@ -914,25 +914,45 @@ if (!function_exists('isapp_whatsapp_sender_event_type_name')) {
             return '';
         }
 
-        $stmt = $pdo->prepare('SELECT nom_typeev FROM is_typeevent WHERE id_typeev = ? LIMIT 1');
-        $stmt->execute([$eventTypeId]);
-        $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
-        $stmt->closeCursor();
+        $queries = [
+            ['SELECT nom_typeev AS event_type_name FROM is_typeevent WHERE id_typeev = ? LIMIT 1', 'event_type_name'],
+            ['SELECT nom AS event_type_name FROM evenement WHERE cod_event = ? LIMIT 1', 'event_type_name'],
+        ];
 
-        return trim((string) ($row['nom_typeev'] ?? ''));
+        foreach ($queries as [$sql, $column]) {
+            try {
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute([$eventTypeId]);
+                $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+                $stmt->closeCursor();
+
+                $label = trim((string) ($row[$column] ?? ''));
+                if ($label !== '') {
+                    return $label;
+                }
+            } catch (\Throwable $exception) {
+                // Ignore missing table/column errors and continue with next fallback.
+            }
+        }
+
+        return '';
     }
 }
 
 if (!function_exists('isapp_whatsapp_sender_is_listening_session_event')) {
     function isapp_whatsapp_sender_is_listening_session_event(PDO $pdo, array $event): bool
     {
+        if ((string) ($event['type_event'] ?? '') === '13') {
+            return true;
+        }
+
         $eventTypeName = isapp_whatsapp_sender_normalize_label(isapp_whatsapp_sender_event_type_name($pdo, $event));
 
         if ($eventTypeName !== '' && strpos($eventTypeName, 'session') !== false && strpos($eventTypeName, 'ecoute') !== false) {
             return true;
         }
 
-        return (string) ($event['type_event'] ?? '') === '13';
+        return false;
     }
 }
 
