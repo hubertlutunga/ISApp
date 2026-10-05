@@ -106,10 +106,11 @@ Variable optionnelle:
 
 - `ISAPP_PUBLIC_BASE_URL`
 
-Le numero expéditeur WhatsApp et le Content SID utilises par l'envoi des invitations sont maintenant verrouilles dans [event/users/pages/whatsapp_template_sender.php](event/users/pages/whatsapp_template_sender.php) avec les valeurs approuvees suivantes:
+Le numero expéditeur WhatsApp et les Content SID utilises par l'envoi des invitations sont maintenant verrouilles dans [event/users/pages/whatsapp_template_sender.php](event/users/pages/whatsapp_template_sender.php) avec les valeurs approuvees suivantes:
 
 - `whatsapp:+14787726313`
-- `HX19ec61e298a83f99ec815a184b9d9a0e`
+- `HX19ec61e298a83f99ec815a184b9d9a0e` (template invitation standard)
+- `HXc108daac6c7c72921fe9e6e056a3d683` (template type evenement Session d'ecoute)
 
 Variables recommandees pour l'email de reinitialisation du mot de passe via `support@invitationspeciale.com`:
 

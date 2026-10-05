@@ -20,6 +20,10 @@ if (!defined('ISAPP_TWILIO_WHATSAPP_TEMPLATE_SID')) {
     define('ISAPP_TWILIO_WHATSAPP_TEMPLATE_SID', 'HX19ec61e298a83f99ec815a184b9d9a0e');
 }
 
+if (!defined('ISAPP_TWILIO_WHATSAPP_TEMPLATE_SID_LISTENING_SESSION')) {
+    define('ISAPP_TWILIO_WHATSAPP_TEMPLATE_SID_LISTENING_SESSION', 'HXc108daac6c7c72921fe9e6e056a3d683');
+}
+
 if (!function_exists('isapp_whatsapp_sender_base_url')) {
     function isapp_whatsapp_sender_base_url(): string
     {
@@ -811,9 +815,12 @@ if (!function_exists('isapp_whatsapp_sender_update_invite_tracking')) {
 }
 
 if (!function_exists('isapp_whatsapp_sender_template_sid')) {
-    function isapp_whatsapp_sender_template_sid(): string
+    function isapp_whatsapp_sender_template_sid(PDO $pdo, array $event): string
     {
         $templateSid = trim(ISAPP_TWILIO_WHATSAPP_TEMPLATE_SID);
+        if (isapp_whatsapp_sender_is_listening_session_event($pdo, $event)) {
+            $templateSid = trim(ISAPP_TWILIO_WHATSAPP_TEMPLATE_SID_LISTENING_SESSION);
+        }
 
         if (!preg_match('/^HX[0-9a-fA-F]{32}$/', $templateSid)) {
             throw new RuntimeException('Le SID du template Twilio WhatsApp est invalide. Il doit commencer par HX et contenir 34 caracteres.');
@@ -862,6 +869,70 @@ if (!function_exists('isapp_whatsapp_sender_required_env')) {
         }
 
         return $value;
+    }
+}
+
+if (!function_exists('isapp_whatsapp_sender_normalize_label')) {
+    function isapp_whatsapp_sender_normalize_label(string $value): string
+    {
+        $value = trim(mb_strtolower($value, 'UTF-8'));
+
+        return strtr($value, [
+            'à' => 'a',
+            'á' => 'a',
+            'â' => 'a',
+            'ä' => 'a',
+            'ç' => 'c',
+            'è' => 'e',
+            'é' => 'e',
+            'ê' => 'e',
+            'ë' => 'e',
+            'ì' => 'i',
+            'í' => 'i',
+            'î' => 'i',
+            'ï' => 'i',
+            'ò' => 'o',
+            'ó' => 'o',
+            'ô' => 'o',
+            'ö' => 'o',
+            'ù' => 'u',
+            'ú' => 'u',
+            'û' => 'u',
+            'ü' => 'u',
+            'ÿ' => 'y',
+            'œ' => 'oe',
+            'æ' => 'ae',
+        ]);
+    }
+}
+
+if (!function_exists('isapp_whatsapp_sender_event_type_name')) {
+    function isapp_whatsapp_sender_event_type_name(PDO $pdo, array $event): string
+    {
+        $eventTypeId = trim((string) ($event['type_event'] ?? ''));
+        if ($eventTypeId === '') {
+            return '';
+        }
+
+        $stmt = $pdo->prepare('SELECT nom_typeev FROM is_typeevent WHERE id_typeev = ? LIMIT 1');
+        $stmt->execute([$eventTypeId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+        $stmt->closeCursor();
+
+        return trim((string) ($row['nom_typeev'] ?? ''));
+    }
+}
+
+if (!function_exists('isapp_whatsapp_sender_is_listening_session_event')) {
+    function isapp_whatsapp_sender_is_listening_session_event(PDO $pdo, array $event): bool
+    {
+        $eventTypeName = isapp_whatsapp_sender_normalize_label(isapp_whatsapp_sender_event_type_name($pdo, $event));
+
+        if ($eventTypeName !== '' && strpos($eventTypeName, 'session') !== false && strpos($eventTypeName, 'ecoute') !== false) {
+            return true;
+        }
+
+        return (string) ($event['type_event'] ?? '') === '13';
     }
 }
 
@@ -924,18 +995,26 @@ if (!function_exists('isapp_whatsapp_send_template_invitation')) {
         isapp_whatsapp_sender_cleanup_old_public_pdfs($pdo);
         $mediaUrl = isapp_whatsapp_sender_ensure_public_pdf($relativePdfLink, $diskStem, $encodedStem);
 
-        $contentSid = isapp_whatsapp_sender_template_sid();
+        $contentSid = isapp_whatsapp_sender_template_sid($pdo, $event);
         $twilioSid = isapp_whatsapp_sender_required_env('TWILIO_ACCOUNT_SID', 'Le compte Twilio');
         $twilioToken = isapp_whatsapp_sender_required_env('TWILIO_AUTH_TOKEN', 'Le jeton Twilio');
         $twilioFrom = isapp_whatsapp_sender_from_number();
         $messagingServiceSid = isapp_whatsapp_sender_messaging_service_sid();
 
-        $contentVariables = [
-            '1' => $recipientName,
-            '2' => $templateEventLabel,
-            '3' => $templateSignature,
-            '4' => $encodedStem,
-        ];
+        $isListeningSessionEvent = isapp_whatsapp_sender_is_listening_session_event($pdo, $event);
+        if ($isListeningSessionEvent) {
+            $contentVariables = [
+                '1' => $recipientName,
+                '2' => $templateSignature,
+            ];
+        } else {
+            $contentVariables = [
+                '1' => $recipientName,
+                '2' => $templateEventLabel,
+                '3' => $templateSignature,
+                '4' => $encodedStem,
+            ];
+        }
 
         $client = new \Twilio\Rest\Client($twilioSid, $twilioToken);
         $sendStatus = 'failed';
