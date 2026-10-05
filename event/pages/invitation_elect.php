@@ -36,9 +36,8 @@ function buildInviteLink(string $typeEvent, int $eventId): string {
         case '3': // Conférence
         case '4':
         case '5':
+        case '13': // Session d'ecoute -> meme lien que type 5
             return 'https://invitationspeciale.com/site/conference/index.php?page=accueil&cod=' . $eventId;
-        case '13': // Session d'ecoute -> meme popup que mariage
-            return 'https://invitationspeciale.com/site/index.php?page=accueil&cod=' . $eventId;
         case '12': // Vernissage du livre
             return 'https://invitationspeciale.com/site/vernisage/index.php?page=accueil&cod=' . $eventId;
         default:

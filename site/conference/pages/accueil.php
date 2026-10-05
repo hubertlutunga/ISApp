@@ -17,6 +17,67 @@
 <?php
 
 
+$rsvpInviteId = isset($_GET['idinv']) ? (int) $_GET['idinv'] : 0;
+$rsvpPresence = isset($_GET['presence']) ? trim((string) $_GET['presence']) : '';
+$rsvpInviteName = '';
+$rsvpOpenModal = false;
+$rsvpModalMode = 'form';
+$rsvpShowNonConfirm = false;
+$rsvpShowPlusTardWarning = false;
+$rsvpAlreadyMessage = '';
+
+if ($rsvpInviteId > 0 && $rsvpPresence !== '') {
+   $inviteStmt = $pdo->prepare('SELECT * FROM invite WHERE id_inv = :id_inv AND cod_mar = :cod_mar LIMIT 1');
+   $inviteStmt->execute([
+      ':id_inv' => $rsvpInviteId,
+      ':cod_mar' => $codevent,
+   ]);
+   $rsvpInvite = $inviteStmt->fetch(PDO::FETCH_ASSOC);
+   $inviteStmt->closeCursor();
+
+   if ($rsvpInvite) {
+      $invitePrefix = match ((string) ($rsvpInvite['sing'] ?? '')) {
+         'C' => 'Couple',
+         'Mr' => 'Monsieur',
+         'Mme' => 'Madame',
+         default => '',
+      };
+
+      $rsvpInviteName = trim($invitePrefix . ' ' . (string) ($rsvpInvite['nom'] ?? ''));
+      if ($rsvpInviteName === '') {
+         $rsvpInviteName = trim((string) ($rsvpInvite['nom'] ?? ''));
+      }
+
+      $existingStmt = $pdo->prepare(
+         'SELECT presence FROM confirmation WHERE cod_mar = :cod_mar AND LOWER(TRIM(noms)) = LOWER(TRIM(:noms)) LIMIT 1'
+      );
+      $existingStmt->execute([
+         ':cod_mar' => $codevent,
+         ':noms' => $rsvpInviteName,
+      ]);
+      $existingConfirmation = $existingStmt->fetch(PDO::FETCH_ASSOC) ?: null;
+      $existingStmt->closeCursor();
+
+      if ($existingConfirmation) {
+         $rsvpAlreadyMessage = match ((string) ($existingConfirmation['presence'] ?? '')) {
+            'oui' => 'Votre presence avait deja ete confirmee.',
+            'non' => 'Votre non participation avait deja ete enregistree.',
+            default => 'Votre reponse avait deja ete enregistree.',
+         };
+      }
+
+      if ($rsvpPresence === 'oui') {
+         $rsvpOpenModal = true;
+         $rsvpModalMode = $existingConfirmation ? 'already' : 'form';
+      } elseif ($rsvpPresence === 'non') {
+         $rsvpShowNonConfirm = !$existingConfirmation;
+      } elseif ($rsvpPresence === 'plustard') {
+         $rsvpShowPlusTardWarning = !$existingConfirmation;
+      }
+   }
+}
+
+
 //------------iframe-------
 
 $stmtframe = $pdo->prepare("SELECT * FROM websiteconference WHERE cod_event = ?");
@@ -409,6 +470,9 @@ if(isset($_POST['submit'])){
 
 
 
+
+   <?php if ($rsvpOpenModal) { include(__DIR__ . '/../../pages/modalreponse.php'); } ?>
+
       <?php include('footer.php');?>
 
 
@@ -438,6 +502,73 @@ if(isset($_POST['submit'])){
 
       <!-- Template custom -->
       <script src="js/main.js"></script>
+
+      <?php if (isset($_GET['ok']) && (string) $_GET['ok'] === '1') { ?>
+      <script>
+      Swal.fire({
+         title: "RSVP!",
+         text: <?php echo json_encode((string) ($publicEventLabels['success_message'] ?? 'Votre inscription a ete confirmee avec succes')); ?>,
+         icon: "success",
+         confirmButtonText: "OK"
+      });
+      </script>
+      <?php } ?>
+
+      <?php if ($rsvpOpenModal && $rsvpInviteName !== '') { ?>
+      <script>
+      document.addEventListener("DOMContentLoaded", function () {
+         openModal(
+            <?php echo json_encode((string) $rsvpInviteName, JSON_UNESCAPED_UNICODE); ?>,
+            <?php echo json_encode((string) $codevent); ?>,
+            <?php echo json_encode((string) $rsvpInviteId); ?>,
+            <?php echo json_encode((string) $rsvpModalMode); ?>
+         );
+      });
+      </script>
+      <?php } ?>
+
+      <?php if ($rsvpAlreadyMessage !== '' && !$rsvpOpenModal) { ?>
+      <script>
+      Swal.fire({
+         title: <?php echo json_encode((string) $rsvpInviteName, JSON_UNESCAPED_UNICODE); ?>,
+         text: <?php echo json_encode((string) $rsvpAlreadyMessage, JSON_UNESCAPED_UNICODE); ?>,
+         icon: "info",
+         confirmButtonText: "OK"
+      }).then((result) => {
+         if (result.isConfirmed) {
+            window.location.href = "index.php?page=accueil&cod=<?php echo urlencode((string) $codevent); ?>&idinv=<?php echo urlencode((string) $rsvpInviteId); ?>";
+         }
+      });
+      </script>
+      <?php } ?>
+
+      <?php if ($rsvpShowNonConfirm && $rsvpInviteName !== '') { ?>
+      <script>
+      Swal.fire({
+         title: <?php echo json_encode((string) $rsvpInviteName, JSON_UNESCAPED_UNICODE); ?>,
+         text: "Vous etes sur le point de repondre NON a cette invitation. Confirmez-vous ?",
+         icon: "warning",
+         showCancelButton: true,
+         confirmButtonText: "Oui, confirmer",
+         cancelButtonText: "Annuler"
+      }).then((result) => {
+         if (result.isConfirmed) {
+            window.location.href = "index.php?page=reponsenon&cod=<?php echo urlencode((string) $codevent); ?>&idinv=<?php echo urlencode((string) $rsvpInviteId); ?>";
+         }
+      });
+      </script>
+      <?php } ?>
+
+      <?php if ($rsvpShowPlusTardWarning && $rsvpInviteName !== '') { ?>
+      <script>
+      Swal.fire({
+         title: <?php echo json_encode((string) $rsvpInviteName, JSON_UNESCAPED_UNICODE); ?>,
+         text: "Pour des raisons de logistique, nous vous prions de bien vouloir confirmer votre participation, ou pas, quelques jours avant la ceremonie.",
+         icon: "warning",
+         confirmButtonText: "OK"
+      });
+      </script>
+      <?php } ?>
 
 
 
