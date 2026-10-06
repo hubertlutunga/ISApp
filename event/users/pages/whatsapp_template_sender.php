@@ -1026,6 +1026,7 @@ if (!function_exists('isapp_whatsapp_send_template_invitation')) {
             $contentVariables = [
                 '1' => $recipientName,
                 '2' => $templateSignature,
+                '3' => $encodedStem,
             ];
         } else {
             $contentVariables = [
