@@ -21,7 +21,7 @@ if (!defined('ISAPP_TWILIO_WHATSAPP_TEMPLATE_SID')) {
 }
 
 if (!defined('ISAPP_TWILIO_WHATSAPP_TEMPLATE_SID_LISTENING_SESSION')) {
-    define('ISAPP_TWILIO_WHATSAPP_TEMPLATE_SID_LISTENING_SESSION', 'HX159e2b4d9b1e825721956e2b6c3bca4a');
+    define('ISAPP_TWILIO_WHATSAPP_TEMPLATE_SID_LISTENING_SESSION', 'HXa24988f9301834319635efdb3fc112b1');
 }
 
 if (!function_exists('isapp_whatsapp_sender_base_url')) {
@@ -1026,7 +1026,6 @@ if (!function_exists('isapp_whatsapp_send_template_invitation')) {
             $contentVariables = [
                 '1' => $recipientName,
                 '2' => $templateSignature,
-                '3' => $encodedStem,
             ];
         } else {
             $contentVariables = [

@@ -110,7 +110,7 @@ Le numero expéditeur WhatsApp et les Content SID utilises par l'envoi des invit
 
 - `whatsapp:+14787726313`
 - `HX19ec61e298a83f99ec815a184b9d9a0e` (template invitation standard)
-- `HX159e2b4d9b1e825721956e2b6c3bca4a` (template type evenement Session d'ecoute)
+- `HXa24988f9301834319635efdb3fc112b1` (template type evenement Session d'ecoute)
 
 Variables recommandees pour l'email de reinitialisation du mot de passe via `support@invitationspeciale.com`:
 
