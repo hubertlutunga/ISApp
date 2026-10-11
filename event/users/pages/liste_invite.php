@@ -705,6 +705,7 @@
 
 								$confirmedNames = InviteStatusService::confirmedNamesIndex($pdo, (int) $codevent);
 								$sentInviteIds = InviteStatusService::sentInviteIdsIndex($pdo, (string) $codevent);
+								$lastSentWhatsappNumbers = InviteStatusService::lastSentWhatsappNumberByInvite($pdo, (string) $codevent);
 								$pdfFilterQuery = http_build_query([
 									'event' => $codevent,
 									'hote_filter' => $selectedHostFilter,
@@ -771,7 +772,9 @@
 										   $inviteAccord = (string) $audienceLabels['singular'];
 									   }
 									   $confirmed = isset($confirmedNames[InviteStatusService::normalizeName((string) $row_inv['nom'])]);
-									$sentInvitation = isset($sentInviteIds[(int) ($row_inv['id_inv'] ?? 0)]);
+									$inviteId = (int) ($row_inv['id_inv'] ?? 0);
+									$sentInvitation = isset($sentInviteIds[$inviteId]);
+									$prefilledWhatsappNumber = (string) ($lastSentWhatsappNumbers[$inviteId] ?? '');
 									$reponseconf = InviteStatusService::invitationStatusLabel($confirmed, $sentInvitation, $row_inv['sing'] ?? null);
 								$hasInvitationPreview = trim((string) ($dataevent['invit_religieux'] ?? '')) !== '';
 									   $hoteNom = $extractFirstName(isset($row_inv['hote_nom']) ? (string) $row_inv['hote_nom'] : '');
@@ -813,7 +816,7 @@
   
  
                        
-					   <a class="dropdown-item" href="#" onclick="<?php echo htmlspecialchars($hasInvitationPreview ? 'openModal(' . json_encode(ucfirst((string) $row_inv['nom']), JSON_UNESCAPED_UNICODE) . ', ' . json_encode((string) ((int) $row_inv['id_inv'])) . ')' : 'showInvitationDesignPending(event)', ENT_QUOTES, 'UTF-8'); ?>" style="color:<?php echo $hasInvitationPreview ? '#495057' : '#adb5bd'; ?>;">
+					   <a class="dropdown-item" href="#" onclick="<?php echo htmlspecialchars($hasInvitationPreview ? 'openModal(' . json_encode(ucfirst((string) $row_inv['nom']), JSON_UNESCAPED_UNICODE) . ', ' . json_encode((string) ((int) $row_inv['id_inv'])) . ', ' . json_encode($prefilledWhatsappNumber, JSON_UNESCAPED_UNICODE) . ')' : 'showInvitationDesignPending(event)', ENT_QUOTES, 'UTF-8'); ?>" style="color:<?php echo $hasInvitationPreview ? '#495057' : '#adb5bd'; ?>;">
 					   <i class="fa fa-share"></i> Envoyer l'invitation</a> 
 
 					   
@@ -1337,11 +1340,11 @@ async function submitTransferInvite(event) {
 		   		}
 		   	}
 
-		   function openModal(inviteName, inviteId) {
+		   function openModal(inviteName, inviteId, prefilledWhatsappNumber) {
 			   document.getElementById('modalTitle').innerText = "Envoyer l'invitation a " + inviteName;
 			   document.getElementById('previewInviteName').innerText = inviteName;
 		   		document.getElementById('whatsappNumberLabel').innerText = whatsappAudienceLabel;
-		   		document.getElementById('whatsappNumber').value = '';
+		   		document.getElementById('whatsappNumber').value = sanitizeWhatsAppInput(prefilledWhatsappNumber || '');
 			   document.getElementById('shareModal').style.display = 'flex';
 			   const linkpdf = "../pages/invitation_speciale.php?cod=" + inviteId + "&event=<?php echo $codevent; ?>";
 			   document.getElementById('inviteName').value = inviteName;
