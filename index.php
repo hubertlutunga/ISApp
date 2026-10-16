@@ -42,7 +42,7 @@ if ($content === null) {
 $pageSlug = (string) ($_GET['page'] ?? ($isAppConfig['default_page'] ?? 'accueil'));
 $baseUrl = rtrim((string) ($isAppConfig['base_url'] ?? ''), '/');
 $siteName = 'Invitation Spéciale';
-$siteDescription = "Invitation Spéciale conçoit des invitations haut de gamme, e-invitations, QR codes et sites d'événement sur mesure pour les mariages et réceptions à Kinshasa et à l'international.";
+$siteDescription = "Invitation Spéciale conçoit des invitations haut de gamme, Billet Special, e-invitations, QR codes et sites d'événement sur mesure pour les mariages et réceptions à Kinshasa et à l'international.";
 $pageTitle = $siteName . ' | Invitations haut de gamme à Kinshasa';
 $pageDescription = $siteDescription;
 
@@ -52,6 +52,9 @@ if ($pageSlug === 'catalogue') {
 } elseif ($pageSlug === 'commande') {
   $pageTitle = $siteName . ' | Commande d\'invitations';
   $pageDescription = "Lancez votre commande d'invitations premium avec Invitation Spéciale et faites-vous accompagner de la création à la livraison.";
+} elseif ($pageSlug === 'billet-special') {
+  $pageTitle = $siteName . ' | Billet Special';
+  $pageDescription = "Découvrez Billet Special, le billet premium avec QR code unique, version digitale et parcours d'accès optimisé pour vos événements.";
 } elseif ($pageSlug === 'contact') {
   $pageTitle = $siteName . ' | Contact';
   $pageDescription = "Contactez Invitation Spéciale pour vos invitations premium, e-invitations, sites de mariage et projets sur mesure.";

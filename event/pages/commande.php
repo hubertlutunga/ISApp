@@ -2,6 +2,24 @@
 <?php
 $feedbackMessage = null;
 $feedbackType = 'error';
+
+$servicePrefill = trim((string) ($_GET['service'] ?? $_POST['service_prefill'] ?? ($_SESSION['order_service_prefill'] ?? '')));
+$allowedServicePrefills = ['billet-special'];
+if (!in_array($servicePrefill, $allowedServicePrefills, true)) {
+    $servicePrefill = '';
+}
+
+if ($servicePrefill !== '') {
+    $_SESSION['order_service_prefill'] = $servicePrefill;
+}
+
+$servicePrefillLabel = $servicePrefill === 'billet-special' ? 'Billet Special' : '';
+$prefilledAddEventUrl = rtrim((string) $isAppConfig['base_url'], '/') . '/event/users/index.php?page=addevent';
+if ($servicePrefill !== '') {
+    $prefilledAddEventUrl .= '&prefill=' . rawurlencode($servicePrefill);
+}
+
+$postLoginRedirect = $prefilledAddEventUrl;
 ?>
 
 <div class="container h-p100 commande-page-shell" style="margin-top:20px;">
@@ -22,7 +40,10 @@ $feedbackType = 'error';
 
 $datasession = UserAccountService::currentSessionUser($pdo);
 if ($datasession) {
-    header('Location: ' . UserAccountService::dashboardUrl($datasession, $isAppConfig));
+    $redirectUrl = $servicePrefill !== ''
+        ? $prefilledAddEventUrl
+        : UserAccountService::dashboardUrl($datasession, $isAppConfig);
+    header('Location: ' . $redirectUrl);
     exit();
 }
 
@@ -57,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['user_phone'] = $registrationResult['user']['phone'];
         $_SESSION['user_email'] = $registrationResult['user']['email'];
 
-        header('Location: ' . rtrim((string) $isAppConfig['base_url'], '/') . '/event/users/index.php?page=addevent');
+        header('Location: ' . $prefilledAddEventUrl);
         exit();
     }
 
@@ -342,7 +363,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     <p class="commande-kicker">Commande et accès client</p>
                     <h1 class="commande-title">Commencez votre commande en quelques instants</h1>
-                    <p class="commande-subtitle">Connectez-vous si vous avez deja un compte, ou creez-en un pour acceder a votre espace evenement et poursuivre votre commande sans interruption.</p>
+                                        <p class="commande-subtitle">
+                                            Connectez-vous si vous avez deja un compte, ou creez-en un pour acceder a votre espace evenement et poursuivre votre commande sans interruption.
+                                            <?php if ($servicePrefillLabel !== ''): ?>
+                                                Parcours prefiltre active: <?php echo htmlspecialchars($servicePrefillLabel, ENT_QUOTES, 'UTF-8'); ?>.
+                                            <?php endif; ?>
+                                        </p>
 							</div>
 							<div class="p-40 commande-card-body">
 
@@ -355,6 +381,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <p class="commande-section-caption">Choisissez votre parcours pour continuer.</p>
 
 <form action="" method="post"> 
+    <input type="hidden" name="service_prefill" value="<?php echo htmlspecialchars($servicePrefill, ENT_QUOTES, 'UTF-8'); ?>">
     <div class="input-group mb-3">
         <div class="option-container" onclick="selectOption(0)">
             <div class="radio-custom"></div>

@@ -25,6 +25,18 @@ if (!$currentSessionUser || (int) ($currentSessionUser['cod_user'] ?? 0) <= 0) {
   exit;
 }
 
+$requestedServicePrefill = trim((string) ($_GET['prefill'] ?? $_POST['service_prefill'] ?? ($_SESSION['order_service_prefill'] ?? '')));
+$allowedServicePrefills = ['billet-special'];
+if (!in_array($requestedServicePrefill, $allowedServicePrefills, true)) {
+  $requestedServicePrefill = '';
+}
+
+if ($requestedServicePrefill !== '') {
+  $_SESSION['order_service_prefill'] = $requestedServicePrefill;
+}
+
+$servicePrefillLabel = $requestedServicePrefill === 'billet-special' ? 'Billet Special' : '';
+
 $accessoryCatalog = EventOrderService::accessoryCatalog($pdo);
 $promoCatalog = EventOrderService::promoCatalog($pdo);
 $paymentOptions = EventOrderService::paymentOptions();
@@ -132,6 +144,42 @@ usort($invitationModelRows, static function (array $leftModel, array $rightModel
     $normalizeInvitationModelLabel((string) ($rightModel['nom'] ?? ''))
   );
 });
+
+if ($requestedServicePrefill === 'billet-special' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
+  $preferredAccessoryId = $digitalWithQrAccessoryIds[0] ?? ($digitalWithoutQrAccessoryIds[0] ?? null);
+
+  if ($preferredAccessoryId !== null) {
+    $_POST['accessoires'] = array_values(array_unique(array_merge(
+      array_map('strval', (array) ($_POST['accessoires'] ?? [])),
+      [(string) $preferredAccessoryId]
+    )));
+  }
+
+  $preferredModelId = null;
+  foreach ($invitationModelRows as $invitationModelRow) {
+    $modelType = $classifyInvitationLabel((string) ($invitationModelRow['nom'] ?? ''));
+    if ($modelType === 'digital_with_qr') {
+      $preferredModelId = (string) ($invitationModelRow['cod_mod'] ?? '');
+      break;
+    }
+  }
+
+  if ($preferredModelId === null) {
+    foreach ($invitationModelRows as $invitationModelRow) {
+      $modelType = $classifyInvitationLabel((string) ($invitationModelRow['nom'] ?? ''));
+      if ($modelType === 'digital_without_qr') {
+        $preferredModelId = (string) ($invitationModelRow['cod_mod'] ?? '');
+        break;
+      }
+    }
+  }
+
+  if ($preferredModelId !== null && $preferredModelId !== '') {
+    $_POST['invitation_models'] = [$preferredModelId];
+    $_POST['invitation_model_quantities'] = [(string) $preferredModelId => '1'];
+    $_POST['modele_inv'] = $preferredModelId;
+  }
+}
 
 $postedAccessories = array_map('strval', $_POST['accessoires'] ?? []);
 $requiresInvitationModelQuantity = count(array_intersect($postedAccessories, $printedInvitationAccessoryIds)) > 0;
@@ -341,6 +389,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     color: #475569;
     font-size: 14px;
     line-height: 1.6;
+  }
+  .service-prefill-banner{
+    margin-bottom: 14px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    border: 1px solid rgba(6, 149, 120, 0.24);
+    background: linear-gradient(135deg, rgba(6, 149, 120, 0.10), rgba(14, 165, 233, 0.08));
+    color: #0f172a;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .service-prefill-banner strong{
+    color: #065f46;
   }
   .event-builder-form{
     padding: 28px 32px 34px !important;
@@ -1013,6 +1074,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <!-- ========================= FORMULAIRE COMPLET ========================= -->
 <form id="eventForm" action="" method="post" enctype="multipart/form-data">
+
+  <input type="hidden" name="service_prefill" value="<?php echo htmlspecialchars($requestedServicePrefill, ENT_QUOTES, 'UTF-8'); ?>">
+
+  <?php if ($servicePrefillLabel !== ''): ?>
+  <div class="service-prefill-banner" role="status" aria-live="polite">
+    <strong>Parcours prefiltre actif:</strong> <?php echo htmlspecialchars($servicePrefillLabel, ENT_QUOTES, 'UTF-8'); ?>.
+    Les options digitales recommandees ont deja ete preselectionnees pour accelerer votre commande.
+  </div>
+  <?php endif; ?>
 
   <div class="form-group">
     <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap;">

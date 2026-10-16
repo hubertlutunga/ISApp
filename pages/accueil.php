@@ -953,6 +953,106 @@ $heroVerticalModels = $showcaseModels !== [] ? array_merge($showcaseModels, $sho
     color: var(--home-muted);
   }
 
+  .is-home-offer-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
+    gap: 24px;
+  }
+
+  .is-home-offer-copy,
+  .is-home-offer-side {
+    padding: 30px;
+  }
+
+  .is-home-offer-copy p {
+    margin: 0 0 16px;
+    color: var(--home-muted);
+    font-size: 16px;
+  }
+
+  .is-home-offer-points {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 12px;
+  }
+
+  .is-home-offer-points li {
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: rgba(243, 236, 225, 0.72);
+    border: 1px solid rgba(87, 116, 99, 0.1);
+    color: var(--home-text);
+    font-weight: 600;
+  }
+
+  .is-home-offer-side {
+    display: grid;
+    gap: 16px;
+    align-content: start;
+  }
+
+  .is-home-offer-media {
+    position: relative;
+    overflow: hidden;
+    border-radius: 22px;
+    border: 1px solid rgba(87, 116, 99, 0.12);
+    background: #f7f2e8;
+    box-shadow: 0 18px 38px rgba(80, 107, 91, 0.12);
+  }
+
+  .is-home-offer-media img {
+    width: 100%;
+    height: 280px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .is-home-offer-badge {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 34px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #f2cf8a 0%, #c8a96b 100%);
+    color: #33220d;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    box-shadow: 0 8px 20px rgba(76, 50, 20, 0.22);
+  }
+
+  .is-home-price-card {
+    padding: 22px;
+    border-radius: 22px;
+    background: rgba(248, 243, 234, 0.88);
+    border: 1px solid rgba(87, 116, 99, 0.12);
+  }
+
+  .is-home-price-card h3 {
+    margin: 0;
+    font: 800 18px/1.2 "Poppins", sans-serif;
+  }
+
+  .is-home-price-card strong {
+    display: block;
+    margin-top: 8px;
+    font: 900 34px/1 "Poppins", sans-serif;
+    letter-spacing: -0.03em;
+    color: #1f2b26;
+  }
+
+  .is-home-price-card p {
+    margin: 10px 0 0;
+    color: var(--home-muted);
+  }
+
   .is-home-about-sidebar {
     display: grid;
     gap: 18px;
@@ -1248,6 +1348,7 @@ $heroVerticalModels = $showcaseModels !== [] ? array_merge($showcaseModels, $sho
   @media (max-width: 1080px) {
     .is-home-hero-grid,
     .is-home-about-grid,
+    .is-home-offer-grid,
     .is-home-calendar-layout,
     .is-home-contact-grid {
       grid-template-columns: 1fr;
@@ -1430,6 +1531,7 @@ $heroVerticalModels = $showcaseModels !== [] ? array_merge($showcaseModels, $sho
       <nav class="is-home-menu" id="homePrimaryMenu" aria-label="Navigation principale">
         <a href="index.php?page=accueil">Accueil</a>
         <a href="#a-propos">A propos</a>
+        <a href="#billet-special">Billet Special</a>
         <a href="#catalogue">Catalogue</a>
         <a href="#contact">Contact</a>
         <a href="event/index.php?page=login">Mon compte</a>
@@ -1457,6 +1559,7 @@ $heroVerticalModels = $showcaseModels !== [] ? array_merge($showcaseModels, $sho
         <h1>Invitation Spéciale est une entité de Hubert Solutions dédiée à la création et à la conception d'invitations haut de gamme</h1>
 
         <div class="is-home-hero-actions">
+          <a class="is-home-btn is-home-btn-primary" href="#billet-special">Decouvrir Billet Special</a>
           <a class="is-home-btn" href="#calendrier-mariages">Voir le calendrier des mariages</a>
         </div>
 
@@ -1587,6 +1690,66 @@ $heroVerticalModels = $showcaseModels !== [] ? array_merge($showcaseModels, $sho
             <p>
               Une signature plus couture que généraliste : chaque détail doit respirer la qualité, la clarté et la justesse.
             </p>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <section class="is-home-section" id="billet-special">
+    <div class="is-home-wrap">
+      <div class="is-home-section-head">
+        <div>
+          <span>Nouveau service</span>
+          <h2>Billet Special: le billet premium qui fluidifie l'acces a votre evenement.</h2>
+        </div>
+        <p>
+          Billet Special est notre nouveau format d'invitation haut de gamme: un billet physique elegant, double digitale et pret pour le controle d'entree.
+        </p>
+      </div>
+
+      <div class="is-home-offer-grid">
+        <article class="is-home-card is-home-offer-copy">
+          <p>
+            Concu pour les mariages, conferences et receptions privees, Billet Special combine design editorial, numero de serie, QR code individuel
+            et verification rapide a l'arrivee. Le resultat: une experience invite plus nette et une equipe d'accueil plus efficace.
+          </p>
+          <p>
+            Chaque billet peut etre personnalise selon votre theme (typographie, palette, monogramme, dress code, plan d'acces et mentions partenaires)
+            puis decliné en version partageable sur WhatsApp et email.
+          </p>
+
+          <ul class="is-home-offer-points" aria-label="Points forts Billet Special">
+            <li>QR code unique par invite avec verification instantanee a l'entree</li>
+            <li>Billet imprime premium + version digitale synchronisee</li>
+            <li>Segmentation VIP, famille, presse et prestataires</li>
+            <li>Suivi des confirmations et export de liste d'arrivee</li>
+          </ul>
+
+          <div class="is-home-contact-actions">
+            <a class="is-home-btn is-home-btn-primary" href="index.php?page=commande&amp;service=billet-special">Commander Billet Special</a>
+            <a class="is-home-btn" href="index.php?page=billet-special">Voir la page Billet Special</a>
+            <a class="is-home-btn" href="<?php echo htmlspecialchars($homeWhatsappUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener">Parler a un conseiller</a>
+          </div>
+        </article>
+
+        <aside class="is-home-card is-home-offer-side">
+          <div class="is-home-offer-media" aria-label="Visuel Billet Special">
+            <span class="is-home-offer-badge">Nouveau</span>
+            <img src="images/IMG_2415.png" alt="Billet Special Invitation Speciale" />
+          </div>
+
+          <div class="is-home-price-card">
+            <h3>Formule de lancement</h3>
+            <strong>Billet Special</strong>
+            <p>
+              Direction artistique, personnalisation du billet, generation QR et accompagnement de mise en service.
+            </p>
+          </div>
+
+          <div class="is-home-price-card">
+            <h3>Ideal pour</h3>
+            <p>Mariages premium, galas, vernissages, conferences et evenements avec controle d'acces.</p>
           </div>
         </aside>
       </div>
