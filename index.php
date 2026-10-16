@@ -54,7 +54,7 @@ if ($pageSlug === 'catalogue') {
   $pageDescription = "Lancez votre commande d'invitations premium avec Invitation Spéciale et faites-vous accompagner de la création à la livraison.";
 } elseif ($pageSlug === 'billet-special') {
   $pageTitle = $siteName . ' | Billet Special';
-  $pageDescription = "Découvrez Billet Special, le billet premium avec QR code unique, version digitale et parcours d'accès optimisé pour vos événements.";
+  $pageDescription = "Découvrez Billet Special, la solution premium de billetterie avec QR code unique pour concerts, spectacles et événements à entrée sur billet.";
 } elseif ($pageSlug === 'contact') {
   $pageTitle = $siteName . ' | Contact';
   $pageDescription = "Contactez Invitation Spéciale pour vos invitations premium, e-invitations, sites de mariage et projets sur mesure.";

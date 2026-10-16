@@ -248,7 +248,7 @@ $billetCommandeUrl = 'index.php?page=commande&service=billet-special';
           <h1>Billet Special</h1>
           <p>
             Le billet premium signe Invitation Speciale: design editorial, QR code individuel et controle d'acces fluide le jour de votre evenement.
-            Ce format est pense pour les organisateurs qui veulent une presentation elegante et une logistique d'entree maitrisee.
+            Ce format est pense pour les organisateurs de concerts, spectacles, festivals et soirees qui vendent ou conditionnent l'entree par billet.
           </p>
 
           <div class="bs-actions">
@@ -268,16 +268,16 @@ $billetCommandeUrl = 'index.php?page=commande&service=billet-special';
       <article class="bs-card">
         <h2>Ce que vous obtenez</h2>
         <p>
-          Billet Special unit l'impact visuel d'une invitation premium et l'efficacite d'un parcours digital: billet imprime, version partageable,
-          QR individuel et suivi des validations.
+          Billet Special unit l'impact visuel d'un billet premium et l'efficacite d'un parcours digital: billet imprime, version partageable,
+          QR individuel et suivi des entrees en temps reel.
         </p>
 
         <ul class="bs-list">
-          <li>Numero de billet et QR unique par invite</li>
+          <li>Numero de billet et QR unique par billet</li>
           <li>Version imprimee et version digitale synchronisees</li>
           <li>Parcours de verification rapide a l'arrivee</li>
-          <li>Segmentation invite: VIP, famille, presse, prestataires</li>
-          <li>Export de liste d'arrivee pour equipe d'accueil</li>
+          <li>Segmentation des acces: VIP, zone standard, backstage et presse</li>
+          <li>Export de liste d'arrivee et suivi d'acces pour equipe d'accueil</li>
         </ul>
       </article>
 

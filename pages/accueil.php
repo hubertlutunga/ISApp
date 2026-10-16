@@ -1711,7 +1711,7 @@ $heroVerticalModels = $showcaseModels !== [] ? array_merge($showcaseModels, $sho
       <div class="is-home-offer-grid">
         <article class="is-home-card is-home-offer-copy">
           <p>
-            Concu pour les mariages, conferences et receptions privees, Billet Special combine design editorial, numero de serie, QR code individuel
+            Concu pour les concerts, spectacles, festivals et soirees a acces payant, Billet Special combine design editorial, numero de serie, QR code individuel
             et verification rapide a l'arrivee. Le resultat: une experience invite plus nette et une equipe d'accueil plus efficace.
           </p>
           <p>
@@ -1720,10 +1720,10 @@ $heroVerticalModels = $showcaseModels !== [] ? array_merge($showcaseModels, $sho
           </p>
 
           <ul class="is-home-offer-points" aria-label="Points forts Billet Special">
-            <li>QR code unique par invite avec verification instantanee a l'entree</li>
+            <li>QR code unique par billet avec verification instantanee a l'entree</li>
             <li>Billet imprime premium + version digitale synchronisee</li>
-            <li>Segmentation VIP, famille, presse et prestataires</li>
-            <li>Suivi des confirmations et export de liste d'arrivee</li>
+            <li>Segmentation des acces: VIP, zone standard, backstage et presse</li>
+            <li>Suivi des ventes et export de liste d'arrivee</li>
           </ul>
 
           <div class="is-home-contact-actions">
@@ -1749,7 +1749,7 @@ $heroVerticalModels = $showcaseModels !== [] ? array_merge($showcaseModels, $sho
 
           <div class="is-home-price-card">
             <h3>Ideal pour</h3>
-            <p>Mariages premium, galas, vernissages, conferences et evenements avec controle d'acces.</p>
+            <p>Concerts, spectacles, festivals, soirees live et tout evenement conditionnant l'entree a un billet.</p>
           </div>
         </aside>
       </div>
