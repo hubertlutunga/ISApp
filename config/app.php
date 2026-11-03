@@ -66,6 +66,14 @@ $appConfig = [
             'action' => getenv('ISAPP_RECAPTCHA_V3_ACTION') ?: 'home_contact',
         ],
     ],
+    'client_profile_chatbot' => [
+        'enabled' => getenv('ISAPP_CLIENT_CHATBOT_ENABLED') === '1',
+        'provider' => strtolower((string) (getenv('ISAPP_CLIENT_CHATBOT_PROVIDER') ?: 'openai')),
+        'api_key' => getenv('ISAPP_CLIENT_CHATBOT_API_KEY') ?: '',
+        'model' => getenv('ISAPP_CLIENT_CHATBOT_MODEL') ?: 'gpt-4o-mini',
+        'timeout_seconds' => (int) (getenv('ISAPP_CLIENT_CHATBOT_TIMEOUT_SECONDS') ?: 20),
+        'max_tokens' => (int) (getenv('ISAPP_CLIENT_CHATBOT_MAX_TOKENS') ?: 500),
+    ],
 ];
 
 $localConfigPath = __DIR__ . '/app.local.php';

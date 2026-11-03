@@ -7,6 +7,7 @@ ISApp est une application PHP de gestion d'evenements et d'invitations. Le depot
 - Back office et parcours utilisateurs PHP classiques.
 - Modules distincts pour les evenements, menus, couples et sites associes.
 - Assets front, bibliotheques tierces et services partages conserves dans le depot.
+- Assistant IA integre dans le profil client pour guider les usages courants (creation d evenement, gestion des invitations et invites, suivi des confirmations).
 
 ## Structure du depot
 
@@ -127,5 +128,29 @@ ISAPP_PASSWORD_RESET_SMTP_PASSWORD=REMPLACER_PAR_LE_MOT_DE_PASSE_SUPPORT
 ```
 
 Pour les Content Templates WhatsApp, Twilio doit aussi recevoir un Messaging Service SID valide dans `TWILIO_MESSAGING_SERVICE_SID`.
+
+## Configuration Assistant IA (profil client)
+
+Le chatbot du profil client peut fonctionner avec OpenAI ou Anthropic, tout en conservant un mode de secours local guide si l'API est indisponible.
+
+Variables d'environnement:
+
+```dotenv
+ISAPP_CLIENT_CHATBOT_ENABLED=1
+ISAPP_CLIENT_CHATBOT_PROVIDER=openai
+ISAPP_CLIENT_CHATBOT_API_KEY=REMPLACER_MANUELLEMENT
+ISAPP_CLIENT_CHATBOT_MODEL=gpt-4o-mini
+ISAPP_CLIENT_CHATBOT_TIMEOUT_SECONDS=20
+ISAPP_CLIENT_CHATBOT_MAX_TOKENS=500
+```
+
+Pour Anthropic, utilisez:
+
+```dotenv
+ISAPP_CLIENT_CHATBOT_PROVIDER=anthropic
+ISAPP_CLIENT_CHATBOT_MODEL=claude-3-5-sonnet-latest
+```
+
+Le endpoint utilise [`event/users/pages/profile_ai_chat.php`](event/users/pages/profile_ai_chat.php) et journalise les echecs LLM via `error_log` sans exposer la cle API.
 
 Les anciennes pages d'essai Twilio du projet ont ete desactivees pour eviter toute exposition publique ou reutilisation accidentelle.

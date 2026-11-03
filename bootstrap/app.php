@@ -9,6 +9,8 @@ if (!defined('ISAPP_BOOTSTRAPPED')) {
     require_once __DIR__ . '/../src/Support/ShortUrlService.php';
     require_once __DIR__ . '/../src/Support/AdminClientManagementService.php';
     require_once __DIR__ . '/../src/Support/UserAccountService.php';
+    require_once __DIR__ . '/../src/Support/ClientProfileChatAssistantService.php';
+    require_once __DIR__ . '/../src/Support/ClientProfileLlmService.php';
     require_once __DIR__ . '/../src/Support/MailerService.php';
     require_once __DIR__ . '/../src/Support/EventOrderService.php';
     require_once __DIR__ . '/../src/Support/EventCreationService.php';
