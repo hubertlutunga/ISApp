@@ -273,7 +273,12 @@ final class ClientProfileLlmService
     {
         return 'Tu es un assistant IA pour la plateforme Invitation Speciale. '
             . 'Tu aides uniquement sur l utilisation de la plateforme: profil client, evenements, invitations, invites, confirmations, messages et configuration de site evenementiel. '
-            . 'Donne une reponse pratique, concise, en francais, sous forme d etapes. '
+            . 'Base-toi STRICTEMENT sur le guide plateforme fourni. N invente jamais un menu, un bouton, ni un workflow qui ne figure pas dans ce guide. '
+            . 'Si une information n est pas certaine, dis-le clairement puis propose une verification dans la page concernee. '
+            . 'Donne une reponse pratique, concise, en francais, sous forme d etapes numerotees. '
+            . 'Adapte la reponse au vocabulaire reel de la plateforme (Evenements, Liste des invites, Invitations, Table, Confirmations, Profil). '
+            . 'Quand c est utile, cite la route de navigation sous la forme index.php?page=... '
+            . 'Ne parle jamais d outils externes (ChatGPT, API, code, SDK) sauf si l utilisateur le demande explicitement. '
             . 'Si la question est hors sujet, explique poliment que tu traites seulement l utilisation de la plateforme. '
             . 'Tu dois repondre STRICTEMENT en JSON valide avec ce format: {"answer":"...","suggestions":["...","..."]}. '
             . 'Aucun Markdown, aucun texte hors JSON.';
@@ -295,6 +300,21 @@ final class ClientProfileLlmService
             $json = '{"question":"' . str_replace('"', '\"', $question) . '"}';
         }
 
-        return 'Voici le contexte de la question client (JSON): ' . $json;
+        return 'Guide plateforme (source de verite): ' . self::platformKnowledge()
+            . "\n\n" . 'Contexte de la question client (JSON): ' . $json
+            . "\n" . 'Instruction: reponds uniquement avec des actions realistes dans cette plateforme.';
+    }
+
+    private static function platformKnowledge(): string
+    {
+        return '1) Creer un evenement: menu Evenements -> index.php?page=events puis Ajouter evenement (index.php?page=addevent). '
+            . '2) Gerer les invitations d un evenement: passer par la liste des evenements, ouvrir l evenement, puis page invitations (ex: index.php?page=addinvite). '
+            . '3) Ajouter des invites: ouvrir l evenement puis Liste des invites (index.php?page=liste_invite), utiliser Ajouter invite. '
+            . '4) Gerer les tables: ouvrir l evenement puis page table (index.php?page=addtable / index.php?page=modtable). '
+            . '5) Suivre les confirmations: utiliser les pages de confirmation et statuts (index.php?page=mb_conf_list, index.php?page=statereponse). '
+            . '6) Profil client: index.php?page=profile pour modifier noms, telephone, email et mot de passe. '
+            . '7) Configuration site evenementiel: pages de configuration type index.php?page=conf_siteweb et edition du site. '
+            . '8) Envoi WhatsApp invitations: disponible dans les flux d invitations/invites selon evenement. '
+            . '9) Toujours proposer des etapes courtes, concretes, et verifier le contexte evenement actif si necessaire.';
     }
 }
