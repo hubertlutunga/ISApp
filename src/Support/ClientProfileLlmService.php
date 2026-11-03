@@ -51,23 +51,62 @@ final class ClientProfileLlmService
                 ],
             ],
         ];
+        if (str_starts_with($model, 'gpt-5')) {
+            $request['reasoning_effort'] = 'minimal';
+        }
 
-        $response = self::httpRequest(
-            'https://api.openai.com/v1/chat/completions',
-            [
-                'Authorization: Bearer ' . $apiKey,
-                'Content-Type: application/json',
-            ],
-            $request,
-            $timeout
-        );
+        $headers = [
+            'Authorization: Bearer ' . $apiKey,
+            'Content-Type: application/json',
+        ];
+
+        $response = null;
+        $lastException = null;
+
+        for ($attempt = 0; $attempt < 3; $attempt++) {
+            try {
+                $response = self::httpRequest(
+                    'https://api.openai.com/v1/chat/completions',
+                    $headers,
+                    $request,
+                    $timeout
+                );
+                break;
+            } catch (RuntimeException $exception) {
+                $lastException = $exception;
+                $normalizedError = strtolower($exception->getMessage());
+
+                $retryWithMaxCompletionTokens = str_contains($normalizedError, "unsupported parameter: 'max_tokens'")
+                    || str_contains($normalizedError, '"param": "max_tokens"');
+                if ($retryWithMaxCompletionTokens && isset($request['max_tokens'])) {
+                    unset($request['max_tokens']);
+                    $request['max_completion_tokens'] = $maxTokens;
+                    continue;
+                }
+
+                $retryWithoutTemperature = (
+                    str_contains($normalizedError, 'unsupported value')
+                    && str_contains($normalizedError, '"param": "temperature"')
+                ) || str_contains($normalizedError, "temperature' does not support");
+                if ($retryWithoutTemperature && isset($request['temperature'])) {
+                    unset($request['temperature']);
+                    continue;
+                }
+
+                throw $exception;
+            }
+        }
+
+        if (!is_array($response)) {
+            throw $lastException ?? new RuntimeException('Le service LLM n a pas retourne de reponse exploitable.');
+        }
 
         $decoded = json_decode($response['body'], true);
         if (!is_array($decoded)) {
             throw new RuntimeException('Reponse OpenAI invalide (JSON mal forme).');
         }
 
-        $content = (string) ($decoded['choices'][0]['message']['content'] ?? '');
+        $content = self::extractOpenAiMessageContent($decoded['choices'][0]['message']['content'] ?? null);
         if (trim($content) === '') {
             throw new RuntimeException('OpenAI a retourne une reponse vide.');
         }
@@ -162,6 +201,30 @@ final class ClientProfileLlmService
             'reply' => $answer,
             'suggestions' => array_slice(array_values(array_unique($suggestions)), 0, 4),
         ];
+    }
+
+    private static function extractOpenAiMessageContent(mixed $content): string
+    {
+        if (is_string($content)) {
+            return $content;
+        }
+
+        if (!is_array($content)) {
+            return '';
+        }
+
+        $text = '';
+        foreach ($content as $part) {
+            if (!is_array($part)) {
+                continue;
+            }
+
+            if (($part['type'] ?? '') === 'text' && isset($part['text']) && is_string($part['text'])) {
+                $text .= $part['text'];
+            }
+        }
+
+        return $text;
     }
 
     private static function httpRequest(string $url, array $headers, array $payload, int $timeout): array

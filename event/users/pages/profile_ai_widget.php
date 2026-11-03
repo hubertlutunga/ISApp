@@ -24,12 +24,6 @@ define('ISAPP_PROFILE_AI_WIDGET_RENDERED', true);
             <p id="client-ai-widget-status" class="client-ai-widget-status">Mode: IA connectee</p>
             <div id="client-ai-widget-messages" class="client-ai-widget-messages" aria-live="polite"></div>
 
-            <div id="client-ai-widget-suggestions" class="client-ai-widget-suggestions">
-                <button type="button" class="client-ai-widget-chip" data-question="Comment ajouter une table ?">Comment ajouter une table ?</button>
-                <button type="button" class="client-ai-widget-chip" data-question="Comment ajouter un invité ?">Comment ajouter un invité ?</button>
-                <button type="button" class="client-ai-widget-chip" data-question="Comment envoyer une invitation ?">Comment envoyer une invitation ?</button>
-            </div>
-
             <form id="client-ai-widget-form" class="client-ai-widget-form">
                 <label for="client-ai-widget-input" class="client-ai-widget-label">Votre question</label>
                 <div class="client-ai-widget-input-row">
@@ -57,9 +51,6 @@ define('ISAPP_PROFILE_AI_WIDGET_RENDERED', true);
 .client-ai-widget-message{max-width:85%;padding:10px 12px;border-radius:14px;line-height:1.5;white-space:pre-line}
 .client-ai-widget-message-user{margin-left:auto;background:#dbeafe;color:#1e3a8a}
 .client-ai-widget-message-bot{margin-right:auto;background:#e2e8f0;color:#0f172a}
-.client-ai-widget-suggestions{display:flex;flex-wrap:wrap;gap:8px}
-.client-ai-widget-chip{border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;border-radius:999px;padding:8px 12px;font-size:13px}
-.client-ai-widget-chip:hover{background:#dbeafe}
 .client-ai-widget-form{display:grid;gap:8px}
 .client-ai-widget-label{font-weight:700;color:#0f172a}
 .client-ai-widget-input-row{display:flex;gap:10px}
@@ -75,10 +66,9 @@ document.addEventListener('DOMContentLoaded', function () {
     var input = document.getElementById('client-ai-widget-input');
     var submitButton = document.getElementById('client-ai-widget-submit');
     var messages = document.getElementById('client-ai-widget-messages');
-    var suggestionsContainer = document.getElementById('client-ai-widget-suggestions');
     var statusLine = document.getElementById('client-ai-widget-status');
 
-    if (!fabButton || !modal || !form || !input || !submitButton || !messages || !suggestionsContainer || !statusLine) {
+    if (!fabButton || !modal || !form || !input || !submitButton || !messages || !statusLine) {
         return;
     }
 
@@ -101,22 +91,6 @@ document.addEventListener('DOMContentLoaded', function () {
         message.textContent = text;
         messages.appendChild(message);
         messages.scrollTop = messages.scrollHeight;
-    }
-
-    function renderSuggestions(items) {
-        if (!Array.isArray(items) || items.length === 0) {
-            return;
-        }
-
-        suggestionsContainer.innerHTML = '';
-        items.forEach(function (question) {
-            var chip = document.createElement('button');
-            chip.type = 'button';
-            chip.className = 'client-ai-widget-chip';
-            chip.setAttribute('data-question', question);
-            chip.textContent = question;
-            suggestionsContainer.appendChild(chip);
-        });
     }
 
     function sendQuestion(question) {
@@ -155,7 +129,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 appendMessage('bot', data.reply || 'Je n ai pas trouve de reponse precise.');
-                renderSuggestions(data.suggestions || []);
             })
             .catch(function () {
                 appendMessage('bot', 'Une erreur est survenue. Reessayez dans quelques instants.');
@@ -186,19 +159,6 @@ document.addEventListener('DOMContentLoaded', function () {
     form.addEventListener('submit', function (event) {
         event.preventDefault();
         sendQuestion(input.value);
-    });
-
-    suggestionsContainer.addEventListener('click', function (event) {
-        var target = event.target;
-        if (!(target instanceof HTMLElement)) {
-            return;
-        }
-
-        if (!target.classList.contains('client-ai-widget-chip')) {
-            return;
-        }
-
-        sendQuestion(target.getAttribute('data-question') || '');
     });
 
     appendMessage('bot', 'Bonjour ! Je suis votre assistant IA. Je peux vous aider a utiliser la plateforme (evenements, invitations, invites et confirmations).');
