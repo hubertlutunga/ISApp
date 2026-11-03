@@ -124,9 +124,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
 
                 <section class="client-profile-card client-profile-ai-card mt-24">
-                    <div class="client-profile-head">
-                        <h2>Assistant IA</h2>
-                        <p>Posez vos questions sur la plateforme: ajout d evenement, invitations, invites, confirmations et plus.</p>
+                    <div class="chat-box-header p-15 d-flex justify-content-between align-items-center client-profile-ai-head">
+                        <div class="d-flex align-items-center gap-10">
+                            <span class="icon-Group-chat fs-20"><span class="path1"></span><span class="path2"></span></span>
+                            <div>
+                                <h2>Assistant IA</h2>
+                                <p>Commencez une discussion pour etre guide pas a pas sur la plateforme.</p>
+                            </div>
+                        </div>
+                        <span class="badge badge-primary">En ligne</span>
                     </div>
 
                     <div class="client-profile-ai-chat">
@@ -169,6 +175,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 .client-profile-card{background:#fff;border-radius:24px;padding:24px;box-shadow:0 18px 40px rgba(15,23,42,.08);height:100%}
 .client-profile-head h2{margin:0 0 8px;font-size:24px;font-weight:800;color:#0f172a}
 .client-profile-head p{margin:0 0 20px;color:#64748b;line-height:1.6}
+.client-profile-ai-head{border-radius:16px;margin-bottom:18px;background:#f8fafc;border:1px solid #e2e8f0}
+.client-profile-ai-head h2{margin:0;font-size:20px;font-weight:800;color:#0f172a}
+.client-profile-ai-head p{margin:2px 0 0;color:#64748b;font-size:13px;line-height:1.5}
 .client-profile-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 .client-profile-form-grid label{display:flex;flex-direction:column;gap:8px;font-weight:700;color:#0f172a}
 .client-profile-form-grid input{min-height:52px;border:1px solid #dbe2ef;border-radius:16px;padding:0 14px;background:#fff;box-shadow:none}
