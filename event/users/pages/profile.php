@@ -124,36 +124,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
 
                 <section class="client-profile-card client-profile-ai-card mt-24">
-                    <div class="chat-box-header p-15 d-flex justify-content-between align-items-center client-profile-ai-head">
+                    <div class="p-15 d-flex justify-content-between align-items-center client-profile-ai-head">
                         <div class="d-flex align-items-center gap-10">
-                            <span class="icon-Group-chat fs-20"><span class="path1"></span><span class="path2"></span></span>
+                            <i class="fas fa-robot fs-20" aria-hidden="true"></i>
                             <div>
                                 <h2>Assistant IA</h2>
-                                <p>Commencez une discussion pour etre guide pas a pas sur la plateforme.</p>
+                                <p>Discutez avec l IA a tout moment via l icone flottante en bas a droite.</p>
                             </div>
                         </div>
                         <span class="badge badge-primary">En ligne</span>
                     </div>
 
-                    <div class="client-profile-ai-chat">
-                        <p id="profile-ai-status" class="client-profile-ai-status">Mode: Assistant guide</p>
-                        <div id="profile-ai-messages" class="client-profile-ai-messages" aria-live="polite"></div>
-
-                        <div id="profile-ai-suggestions" class="client-profile-ai-suggestions">
-                            <button type="button" class="client-profile-ai-chip" data-question="Comment ajouter un evenement ?">Ajouter un evenement</button>
-                            <button type="button" class="client-profile-ai-chip" data-question="Comment ajouter une invitation ?">Ajouter une invitation</button>
-                            <button type="button" class="client-profile-ai-chip" data-question="Comment ajouter un invite ?">Ajouter un invite</button>
-                            <button type="button" class="client-profile-ai-chip" data-question="Comment suivre les confirmations ?">Suivre les confirmations</button>
-                        </div>
-
-                        <form id="profile-ai-form" class="client-profile-ai-form">
-                            <label for="profile-ai-input" class="client-profile-ai-label">Votre question</label>
-                            <div class="client-profile-ai-input-row">
-                                <input id="profile-ai-input" name="message" type="text" maxlength="600" placeholder="Ex: Comment ajouter un invite ?" required>
-                                <button type="submit" id="profile-ai-submit" class="btn btn-primary">Envoyer</button>
-                            </div>
-                        </form>
-                    </div>
+                    <p class="client-profile-ai-note mb-0">Cliquez sur l icone Assistant IA pour ouvrir le modal et poser vos questions (evenements, invitations, invites, confirmations).</p>
                 </section>
             </div>
         </div>
@@ -163,6 +145,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </div>
 
 <style>
+html, body{height:auto !important;overflow-y:auto !important}
+body.layout-top-nav.fixed{overflow-y:auto !important}
 .client-profile-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;padding:30px;border-radius:28px;background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 100%);color:#fff;margin-bottom:24px;box-shadow:0 24px 50px rgba(15,23,42,.16)}
 .client-profile-kicker{display:inline-flex;padding:7px 12px;border-radius:999px;background:rgba(255,255,255,.14);font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em}
 .client-profile-hero h1{margin:14px 0 8px;font-size:34px;font-weight:800;color:#fff}
@@ -175,7 +159,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 .client-profile-card{background:#fff;border-radius:24px;padding:24px;box-shadow:0 18px 40px rgba(15,23,42,.08);height:100%}
 .client-profile-head h2{margin:0 0 8px;font-size:24px;font-weight:800;color:#0f172a}
 .client-profile-head p{margin:0 0 20px;color:#64748b;line-height:1.6}
-.client-profile-ai-head{border-radius:16px;margin-bottom:18px;background:#f8fafc;border:1px solid #e2e8f0}
+.client-profile-ai-head{position:relative;border-radius:16px;margin-bottom:18px;background:#f8fafc;border:1px solid #e2e8f0}
 .client-profile-ai-head h2{margin:0;font-size:20px;font-weight:800;color:#0f172a}
 .client-profile-ai-head p{margin:2px 0 0;color:#64748b;font-size:13px;line-height:1.5}
 .client-profile-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
@@ -184,125 +168,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 .client-profile-field-full{grid-column:1/-1}
 .client-profile-actions{display:flex;justify-content:flex-start}
 .mt-24{margin-top:24px}
-.client-profile-ai-chat{display:grid;gap:14px}
-.client-profile-ai-status{margin:0;color:#64748b;font-size:13px}
-.client-profile-ai-messages{display:grid;gap:10px;max-height:320px;overflow:auto;padding:12px;border:1px solid #e2e8f0;border-radius:16px;background:#f8fafc}
-.client-profile-ai-message{max-width:85%;padding:10px 12px;border-radius:14px;line-height:1.5;white-space:pre-line}
-.client-profile-ai-message-user{margin-left:auto;background:#dbeafe;color:#1e3a8a}
-.client-profile-ai-message-bot{margin-right:auto;background:#e2e8f0;color:#0f172a}
-.client-profile-ai-suggestions{display:flex;flex-wrap:wrap;gap:8px}
-.client-profile-ai-chip{border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;border-radius:999px;padding:8px 12px;font-size:13px}
-.client-profile-ai-chip:hover{background:#dbeafe}
-.client-profile-ai-form{display:grid;gap:8px}
-.client-profile-ai-label{font-weight:700;color:#0f172a}
-.client-profile-ai-input-row{display:flex;gap:10px}
-.client-profile-ai-input-row input{flex:1;min-height:48px;border:1px solid #dbe2ef;border-radius:14px;padding:0 14px}
-@media (max-width: 767px){.client-profile-ai-input-row{flex-direction:column}.client-profile-ai-input-row .btn{width:100%}}
+.client-profile-ai-note{color:#475569;line-height:1.7}
 @media (max-width: 767px){.client-profile-form-grid{grid-template-columns:1fr}.client-profile-hero{padding:24px}.client-profile-hero h1{font-size:28px}}
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    var form = document.getElementById('profile-ai-form');
-    var input = document.getElementById('profile-ai-input');
-    var submitButton = document.getElementById('profile-ai-submit');
-    var messages = document.getElementById('profile-ai-messages');
-    var suggestionsContainer = document.getElementById('profile-ai-suggestions');
-    var statusLine = document.getElementById('profile-ai-status');
-
-    if (!form || !input || !submitButton || !messages || !suggestionsContainer || !statusLine) {
-        return;
-    }
-
-    function appendMessage(role, text) {
-        var message = document.createElement('div');
-        message.className = 'client-profile-ai-message ' + (role === 'user' ? 'client-profile-ai-message-user' : 'client-profile-ai-message-bot');
-        message.textContent = text;
-        messages.appendChild(message);
-        messages.scrollTop = messages.scrollHeight;
-    }
-
-    function renderSuggestions(items) {
-        if (!Array.isArray(items) || items.length === 0) {
+    function unlockProfilePageScroll() {
+        var html = document.documentElement;
+        var body = document.body;
+        if (!body) {
             return;
         }
 
-        suggestionsContainer.innerHTML = '';
-        items.forEach(function (question) {
-            var chip = document.createElement('button');
-            chip.type = 'button';
-            chip.className = 'client-profile-ai-chip';
-            chip.setAttribute('data-question', question);
-            chip.textContent = question;
-            suggestionsContainer.appendChild(chip);
-        });
+        if (body.classList.contains('modal-open') && !document.querySelector('.modal.show')) {
+            body.classList.remove('modal-open');
+        }
+
+        if (body.style.overflow === 'hidden') {
+            body.style.overflow = 'auto';
+        }
+
+        if (body.style.overflowY === 'hidden') {
+            body.style.overflowY = 'auto';
+        }
+
+        html.style.overflowY = 'auto';
+        body.style.overflowY = 'auto';
     }
 
-    function sendQuestion(question) {
-        var normalizedQuestion = String(question || '').trim();
-        if (normalizedQuestion === '') {
-            return;
-        }
-
-        appendMessage('user', normalizedQuestion);
-        input.value = '';
-        submitButton.disabled = true;
-
-        var formData = new URLSearchParams();
-        formData.append('message', normalizedQuestion);
-
-        fetch('pages/profile_ai_chat.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: formData.toString()
-        })
-            .then(function (response) {
-                return response.json();
-            })
-            .then(function (data) {
-                if (!data.success) {
-                    appendMessage('bot', data.message || 'Je n ai pas pu traiter votre demande pour le moment.');
-                    return;
-                }
-
-                if (data.source === 'openai' || data.source === 'anthropic') {
-                    statusLine.textContent = 'Mode: IA connectee (' + data.source + ')';
-                } else {
-                    statusLine.textContent = 'Mode: Assistant guide (secours local)';
-                }
-
-                appendMessage('bot', data.reply || 'Je n ai pas trouve de reponse precise.');
-                renderSuggestions(data.suggestions || []);
-            })
-            .catch(function () {
-                appendMessage('bot', 'Une erreur est survenue. Reessayez dans quelques instants.');
-            })
-            .finally(function () {
-                submitButton.disabled = false;
-            });
-    }
-
-    appendMessage('bot', 'Bonjour ! Je suis votre assistant IA. Je peux vous aider a utiliser la plateforme (evenements, invitations, invites et confirmations).');
-
-    form.addEventListener('submit', function (event) {
-        event.preventDefault();
-        sendQuestion(input.value);
-    });
-
-    suggestionsContainer.addEventListener('click', function (event) {
-        var target = event.target;
-        if (!(target instanceof HTMLElement)) {
-            return;
-        }
-
-        if (!target.classList.contains('client-profile-ai-chip')) {
-            return;
-        }
-
-        sendQuestion(target.getAttribute('data-question') || '');
-    });
+    unlockProfilePageScroll();
+    window.setTimeout(unlockProfilePageScroll, 120);
 });
 </script>
 

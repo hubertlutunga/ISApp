@@ -33,22 +33,28 @@ if (mb_strlen($message) > 600) {
 
 $user = UserAccountService::currentSessionUser($pdo);
 $clientName = is_array($user) ? (string) ($user['noms'] ?? '') : '';
-$assistant = null;
-$source = 'local';
 $chatbotConfig = (array) ($isAppConfig['client_profile_chatbot'] ?? []);
 
-if (!empty($chatbotConfig['enabled'])) {
-    try {
-        $assistant = ClientProfileLlmService::generate($message, $clientName, $chatbotConfig);
-        $source = (string) ($chatbotConfig['provider'] ?? 'llm');
-    } catch (RuntimeException $exception) {
-        error_log('[profile_ai_chat] LLM indisponible: ' . $exception->getMessage());
-    }
+if (empty($chatbotConfig['enabled'])) {
+    http_response_code(503);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Assistant IA indisponible. Activez la configuration LLM pour continuer.',
+    ]);
+    exit;
 }
 
-if (!is_array($assistant)) {
-    $assistant = ClientProfileChatAssistantService::buildResponse($message, $clientName);
-    $source = 'local_fallback';
+try {
+    $assistant = ClientProfileLlmService::generate($message, $clientName, $chatbotConfig);
+    $source = (string) ($chatbotConfig['provider'] ?? 'llm');
+} catch (RuntimeException $exception) {
+    error_log('[profile_ai_chat] LLM indisponible: ' . $exception->getMessage());
+    http_response_code(502);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Le service IA est temporairement indisponible. Verifiez la configuration API puis reessayez.',
+    ]);
+    exit;
 }
 
 echo json_encode([

@@ -16,3 +16,5 @@
                <a href="https://wa.me/243810678785" target="_blinck">Nous contacter</a>        
  
   </footer>
+
+<?php include_once __DIR__ . '/profile_ai_widget.php'; ?>

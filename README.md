@@ -131,7 +131,7 @@ Pour les Content Templates WhatsApp, Twilio doit aussi recevoir un Messaging Ser
 
 ## Configuration Assistant IA (profil client)
 
-Le chatbot du profil client peut fonctionner avec OpenAI ou Anthropic, tout en conservant un mode de secours local guide si l'API est indisponible.
+Le chatbot du profil client fonctionne avec un provider LLM reel (OpenAI ou Anthropic). Si l'API est indisponible ou mal configuree, le endpoint retourne une erreur explicite (pas de reponse locale predefinie).
 
 Variables d'environnement:
 
