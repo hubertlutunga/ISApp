@@ -668,6 +668,10 @@ function drc_enqueue_email(
 
 function drc_mailer_transport(): array
 {
+    $encryption = getenv('USALUMNI_SMTP_ENCRYPTION')
+        ?: (getenv('DRCALUMNI_SMTP_ENCRYPTION')
+            ?: (getenv('ISAPP_SMTP_ENCRYPTION') ?: 'tls'));
+
     return [
         'host' => getenv('USALUMNI_SMTP_HOST')
             ?: (getenv('DRCALUMNI_SMTP_HOST')
@@ -685,7 +689,7 @@ function drc_mailer_transport(): array
             ?: (getenv('DRCALUMNI_SMTP_PORT')
             ?: (getenv('CREATORSBOMOKO_SMTP_PORT')
                 ?: (getenv('ISAPP_SMTP_PORT') ?: 587)))),
-        'encryption' => getenv('USALUMNI_SMTP_ENCRYPTION') ?: (getenv('DRCALUMNI_SMTP_ENCRYPTION') ?: (getenv('ISAPP_SMTP_ENCRYPTION') ?: 'tls')),
+        'encryption' => strtolower(trim((string) $encryption)),
         'from_name' => getenv('USALUMNI_SMTP_FROM_NAME') ?: (getenv('DRCALUMNI_SMTP_FROM_NAME') ?: 'Section des Affaires publiques'),
         'reply_to' => getenv('USALUMNI_SMTP_REPLY_TO') ?: (getenv('DRCALUMNI_SMTP_REPLY_TO') ?: ''),
     ];
@@ -707,9 +711,14 @@ function drc_send_email_transport(string $toEmail, string $toName, string $subje
         $mail->Username = $transport['user'];
         $mail->Password = $transport['password'];
         $mail->Port = $transport['port'];
-        $mail->SMTPSecure = $transport['encryption'] === 'ssl'
-            ? \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS
-            : \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+        if ($transport['encryption'] === 'ssl' || $transport['encryption'] === 'smtps') {
+            $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS;
+        } elseif ($transport['encryption'] === 'tls' || $transport['encryption'] === 'starttls') {
+            $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+        } else {
+            $mail->SMTPSecure = '';
+            $mail->SMTPAutoTLS = false;
+        }
         $mail->setFrom($transport['user'], $transport['from_name']);
         if ($transport['reply_to'] !== '') {
             $mail->addReplyTo($transport['reply_to'], $transport['from_name']);

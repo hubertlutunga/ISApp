@@ -273,6 +273,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $textBody,
                     'submission_ack_' . $applicationId
                 );
+
+                $batch = max(1, min(100, (int) (drc_setting($pdo, 'queue_batch_size', '20') ?? '20')));
+                drc_process_outbox($pdo, $batch, null);
             }
 
             $pdo->commit();
