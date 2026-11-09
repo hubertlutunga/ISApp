@@ -12,6 +12,9 @@ require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/PHPMailer/src/Exception.php';
 require_once dirname(__DIR__, 2) . '/PHPMailer/src/PHPMailer.php';
 require_once dirname(__DIR__, 2) . '/PHPMailer/src/SMTP.php';
+require_once dirname(__DIR__, 2) . '/src/Support/EnvLoader.php';
+
+EnvLoader::loadProjectEnv(dirname(__DIR__));
 
 if (!defined('DRCALUMNI_BOOTSTRAPPED')) {
     define('DRCALUMNI_BOOTSTRAPPED', true);
@@ -659,9 +662,16 @@ function drc_mailer_transport(): array
             ?: (getenv('CREATORSBOMOKO_SMTP_HOST')
                 ?: (getenv('ISAPP_SMTP_HOST') ?: 'invitationspeciale.com')),
         'user' => getenv('DRCALUMNI_SMTP_USER')
+            ?: (getenv('DRCALUMNI_SMTP_USERNAME')
+                ?: (getenv('CREATORSBOMOKO_SMTP_USERNAME')
+                    ?: (getenv('ISAPP_SMTP_USER')
+                        ?: (getenv('ISAPP_SMTP_USERNAME') ?: 'eventpass@invitationspeciale.com'))))
             ?: (getenv('CREATORSBOMOKO_SMTP_USER')
                 ?: (getenv('ISAPP_SMTP_USERNAME') ?: 'eventpass@invitationspeciale.com')),
         'password' => getenv('DRCALUMNI_SMTP_PASSWORD')
+            ?: (getenv('DRCALUMNI_SMTP_PASS')
+                ?: (getenv('CREATORSBOMOKO_SMTP_PASS')
+                    ?: (getenv('ISAPP_SMTP_PASS') ?: '')))
             ?: (getenv('CREATORSBOMOKO_SMTP_PASSWORD')
                 ?: (getenv('ISAPP_SMTP_PASSWORD') ?: '')),
         'port' => (int) (getenv('DRCALUMNI_SMTP_PORT')

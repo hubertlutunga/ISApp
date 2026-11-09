@@ -22,7 +22,9 @@ Plateforme complète de candidatures, back-office, notifications e-mail, QR code
 
 ## Déploiement (non destructif)
 
-1. Configurer les variables d’environnement (voir `.env.example`).
+1. Configurer les variables d’environnement (voir `.env.example`) dans l’un des emplacements chargés:
+   - racine du dépôt ISApp: `.env`, `.env.local`, `.isapp.env`…
+   - ou racine du module: `drcalumni/.env` (supporté pour isoler la config SMTP du module).
 2. Sauvegarder la base de données.
 3. Exécuter la migration SQL:
    - [`001_drcalumni.sql`](./database/migrations/001_drcalumni.sql)
@@ -62,4 +64,3 @@ Plateforme complète de candidatures, back-office, notifications e-mail, QR code
 - Tables dédiées préfixées `drcalumni_`.
 - Données sensibles d’aménagement visibles côté back-office uniquement.
 - Paramètres SMTP et secrets via variables d’environnement.
-
