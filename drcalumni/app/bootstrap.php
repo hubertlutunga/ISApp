@@ -12,15 +12,13 @@ require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/PHPMailer/src/Exception.php';
 require_once dirname(__DIR__, 2) . '/PHPMailer/src/PHPMailer.php';
 require_once dirname(__DIR__, 2) . '/PHPMailer/src/SMTP.php';
-require_once dirname(__DIR__, 2) . '/src/Support/EnvLoader.php';
-
-EnvLoader::loadProjectEnv(dirname(__DIR__));
 
 if (!defined('DRCALUMNI_BOOTSTRAPPED')) {
     define('DRCALUMNI_BOOTSTRAPPED', true);
 }
 
 const DRCALUMNI_EVENT_NAME = 'DRC ALUMNI IMPACT 2026';
+const DRCALUMNI_PUBLIC_EVENT_NAME = 'U.S. ALUMNI IMPACT 2026';
 const DRCALUMNI_EVENT_THEME = 'Faire progresser le partenariat stratégique et les opportunités économiques entre les États-Unis et la RDC';
 const DRCALUMNI_EVENT_DATES = '1er et 2 décembre 2026';
 const DRCALUMNI_EVENT_TIME = '9h00';
@@ -152,6 +150,19 @@ function drc_asset(string $path): string
 function drc_absolute_url(string $path): string
 {
     $relative = drc_url($path);
+    $relativeParts = parse_url($relative);
+    if (is_array($relativeParts) && isset($relativeParts['path'])) {
+        $segments = explode('/', (string) $relativeParts['path']);
+        $encodedSegments = array_map(
+            static fn (string $segment): string => rawurlencode(rawurldecode($segment)),
+            $segments
+        );
+        $encodedPath = implode('/', $encodedSegments);
+        $query = isset($relativeParts['query']) ? '?' . $relativeParts['query'] : '';
+        $fragment = isset($relativeParts['fragment']) ? '#' . $relativeParts['fragment'] : '';
+        $relative = $encodedPath . $query . $fragment;
+    }
+
     if (str_starts_with($relative, 'http://') || str_starts_with($relative, 'https://')) {
         return $relative;
     }
@@ -662,16 +673,9 @@ function drc_mailer_transport(): array
             ?: (getenv('CREATORSBOMOKO_SMTP_HOST')
                 ?: (getenv('ISAPP_SMTP_HOST') ?: 'invitationspeciale.com')),
         'user' => getenv('DRCALUMNI_SMTP_USER')
-            ?: (getenv('DRCALUMNI_SMTP_USERNAME')
-                ?: (getenv('CREATORSBOMOKO_SMTP_USERNAME')
-                    ?: (getenv('ISAPP_SMTP_USER')
-                        ?: (getenv('ISAPP_SMTP_USERNAME') ?: 'eventpass@invitationspeciale.com'))))
             ?: (getenv('CREATORSBOMOKO_SMTP_USER')
                 ?: (getenv('ISAPP_SMTP_USERNAME') ?: 'eventpass@invitationspeciale.com')),
         'password' => getenv('DRCALUMNI_SMTP_PASSWORD')
-            ?: (getenv('DRCALUMNI_SMTP_PASS')
-                ?: (getenv('CREATORSBOMOKO_SMTP_PASS')
-                    ?: (getenv('ISAPP_SMTP_PASS') ?: '')))
             ?: (getenv('CREATORSBOMOKO_SMTP_PASSWORD')
                 ?: (getenv('ISAPP_SMTP_PASSWORD') ?: '')),
         'port' => (int) (getenv('DRCALUMNI_SMTP_PORT')
@@ -955,4 +959,9 @@ function drc_qr_png_path(int $applicationId, string $token): string
     require_once dirname(__DIR__, 2) . '/qrscan/phpqrcode/qrlib.php';
     QRcode::png(drc_qr_public_url($token), $path, QR_ECLEVEL_M, 8, 2);
     return $path;
+}
+
+function drc_qr_public_image_url(int $applicationId): string
+{
+    return drc_absolute_url('storage/qrcodes/drcalumni_' . $applicationId . '.png');
 }

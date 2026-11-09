@@ -19,7 +19,7 @@ $swalPayload = [
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Confirmation | <?php echo drc_h(DRCALUMNI_EVENT_NAME); ?></title>
+    <title>Confirmation | <?php echo drc_h(DRCALUMNI_PUBLIC_EVENT_NAME); ?></title>
     <link rel="icon" type="image/png" href="<?php echo drc_h(drc_asset($logoPaths['favicon'])); ?>">
     <link rel="stylesheet" href="<?php echo drc_h(drc_asset('assets/css/public.css')); ?>">
 </head>
@@ -36,7 +36,7 @@ $swalPayload = [
 <main>
     <section class="section confirmation-section">
         <h2>Votre candidature a été soumise</h2>
-        <p>Merci pour votre dossier. Nous avons bien enregistré votre candidature pour <?php echo drc_h(DRCALUMNI_EVENT_NAME); ?>.</p>
+        <p>Merci pour votre dossier. Nous avons bien enregistré votre candidature pour <?php echo drc_h(DRCALUMNI_PUBLIC_EVENT_NAME); ?>.</p>
         <?php if ($reference !== ''): ?>
             <p class="confirmation-reference"><strong>Référence :</strong> <?php echo drc_h($reference); ?></p>
         <?php endif; ?>

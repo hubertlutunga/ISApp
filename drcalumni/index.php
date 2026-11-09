@@ -312,7 +312,7 @@ if (isset($errors['global'])) {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?php echo drc_h(DRCALUMNI_EVENT_NAME); ?> | Candidature</title>
+    <title><?php echo drc_h(DRCALUMNI_PUBLIC_EVENT_NAME); ?> | Candidature</title>
     <link rel="icon" type="image/png" href="<?php echo drc_h(drc_asset($logoPaths['favicon'])); ?>">
     <link rel="stylesheet" href="<?php echo drc_h(drc_asset('assets/css/public.css')); ?>">
 </head>
@@ -327,7 +327,7 @@ if (isset($errors['global'])) {
     </div>
     <div class="hero-main">
         <span class="eyebrow">Sommet officiel des alumni</span>
-        <h1><?php echo drc_h(str_replace(' 2026', '', DRCALUMNI_EVENT_NAME)); ?> <span class="title-year">2026</span></h1>
+        <h1><?php echo drc_h(str_replace(' 2026', '', DRCALUMNI_PUBLIC_EVENT_NAME)); ?> <span class="title-year">2026</span></h1>
         <p class="subtitle">« <?php echo drc_h(DRCALUMNI_EVENT_THEME); ?> »</p>
         <aside class="event-card">
             <strong>Informations pratiques</strong>
