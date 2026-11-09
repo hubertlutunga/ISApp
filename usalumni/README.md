@@ -1,13 +1,13 @@
-# DRC ALUMNI IMPACT 2026
+# U.S. Alumni Impact 2026 – Promoting Partnership and Prosperity
 
-Plateforme complète de candidatures, back-office, notifications e-mail, QR codes et contrôle d’accès pour l’événement **DRC ALUMNI IMPACT 2026**.
+Plateforme complète de candidatures, back-office, notifications e-mail, QR codes et contrôle d’accès pour l’événement **U.S. Alumni Impact 2026 – Promoting Partnership and Prosperity**.
 
 ## URLs
 
-- Site public: `/drcalumni/`
-- Confirmation: `/drcalumni/confirmation/`
-- Back-office: `/drcalumni/admin/`
-- Scan/contrôle d’accès: `/drcalumni/admin/scan/`
+- Site public: `/usalumni/`
+- Confirmation: `/usalumni/confirmation/`
+- Back-office: `/usalumni/admin/`
+- Scan/contrôle d’accès: `/usalumni/admin/scan/`
 
 ## Prérequis
 
@@ -22,14 +22,12 @@ Plateforme complète de candidatures, back-office, notifications e-mail, QR code
 
 ## Déploiement (non destructif)
 
-1. Configurer les variables d’environnement (voir `.env.example`) dans l’un des emplacements chargés:
-   - racine du dépôt ISApp: `.env`, `.env.local`, `.isapp.env`…
-   - ou racine du module: `drcalumni/.env` (supporté pour isoler la config SMTP du module).
+1. Configurer les variables d’environnement (voir `.env.example`).
 2. Sauvegarder la base de données.
 3. Exécuter la migration SQL:
    - [`001_drcalumni.sql`](./database/migrations/001_drcalumni.sql)
-4. Ouvrir `/drcalumni/admin/register.php` et créer le premier super administrateur.
-5. Se connecter sur `/drcalumni/admin/`.
+4. Ouvrir `/usalumni/admin/register.php` et créer le premier super administrateur.
+5. Se connecter sur `/usalumni/admin/`.
 6. Vérifier:
    - logos officiels chargés,
    - création candidature,

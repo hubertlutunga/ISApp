@@ -14,10 +14,10 @@
     root.setAttribute('novalidate', 'novalidate');
 
     const resolveBasePath = () => {
-        const marker = '/drcalumni/';
+        const marker = '/usalumni/';
         const pathname = window.location.pathname || '';
         const markerIndex = pathname.indexOf(marker);
-        return markerIndex === -1 ? '/drcalumni' : pathname.slice(0, markerIndex + marker.length - 1);
+        return markerIndex === -1 ? '/usalumni' : pathname.slice(0, markerIndex + marker.length - 1);
     };
 
     let swalLoaderPromise = null;

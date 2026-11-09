@@ -1,8 +1,8 @@
-# DRC ALUMNI IMPACT 2026 — DEPLOYMENT & MASTER PROMPT COPILOT
+# U.S. Alumni Impact 2026 – Promoting Partnership and Prosperity — DEPLOYMENT & MASTER PROMPT COPILOT
 
-> **Projet :** plateforme officielle de candidatures et de gestion des participants au DRC Alumni Impact 2026  
+> **Projet :** plateforme officielle de candidatures et de gestion des participants au U.S. Alumni Impact 2026 – Promoting Partnership and Prosperity  
 > **Client :** Ambassade des États-Unis à Kinshasa — Section des Affaires publiques  
-> **Dossier cible :** `invitationspeciale/drcalumni/`  
+> **Dossier cible :** `invitationspeciale/usalumni/`  
 > **Projet de référence :** `invitationspeciale/creatorsbomoko/`  
 > **Livrable :** application publique + back-office + notifications + QR codes + contrôle d'accès + documentation technique.
 
@@ -10,13 +10,13 @@
 
 ## 0. PROMPT MAÎTRE À TRANSMETTRE À GITHUB COPILOT
 
-Tu es un **développeur full-stack senior, architecte logiciel et UI/UX designer de niveau international**. Ta mission est de **DÉVELOPPER réellement**, et pas seulement de proposer une maquette, la plateforme complète **DRC ALUMNI IMPACT 2026** dans le dossier `invitationspeciale/drcalumni/`.
+Tu es un **développeur full-stack senior, architecte logiciel et UI/UX designer de niveau international**. Ta mission est de **DÉVELOPPER réellement**, et pas seulement de proposer une maquette, la plateforme complète **U.S. Alumni Impact 2026 – Promoting Partnership and Prosperity** dans le dossier `invitationspeciale/usalumni/`.
 
 ### Référence obligatoire
 
 1. **Analyse d'abord en profondeur** le projet EXISTANT `invitationspeciale/creatorsbomoko/`, y compris les pages publiques, le formulaire, les modèles SQL, l'authentification, le back-office, le processus d'approbation/rejet, les envois d'e-mails, la génération des QR codes, le scan à l'entrée, les exports, la fermeture des inscriptions, les paramètres et la sécurité.
 2. Réutilise **les fonctionnalités et les principes d'architecture réellement présents**, en les adaptant au nouvel événement. **N'invente pas** l'existence de modules non trouvés : signale-les puis implémente les modules demandés dans ce document.
-3. **Ne modifie, ne supprime et ne casse aucun fichier, configuration, table, donnée, route ou comportement de `creatorsbomoko`**. Le projet `drcalumni` doit être autonome, avec ses propres tables, paramètres, identifiants et fichiers, même si des composants sont copiés et adaptés.
+3. **Ne modifie, ne supprime et ne casse aucun fichier, configuration, table, donnée, route ou comportement de `creatorsbomoko`**. Le projet `usalumni` doit être autonome, avec ses propres tables, paramètres, identifiants et fichiers, même si des composants sont copiés et adaptés.
 4. Reprends la stack existante si elle est appropriée au serveur (probablement PHP/MySQL, **à vérifier dans le code**). Ne migre pas vers un framework nécessitant une infrastructure absente. Inspecte d'abord versions PHP, dépendances, gestion des e-mails, QR et structure des dossiers.
 5. **Design totalement nouveau** et premium, qui ne ressemble pas visuellement à Creators Bomoko, avec des couleurs inspirées du drapeau américain. Le résultat doit être digne d'un site événementiel institutionnel de l'Ambassade des États-Unis : composition haut de gamme, typographie impeccable, cohérence, accessibilité, animations discrètes, performance irréprochable, présentation mobile et desktop soignée.
 6. Le formulaire doit reproduire fidèlement **toutes les questions et tous les choix** des documents transmis par l'Ambassade. Les modèles d'e-mails de sélection et de non-sélection figurent ci-dessous : préserver leur rédaction officielle, hormis personnalisation du nom et ajout clairement séparé du QR code/identifiant pratique.
@@ -29,7 +29,7 @@ Tu es un **développeur full-stack senior, architecte logiciel et UI/UX designer
 
 ## 1. IDENTITÉ DE L'ÉVÉNEMENT
 
-- **Nom officiel :** DRC ALUMNI IMPACT 2026
+- **Nom officiel :** U.S. Alumni Impact 2026 – Promoting Partnership and Prosperity
 - **Thème officiel :** « Faire progresser le partenariat stratégique et les opportunités économiques entre les États-Unis et la RDC »
 - **Dates :** 1er et 2 décembre 2026
 - **Heure de présence demandée :** 9h00
@@ -42,13 +42,13 @@ Tu es un **développeur full-stack senior, architecte logiciel et UI/UX designer
 
 ### Routes proposées (adapter aux conventions du projet de référence)
 
-- Site public : `/drcalumni/`
-- Formulaire public : `/drcalumni/` ou `/drcalumni/candidature/`
-- Page de confirmation de soumission : `/drcalumni/confirmation/`
-- Back-office sécurisé : `/drcalumni/admin/`
-- Contrôle des entrées : `/drcalumni/admin/scan/` (ou route équivalente protégée)
+- Site public : `/usalumni/`
+- Formulaire public : `/usalumni/` ou `/usalumni/candidature/`
+- Page de confirmation de soumission : `/usalumni/confirmation/`
+- Back-office sécurisé : `/usalumni/admin/`
+- Contrôle des entrées : `/usalumni/admin/scan/` (ou route équivalente protégée)
 
-Toutes les routes doivent fonctionner sous le préfixe `/drcalumni/` sans casser les chemins des assets et sans redirection involontaire vers `/creatorsbomoko/`.
+Toutes les routes doivent fonctionner sous le préfixe `/usalumni/` sans casser les chemins des assets et sans redirection involontaire vers `/creatorsbomoko/`.
 
 ---
 
@@ -78,13 +78,13 @@ Le bleu `#002868` est la dominante. Le rouge `#BF0A30` sert aux accents, états 
   - `/images/Freedom 250 Icon - RGB - Full Color - Gold.png`
   - `/images/use-kinshasa-seal-color.png`
 
-**Important sur les chemins :** inspecter où se trouve réellement le dossier `images` dans `drcalumni`. Si les fichiers sont dans `drcalumni/images/`, leur URL publique sera normalement `/drcalumni/images/...` et non `/images/...`. Utiliser un helper `asset_url()` ou une constante `BASE_URL` permettant de générer la bonne URL **sans changer les noms de fichiers ni casser les routes**. Vérifier l'existence effective de chacun des trois assets et afficher une erreur claire si l'un manque. Ne pas substituer de logos non autorisés. Le PNG vertical en favicon est accepté par la demande ; une icône carrée dérivée pourrait être proposée ultérieurement, sans modifier le fichier fourni.
+**Important sur les chemins :** inspecter où se trouve réellement le dossier `images` dans `usalumni`. Si les fichiers sont dans `drcalumni/images/`, leur URL publique sera normalement `/usalumni/images/...` et non `/images/...`. Utiliser un helper `asset_url()` ou une constante `BASE_URL` permettant de générer la bonne URL **sans changer les noms de fichiers ni casser les routes**. Vérifier l'existence effective de chacun des trois assets et afficher une erreur claire si l'un manque. Ne pas substituer de logos non autorisés. Le PNG vertical en favicon est accepté par la demande ; une icône carrée dérivée pourrait être proposée ultérieurement, sans modifier le fichier fourni.
 
 ### Composition visuelle attendue
 
 **Header :** fond navy élégant, logo vertical de l'Ambassade **réellement centré**, espace blanc généreux, navigation discrète si utile, bonne lisibilité et comportement mobile maîtrisé. Un motif graphique extrêmement discret inspiré des étoiles / bandes du drapeau américain peut être utilisé en arrière-plan, mais **pas de faux sceau ou faux logo**.
 
-**Hero :** grand titre `DRC ALUMNI IMPACT 2026`, thème en sous-titre, labels raffinés `1–2 DÉCEMBRE 2026` et `KINSHASA`, appel à l'action « Déposer ma candidature ». Hiérarchie typographique forte, alignements précis, excellente lisibilité. Il faut ressentir le prestige de l'événement dès les premières secondes.
+**Hero :** grand titre `U.S. Alumni Impact 2026 – Promoting Partnership and Prosperity`, thème en sous-titre, labels raffinés `1–2 DÉCEMBRE 2026` et `KINSHASA`, appel à l'action « Déposer ma candidature ». Hiérarchie typographique forte, alignements précis, excellente lisibilité. Il faut ressentir le prestige de l'événement dès les premières secondes.
 
 **Bloc événement :** présentation du sommet, ses dates et son lieu, infos sous forme de cartes élégantes et aérées. Ne pas ajouter de chiffres ou promesses non validés.
 
@@ -325,11 +325,11 @@ Les contenus suivants proviennent des documents remis par l'Ambassade. **Ne pas 
 
 ### 5.1 Confirmation de sélection
 
-**Objet : Confirmation de sélection – DRC ALUMNI IMPACT 2026**
+**Objet : Confirmation de sélection – U.S. Alumni Impact 2026 – Promoting Partnership and Prosperity**
 
 > Cher/Chère [Nom de l’alumnus/alumna],
 >
-> L’Ambassade des États-Unis à Kinshasa a le plaisir de vous annoncer que votre candidature a été retenue pour participer au DRC ALUMNI IMPACT 2026, placé sous le thème : « Faire progresser le partenariat stratégique et les opportunités économiques entre les États-Unis et la RDC ».
+> L’Ambassade des États-Unis à Kinshasa a le plaisir de vous annoncer que votre candidature a été retenue pour participer au U.S. Alumni Impact 2026 – Promoting Partnership and Prosperity, placé sous le thème : « Faire progresser le partenariat stratégique et les opportunités économiques entre les États-Unis et la RDC ».
 >
 > Ce sommet réunira 250 anciens participants aux programmes d’échanges du gouvernement américain, venus des différentes régions de la République démocratique du Congo. Il constituera une plateforme privilégiée de dialogue, de réseautage et de collaboration, permettant de renforcer les liens au sein de la communauté des alumni et d'explorer de nouvelles perspectives de partenariat au service des relations stratégiques entre les États-Unis et la RDC.
 >
@@ -341,7 +341,7 @@ Les contenus suivants proviennent des documents remis par l'Ambassade. **Ne pas 
 >
 > Nous vous prions de bien vouloir prendre vos dispositions afin d'être sur place à 9h00. L'agenda détaillé du Sommet vous sera communiqué prochainement.
 >
-> Félicitations pour votre sélection ! Nous sommes ravis de vous accueillir au DRC ALUMNI IMPACT 2026.
+> Félicitations pour votre sélection ! Nous sommes ravis de vous accueillir au U.S. Alumni Impact 2026 – Promoting Partnership and Prosperity.
 >
 > Pour toute question ou information complémentaire, n'hésitez pas à nous contacter aux adresses suivantes :
 >
@@ -361,7 +361,7 @@ Les contenus suivants proviennent des documents remis par l'Ambassade. **Ne pas 
 
 > Cher/Chère [Nom de l’alumnus/alumna],
 >
-> L’Ambassade des États-Unis à Kinshasa tient à vous remercier sincèrement pour l’intérêt que vous avez manifesté à l’égard du DRC ALUMNI IMPACT 2026, placé sous le thème : « Faire progresser le partenariat stratégique et les opportunités économiques entre les États-Unis et la RDC », ainsi que pour le temps consacré à la soumission de votre candidature.
+> L’Ambassade des États-Unis à Kinshasa tient à vous remercier sincèrement pour l’intérêt que vous avez manifesté à l’égard du U.S. Alumni Impact 2026 – Promoting Partnership and Prosperity, placé sous le thème : « Faire progresser le partenariat stratégique et les opportunités économiques entre les États-Unis et la RDC », ainsi que pour le temps consacré à la soumission de votre candidature.
 >
 > Nous avons reçu un grand nombre de candidatures témoignant de l’engagement et du dynamisme de la communauté des anciens participants aux programmes d’échanges du gouvernement américain en République démocratique du Congo.
 >
@@ -448,7 +448,7 @@ Utiliser **des tables propres au nouvel événement** et les adapter à la conve
 
 **Phase B — Base du nouveau projet & direction visuelle**
 
-1. Créer uniquement les nouveaux fichiers de `drcalumni`.
+1. Créer uniquement les nouveaux fichiers de `usalumni`.
 2. Configurer DB isolée/logiquement séparée, variables d'environnement et migrations.
 3. Réaliser entièrement le design responsive : header bleu avec logo centré, hero premium, formulaire en six étapes, footer blanc à deux logos.
 4. Vérifier rendu mobile/desktop, tailles des logos, alignements, contrastes et focus.
@@ -476,7 +476,7 @@ Utiliser **des tables propres au nouvel événement** et les adapter à la conve
 **Phase F — Recette & publication**
 
 1. Tests fonctionnels et de sécurité.
-2. Vérifier le déploiement sous `/drcalumni/` sans impact sur `/creatorsbomoko/`.
+2. Vérifier le déploiement sous `/usalumni/` sans impact sur `/creatorsbomoko/`.
 3. Écrire les instructions et commandes concrètes de déploiement en fonction du serveur trouvé, et renseigner `README.md`.
 4. Rendre un rapport de livraison détaillé avec les éventuels points à faire valider par l'Ambassade.
 
@@ -487,7 +487,7 @@ Utiliser **des tables propres au nouvel événement** et les adapter à la conve
 Cocher explicitement les résultats dans le rapport final de Copilot :
 
 - [ ] Le projet Creators Bomoko n'a subi **aucune modification** et fonctionne toujours.
-- [ ] L'URL `/drcalumni/` charge la bonne application, tous les assets et les bons logos.
+- [ ] L'URL `/usalumni/` charge la bonne application, tous les assets et les bons logos.
 - [ ] Le header est **bleu `#002868`**, son logo est **centré**, le favicon utilise le fichier indiqué.
 - [ ] Le footer est **blanc** et présente **les deux logos officiels**, sans déformation.
 - [ ] Le rendu est premium, distinct de Creators Bomoko, agréable en mobile/desktop.
@@ -518,7 +518,7 @@ Le serveur et les versions ne sont **pas spécifiés dans les documents officiel
 
 1. Vérifier les versions PHP, MySQL/MariaDB, les extensions requises, les bibliothèques QR, e-mail, export et le chemin absolu du webroot.
 2. Configurer `APP_URL`, `APP_ENV=production`, `APP_TIMEZONE=Africa/Kinshasa`, accès DB, secrets, SMTP et chemin des assets via variables privées et `.env.example` non secret.
-3. Faire une sauvegarde indépendante avant migration, puis appliquer **uniquement les migrations `drcalumni`**.
+3. Faire une sauvegarde indépendante avant migration, puis appliquer **uniquement les migrations `usalumni`**.
 4. Créer un administrateur initial via une procédure sécurisée (secret fourni hors Git), jamais un mot de passe codé en dur.
 5. Vérifier droits de fichiers, interdiction d'accès direct aux dossiers internes, HTTPS, cookies sécurisés, politique de journaux.
 6. Tester les trois images officielles par URL, chaque route, les liens d'e-mail, génération/scan des QR, les deux journées, les sorties PDF/CSV.
@@ -546,4 +546,4 @@ Le serveur et les versions ne sont **pas spécifiés dans les documents officiel
 
 ## 11. INSTRUCTION DE DÉPART IMMÉDIATE POUR COPILOT
 
-**Commence maintenant.** Inspecte intégralement `invitationspeciale/creatorsbomoko/` en lecture seule, puis inspecte `invitationspeciale/drcalumni/`. Crée le nouveau projet sans modifier Creators Bomoko. Commence par réaliser la **page publique finale et le wizard complet**, avec le design navy/rouge/blanc et les trois logos indiqués, puis continue jusqu'au **back-office fonctionnel, aux e-mails officiels, aux QR codes et au contrôle d'accès sur deux jours**. Pour tout contenu soumis au client, reste strictement fidèle aux documents ci-dessus. Ne te contente ni d'un prototype ni d'une simple description : **implémente, vérifie et documente**.
+**Commence maintenant.** Inspecte intégralement `invitationspeciale/creatorsbomoko/` en lecture seule, puis inspecte `invitationspeciale/usalumni/`. Crée le nouveau projet sans modifier Creators Bomoko. Commence par réaliser la **page publique finale et le wizard complet**, avec le design navy/rouge/blanc et les trois logos indiqués, puis continue jusqu'au **back-office fonctionnel, aux e-mails officiels, aux QR codes et au contrôle d'accès sur deux jours**. Pour tout contenu soumis au client, reste strictement fidèle aux documents ci-dessus. Ne te contente ni d'un prototype ni d'une simple description : **implémente, vérifie et documente**.

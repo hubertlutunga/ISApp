@@ -259,7 +259,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             drc_audit($pdo, null, 'application.submitted', 'application', (string) $applicationId, ['reference' => $reference, 'email' => drc_mask_sensitive_email($email)]);
 
             if (drc_setting($pdo, 'submission_ack_enabled', '1') === '1') {
-                $subject = drc_setting($pdo, 'submission_ack_subject', 'Accusé de réception – DRC ALUMNI IMPACT 2026') ?? '';
+                $subject = drc_setting($pdo, 'submission_ack_subject', 'Accusé de réception – U.S. Alumni Impact 2026 – Promoting Partnership and Prosperity') ?? '';
                 $rawBody = drc_setting($pdo, 'submission_ack_body', '') ?? '';
                 $textBody = str_replace(['{name}', '{reference}'], [$fullName, $reference], $rawBody);
                 drc_enqueue_email(

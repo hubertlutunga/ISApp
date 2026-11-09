@@ -94,7 +94,7 @@ if ($currentUser['role'] === DRCALUMNI_ROLE_CHECKIN) {
 
 function drc_admin_build_selection_mail(PDO $pdo, array $application, string $token, string $qrImageUrl): array
 {
-    $subject = drc_setting($pdo, 'selection_subject', 'Confirmation de sélection – DRC ALUMNI IMPACT 2026') ?? '';
+    $subject = drc_setting($pdo, 'selection_subject', 'Confirmation de sélection – U.S. Alumni Impact 2026 – Promoting Partnership and Prosperity') ?? '';
     $template = drc_setting($pdo, 'selection_body', drc_selection_email_text('{name}')) ?? '';
     $text = str_replace(
         ['{name}', '{reference}'],
@@ -118,7 +118,7 @@ function drc_admin_build_selection_mail(PDO $pdo, array $application, string $to
 
 function drc_admin_build_rejection_mail(PDO $pdo, array $application): array
 {
-    $subject = drc_setting($pdo, 'rejection_subject', 'Information relative à votre candidature – DRC ALUMNI IMPACT 2026') ?? '';
+    $subject = drc_setting($pdo, 'rejection_subject', 'Information relative à votre candidature – U.S. Alumni Impact 2026 – Promoting Partnership and Prosperity') ?? '';
     $template = drc_setting($pdo, 'rejection_body', drc_rejection_email_text('{name}')) ?? '';
     $text = str_replace(
         ['{name}', '{reference}'],
@@ -499,7 +499,7 @@ if ($error !== '') {
     <div class="admin-topbar-inner">
         <div class="admin-brand">
             <img class="admin-brand-logo" src="<?php echo drc_h(drc_asset('images/use-kinshasa-flag-logo-vertical-color.png')); ?>" alt="Ambassade des États-Unis à Kinshasa">
-            <strong>DRC ALUMNI IMPACT 2026</strong>
+            <strong>U.S. Alumni Impact 2026 – Promoting Partnership and Prosperity</strong>
         </div>
         <nav class="admin-menu">
             <a class="active" href="<?php echo drc_h(drc_url('admin/index.php')); ?>">Acceuil</a>

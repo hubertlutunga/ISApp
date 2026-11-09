@@ -71,15 +71,15 @@ $stats = [
 ];
 $outboxRecent = $pdo->query('SELECT mail_type, recipient_email, status, attempts, queued_at, last_error FROM drcalumni_email_outbox ORDER BY id DESC LIMIT 20')->fetchAll(PDO::FETCH_ASSOC);
 
-$selectionDefaultSubject = 'Confirmation de sélection – DRC ALUMNI IMPACT 2026';
-$rejectionDefaultSubject = 'Information relative à votre candidature – DRC ALUMNI IMPACT 2026';
-$submissionAckDefaultBody = "Bonjour {name},\n\nNous confirmons la réception de votre candidature au DRC ALUMNI IMPACT 2026.\n\nRéférence: {reference}\n\nVotre dossier est en cours d’examen. Cette confirmation de dépôt ne signifie pas une sélection.\n\nCordialement,\nSection des Affaires publiques\nAmbassade des États-Unis à Kinshasa";
+$selectionDefaultSubject = 'Confirmation de sélection – U.S. Alumni Impact 2026 – Promoting Partnership and Prosperity';
+$rejectionDefaultSubject = 'Information relative à votre candidature – U.S. Alumni Impact 2026 – Promoting Partnership and Prosperity';
+$submissionAckDefaultBody = "Bonjour {name},\n\nNous confirmons la réception de votre candidature à U.S. Alumni Impact 2026 – Promoting Partnership and Prosperity.\n\nRéférence: {reference}\n\nVotre dossier est en cours d’examen. Cette confirmation de dépôt ne signifie pas une sélection.\n\nCordialement,\nSection des Affaires publiques\nAmbassade des États-Unis à Kinshasa";
 $settings = [
     'registrations_open' => drc_setting($pdo, 'registrations_open', '1'),
     'selection_capacity' => drc_setting($pdo, 'selection_capacity', '250'),
     'queue_batch_size' => drc_setting($pdo, 'queue_batch_size', '20'),
     'submission_ack_enabled' => drc_setting($pdo, 'submission_ack_enabled', '1'),
-    'submission_ack_subject' => drc_setting($pdo, 'submission_ack_subject', 'Accusé de réception – DRC ALUMNI IMPACT 2026'),
+    'submission_ack_subject' => drc_setting($pdo, 'submission_ack_subject', 'Accusé de réception – U.S. Alumni Impact 2026 – Promoting Partnership and Prosperity'),
     'submission_ack_body' => drc_setting($pdo, 'submission_ack_body', $submissionAckDefaultBody),
     'selection_subject' => drc_setting($pdo, 'selection_subject', $selectionDefaultSubject),
     'selection_body' => drc_setting($pdo, 'selection_body', drc_selection_email_text('{name}')),
@@ -119,7 +119,7 @@ if ($error !== '') {
     <div class="admin-topbar-inner">
         <div class="admin-brand">
             <img class="admin-brand-logo" src="<?php echo drc_h(drc_asset('images/use-kinshasa-flag-logo-vertical-color.png')); ?>" alt="Ambassade des États-Unis à Kinshasa">
-            <strong>DRC ALUMNI IMPACT 2026</strong>
+            <strong>U.S. Alumni Impact 2026 – Promoting Partnership and Prosperity</strong>
         </div>
         <nav class="admin-menu">
             <a href="<?php echo drc_h(drc_url('admin/index.php')); ?>">Acceuil</a>

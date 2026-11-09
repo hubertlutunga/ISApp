@@ -17,8 +17,8 @@ if (!defined('DRCALUMNI_BOOTSTRAPPED')) {
     define('DRCALUMNI_BOOTSTRAPPED', true);
 }
 
-const DRCALUMNI_EVENT_NAME = 'DRC ALUMNI IMPACT 2026';
-const DRCALUMNI_PUBLIC_EVENT_NAME = 'U.S. ALUMNI IMPACT 2026';
+const DRCALUMNI_EVENT_NAME = 'U.S. Alumni Impact 2026 – Promoting Partnership and Prosperity';
+const DRCALUMNI_PUBLIC_EVENT_NAME = 'U.S. Alumni Impact 2026 – Promoting Partnership and Prosperity';
 const DRCALUMNI_EVENT_THEME = 'Faire progresser le partenariat stratégique et les opportunités économiques entre les États-Unis et la RDC';
 const DRCALUMNI_EVENT_DATES = '1er et 2 décembre 2026';
 const DRCALUMNI_EVENT_TIME = '9h00';
@@ -129,11 +129,11 @@ function drc_base_url(): string
     }
 
     $scriptName = str_replace('\\', '/', (string) ($_SERVER['SCRIPT_NAME'] ?? ''));
-    $position = strpos($scriptName, '/drcalumni/');
-    $path = $position === false ? '/drcalumni' : substr($scriptName, 0, $position + strlen('/drcalumni'));
+    $position = strpos($scriptName, '/usalumni/');
+    $path = $position === false ? '/usalumni' : substr($scriptName, 0, $position + strlen('/usalumni'));
     $cached = rtrim($path, '/');
 
-    return $cached === '' ? '/drcalumni' : $cached;
+    return $cached === '' ? '/usalumni' : $cached;
 }
 
 function drc_url(string $path = ''): string
@@ -303,11 +303,11 @@ function drc_boot_defaults(PDO $pdo): void
         'event_location' => DRCALUMNI_EVENT_LOCATION,
         'contact_emails' => 'LungunguVK@state.gov,KazadiNN@state.gov',
         'submission_ack_enabled' => '1',
-        'submission_ack_subject' => 'Accusé de réception – DRC ALUMNI IMPACT 2026',
-        'submission_ack_body' => "Bonjour {name},\n\nNous confirmons la réception de votre candidature au DRC ALUMNI IMPACT 2026.\n\nRéférence: {reference}\n\nVotre dossier est en cours d’examen. Cette confirmation de dépôt ne signifie pas une sélection.\n\nCordialement,\nSection des Affaires publiques\nAmbassade des États-Unis à Kinshasa",
-        'selection_subject' => 'Confirmation de sélection – DRC ALUMNI IMPACT 2026',
+        'submission_ack_subject' => 'Accusé de réception – U.S. Alumni Impact 2026 – Promoting Partnership and Prosperity',
+        'submission_ack_body' => "Bonjour {name},\n\nNous confirmons la réception de votre candidature à U.S. Alumni Impact 2026 – Promoting Partnership and Prosperity.\n\nRéférence: {reference}\n\nVotre dossier est en cours d’examen. Cette confirmation de dépôt ne signifie pas une sélection.\n\nCordialement,\nSection des Affaires publiques\nAmbassade des États-Unis à Kinshasa",
+        'selection_subject' => 'Confirmation de sélection – U.S. Alumni Impact 2026 – Promoting Partnership and Prosperity',
         'selection_body' => drc_selection_email_text('{name}'),
-        'rejection_subject' => 'Information relative à votre candidature – DRC ALUMNI IMPACT 2026',
+        'rejection_subject' => 'Information relative à votre candidature – U.S. Alumni Impact 2026 – Promoting Partnership and Prosperity',
         'rejection_body' => drc_rejection_email_text('{name}'),
         'queue_batch_size' => '20',
     ];
@@ -669,21 +669,25 @@ function drc_enqueue_email(
 function drc_mailer_transport(): array
 {
     return [
-        'host' => getenv('DRCALUMNI_SMTP_HOST')
+        'host' => getenv('USALUMNI_SMTP_HOST')
+            ?: (getenv('DRCALUMNI_SMTP_HOST')
             ?: (getenv('CREATORSBOMOKO_SMTP_HOST')
-                ?: (getenv('ISAPP_SMTP_HOST') ?: 'invitationspeciale.com')),
-        'user' => getenv('DRCALUMNI_SMTP_USER')
+                ?: (getenv('ISAPP_SMTP_HOST') ?: 'invitationspeciale.com'))),
+        'user' => getenv('USALUMNI_SMTP_USER')
+            ?: (getenv('DRCALUMNI_SMTP_USER')
             ?: (getenv('CREATORSBOMOKO_SMTP_USER')
-                ?: (getenv('ISAPP_SMTP_USERNAME') ?: 'eventpass@invitationspeciale.com')),
-        'password' => getenv('DRCALUMNI_SMTP_PASSWORD')
+                ?: (getenv('ISAPP_SMTP_USERNAME') ?: 'eventpass@invitationspeciale.com'))),
+        'password' => getenv('USALUMNI_SMTP_PASSWORD')
+            ?: (getenv('DRCALUMNI_SMTP_PASSWORD')
             ?: (getenv('CREATORSBOMOKO_SMTP_PASSWORD')
-                ?: (getenv('ISAPP_SMTP_PASSWORD') ?: '')),
-        'port' => (int) (getenv('DRCALUMNI_SMTP_PORT')
+                ?: (getenv('ISAPP_SMTP_PASSWORD') ?: ''))),
+        'port' => (int) (getenv('USALUMNI_SMTP_PORT')
+            ?: (getenv('DRCALUMNI_SMTP_PORT')
             ?: (getenv('CREATORSBOMOKO_SMTP_PORT')
-                ?: (getenv('ISAPP_SMTP_PORT') ?: 587))),
-        'encryption' => getenv('DRCALUMNI_SMTP_ENCRYPTION') ?: (getenv('ISAPP_SMTP_ENCRYPTION') ?: 'tls'),
-        'from_name' => getenv('DRCALUMNI_SMTP_FROM_NAME') ?: 'Section des Affaires publiques',
-        'reply_to' => getenv('DRCALUMNI_SMTP_REPLY_TO') ?: '',
+                ?: (getenv('ISAPP_SMTP_PORT') ?: 587)))),
+        'encryption' => getenv('USALUMNI_SMTP_ENCRYPTION') ?: (getenv('DRCALUMNI_SMTP_ENCRYPTION') ?: (getenv('ISAPP_SMTP_ENCRYPTION') ?: 'tls')),
+        'from_name' => getenv('USALUMNI_SMTP_FROM_NAME') ?: (getenv('DRCALUMNI_SMTP_FROM_NAME') ?: 'Section des Affaires publiques'),
+        'reply_to' => getenv('USALUMNI_SMTP_REPLY_TO') ?: (getenv('DRCALUMNI_SMTP_REPLY_TO') ?: ''),
     ];
 }
 
@@ -910,12 +914,12 @@ function drc_render_text_mail(string $body): string
 
 function drc_selection_email_text(string $name): string
 {
-    return "Cher/Chère {$name},\n\nL’Ambassade des États-Unis à Kinshasa a le plaisir de vous annoncer que votre candidature a été retenue pour participer au DRC ALUMNI IMPACT 2026, placé sous le thème : « Faire progresser le partenariat stratégique et les opportunités économiques entre les États-Unis et la RDC ».\n\nCe sommet réunira 250 anciens participants aux programmes d’échanges du gouvernement américain, venus des différentes régions de la République démocratique du Congo. Il constituera une plateforme privilégiée de dialogue, de réseautage et de collaboration, permettant de renforcer les liens au sein de la communauté des alumni et d'explorer de nouvelles perspectives de partenariat au service des relations stratégiques entre les États-Unis et la RDC.\n\nINFORMATIONS PRATIQUES\n\nDates : Du 1er au 2 décembre 2026\nLieu : The Garden, situé en face de l'entrée de l'hôtel Pullman donnant sur l'avenue Colonel Tshatshi, Kinshasa.\nDurée : Deux jours\n\nNous vous prions de bien vouloir prendre vos dispositions afin d'être sur place à 9h00. L'agenda détaillé du Sommet vous sera communiqué prochainement.\n\nFélicitations pour votre sélection ! Nous sommes ravis de vous accueillir au DRC ALUMNI IMPACT 2026.\n\nPour toute question ou information complémentaire, n'hésitez pas à nous contacter aux adresses suivantes :\n\nLungunguVK@state.gov\nKazadiNN@state.gov\n\nCordialement,\n\nSection des Affaires publiques\nAmbassade des États-Unis à Kinshasa";
+    return "Cher/Chère {$name},\n\nL’Ambassade des États-Unis à Kinshasa a le plaisir de vous annoncer que votre candidature a été retenue pour participer à U.S. Alumni Impact 2026 – Promoting Partnership and Prosperity.\n\nCe sommet réunira 250 anciens participants aux programmes d’échanges du gouvernement américain, venus des différentes régions de la République démocratique du Congo. Il constituera une plateforme privilégiée de dialogue, de réseautage et de collaboration, permettant de renforcer les liens au sein de la communauté des alumni et d'explorer de nouvelles perspectives de partenariat au service des relations stratégiques entre les États-Unis et la RDC.\n\nINFORMATIONS PRATIQUES\n\nDates : Du 1er au 2 décembre 2026\nLieu : The Garden, situé en face de l'entrée de l'hôtel Pullman donnant sur l'avenue Colonel Tshatshi, Kinshasa.\nDurée : Deux jours\n\nNous vous prions de bien vouloir prendre vos dispositions afin d'être sur place à 9h00. L'agenda détaillé du Sommet vous sera communiqué prochainement.\n\nFélicitations pour votre sélection ! Nous sommes ravis de vous accueillir à U.S. Alumni Impact 2026 – Promoting Partnership and Prosperity.\n\nPour toute question ou information complémentaire, n'hésitez pas à nous contacter aux adresses suivantes :\n\nLungunguVK@state.gov\nKazadiNN@state.gov\n\nCordialement,\n\nSection des Affaires publiques\nAmbassade des États-Unis à Kinshasa";
 }
 
 function drc_rejection_email_text(string $name): string
 {
-    return "Cher/Chère {$name},\n\nL’Ambassade des États-Unis à Kinshasa tient à vous remercier sincèrement pour l’intérêt que vous avez manifesté à l’égard du DRC ALUMNI IMPACT 2026, placé sous le thème : « Faire progresser le partenariat stratégique et les opportunités économiques entre les États-Unis et la RDC », ainsi que pour le temps consacré à la soumission de votre candidature.\n\nNous avons reçu un grand nombre de candidatures témoignant de l’engagement et du dynamisme de la communauté des anciens participants aux programmes d’échanges du gouvernement américain en République démocratique du Congo.\n\nCompte tenu du nombre limité de places disponibles, nous regrettons de vous informer que votre candidature n’a malheureusement pas été retenue pour cette édition du Sommet.\n\nNous vous encourageons vivement à rester actif au sein de la communauté des alumni et à saisir les prochaines occasions de réseautage, de renforcement des capacités et de collaboration proposées par l’Ambassade des États-Unis.\n\nNous vous remercions une nouvelle fois pour votre intérêt, votre compréhension et votre engagement continu. Nous espérons avoir l’occasion de vous retrouver dans le cadre de prochaines activités et initiatives destinées aux alumni.\n\nCordialement,\n\nSection des Affaires publiques\nAmbassade des États-Unis à Kinshasa";
+    return "Cher/Chère {$name},\n\nL’Ambassade des États-Unis à Kinshasa tient à vous remercier sincèrement pour l’intérêt que vous avez manifesté à l’égard de U.S. Alumni Impact 2026 – Promoting Partnership and Prosperity, ainsi que pour le temps consacré à la soumission de votre candidature.\n\nNous avons reçu un grand nombre de candidatures témoignant de l’engagement et du dynamisme de la communauté des anciens participants aux programmes d’échanges du gouvernement américain en République démocratique du Congo.\n\nCompte tenu du nombre limité de places disponibles, nous regrettons de vous informer que votre candidature n’a malheureusement pas été retenue pour cette édition du Sommet.\n\nNous vous encourageons vivement à rester actif au sein de la communauté des alumni et à saisir les prochaines occasions de réseautage, de renforcement des capacités et de collaboration proposées par l’Ambassade des États-Unis.\n\nNous vous remercions une nouvelle fois pour votre intérêt, votre compréhension et votre engagement continu. Nous espérons avoir l’occasion de vous retrouver dans le cadre de prochaines activités et initiatives destinées aux alumni.\n\nCordialement,\n\nSection des Affaires publiques\nAmbassade des États-Unis à Kinshasa";
 }
 
 function drc_official_mail_html(string $title, string $text, ?string $extraHtml = null): string
@@ -954,7 +958,7 @@ function drc_qr_png_path(int $applicationId, string $token): string
     if (!is_dir($directory)) {
         mkdir($directory, 0775, true);
     }
-    $path = $directory . '/drcalumni_' . $applicationId . '.png';
+    $path = $directory . '/usalumni_' . $applicationId . '.png';
 
     require_once dirname(__DIR__, 2) . '/qrscan/phpqrcode/qrlib.php';
     QRcode::png(drc_qr_public_url($token), $path, QR_ECLEVEL_M, 8, 2);
@@ -963,5 +967,5 @@ function drc_qr_png_path(int $applicationId, string $token): string
 
 function drc_qr_public_image_url(int $applicationId): string
 {
-    return drc_absolute_url('storage/qrcodes/drcalumni_' . $applicationId . '.png');
+    return drc_absolute_url('storage/qrcodes/usalumni_' . $applicationId . '.png');
 }

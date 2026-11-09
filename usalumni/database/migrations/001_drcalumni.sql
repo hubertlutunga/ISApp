@@ -1,4 +1,4 @@
--- DRC ALUMNI IMPACT 2026 schema
+-- U.S. Alumni Impact 2026 – Promoting Partnership and Prosperity schema
 -- Exécuter uniquement sur la base cible ISApp.
 
 CREATE TABLE IF NOT EXISTS drcalumni_settings (
@@ -155,4 +155,3 @@ CREATE TABLE IF NOT EXISTS drcalumni_audit_logs (
     PRIMARY KEY (id),
     CONSTRAINT fk_drcalumni_audit_actor FOREIGN KEY (actor_user_id) REFERENCES drcalumni_users (id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
