@@ -92,7 +92,7 @@ if ($currentUser['role'] === DRCALUMNI_ROLE_CHECKIN) {
     exit;
 }
 
-function drc_admin_build_selection_mail(PDO $pdo, array $application, string $qrImageSrc): array
+function drc_admin_build_selection_mail(PDO $pdo, array $application): array
 {
     $subject = drc_setting($pdo, 'selection_subject', 'Confirmation de sélection – U.S. Alumni Impact 2026 – Promoting Partnership and Prosperity') ?? '';
     $template = drc_setting($pdo, 'selection_body', drc_selection_email_text('{name}')) ?? '';
@@ -102,13 +102,14 @@ function drc_admin_build_selection_mail(PDO $pdo, array $application, string $qr
         $template
     );
     $ref = (string) $application['reference_code'];
+    $qrCid = 'selection_qr_' . (int) $application['id'];
     $extra = '<hr style="border:none;border-top:1px solid #DBE3EF;margin:20px 0;">
     <h2 style="color:#002868;margin:0 0 10px;">Votre code d’accès</h2>
     <p style="margin:0 0 8px;"><strong>Nom :</strong> ' . drc_h((string) $application['full_name']) . '</p>
     <p style="margin:0 0 8px;"><strong>Référence :</strong> ' . drc_h($ref) . '</p>
     <p style="margin:0 0 8px;">Présentez ce QR code à l’accueil.</p>
     <div style="text-align:center;border:1px dashed #002868;border-radius:12px;padding:12px 10px;background:#fff;">
-        <img src="' . drc_h($qrImageSrc) . '" alt="QR code d’accès" style="width:220px;height:220px;max-width:100%;display:inline-block;">
+        <img src="cid:' . drc_h($qrCid) . '" alt="QR code d’accès" style="width:220px;height:220px;max-width:100%;display:inline-block;">
     </div>';
     $html = drc_official_mail_html($subject, $text, $extra);
     return ['subject' => $subject, 'text' => $text, 'html' => $html];
@@ -185,7 +186,7 @@ function drc_admin_update_status(
             $token = drc_generate_access_token();
             drc_store_access_token($pdo, $applicationId, $token);
             drc_qr_png_path($applicationId, $token);
-            $mail = drc_admin_build_selection_mail($pdo, $application, drc_qr_email_image_src($applicationId));
+            $mail = drc_admin_build_selection_mail($pdo, $application);
             drc_enqueue_email(
                 $pdo,
                 $applicationId,

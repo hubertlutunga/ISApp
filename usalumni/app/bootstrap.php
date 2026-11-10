@@ -731,7 +731,7 @@ function drc_mailer_transport(): array
     ];
 }
 
-function drc_send_email_transport(string $toEmail, string $toName, string $subject, string $html, string $text): array
+function drc_send_email_transport(string $toEmail, string $toName, string $subject, string $html, string $text, array $embeddedImages = []): array
 {
     $transport = drc_mailer_transport();
     if (trim($transport['password']) === '') {
@@ -747,7 +747,7 @@ function drc_send_email_transport(string $toEmail, string $toName, string $subje
     foreach (array_unique($attempts) as $attemptEncryption) {
         $attemptTransport = $transport;
         $attemptTransport['encryption'] = $attemptEncryption;
-        $result = drc_send_email_transport_once($attemptTransport, $toEmail, $toName, $subject, $html, $text);
+        $result = drc_send_email_transport_once($attemptTransport, $toEmail, $toName, $subject, $html, $text, $embeddedImages);
         if ($result['success'] === true) {
             return $result;
         }
@@ -757,7 +757,7 @@ function drc_send_email_transport(string $toEmail, string $toName, string $subje
     return ['success' => false, 'message' => $lastError];
 }
 
-function drc_send_email_transport_once(array $transport, string $toEmail, string $toName, string $subject, string $html, string $text): array
+function drc_send_email_transport_once(array $transport, string $toEmail, string $toName, string $subject, string $html, string $text, array $embeddedImages = []): array
 {
     try {
         $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
@@ -781,6 +781,17 @@ function drc_send_email_transport_once(array $transport, string $toEmail, string
             $mail->addReplyTo($transport['reply_to'], $transport['from_name']);
         }
         $mail->addAddress($toEmail, $toName);
+        foreach ($embeddedImages as $image) {
+            $path = (string) ($image['path'] ?? '');
+            $cid = (string) ($image['cid'] ?? '');
+            if ($path === '' || $cid === '' || !is_file($path) || !is_readable($path)) {
+                continue;
+            }
+
+            $name = (string) ($image['name'] ?? basename($path));
+            $mime = (string) ($image['mime'] ?? 'image/png');
+            $mail->addEmbeddedImage($path, $cid, $name, 'base64', $mime);
+        }
         $mail->isHTML(true);
         $mail->Subject = $subject;
         $mail->Body = $html;
@@ -812,12 +823,25 @@ function drc_process_outbox(PDO $pdo, int $limit, ?int $actorUserId = null): arr
     foreach ($rows as $row) {
         $outboxId = (int) $row['id'];
         $attemptNo = ((int) $row['attempts']) + 1;
+        $embeddedImages = [];
+        if ((string) $row['mail_type'] === 'selection') {
+            $applicationId = (int) $row['application_id'];
+            $qrPath = dirname(__DIR__) . '/storage/qrcodes/usalumni_' . $applicationId . '.png';
+            $embeddedImages[] = [
+                'path' => $qrPath,
+                'cid' => 'selection_qr_' . $applicationId,
+                'name' => 'qr-code.png',
+                'mime' => 'image/png',
+            ];
+        }
+
         $result = drc_send_email_transport(
             (string) $row['recipient_email'],
             (string) $row['recipient_name'],
             (string) $row['subject_line'],
             (string) $row['body_html'],
-            (string) $row['body_text']
+            (string) $row['body_text'],
+            $embeddedImages
         );
 
         $status = $result['success'] ? 'sent' : 'failed';
