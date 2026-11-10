@@ -46,6 +46,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string) ($_POST['form_action'] ?? 
     }
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string) ($_POST['form_action'] ?? '') === 'smtp_test') {
+    if (!drc_validate_csrf($csrfKey, (string) ($_POST['csrf_token'] ?? ''))) {
+        $error = 'Session expirée.';
+    } else {
+        $testEmail = drc_normalize_email((string) ($_POST['smtp_test_email'] ?? ''));
+        if ($testEmail === '' || !filter_var($testEmail, FILTER_VALIDATE_EMAIL)) {
+            $error = 'Adresse e-mail de test invalide.';
+        } else {
+            $subject = 'Test SMTP — U.S. Alumni Impact 2026';
+            $text = "Bonjour,\n\nCe message confirme que la configuration SMTP US Alumni fonctionne.\n\nDate: " . date('Y-m-d H:i:s');
+            $result = drc_send_email_transport(
+                $testEmail,
+                $testEmail,
+                $subject,
+                drc_official_mail_html($subject, $text),
+                $text
+            );
+
+            if ($result['success']) {
+                $flash = "E-mail de test envoyé à {$testEmail}.";
+            } else {
+                $error = 'Échec test SMTP: ' . (string) ($result['message'] ?? 'erreur inconnue');
+            }
+        }
+    }
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string) ($_POST['form_action'] ?? '') === 'update_settings') {
     if (!drc_validate_csrf($csrfKey, (string) ($_POST['csrf_token'] ?? ''))) {
         $error = 'Session expirée.';
@@ -70,6 +97,14 @@ $stats = [
     'emails_failed' => (int) $pdo->query("SELECT COUNT(*) FROM drcalumni_email_outbox WHERE status = 'failed'")->fetchColumn(),
 ];
 $outboxRecent = $pdo->query('SELECT mail_type, recipient_email, status, attempts, queued_at, last_error FROM drcalumni_email_outbox ORDER BY id DESC LIMIT 20')->fetchAll(PDO::FETCH_ASSOC);
+$smtpTransport = drc_mailer_transport();
+$smtpDebug = [
+    'host' => (string) ($smtpTransport['host'] ?? ''),
+    'port' => (string) ($smtpTransport['port'] ?? ''),
+    'user' => (string) ($smtpTransport['user'] ?? ''),
+    'encryption' => (string) ($smtpTransport['encryption'] ?? ''),
+    'password_configured' => trim((string) ($smtpTransport['password'] ?? '')) !== '' ? 'oui' : 'non',
+];
 
 $selectionDefaultSubject = 'Confirmation de sélection – U.S. Alumni Impact 2026 – Promoting Partnership and Prosperity';
 $rejectionDefaultSubject = 'Information relative à votre candidature – U.S. Alumni Impact 2026 – Promoting Partnership and Prosperity';
@@ -175,6 +210,25 @@ if ($error !== '') {
             <input type="hidden" name="csrf_token" value="<?php echo drc_h($csrfToken); ?>">
             <button class="btn btn-primary" type="submit">Traiter la file d’e-mails</button>
         </form>
+        <div style="margin-top:14px;padding-top:10px;border-top:1px solid #dbe3ef;">
+            <strong>Diagnostic SMTP actif</strong>
+            <div class="small" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-top:6px;">
+                <span><strong>Host:</strong> <?php echo drc_h($smtpDebug['host']); ?></span>
+                <span><strong>Port:</strong> <?php echo drc_h($smtpDebug['port']); ?></span>
+                <span><strong>User:</strong> <?php echo drc_h($smtpDebug['user']); ?></span>
+                <span><strong>Encryption:</strong> <?php echo drc_h($smtpDebug['encryption']); ?></span>
+                <span><strong>Mot de passe:</strong> <?php echo drc_h($smtpDebug['password_configured']); ?></span>
+            </div>
+            <form method="post" action="settings.php" style="margin-top:10px;display:flex;gap:8px;align-items:end;flex-wrap:wrap;">
+                <input type="hidden" name="form_action" value="smtp_test">
+                <input type="hidden" name="csrf_token" value="<?php echo drc_h($csrfToken); ?>">
+                <div style="min-width:260px;flex:1;">
+                    <label for="smtp_test_email">E-mail de test</label>
+                    <input id="smtp_test_email" name="smtp_test_email" type="email" required placeholder="vous@example.com">
+                </div>
+                <button class="btn btn-soft" type="submit">Envoyer un test SMTP</button>
+            </form>
+        </div>
     </section>
 
     <section class="card" style="margin-bottom:12px;">
