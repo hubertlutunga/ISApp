@@ -102,13 +102,11 @@ function drc_admin_build_selection_mail(PDO $pdo, array $application, string $to
         $template
     );
     $ref = (string) $application['reference_code'];
-    $accessUrl = drc_qr_public_url($token);
     $extra = '<hr style="border:none;border-top:1px solid #DBE3EF;margin:20px 0;">
     <h2 style="color:#002868;margin:0 0 10px;">Votre code d’accès</h2>
     <p style="margin:0 0 8px;"><strong>Nom :</strong> ' . drc_h((string) $application['full_name']) . '</p>
     <p style="margin:0 0 8px;"><strong>Référence :</strong> ' . drc_h($ref) . '</p>
     <p style="margin:0 0 8px;">Présentez ce QR code à l’accueil.</p>
-    <p style="margin:0 0 12px;"><a href="' . drc_h($accessUrl) . '">' . drc_h($accessUrl) . '</a></p>
     <div style="text-align:center;border:1px dashed #002868;border-radius:12px;padding:12px 10px;background:#fff;">
         <img src="' . drc_h($qrImageUrl) . '" alt="QR code d’accès" style="width:220px;height:220px;max-width:100%;display:inline-block;">
     </div>';

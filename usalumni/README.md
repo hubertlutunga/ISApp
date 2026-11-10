@@ -17,7 +17,7 @@ Plateforme complète de candidatures, back-office, notifications e-mail, QR code
 - Accès aux bibliothèques existantes du dépôt:
   - `config/database.php`
   - `PHPMailer/src/*`
-  - `qrscan/phpqrcode/qrlib.php`
+  - `phpqrcode/qrlib.php` (ou `qrscan/phpqrcode/qrlib.php`)
 - Optionnel PDF: `event/pages/tcpdf/tcpdf.php`
 
 ## Déploiement (non destructif)

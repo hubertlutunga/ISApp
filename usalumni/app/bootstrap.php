@@ -181,6 +181,17 @@ function drc_absolute_url(string $path): string
         return $relative;
     }
 
+    $configuredBase = (string) (getenv('APP_URL') ?: (getenv('ISAPP_BASE_URL') ?: ''));
+    if ($configuredBase !== '') {
+        $parts = parse_url($configuredBase);
+        if (is_array($parts) && isset($parts['host'])) {
+            $scheme = isset($parts['scheme']) ? (string) $parts['scheme'] : 'https';
+            $host = (string) $parts['host'];
+            $port = isset($parts['port']) ? ':' . (string) $parts['port'] : '';
+            return $scheme . '://' . $host . $port . $relative;
+        }
+    }
+
     $host = (string) ($_SERVER['HTTP_HOST'] ?? '');
     if ($host === '') {
         return $relative;
@@ -1005,7 +1016,7 @@ function drc_official_mail_html(string $title, string $text, ?string $extraHtml 
 
 function drc_qr_public_url(string $token): string
 {
-    return drc_url('admin/scan/index.php?token=' . rawurlencode($token));
+    return drc_absolute_url('admin/scan/index.php?token=' . rawurlencode($token));
 }
 
 function drc_qr_png_path(int $applicationId, string $token): string
@@ -1016,7 +1027,21 @@ function drc_qr_png_path(int $applicationId, string $token): string
     }
     $path = $directory . '/usalumni_' . $applicationId . '.png';
 
-    require_once dirname(__DIR__, 2) . '/qrscan/phpqrcode/qrlib.php';
+    $qrLibCandidates = [
+        dirname(__DIR__, 2) . '/phpqrcode/qrlib.php',
+        dirname(__DIR__, 2) . '/qrscan/phpqrcode/qrlib.php',
+    ];
+    $qrLib = null;
+    foreach ($qrLibCandidates as $candidate) {
+        if (is_file($candidate)) {
+            $qrLib = $candidate;
+            break;
+        }
+    }
+    if ($qrLib === null) {
+        throw new RuntimeException('Bibliothèque phpqrcode introuvable.');
+    }
+    require_once $qrLib;
     QRcode::png(drc_qr_public_url($token), $path, QR_ECLEVEL_M, 8, 2);
     return $path;
 }
