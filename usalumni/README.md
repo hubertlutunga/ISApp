@@ -8,6 +8,7 @@ Plateforme complète de candidatures, back-office, notifications e-mail, QR code
 - Confirmation: `/usalumni/confirmation/`
 - Back-office: `/usalumni/admin/`
 - Scan/contrôle d’accès: `/usalumni/admin/scan/`
+- Cible QR publique sans login: `/usalumni/presence_cible.php?id={token}`
 
 ## Prérequis
 

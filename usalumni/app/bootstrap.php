@@ -1040,7 +1040,31 @@ function drc_official_mail_html(string $title, string $text, ?string $extraHtml 
 
 function drc_qr_public_url(string $token): string
 {
-    return drc_absolute_url('admin/scan/index.php?token=' . rawurlencode($token));
+    return drc_absolute_url('presence_cible.php?id=' . rawurlencode($token));
+}
+
+function drc_public_checkin_operator_id(PDO $pdo): int
+{
+    $email = 'qr-public@usalumni.local';
+    $stmt = $pdo->prepare('SELECT id FROM drcalumni_users WHERE email = :email LIMIT 1');
+    $stmt->execute([':email' => $email]);
+    $existingId = $stmt->fetchColumn();
+    if ($existingId !== false) {
+        return (int) $existingId;
+    }
+
+    $insert = $pdo->prepare(
+        'INSERT INTO drcalumni_users (full_name, email, password_hash, role, is_active)
+         VALUES (:name, :email, :password_hash, :role, 1)'
+    );
+    $insert->execute([
+        ':name' => 'Public QR Check-in',
+        ':email' => $email,
+        ':password_hash' => password_hash(bin2hex(random_bytes(16)), PASSWORD_DEFAULT),
+        ':role' => DRCALUMNI_ROLE_CHECKIN,
+    ]);
+
+    return (int) $pdo->lastInsertId();
 }
 
 function drc_qr_png_path(int $applicationId, string $token): string
