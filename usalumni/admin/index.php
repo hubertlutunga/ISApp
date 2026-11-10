@@ -60,8 +60,8 @@ if (!drc_is_logged_in()) {
 </head>
 <body class="admin-login-body">
 <div class="login-wrap card login-card">
-    <img class="login-logo" src="<?php echo drc_h(drc_asset('images/use-kinshasa-flag-logo-vertical-color-whitetext.png')); ?>" alt="Ambassade des États-Unis à Kinshasa">
-    <h1 class="login-title">DRC Almuni</h1>
+    <img class="login-logo" src="<?php echo drc_h(drc_asset('images/use-kinshasa-flag-logo-vertical-color.png')); ?>" alt="Ambassade des États-Unis à Kinshasa">
+    <h1 class="login-title">U.S. Alumni Impact</h1>
     <p class="login-subtitle">Connexion sécurisée au back-office</p>
     <?php if ($error !== ''): ?><div class="alert alert-error"><?php echo drc_h($error); ?></div><?php endif; ?>
     <form method="post" action="index.php">
@@ -71,7 +71,7 @@ if (!drc_is_logged_in()) {
             <label for="email">E-mail</label>
             <input id="email" name="email" type="email" required>
         </div>
-        <div class="field">
+        <div class="field login-password-field">
             <label for="password">Mot de passe</label>
             <input id="password" name="password" type="password" required>
         </div>
