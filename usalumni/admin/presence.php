@@ -86,21 +86,24 @@ $recentCheckins = $pdo->query(
 </head>
 <body>
 <header class="admin-topbar">
-    <div class="admin-topbar-inner">
+    <div class="admin-topbar-inner" data-admin-topbar>
         <div class="admin-brand">
             <img class="admin-brand-logo" src="<?php echo drc_h(drc_asset('images/use-kinshasa-flag-logo-vertical-color-whitetext.png')); ?>" alt="Ambassade des États-Unis à Kinshasa">
             <img class="admin-brand-logo-secondary" src="<?php echo drc_h(drc_asset('images/use-kinshasa-seal-color.png')); ?>" alt="U.S. Embassy Kinshasa Seal">
             <strong><?php echo drc_h(DRCALUMNI_EVENT_TOPBAR_NAME); ?></strong>
         </div>
-        <nav class="admin-menu">
-            <a href="<?php echo drc_h(drc_url('admin/index.php')); ?>">Acceuil</a>
-            <a class="active" href="<?php echo drc_h(drc_url('admin/presence.php')); ?>">Présence</a>
-            <a href="<?php echo drc_h(drc_url('admin/register.php')); ?>">Utilisateurs</a>
-            <a href="<?php echo drc_h(drc_url('admin/settings.php')); ?>">Paramètres</a>
-        </nav>
-        <div class="admin-user">
-            <span>Connecté: <strong><?php echo drc_h((string) $currentUser['name']); ?></strong></span>
-            <a class="btn btn-soft" href="<?php echo drc_h(drc_url('admin/index.php?action=logout')); ?>">Déconnexion</a>
+        <button class="navbar-toggler" type="button" aria-expanded="false" aria-label="Afficher le menu">☰</button>
+        <div class="admin-nav-collapse">
+            <nav class="admin-menu">
+                <a href="<?php echo drc_h(drc_url('admin/index.php')); ?>">Acceuil</a>
+                <a class="active" href="<?php echo drc_h(drc_url('admin/presence.php')); ?>">Présence</a>
+                <a href="<?php echo drc_h(drc_url('admin/register.php')); ?>">Utilisateurs</a>
+                <a href="<?php echo drc_h(drc_url('admin/settings.php')); ?>">Paramètres</a>
+            </nav>
+            <div class="admin-user">
+                <span>Connecté: <strong><?php echo drc_h((string) $currentUser['name']); ?></strong></span>
+                <a class="btn btn-soft" href="<?php echo drc_h(drc_url('admin/index.php?action=logout')); ?>">Déconnexion</a>
+            </div>
         </div>
     </div>
 </header>
@@ -158,5 +161,15 @@ $recentCheckins = $pdo->query(
         <p>Section des Affaires publiques · Ambassade des États-Unis à Kinshasa · Designed by Invitation Speciale</p>
     </footer>
 </main>
+<script>
+document.querySelectorAll('[data-admin-topbar]').forEach((topbar) => {
+    const toggle = topbar.querySelector('.navbar-toggler');
+    if (!toggle) return;
+    toggle.addEventListener('click', () => {
+        const opened = topbar.classList.toggle('nav-open');
+        toggle.setAttribute('aria-expanded', opened ? 'true' : 'false');
+    });
+});
+</script>
 </body>
 </html>
