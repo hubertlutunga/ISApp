@@ -1050,3 +1050,16 @@ function drc_qr_public_image_url(int $applicationId): string
 {
     return drc_absolute_url('storage/qrcodes/usalumni_' . $applicationId . '.png');
 }
+
+function drc_qr_email_image_src(int $applicationId): string
+{
+    $path = dirname(__DIR__) . '/storage/qrcodes/usalumni_' . $applicationId . '.png';
+    if (is_file($path) && is_readable($path)) {
+        $raw = file_get_contents($path);
+        if (is_string($raw) && $raw !== '') {
+            return 'data:image/png;base64,' . base64_encode($raw);
+        }
+    }
+
+    return drc_qr_public_image_url($applicationId);
+}

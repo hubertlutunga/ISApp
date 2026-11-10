@@ -92,7 +92,7 @@ if ($currentUser['role'] === DRCALUMNI_ROLE_CHECKIN) {
     exit;
 }
 
-function drc_admin_build_selection_mail(PDO $pdo, array $application, string $token, string $qrImageUrl): array
+function drc_admin_build_selection_mail(PDO $pdo, array $application, string $qrImageSrc): array
 {
     $subject = drc_setting($pdo, 'selection_subject', 'Confirmation de sélection – U.S. Alumni Impact 2026 – Promoting Partnership and Prosperity') ?? '';
     $template = drc_setting($pdo, 'selection_body', drc_selection_email_text('{name}')) ?? '';
@@ -108,7 +108,7 @@ function drc_admin_build_selection_mail(PDO $pdo, array $application, string $to
     <p style="margin:0 0 8px;"><strong>Référence :</strong> ' . drc_h($ref) . '</p>
     <p style="margin:0 0 8px;">Présentez ce QR code à l’accueil.</p>
     <div style="text-align:center;border:1px dashed #002868;border-radius:12px;padding:12px 10px;background:#fff;">
-        <img src="' . drc_h($qrImageUrl) . '" alt="QR code d’accès" style="width:220px;height:220px;max-width:100%;display:inline-block;">
+        <img src="' . drc_h($qrImageSrc) . '" alt="QR code d’accès" style="width:220px;height:220px;max-width:100%;display:inline-block;">
     </div>';
     $html = drc_official_mail_html($subject, $text, $extra);
     return ['subject' => $subject, 'text' => $text, 'html' => $html];
@@ -185,7 +185,7 @@ function drc_admin_update_status(
             $token = drc_generate_access_token();
             drc_store_access_token($pdo, $applicationId, $token);
             drc_qr_png_path($applicationId, $token);
-            $mail = drc_admin_build_selection_mail($pdo, $application, $token, drc_qr_public_image_url($applicationId));
+            $mail = drc_admin_build_selection_mail($pdo, $application, drc_qr_email_image_src($applicationId));
             drc_enqueue_email(
                 $pdo,
                 $applicationId,
