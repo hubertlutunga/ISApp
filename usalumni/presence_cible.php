@@ -71,12 +71,8 @@ $logoPaths = drc_public_logo_paths();
 </head>
 <body>
 <header class="admin-topbar">
-    <div class="admin-topbar-inner">
-        <div class="admin-brand">
-            <img class="admin-brand-logo" src="<?php echo drc_h(drc_asset('images/use-kinshasa-flag-logo-vertical-color.png')); ?>" alt="Ambassade des États-Unis à Kinshasa">
-            <img class="admin-brand-logo-secondary" src="<?php echo drc_h(drc_asset('images/use-kinshasa-seal-color.png')); ?>" alt="U.S. Embassy Kinshasa Seal">
-            <strong><?php echo drc_h(DRCALUMNI_EVENT_TOPBAR_NAME); ?></strong>
-        </div>
+    <div class="admin-topbar-inner" style="justify-content:center;">
+        <img class="admin-brand-logo-solo" src="<?php echo drc_h(drc_asset('images/Logo_invitationSpeciale_SF.png')); ?>" alt="Invitation Spéciale">
     </div>
 </header>
 <main class="content" style="max-width:760px;margin:32px auto;">
@@ -97,7 +93,11 @@ $logoPaths = drc_public_logo_paths();
                     </tbody>
                 </table>
             </div>
-            <a class="btn btn-primary" href="#" onclick="confirmAcces(event)">✓ Confirmer l'accès <?php echo drc_h(drc_checkin_day_label($day)); ?></a>
+            <div style="display:flex;justify-content:center;margin-top:8px;">
+                <a class="btn btn-primary" style="min-width:280px;text-align:center;padding:13px 18px;font-size:15px;" href="#" onclick="confirmAcces(event)">
+                    ✓ Confirmer l'accès <?php echo drc_h(drc_checkin_day_label($day)); ?>
+                </a>
+            </div>
         <?php endif; ?>
     </section>
     <footer class="admin-footer">
