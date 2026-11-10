@@ -19,8 +19,10 @@ if (!$canManage) {
 
 $errors = [];
 $success = '';
+$editUser = null;
+$protectedAdminEmail = 'superadmin@drcalumni.com';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string) ($_POST['form_action'] ?? 'create_user') === 'create_user') {
     if (!drc_validate_csrf($csrfKey, (string) ($_POST['csrf_token'] ?? ''))) {
         $errors['global'] = 'Session expirée.';
     }
@@ -74,9 +76,87 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string) ($_POST['form_action'] ?? '') === 'update_user') {
+    if (!drc_validate_csrf($csrfKey, (string) ($_POST['csrf_token'] ?? ''))) {
+        $errors['global'] = 'Session expirée.';
+    } else {
+        $targetUserId = (int) ($_POST['user_id'] ?? 0);
+        $targetStmt = $pdo->prepare('SELECT * FROM drcalumni_users WHERE id = :id LIMIT 1');
+        $targetStmt->execute([':id' => $targetUserId]);
+        $targetUser = $targetStmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!is_array($targetUser)) {
+            $errors['global'] = 'Utilisateur introuvable.';
+        } elseif (drc_normalize_email((string) $targetUser['email']) === $protectedAdminEmail) {
+            $errors['global'] = 'Le compte superadmin@drcalumni.com est protégé et ne peut pas être modifié.';
+        } else {
+            $fullName = drc_clean_text((string) ($_POST['edit_full_name'] ?? ''), 180);
+            $role = drc_clean_text((string) ($_POST['edit_role'] ?? DRCALUMNI_ROLE_REVIEWER), 30);
+            $isActive = (string) ($_POST['edit_is_active'] ?? '0') === '1' ? 1 : 0;
+            $newPassword = (string) ($_POST['edit_password'] ?? '');
+            $newPasswordConfirm = (string) ($_POST['edit_password_confirm'] ?? '');
+
+            if ($fullName === '') {
+                $errors['global'] = 'Nom requis.';
+            }
+            if (!array_key_exists($role, drc_roles())) {
+                $role = DRCALUMNI_ROLE_REVIEWER;
+            }
+            if ($newPassword !== '' && strlen($newPassword) < 8) {
+                $errors['global'] = 'Le nouveau mot de passe doit contenir au moins 8 caractères.';
+            }
+            if ($newPassword !== '' && $newPassword !== $newPasswordConfirm) {
+                $errors['global'] = 'Les mots de passe de modification ne correspondent pas.';
+            }
+
+            if ($errors === []) {
+                if ($newPassword !== '') {
+                    $update = $pdo->prepare(
+                        'UPDATE drcalumni_users
+                         SET full_name = :full_name, role = :role, is_active = :is_active, password_hash = :password_hash
+                         WHERE id = :id'
+                    );
+                    $update->execute([
+                        ':full_name' => $fullName,
+                        ':role' => $role,
+                        ':is_active' => $isActive,
+                        ':password_hash' => password_hash($newPassword, PASSWORD_DEFAULT),
+                        ':id' => $targetUserId,
+                    ]);
+                } else {
+                    $update = $pdo->prepare(
+                        'UPDATE drcalumni_users
+                         SET full_name = :full_name, role = :role, is_active = :is_active
+                         WHERE id = :id'
+                    );
+                    $update->execute([
+                        ':full_name' => $fullName,
+                        ':role' => $role,
+                        ':is_active' => $isActive,
+                        ':id' => $targetUserId,
+                    ]);
+                }
+
+                drc_audit($pdo, (int) ($currentUser['id'] ?? 0), 'user.updated', 'user', (string) $targetUserId, ['role' => $role, 'active' => $isActive]);
+                $success = 'Utilisateur modifié.';
+            }
+        }
+    }
+}
+
 $users = [];
 if ($currentUser !== null && $currentUser['role'] === DRCALUMNI_ROLE_SUPER_ADMIN) {
     $users = $pdo->query('SELECT id, full_name, email, role, is_active, last_login_at, created_at FROM drcalumni_users ORDER BY created_at DESC')->fetchAll(PDO::FETCH_ASSOC);
+}
+
+$editId = (int) ($_GET['edit'] ?? ($_POST['user_id'] ?? 0));
+if ($editId > 0) {
+    foreach ($users as $existingUser) {
+        if ((int) $existingUser['id'] === $editId) {
+            $editUser = $existingUser;
+            break;
+        }
+    }
 }
 $swalPayload = null;
 if (isset($errors['global'])) {
@@ -109,7 +189,7 @@ if (isset($errors['global'])) {
 <header class="admin-topbar">
     <div class="admin-topbar-inner">
         <div class="admin-brand">
-            <img class="admin-brand-logo" src="<?php echo drc_h(drc_asset('images/use-kinshasa-flag-logo-vertical-color.png')); ?>" alt="Ambassade des États-Unis à Kinshasa">
+            <img class="admin-brand-logo" src="<?php echo drc_h(drc_asset('images/use-kinshasa-flag-logo-vertical-color-whitetext.png')); ?>" alt="Ambassade des États-Unis à Kinshasa">
             <img class="admin-brand-logo-secondary" src="<?php echo drc_h(drc_asset('images/use-kinshasa-seal-color.png')); ?>" alt="U.S. Embassy Kinshasa Seal">
             <strong><?php echo drc_h(DRCALUMNI_EVENT_TOPBAR_NAME); ?></strong>
         </div>
@@ -128,11 +208,11 @@ if (isset($errors['global'])) {
 <?php endif; ?>
 <main class="content">
 <div class="card admin-panel">
-    <img class="sidebar-logo" src="<?php echo drc_h(drc_asset($logoPaths['header'])); ?>" alt="">
     <h1 style="margin:0 0 14px;text-align:center;">Gestion des utilisateurs admin</h1>
     <?php if (isset($errors['global'])): ?><div class="alert alert-error"><?php echo drc_h($errors['global']); ?></div><?php endif; ?>
     <?php if ($success !== ''): ?><div class="alert alert-ok"><?php echo drc_h($success); ?></div><?php endif; ?>
     <form method="post" action="register.php">
+        <input type="hidden" name="form_action" value="create_user">
         <input type="hidden" name="csrf_token" value="<?php echo drc_h($csrfToken); ?>">
         <div class="grid-2">
             <div class="field">
@@ -168,15 +248,54 @@ if (isset($errors['global'])) {
             </div>
         </div>
         <button class="btn btn-primary" type="submit"><?php echo $userCount === 0 ? 'Créer le premier super admin' : 'Créer le compte'; ?></button>
-        <a class="btn btn-soft" href="<?php echo drc_h(drc_url('admin/index.php')); ?>">Retour dashboard</a>
     </form>
+
+    <?php if (is_array($editUser)): ?>
+        <hr style="margin:20px 0;border:none;border-top:1px solid #DBE3EF;">
+        <h2 style="margin:0 0 10px;">Modifier un utilisateur</h2>
+        <form method="post" action="register.php?edit=<?php echo (int) $editUser['id']; ?>">
+            <input type="hidden" name="form_action" value="update_user">
+            <input type="hidden" name="csrf_token" value="<?php echo drc_h($csrfToken); ?>">
+            <input type="hidden" name="user_id" value="<?php echo (int) $editUser['id']; ?>">
+            <div class="grid-2">
+                <div class="field">
+                    <label for="edit_full_name">Nom complet</label>
+                    <input id="edit_full_name" name="edit_full_name" type="text" required value="<?php echo drc_h((string) $editUser['full_name']); ?>">
+                </div>
+                <div class="field">
+                    <label for="edit_email">E-mail</label>
+                    <input id="edit_email" type="email" readonly value="<?php echo drc_h((string) $editUser['email']); ?>">
+                </div>
+                <div class="field">
+                    <label for="edit_role">Rôle</label>
+                    <select id="edit_role" name="edit_role">
+                        <?php foreach (drc_roles() as $value => $label): ?>
+                            <option value="<?php echo drc_h($value); ?>" <?php echo (string) $editUser['role'] === $value ? 'selected' : ''; ?>><?php echo drc_h($label); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="field">
+                    <label><input type="checkbox" name="edit_is_active" value="1" <?php echo (int) $editUser['is_active'] === 1 ? 'checked' : ''; ?>> Actif</label>
+                </div>
+                <div class="field">
+                    <label for="edit_password">Nouveau mot de passe (optionnel)</label>
+                    <input id="edit_password" name="edit_password" type="password" minlength="8">
+                </div>
+                <div class="field">
+                    <label for="edit_password_confirm">Confirmer nouveau mot de passe</label>
+                    <input id="edit_password_confirm" name="edit_password_confirm" type="password" minlength="8">
+                </div>
+            </div>
+            <button class="btn btn-primary" type="submit">Enregistrer les modifications</button>
+        </form>
+    <?php endif; ?>
 
     <?php if ($users !== []): ?>
         <hr style="margin:20px 0;border:none;border-top:1px solid #DBE3EF;">
         <h2 style="margin:0 0 10px;">Comptes existants</h2>
         <div class="table-wrap">
             <table style="min-width:0;">
-                <thead><tr><th>Nom</th><th>E-mail</th><th>Rôle</th><th>Actif</th><th>Dernière connexion</th></tr></thead>
+                <thead><tr><th>Nom</th><th>E-mail</th><th>Rôle</th><th>Actif</th><th>Dernière connexion</th><th>Actions</th></tr></thead>
                 <tbody>
                 <?php foreach ($users as $user): ?>
                     <tr>
@@ -185,6 +304,13 @@ if (isset($errors['global'])) {
                         <td><?php echo drc_h((string) $user['role']); ?></td>
                         <td><?php echo (int) $user['is_active'] === 1 ? 'Oui' : 'Non'; ?></td>
                         <td><?php echo drc_h((string) ($user['last_login_at'] ?? '—')); ?></td>
+                        <td>
+                            <?php if (drc_normalize_email((string) $user['email']) === $protectedAdminEmail): ?>
+                                <span class="small">Compte protégé</span>
+                            <?php else: ?>
+                                <a class="btn btn-soft" href="<?php echo drc_h(drc_url('admin/register.php?edit=' . (int) $user['id'])); ?>">Éditer</a>
+                            <?php endif; ?>
+                        </td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>

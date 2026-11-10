@@ -60,7 +60,7 @@ if (!drc_is_logged_in()) {
 </head>
 <body class="admin-login-body">
 <div class="login-wrap card login-card">
-    <img class="login-logo" src="<?php echo drc_h(drc_asset('images/use-kinshasa-flag-logo-vertical-color.png')); ?>" alt="Ambassade des États-Unis à Kinshasa">
+    <img class="login-logo" src="<?php echo drc_h(drc_asset('images/use-kinshasa-flag-logo-vertical-color-whitetext.png')); ?>" alt="Ambassade des États-Unis à Kinshasa">
     <h1 class="login-title">DRC Almuni</h1>
     <p class="login-subtitle">Connexion sécurisée au back-office</p>
     <?php if ($error !== ''): ?><div class="alert alert-error"><?php echo drc_h($error); ?></div><?php endif; ?>
@@ -497,7 +497,7 @@ if ($error !== '') {
 <header class="admin-topbar">
     <div class="admin-topbar-inner">
         <div class="admin-brand">
-            <img class="admin-brand-logo" src="<?php echo drc_h(drc_asset('images/use-kinshasa-flag-logo-vertical-color.png')); ?>" alt="Ambassade des États-Unis à Kinshasa">
+            <img class="admin-brand-logo" src="<?php echo drc_h(drc_asset('images/use-kinshasa-flag-logo-vertical-color-whitetext.png')); ?>" alt="Ambassade des États-Unis à Kinshasa">
             <img class="admin-brand-logo-secondary" src="<?php echo drc_h(drc_asset('images/use-kinshasa-seal-color.png')); ?>" alt="U.S. Embassy Kinshasa Seal">
             <strong><?php echo drc_h(DRCALUMNI_EVENT_TOPBAR_NAME); ?></strong>
         </div>
