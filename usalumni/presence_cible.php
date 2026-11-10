@@ -70,6 +70,15 @@ $logoPaths = drc_public_logo_paths();
     <link rel="stylesheet" href="<?php echo drc_h(drc_asset('assets/css/admin.css')); ?>">
 </head>
 <body>
+<header class="admin-topbar">
+    <div class="admin-topbar-inner">
+        <div class="admin-brand">
+            <img class="admin-brand-logo" src="<?php echo drc_h(drc_asset('images/use-kinshasa-flag-logo-vertical-color.png')); ?>" alt="Ambassade des États-Unis à Kinshasa">
+            <img class="admin-brand-logo-secondary" src="<?php echo drc_h(drc_asset('images/use-kinshasa-seal-color.png')); ?>" alt="U.S. Embassy Kinshasa Seal">
+            <strong><?php echo drc_h(DRCALUMNI_EVENT_TOPBAR_NAME); ?></strong>
+        </div>
+    </div>
+</header>
 <main class="content" style="max-width:760px;margin:32px auto;">
     <section class="card">
         <h2 class="section-title" style="margin-top:0;">Validation présence — <?php echo drc_h(drc_checkin_day_label($day)); ?></h2>
@@ -91,6 +100,13 @@ $logoPaths = drc_public_logo_paths();
             <a class="btn btn-primary" href="#" onclick="confirmAcces(event)">✓ Confirmer l'accès <?php echo drc_h(drc_checkin_day_label($day)); ?></a>
         <?php endif; ?>
     </section>
+    <footer class="admin-footer">
+        <div class="admin-footer-logos">
+            <img src="<?php echo drc_h(drc_asset($logoPaths['footer_freedom'])); ?>" alt="Freedom 250">
+            <img src="<?php echo drc_h(drc_asset($logoPaths['footer_seal'])); ?>" alt="U.S. Embassy Kinshasa Seal">
+        </div>
+        <p>Section des Affaires publiques · Ambassade des États-Unis à Kinshasa · Designed by Invitation Speciale</p>
+    </footer>
 </main>
 
 <script src="<?php echo drc_h(drc_asset('sweet/sweetalert2.all.min.js')); ?>" onerror="this.onerror=null;this.src='/sweet/sweetalert2.all.min.js';"></script>

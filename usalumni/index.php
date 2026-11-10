@@ -613,7 +613,7 @@ if (isset($errors['global'])) {
             <img src="<?php echo drc_h(drc_asset($logoPaths['footer_freedom'])); ?>" alt="Freedom 250">
             <img src="<?php echo drc_h(drc_asset($logoPaths['footer_seal'])); ?>" alt="U.S. Embassy Kinshasa Seal">
         </div>
-        <p>Section des Affaires publiques · Ambassade des États-Unis à Kinshasa</p>
+        <p>Section des Affaires publiques · Ambassade des États-Unis à Kinshasa · Designed by Invitation Speciale</p>
     </footer>
 </main>
 <script src="<?php echo drc_h(drc_asset('assets/js/form-wizard.js')); ?>"></script>
@@ -627,5 +627,7 @@ window.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 <?php endif; ?>
+
+
 </body>
 </html>
