@@ -10,17 +10,27 @@ if (empty($_SESSION['drcalumni_presence_token'])) {
     $_SESSION['drcalumni_presence_token'] = bin2hex(random_bytes(32));
 }
 
-$token = trim((string) ($_GET['id'] ?? ''));
+$identifier = trim((string) ($_GET['id'] ?? ''));
 $day = drc_resolve_event_day((string) ($_GET['day'] ?? null));
 $action = (string) ($_GET['action'] ?? '');
 $sessionToken = (string) $_SESSION['drcalumni_presence_token'];
 $flash = '';
 $error = '';
 $application = null;
+$accessCode = '026';
 
 try {
-    if ($token !== '') {
-        $application = drc_find_application_by_access_token($pdo, $token);
+    if ($identifier !== '') {
+        $application = drc_find_application_by_access_token($pdo, $identifier);
+
+        if (!is_array($application)) {
+            $byReference = $pdo->prepare('SELECT * FROM drcalumni_applications WHERE reference_code = :reference LIMIT 1');
+            $byReference->execute([':reference' => $identifier]);
+            $candidate = $byReference->fetch(PDO::FETCH_ASSOC);
+            if (is_array($candidate)) {
+                $application = $candidate;
+            }
+        }
     }
 
     if (is_array($application) && (string) ($application['status'] ?? '') !== 'selected') {
@@ -38,23 +48,16 @@ try {
             $checkin = drc_checkin($pdo, (int) $application['id'], $day, $operatorId, 'qr_public');
             $_SESSION['drcalumni_presence_token'] = bin2hex(random_bytes(32));
             $result = $checkin['already'] ? 'exists' : 'ok';
-            header('Location: ' . drc_url('presence_cible.php?id=' . rawurlencode($token) . '&day=' . $day . '&result=' . $result));
+            header('Location: ' . drc_url('presence.php?day=' . $day . '&result=' . $result));
             exit;
         }
-    }
-
-    $result = (string) ($_GET['result'] ?? '');
-    if ($result === 'ok') {
-        $flash = 'Présence confirmée avec succès pour ' . drc_checkin_day_label($day) . '.';
-    } elseif ($result === 'exists') {
-        $flash = 'Présence déjà enregistrée pour ' . drc_checkin_day_label($day) . '.';
     }
 } catch (Throwable $exception) {
     error_log('[US Alumni Presence Cible] ' . $exception->getMessage());
     $error = 'Impossible de charger la fiche de présence.';
 }
 
-$confirmUrl = drc_url('presence_cible.php?id=' . rawurlencode($token) . '&day=' . $day . '&action=confirm&token=' . rawurlencode($sessionToken));
+$confirmUrl = drc_url('presence_cible.php?id=' . rawurlencode($identifier) . '&day=' . $day . '&action=confirm&token=' . rawurlencode($sessionToken));
 $logoPaths = drc_public_logo_paths();
 ?>
 <!doctype html>
@@ -85,9 +88,55 @@ $logoPaths = drc_public_logo_paths();
                     </tbody>
                 </table>
             </div>
-            <a class="btn btn-primary" href="<?php echo drc_h($confirmUrl); ?>">Confirmer l'accès</a>
+            <a class="btn btn-primary" href="#" onclick="confirmAcces(event)">✓ Confirmer l'accès <?php echo drc_h(drc_checkin_day_label($day)); ?></a>
         <?php endif; ?>
     </section>
 </main>
+
+<script src="<?php echo drc_h(drc_asset('sweet/sweetalert2.all.min.js')); ?>" onerror="this.onerror=null;this.src='/sweet/sweetalert2.all.min.js';"></script>
+<script>if (!window.Swal) { document.write('<script src=\"https://cdn.jsdelivr.net/npm/sweetalert2@11\"><\\/script>'); }</script>
+<script>
+function confirmAcces(event) {
+    event.preventDefault();
+    const confirmationCode = <?php echo json_encode($accessCode, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
+
+    Swal.fire({
+        title: "Confirmer l’accès",
+        html: `
+        <div style="text-align:left;margin-top:10px;">
+            <label style="display:block;margin-bottom:6px;">Code de confirmation</label>
+            <input id="cleConfirm" type="text" class="swal2-input"
+                placeholder="Entrez le code"
+                autocomplete="off"
+                style="margin:0;width:100%;">
+        </div>
+        `,
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonText: "Confirmer",
+        cancelButtonText: "Annuler",
+        focusConfirm: false,
+        preConfirm: () => {
+            const val = document.getElementById('cleConfirm').value.trim();
+            if (!val) {
+                Swal.showValidationMessage("Veuillez entrer le code de confirmation.");
+                return false;
+            }
+            return val;
+        }
+    }).then((result) => {
+        if (!result.isConfirmed) return;
+        if (result.value !== confirmationCode) {
+            Swal.fire({
+                icon: "error",
+                title: "Code incorrect",
+                text: "Le code de confirmation ne correspond pas."
+            });
+            return;
+        }
+        window.location.href = <?php echo json_encode($confirmUrl, JSON_UNESCAPED_SLASHES); ?>;
+    });
+}
+</script>
 </body>
 </html>
