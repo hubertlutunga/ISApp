@@ -664,7 +664,18 @@ function drc_enqueue_email(
         'INSERT INTO drcalumni_email_outbox
         (application_id, mail_type, recipient_email, recipient_name, subject_line, body_html, body_text, idempotency_key, status, queued_at)
         VALUES (:app, :type, :email, :name, :subject, :html, :text, :idem, :status, :queued)
-        ON DUPLICATE KEY UPDATE id = id'
+        ON DUPLICATE KEY UPDATE
+            recipient_email = VALUES(recipient_email),
+            recipient_name = VALUES(recipient_name),
+            subject_line = VALUES(subject_line),
+            body_html = VALUES(body_html),
+            body_text = VALUES(body_text),
+            status = "pending",
+            attempts = 0,
+            last_attempt_at = NULL,
+            sent_at = NULL,
+            last_error = NULL,
+            queued_at = VALUES(queued_at)'
     );
     $stmt->execute([
         ':app' => $applicationId,
@@ -776,8 +787,9 @@ function drc_process_outbox(PDO $pdo, int $limit, ?int $actorUserId = null): arr
 {
     $stmt = $pdo->prepare(
         "SELECT * FROM drcalumni_email_outbox
-         WHERE status IN ('pending', 'failed')
-         ORDER BY queued_at ASC
+         WHERE status = 'pending'
+            OR (status = 'failed' AND attempts < 5)
+         ORDER BY CASE WHEN status = 'pending' THEN 0 ELSE 1 END, queued_at ASC
          LIMIT :lim"
     );
     $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
