@@ -72,7 +72,7 @@ $logoPaths = drc_public_logo_paths();
 <body>
 <header class="admin-topbar">
     <div class="admin-topbar-inner" style="justify-content:center;">
-        <img class="admin-brand-logo-solo" src="<?php echo drc_h(drc_asset('images/Logo_invitationSpeciale_SF.png')); ?>" alt="Invitation Spéciale">
+        <img class="admin-brand-logo-solo" src="<?php echo drc_h(drc_asset('images/Logo_invitationSpeciale_4.png')); ?>" alt="Invitation Spéciale">
     </div>
 </header>
 <main class="content" style="max-width:760px;margin:32px auto;">
