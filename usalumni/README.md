@@ -22,7 +22,7 @@ Plateforme complète de candidatures, back-office, notifications e-mail, QR code
 
 ## Déploiement (non destructif)
 
-1. Configurer les variables d’environnement (voir `.env.example`).
+1. Configurer les variables d’environnement (voir `.env.example`) dans l’un des fichiers lus au runtime (`/isapp.env`, `/.isapp.env`, `/.env` à la racine projet, ou `usalumni/.env`).
 2. Sauvegarder la base de données.
 3. Exécuter la migration SQL:
    - [`001_drcalumni.sql`](./database/migrations/001_drcalumni.sql)

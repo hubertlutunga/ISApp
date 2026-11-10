@@ -10,6 +10,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once dirname(__DIR__, 2) . '/src/Support/EnvLoader.php';
 EnvLoader::loadProjectEnv(dirname(__DIR__, 2));
+EnvLoader::loadProjectEnv(dirname(__DIR__));
 
 require_once dirname(__DIR__, 2) . '/config/database.php';
 
@@ -714,6 +715,27 @@ function drc_send_email_transport(string $toEmail, string $toName, string $subje
         return ['success' => false, 'message' => 'SMTP non configuré (mot de passe manquant).'];
     }
 
+    $attempts = [$transport['encryption']];
+    if ($transport['encryption'] === 'tls' || $transport['encryption'] === 'starttls') {
+        $attempts[] = 'none';
+    }
+
+    $lastError = 'Échec SMTP non spécifié.';
+    foreach (array_unique($attempts) as $attemptEncryption) {
+        $attemptTransport = $transport;
+        $attemptTransport['encryption'] = $attemptEncryption;
+        $result = drc_send_email_transport_once($attemptTransport, $toEmail, $toName, $subject, $html, $text);
+        if ($result['success'] === true) {
+            return $result;
+        }
+        $lastError = (string) ($result['message'] ?? $lastError);
+    }
+
+    return ['success' => false, 'message' => $lastError];
+}
+
+function drc_send_email_transport_once(array $transport, string $toEmail, string $toName, string $subject, string $html, string $text): array
+{
     try {
         $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
         $mail->CharSet = 'UTF-8';
