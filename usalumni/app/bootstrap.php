@@ -8,10 +8,22 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+require_once dirname(__DIR__, 2) . '/src/Support/EnvLoader.php';
+EnvLoader::loadProjectEnv(dirname(__DIR__, 2));
+
 require_once dirname(__DIR__, 2) . '/config/database.php';
-require_once dirname(__DIR__, 2) . '/PHPMailer/src/Exception.php';
-require_once dirname(__DIR__, 2) . '/PHPMailer/src/PHPMailer.php';
-require_once dirname(__DIR__, 2) . '/PHPMailer/src/SMTP.php';
+
+$phpMailerRoot = dirname(__DIR__, 2) . '/PHPMailer/src';
+if (!is_dir($phpMailerRoot)) {
+    $phpMailerRoot = dirname(__DIR__) . '/PHPMailer/src';
+}
+if (!is_dir($phpMailerRoot)) {
+    throw new RuntimeException('PHPMailer introuvable: dossier /PHPMailer/src manquant.');
+}
+
+require_once $phpMailerRoot . '/Exception.php';
+require_once $phpMailerRoot . '/PHPMailer.php';
+require_once $phpMailerRoot . '/SMTP.php';
 
 if (!defined('DRCALUMNI_BOOTSTRAPPED')) {
     define('DRCALUMNI_BOOTSTRAPPED', true);
