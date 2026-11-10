@@ -499,7 +499,7 @@ if ($error !== '') {
     <div class="admin-topbar-inner">
         <div class="admin-brand">
             <img class="admin-brand-logo" src="<?php echo drc_h(drc_asset('images/use-kinshasa-flag-logo-vertical-color.png')); ?>" alt="Ambassade des États-Unis à Kinshasa">
-            <strong>U.S. Alumni Impact 2026 – Promoting Partnership and Prosperity</strong>
+            <strong><?php echo drc_h(DRCALUMNI_EVENT_TOPBAR_NAME); ?></strong>
         </div>
         <nav class="admin-menu">
             <a class="active" href="<?php echo drc_h(drc_url('admin/index.php')); ?>">Acceuil</a>

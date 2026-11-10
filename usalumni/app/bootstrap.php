@@ -32,6 +32,7 @@ if (!defined('DRCALUMNI_BOOTSTRAPPED')) {
 
 const DRCALUMNI_EVENT_NAME = 'U.S. Alumni Impact 2026 – Promoting Partnership and Prosperity';
 const DRCALUMNI_PUBLIC_EVENT_NAME = 'U.S. Alumni Impact 2026 – Promoting Partnership and Prosperity';
+const DRCALUMNI_EVENT_TOPBAR_NAME = 'U.S. Alumni Impact 2026';
 const DRCALUMNI_EVENT_THEME = 'Faire progresser le partenariat stratégique et les opportunités économiques entre les États-Unis et la RDC';
 const DRCALUMNI_EVENT_DATES = '1er et 2 décembre 2026';
 const DRCALUMNI_EVENT_TIME = '9h00';
