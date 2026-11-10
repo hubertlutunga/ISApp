@@ -21,7 +21,5 @@ deployment:
     - /usr/bin/rsync -a twilio-php-main/ $DEPLOYPATH/twilio-php-main/
     - /bin/mkdir -p $DEPLOYPATH/usalumni/
     - /usr/bin/rsync -a --delete usalumni/ $DEPLOYPATH/usalumni/
-    - /bin/mkdir -p $DEPLOYPATH/uslumni/
-    - /usr/bin/rsync -a --delete usalumni/ $DEPLOYPATH/uslumni/
     - /bin/cp -u .htaccess $DEPLOYPATH
     - /bin/cp -u index.php $DEPLOYPATH
